@@ -10,16 +10,48 @@
             padding: 0; 
             height: 100%; 
             overflow: hidden; 
+            background-color: #f1f2f5; 
         }
-        iframe { 
-            width: 100%; 
-            height: 100%; 
-            border: none; 
+        
+        /* TRUQUE PARA ESCONDER A BARRA DO GOOGLE SCRIPT */
+        .app-container {
+            width: 100%;
+            height: calc(100% + 30px); 
+            margin-top: -30px; 
+            position: relative;
         }
+        
+        iframe { width: 100%; height: 100%; border: none; display: block; }
     </style>
 </head>
 <body>
-    <!-- Substitua o link abaixo pelo link de implantação/deploy do seu Google Apps Script -->
-    <iframe src="https://script.google.com/macros/s/AKfycbw2Spzk-QMkVpJ3dY3R203puKxkcDAFrEdGX5TNc_kx8Rt_KIbGB6oIfXvknEpMD6iJ/exec"></iframe>
+    <div class="app-container">
+        <iframe id="app-frame" src=""></iframe>
+    </div>
+
+    <script>
+        // ⚠️ SUBSTITUA COM O SEU LINK DE IMPLEMENTAÇÃO DO GOOGLE APPS SCRIPT
+        const gasScriptUrl = "https://script.google.com/macros/s/AKfycbw2Spzk-QMkVpJ3dY3R203puKxkcDAFrEdGX5TNc_kx8Rt_KIbGB6oIfXvknEpMD6iJ/exec";
+
+        // Captura a URL atual (ex: /esportes/titulo/12345)
+        const currentPath = window.location.pathname + window.location.search;
+
+        // Injeta a rota no iframe para o Google Script saber o que carregar
+        const iframe = document.getElementById('app-frame');
+        iframe.src = gasScriptUrl + "?route=" + encodeURIComponent(currentPath);
+
+        // Escuta mensagens vindas DENTRO do Google Script para mudar a URL do navegador
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'NAVIGATE') {
+                window.history.pushState(null, '', event.data.path);
+            }
+        });
+
+        // Quando o utilizador clica em "Voltar" no navegador
+        window.addEventListener('popstate', function() {
+            const newPath = window.location.pathname + window.location.search;
+            iframe.src = gasScriptUrl + "?route=" + encodeURIComponent(newPath);
+        });
+    </script>
 </body>
 </html>
