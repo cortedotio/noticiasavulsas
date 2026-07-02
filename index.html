@@ -6,14 +6,7 @@
     <title>Notícias Avulsas</title>
     <style>
         body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: #f1f2f5; }
-        
-        /* Oculta a barra da Google empurrando o site suavemente para cima */
-        .app-container {
-            width: 100%;
-            height: calc(100% + 30px);
-            margin-top: -30px;
-            position: relative;
-        }
+        .app-container { width: 100%; height: 100%; }
         iframe { width: 100%; height: 100%; border: none; display: block; }
     </style>
 </head>
@@ -23,22 +16,22 @@
     </div>
 
     <script>
-        // O seu link de Deploy Oficial do Google Apps Script (atualizado conforme a sua imagem)
-        const gasScriptUrl = "https://script.google.com/macros/s/AKfycbyYjyJhk5BEgKo4lr8wx2x7yK1mKnBRCBgjd1Ht9TH8vxXTVb2z1uSqm3zQkoFFXxI/exec";
+        // ⚠️ O SEU LINK DO GOOGLE APPS SCRIPT (já atualizado com o da sua imagem)
+        const gasScriptUrl = "https://script.google.com/macros/s/AKfycbyTh_5FfTKMU1QyJQ_N9RbnGdXfmHFrN48JM-o9IQsNfyTtmlo0l1E1jBPmc_GaI-BG/exec";
         
-        // Deteta a URL que o leitor tentou aceder e envia para o Google Script
+        // Pega a rota atual (ex: /esportes/Cuiaba/12345) e manda para o Google Script
         const currentPath = window.location.pathname + window.location.search;
         const iframe = document.getElementById('app-frame');
         iframe.src = gasScriptUrl + "?route=" + encodeURIComponent(currentPath);
 
-        // Ouve a ordem do Google Script para mudar o link da barra de navegação no momento do clique
+        // Ouve a ordem do Google Script para mudar a URL no navegador visualmente
         window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'NAVIGATE') {
                 window.history.pushState(null, '', event.data.path);
             }
         });
-
-        // Garante que o botão "Voltar" do telemóvel/PC funciona perfeitamente
+        
+        // Lida com o botão "Voltar" e "Avançar" do navegador
         window.addEventListener('popstate', function() {
             const newPath = window.location.pathname + window.location.search;
             iframe.src = gasScriptUrl + "?route=" + encodeURIComponent(newPath);
