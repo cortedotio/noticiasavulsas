@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notícias Avulsas</title>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: #f1f2f5; }
+        .app-container { width: 100%; height: 100%; }
+        iframe { width: 100%; height: 100%; border: none; display: block; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <iframe id="app-frame" src=""></iframe>
+    </div>
+
+    <script>
+        // ⚠️ O SEU LINK DO GOOGLE APPS SCRIPT (já atualizado com o da sua imagem)
+        const gasScriptUrl = "https://script.google.com/macros/s/AKfycbyTh_5FfTKMU1QyJQ_N9RbnGdXfmHFrN48JM-o9IQsNfyTtmlo0l1E1jBPmc_GaI-BG/exec";
+        
+        // Pega a rota atual (ex: /esportes/Cuiaba/12345) e manda para o Google Script
+        const currentPath = window.location.pathname + window.location.search;
+        const iframe = document.getElementById('app-frame');
+        iframe.src = gasScriptUrl + "?route=" + encodeURIComponent(currentPath);
+
+        // Ouve a ordem do Google Script para mudar a URL no navegador visualmente
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'NAVIGATE') {
+                window.history.pushState(null, '', event.data.path);
+            }
+        });
+        
+        // Lida com o botão "Voltar" e "Avançar" do navegador
+        window.addEventListener('popstate', function() {
+            const newPath = window.location.pathname + window.location.search;
+            iframe.src = gasScriptUrl + "?route=" + encodeURIComponent(newPath);
+        });
+    </script>
+</body>
+</html>
