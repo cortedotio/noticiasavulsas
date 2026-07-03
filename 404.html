@@ -25,7 +25,65 @@
 
     <script>
         // ⚠️ COLE AQUI O SEU NOVO LINK DO GOOGLE APPS SCRIPT (TERMINADO EM /exec)
-        const gasScriptUrl = "https://script.google.com/macros/s/AKfycbxnDB3pne_adRDscbV29tpUQJi3GJw6e6B75bUmjahkIX4Z5ooowzEq6Cjr5rt0gxVT/exec";
+        const gasScriptUrl = "https://script.google.com/macros/s/AKfycbxumT7gp711tvY6q2SUbIUZHwbYc2lnc6-N_ETZGZmWic3g-fdfnf4Ss88P3sQivfbH/exec";
+
+        // Captura a URL atual e passa para o iframe
+        const currentPath = window.location.pathname + window.location.search;
+        const iframe = document.getElementById('app-frame');
+        iframe.src = gasScriptUrl + "?route=" + encodeURIComponent(currentPath);
+
+        // Atualiza a barra do navegador suavemente
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'NAVIGATE') {
+                window.history.pushState(null, '', event.data.path);
+            }
+        });
+
+        // Suporte para o botão voltar do navegador
+        window.addEventListener('popstate', function() {
+            const newPath = window.location.pathname + window.location.search;
+            iframe.src = gasScriptUrl + "?route=" + encodeURIComponent(newPath);
+        });
+    </script>
+</body>
+</html>
+]
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notícias Avulsas</title>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: #f1f2f5; }
+        
+        /* TRUQUE PARA ESCONDER A BARRA DO GOOGLE SCRIPT */
+        .app-container {
+            width: 100%;
+            height: calc(100% + 30px);
+            margin-top: -30px;
+            position: relative;
+        }
+        
+        iframe { width: 100%; height: 100%; border: none; display: block; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <iframe id="app-frame" src=""></iframe>
+    </div>
+
+    <script>
+        // ⚠️ COLE AQUI O SEU NOVO LINK DO GOOGLE APPS SCRIPT (TERMINADO EM /exec)
+        const gasScriptUrl = "COLE_AQUI_O_SEU_LINK";
 
         // Captura a URL atual e passa para o iframe
         const currentPath = window.location.pathname + window.location.search;
