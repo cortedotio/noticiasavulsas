@@ -1,107 +1,42 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT" style="margin: 0; padding: 0; height: 100%; overflow: hidden;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notícias Avulsas</title>
+    <title>Notícias Avulsas - Portal</title>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: #f1f2f5; }
-        
-        /* TRUQUE PARA ESCONDER A BARRA DO GOOGLE SCRIPT */
-        .app-container {
-            width: 100%;
-            height: calc(100% + 30px);
-            margin-top: -30px;
-            position: relative;
-        }
-        
-        iframe { width: 100%; height: 100%; border: none; display: block; }
+        /* Tira as margens e esconde a barra de rolagem lateral nativa, o iframe faz o scroll */
+        body { margin: 0; padding: 0; height: 100vh; overflow: hidden; background-color: #f1f2f5; }
+        iframe { border: none; width: 100%; height: 100%; display: block; }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <iframe id="app-frame" src=""></iframe>
-    </div>
-
+    
+    <!-- Este Iframe carrega secretamente a sua interface do Google sem ninguém perceber -->
+    <iframe id="portal-frame" allowfullscreen></iframe>
+    
     <script>
-        // ⚠️ COLE AQUI O SEU NOVO LINK DO GOOGLE APPS SCRIPT (TERMINADO EM /exec)
-        const gasScriptUrl = "https://script.google.com/macros/s/AKfycbxumT7gp711tvY6q2SUbIUZHwbYc2lnc6-N_ETZGZmWic3g-fdfnf4Ss88P3sQivfbH/exec";
+        // ⚠️ IMPORTANTE: COLE AQUI O SEU LINK DE EXECUÇÃO DO GOOGLE APPS SCRIPT (URL que acaba em /exec)
+        const URL_DO_SEU_WEB_APP_GOOGLE = "https://script.google.com/macros/s/AKfycbzV_47ciKgO9iqsj9Vm5PZE1Vy63yFCj1XVMnO7Ve3oxYD3aCvfcfkTF82pehdZWxM/exec";
+        
+        const iframe = document.getElementById("portal-frame");
+        
+        // 1. Inicia o Iframe. Repassamos a URL atual do GitHub para ele saber se deve abrir uma noticia direta.
+        iframe.src = URL_DO_SEU_WEB_APP_GOOGLE + window.location.search;
 
-        // Captura a URL atual e passa para o iframe
-        const currentPath = window.location.pathname + window.location.search;
-        const iframe = document.getElementById('app-frame');
-        iframe.src = gasScriptUrl + "?route=" + encodeURIComponent(currentPath);
-
-        // Atualiza a barra do navegador suavemente
+        // 2. Fica a escutar as mensagens do Google Apps Script
         window.addEventListener('message', function(event) {
-            if (event.data && event.data.type === 'NAVIGATE') {
-                window.history.pushState(null, '', event.data.path);
+            if (event.data && event.data.tipo === 'NAVEGACAO') {
+                // O Iframe avisou que navegou. Alteramos a URL do Github (noticiasavulsas.com.br/...) sem dar refresh!
+                window.history.pushState({}, '', window.location.pathname + event.data.url);
             }
         });
 
-        // Suporte para o botão voltar do navegador
-        window.addEventListener('popstate', function() {
-            const newPath = window.location.pathname + window.location.search;
-            iframe.src = gasScriptUrl + "?route=" + encodeURIComponent(newPath);
+        // 3. Se o utilizador clicar na seta de "Voltar" do navegador Chrome/Safari, atualiza o Iframe!
+        window.addEventListener('popstate', function(event) {
+            iframe.src = URL_DO_SEU_WEB_APP_GOOGLE + window.location.search;
         });
     </script>
-</body>
-</html>
-]
 
-
-
-
-
-
-
-
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notícias Avulsas</title>
-    <style>
-        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: #f1f2f5; }
-        
-        /* TRUQUE PARA ESCONDER A BARRA DO GOOGLE SCRIPT */
-        .app-container {
-            width: 100%;
-            height: calc(100% + 30px);
-            margin-top: -30px;
-            position: relative;
-        }
-        
-        iframe { width: 100%; height: 100%; border: none; display: block; }
-    </style>
-</head>
-<body>
-    <div class="app-container">
-        <iframe id="app-frame" src=""></iframe>
-    </div>
-
-    <script>
-        // ⚠️ COLE AQUI O SEU NOVO LINK DO GOOGLE APPS SCRIPT (TERMINADO EM /exec)
-        const gasScriptUrl = "COLE_AQUI_O_SEU_LINK";
-
-        // Captura a URL atual e passa para o iframe
-        const currentPath = window.location.pathname + window.location.search;
-        const iframe = document.getElementById('app-frame');
-        iframe.src = gasScriptUrl + "?route=" + encodeURIComponent(currentPath);
-
-        // Atualiza a barra do navegador suavemente
-        window.addEventListener('message', function(event) {
-            if (event.data && event.data.type === 'NAVIGATE') {
-                window.history.pushState(null, '', event.data.path);
-            }
-        });
-
-        // Suporte para o botão voltar do navegador
-        window.addEventListener('popstate', function() {
-            const newPath = window.location.pathname + window.location.search;
-            iframe.src = gasScriptUrl + "?route=" + encodeURIComponent(newPath);
-        });
-    </script>
 </body>
 </html>
