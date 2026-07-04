@@ -12,28 +12,31 @@
 </head>
 <body>
     
-    <!-- Este Iframe carrega secretamente a sua interface do Google sem ninguém perceber -->
+    <!-- Este Iframe carrega secretamente a sua interface do Google -->
     <iframe id="portal-frame" allowfullscreen></iframe>
     
     <script>
-        // ⚠️ IMPORTANTE: COLE AQUI O SEU LINK DE EXECUÇÃO DO GOOGLE APPS SCRIPT (URL que acaba em /exec)
-        const URL_DO_SEU_WEB_APP_GOOGLE = "https://script.google.com/macros/s/AKfycbywwWj0L0RBhPCqRhCiLOm7ZnHlZ0v7uJfOyIaysZCFTi1cyZ6oabcLuwGwvHVWOkO2/exec";
+        // ⚠️ COLE AQUI O SEU LINK DE EXECUÇÃO DO GOOGLE APPS SCRIPT
+        const URL_DO_SEU_WEB_APP_GOOGLE = "https://script.google.com/macros/s/AKfycbyNZbWrueHgYf6pwrJcjTyYUWsvW8wukmPm5XDPJHTheTxSmdQooS2_FVCNYlsBKRNw/exec";
         
         const iframe = document.getElementById("portal-frame");
         
-        // 1. Inicia o Iframe. Repassamos a URL atual do GitHub para ele saber se deve abrir uma noticia direta.
+        // 1. Inicia o Iframe lendo a URL atual do GitHub (para abrir notícias diretas enviadas por link)
         iframe.src = URL_DO_SEU_WEB_APP_GOOGLE + window.location.search;
 
-        // 2. Fica a escutar as mensagens do Google Apps Script
+        // 2. Fica a escutar as navegações dentro do Iframe
         window.addEventListener('message', function(event) {
             if (event.data && event.data.tipo === 'NAVEGACAO') {
-                // O Iframe avisou que navegou. Alteramos a URL do Github (noticiasavulsas.com.br/...) sem dar refresh!
-                window.history.pushState({}, '', window.location.pathname + event.data.url);
+                // Altera a URL do navegador principal (ex: ?categoria=Esportes) sem dar refresh!
+                if (window.location.search !== event.data.search) {
+                    window.history.pushState({}, '', window.location.pathname + event.data.search);
+                }
             }
         });
 
-        // 3. Se o utilizador clicar na seta de "Voltar" do navegador Chrome/Safari, atualiza o Iframe!
+        // 3. Se o utilizador clicar na seta de "Voltar" ou "Avançar" do navegador
         window.addEventListener('popstate', function(event) {
+            // Manda o Iframe carregar a página correspondente à URL para a qual voltámos
             iframe.src = URL_DO_SEU_WEB_APP_GOOGLE + window.location.search;
         });
     </script>
