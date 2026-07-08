@@ -21,16 +21,20 @@
         
         const iframe = document.getElementById("portal-frame");
         
-        // 1. Gera o Link correto a partir da URL do GitHub para o Google Apps Script
+        // 1. Gera o Link correto a partir da URL limpa do GitHub
         function getIframeUrl() {
-            let hash = window.location.hash.replace('#', '');
+            let path = window.location.pathname; // Ex: /noticia/12345
             let query = '';
             
-            // Traduz a Rota Hash do GitHub para os parâmetros de link que o Google entende
-            if (hash.startsWith('/noticia/')) {
-                query = '?noticia=' + hash.split('/noticia/')[1];
-            } else if (hash.startsWith('/categoria/')) {
-                query = '?categoria=' + encodeURIComponent(hash.split('/categoria/')[1]);
+            // Lê as secções "limpas" do URL e converte para parâmetros que o Apps Script compreende
+            if (path.startsWith('/noticia/')) {
+                let id = path.split('/noticia/')[1];
+                if(id && id.endsWith('/')) id = id.slice(0, -1);
+                query = '?noticia=' + id;
+            } else if (path.startsWith('/categoria/')) {
+                let cat = path.split('/categoria/')[1];
+                if(cat && cat.endsWith('/')) cat = cat.slice(0, -1);
+                query = '?categoria=' + encodeURIComponent(decodeURIComponent(cat));
             }
             
             return URL_DO_SEU_WEB_APP_GOOGLE + query;
@@ -39,29 +43,27 @@
         // Carrega o site inicialmente
         iframe.src = getIframeUrl();
 
-        // 2. Fica à escuta das mudanças que ocorrem LÁ DENTRO do site (ex: Clicar numa notícia)
+        // 2. Escuta as mudanças LÁ DENTRO e atualiza a URL cá fora de forma limpa (sem o #)
         window.addEventListener('message', function(event) {
             if (event.data && event.data.tipo === 'NAVEGACAO') {
                 
-                let newHash = '/';
+                let newPath = '/';
                 
                 if (event.data.noticiaId) {
-                    newHash = '/noticia/' + event.data.noticiaId;
+                    newPath = '/noticia/' + event.data.noticiaId;
                 } else if (event.data.categoria && event.data.categoria !== 'Todas' && event.data.categoria !== 'Pesquisa') {
-                    newHash = '/categoria/' + encodeURIComponent(event.data.categoria);
+                    // Cria uma rota com o nome da categoria
+                    newPath = '/categoria/' + encodeURIComponent(event.data.categoria);
                 }
                 
-                // Altera a URL cá fora (no GitHub) para acompanhar as mudanças de lá de dentro
-                if (window.location.hash !== '#' + newHash && newHash !== '/') {
-                    window.history.pushState(null, '', '#' + newHash);
-                } else if (newHash === '/' && window.location.hash !== '') {
-                    window.history.pushState(null, '', window.location.pathname); 
+                // Se o caminho mudar, atualiza a barra de endereço sem recarregar a página!
+                if (window.location.pathname !== newPath) {
+                    window.history.pushState(null, '', newPath);
                 }
             }
         });
 
-        // 3. A SOLUÇÃO DEFINITIVA PARA O BOTÃO VOLTAR / AVANÇAR
-        // Ao clicar nas setas do navegador, o Iframe carrega instantaneamente a morada correta
+        // 3. Ao clicar nas setas de Voltar/Avançar do navegador, força o Iframe a atualizar
         window.addEventListener('popstate', function(event) {
             iframe.src = getIframeUrl();
         });
