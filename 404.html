@@ -1,70 +1,74 @@
-<!DOCTYPE html>
-<html lang="pt-PT" style="margin: 0; padding: 0; height: 100%; overflow: hidden;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notícias Avulsas - Portal de Informação</title>
     <style>
-        /* Remove margens e esconde a barra de rolagem lateral nativa */
+        /* Remove margens e esconde a barra de rolagem lateral nativa, o iframe gere o scroll */
         body { margin: 0; padding: 0; height: 100vh; overflow: hidden; background-color: #f1f2f5; }
         iframe { border: none; width: 100%; height: 100%; display: block; }
     </style>
 </head>
 <body>
     
-    <!-- Iframe com permissões totais para forçar o Google a exibir o site -->
-    <iframe id="portal-frame" allowfullscreen sandbox="allow-top-navigation allow-scripts allow-popups allow-forms allow-same-origin"></iframe>
+    <!-- Iframe responsável por carregar a interface vinda do Google Apps Script -->
+    <iframe id="portal-frame" allowfullscreen></iframe>
     
     <script>
-        // O SEU LINK EXATO E FUNCIONAL
+        // ⚠️ O SEU LINK DE EXECUÇÃO DO GOOGLE APPS SCRIPT
         const URL_DO_SEU_WEB_APP_GOOGLE = "https://script.google.com/macros/s/AKfycbw4h9qo2E_myErw68UdFOmdmt_lExylcy2sl0qVNwqhPwg9z959Pu919vbJ5i1qY-t5/exec";
-        
+
         const iframe = document.getElementById("portal-frame");
-        
+
+        // 1. Gera o Link correto do Google a partir da URL "limpa" do GitHub
         function getIframeUrl() {
-            let path = window.location.pathname; 
-            // Variável limpa para evitar conflitos com o Google
-            let query = '?v=' + new Date().getTime(); 
-            
+            let path = window.location.pathname; // Ex: /noticia/12345
+            let query = '';
+
+            // Lê as secções do URL e converte para parâmetros que o Apps Script compreende
             if (path.startsWith('/noticia/')) {
                 let id = path.split('/noticia/')[1];
                 if(id && id.endsWith('/')) id = id.slice(0, -1);
-                query += '&noticia=' + id;
+                query = '?noticia=' + id;
             } else if (path.startsWith('/categoria/')) {
                 let cat = path.split('/categoria/')[1];
                 if(cat && cat.endsWith('/')) cat = cat.slice(0, -1);
-                query += '&categoria=' + encodeURIComponent(decodeURIComponent(cat));
-            } else if (path.startsWith('/pesquisa/')) {
-                let termo = path.split('/pesquisa/')[1];
-                if(termo && termo.endsWith('/')) termo = termo.slice(0, -1);
-                query += '&pesquisa=' + encodeURIComponent(decodeURIComponent(termo));
+                query = '?categoria=' + encodeURIComponent(decodeURIComponent(cat));
+
+
+
+
+
+
             }
             
             return URL_DO_SEU_WEB_APP_GOOGLE + query;
         }
 
-        // Inicia o iframe
+        // Carrega o site inicialmente
         iframe.src = getIframeUrl();
 
-        // Comunicação entre o Google e o GitHub
+        // 2. Escuta as mudanças vindas DO INTERIOR do iframe e atualiza a URL cá fora
         window.addEventListener('message', function(event) {
             if (event.data && event.data.tipo === 'NAVEGACAO') {
-                let newPath = '/';
                 
+                let newPath = '/';
+
                 if (event.data.noticiaId) {
                     newPath = '/noticia/' + event.data.noticiaId;
-                } else if (event.data.pesquisa) {
-                    newPath = '/pesquisa/' + encodeURIComponent(event.data.pesquisa);
                 } else if (event.data.categoria && event.data.categoria !== 'Todas' && event.data.categoria !== 'Pesquisa') {
+                    // Cria uma rota limpa com o nome da categoria
                     newPath = '/categoria/' + encodeURIComponent(event.data.categoria);
                 }
-                
+
+                // Se o caminho mudar, atualiza a barra de endereço do navegador sem recarregar a página!
                 if (window.location.pathname !== newPath) {
                     window.history.pushState(null, '', newPath);
                 }
             }
         });
 
+        // 3. O botão de VOLTAR/AVANÇAR do navegador
+        // Ao clicar nas setas do PC ou Telemóvel, força o Iframe a recarregar a página que estava no histórico
         window.addEventListener('popstate', function(event) {
             iframe.src = getIframeUrl();
         });
