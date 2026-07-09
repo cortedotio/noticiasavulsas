@@ -10,49 +10,65 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
+    <!-- Scripts Oficiais para as Redes Sociais Embutidas -->
+    <script async src="//www.instagram.com/embed.js"></script>
+    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+    
     <script>
         // ================================================================
         // CONEXÃO PROFISSIONAL COM A API DO GOOGLE (SEM IFRAME)
         // ================================================================
         
-        // ⚠️ COLE AQUI O SEU NOVO LINK DO GOOGLE APPS SCRIPT (O QUE CRIOU AGORA)
+        // ⚠️ O SEU LINK DE EXECUÇÃO DA API DO GOOGLE (Não alterar)
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwp0mNywNg8yS7wI8Q9gknG0MNf-DVQWgFqWHZQLabZ7-kVUH-X56Ra62LKTTeXfb6B/exec";
         
-        window.google = { script: { run: {} } };
-        
+        window.google = {
+            script: {
+                run: {
+                    withSuccessHandler: function(cb) {
+                        this._onSuccess = cb;
+                        return this;
+                    },
+                    withFailureHandler: function(cb) {
+                        this._onFailure = cb;
+                        return this;
+                    }
+                }
+            }
+        };
+
         const apiFunctions = [
             'getHomeData', 'verificarLogin', 'salvarConfiguracaoHTMLCustom',
-            'salvarNoticiaNoSheets', 'alternarStatusNoticia',
-            'excluirNoticia', 'curtirNoticiaNoSheets', 'incrementarView',
-            'salvarComentarioNoSheets', 'salvarPropagandaNoSheets',
-            'inscreverNewsletter', 'adicionarCategoriaNoSheets',
+            'salvarNoticiaNoSheets', 'alternarStatusNoticia', 'excluirNoticia',
+            'curtirNoticiaNoSheets', 'incrementarView', 'salvarComentarioNoSheets',
+            'salvarPropagandaNoSheets', 'inscreverNewsletter', 'adicionarCategoriaNoSheets',
             'chamarGeminiBackend', 'chamarGeminiImagemBackend'
         ];
 
+        // Cria a "Ponte" Dinâmica para cada função da API
         apiFunctions.forEach(function(funcName) {
-            google.script.run[funcName] = function(data) {
-                var handler = {
-                    onSuccess: null, onFailure: null,
-                    withSuccessHandler: function(cb) { this.onSuccess = cb; return this; },
-                    withFailureHandler: function(cb) { this.onFailure = cb; return this; }
-                };
+            window.google.script.run[funcName] = function() {
+                var argsArray = Array.prototype.slice.call(arguments);
                 
-                setTimeout(function() {
-                    fetch(GAS_API_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: funcName, data: data || {} })
-                    })
-                    .then(function(res) { return res.json(); })
-                    .then(function(result) {
-                        if (handler.onSuccess) handler.onSuccess(result);
-                    })
-                    .catch(function(err) {
-                        if (handler.onFailure) handler.onFailure(err);
-                        else console.error("API Error (" + funcName + "):", err);
-                    });
-                }, 10);
+                var successCb = this._onSuccess;
+                var failureCb = this._onFailure;
                 
-                return handler;
+                this._onSuccess = null;
+                this._onFailure = null;
+                
+                fetch(GAS_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: funcName, args: argsArray })
+                })
+                .then(function(res) { return res.json(); })
+                .then(function(result) {
+                    if (successCb) successCb(result);
+                })
+                .catch(function(err) {
+                    if (failureCb) failureCb(err);
+                    else console.error("API Error (" + funcName + "):", err);
+                });
             };
         });
 
@@ -61,15 +77,35 @@
         // ================================================================
         window.onerror = function(message, source, lineno, colno, error) {
             console.error("Erro Global JS:", message, "na linha", lineno);
+            setTimeout(function() {
+                var debugBox = document.getElementById('debug-error-box');
+                if (debugBox) {
+                    debugBox.innerHTML = "Erro de JavaScript detetado: " + message + " (Linha " + lineno + ")";
+                    debugBox.classList.remove('hidden');
+                }
+            }, 500);
         };
 
         var configureTailwind = function() {
-            if (typeof tailwind === 'undefined') { setTimeout(configureTailwind, 10); return; }
+            if (typeof tailwind === 'undefined') { 
+                setTimeout(configureTailwind, 10); 
+                return; 
+            }
             tailwind.config = {
                 theme: {
                     extend: {
-                        fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] },
-                        colors: { jornal: { blue: '#0F172A', red: '#E11D48', gray: '#F8FAFC', dark: '#020617' } }
+                        fontFamily: { 
+                            sans: ['Inter', 'sans-serif'], 
+                            serif: ['Merriweather', 'serif'] 
+                        },
+                        colors: {
+                            jornal: { 
+                                blue: '#0F172A', 
+                                red: '#E11D48',
+                                gray: '#F8FAFC', 
+                                dark: '#020617'
+                            }
+                        }
                     }
                 }
             };
@@ -83,6 +119,8 @@
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+        .spinner { border: 2px solid rgba(255,255,255,.3); border-left-color: #fff; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
@@ -103,11 +141,9 @@
         .rich-editor ul { list-style-type: disc; padding-left: 24px; margin-bottom: 12px; }
         .rich-editor ol { list-style-type: decimal; padding-left: 24px; margin-bottom: 12px; }
         
-        /* Estilos Embed Redes Sociais */
+        /* Ajuste nativo para o embed do Instagram ficar responsivo e elegante */
         .instagram-media { background: #FFF; border: 0; border-radius: 3px; box-shadow: 0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px auto; max-width: 540px; min-width: 326px; padding: 0; width: 99.375%; width: -webkit-calc(100% - 2px); width: calc(100% - 2px); }
     </style>
-    <script async src="//www.instagram.com/embed.js"></script>
-    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 </head>
 <body class="antialiased min-h-screen flex flex-col relative selection:bg-jornal-red selection:text-white">
 
@@ -116,6 +152,7 @@
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
+    <!-- VIEW PORTAL PRINCIPAL -->
     <div id="view-portal" class="flex-grow flex flex-col relative min-w-0">
         
         <div class="bg-jornal-dark text-white text-[10px] uppercase font-bold tracking-widest py-1.5 px-4 hidden md:block w-full z-40 relative min-w-0">
@@ -146,6 +183,7 @@
                     </h1>
                 </div>
                 
+                <!-- Barra de Pesquisa Lupa -->
                 <form onsubmit="pesquisarSite(event)" class="relative hidden md:flex items-center mx-auto flex-grow max-w-sm">
                     <input type="text" id="input-pesquisa" placeholder="Pesquisar notícias..." class="w-full px-5 py-2.5 bg-gray-100 border border-gray-200 rounded-full text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-jornal-blue pr-12 transition-all" />
                     <button type="submit" class="absolute right-3 p-2 text-gray-400 hover:text-jornal-red transition-colors flex items-center justify-center">
@@ -162,6 +200,7 @@
                     <button id="btn-header-login" onclick="abrirModalLogin()" class="text-xs font-bold text-jornal-blue bg-gray-100 px-3 py-1.5 rounded-full">LOGIN</button>
                 </div>
             </div>
+            <!-- Barra Pesquisa Mobile Escondida -->
             <form id="form-pesquisa-mobile" onsubmit="pesquisarSite(event)" class="hidden w-full px-4 pb-4 bg-white border-b border-gray-100 lg:hidden">
                 <div class="relative w-full">
                     <input type="text" id="input-pesquisa-mobile" placeholder="Pesquisar..." class="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-sm text-sm focus:outline-none" />
@@ -176,11 +215,12 @@
         </nav>
 
         <main class="max-w-[1200px] mx-auto pt-6 md:pt-8 pb-16 px-4 flex-grow w-full min-w-0">
+            <!-- Container Topo (Publicidade Carrossel) -->
             <div id="ads-topo-container" class="w-full mb-8 hidden grid gap-4 grid-cols-1 md:grid-cols-2"></div>
 
             <div id="loading-noticias" class="flex flex-col items-center justify-center py-20">
                 <div class="w-10 h-10 border-4 border-gray-200 border-t-jornal-blue rounded-full animate-spin mb-4"></div>
-                <p class="text-xs font-bold uppercase tracking-widest text-gray-500 animate-pulse">A comunicar com os servidores...</p>
+                <p class="text-xs font-bold uppercase tracking-widest text-gray-500 animate-pulse">A carregar informações do servidor...</p>
                 <div id="debug-error-box" class="hidden mt-4 text-xs text-red-500 font-mono text-center p-4 bg-red-50 border border-red-200 rounded max-w-xl break-words w-full shadow-sm"></div>
             </div>
 
@@ -247,8 +287,9 @@
                             </div>
                         </div>
 
-                        <div id="nc-conteudo" class="text-gray-800 text-base md:text-lg leading-relaxed font-serif mb-8 rich-editor break-words"></div>
+                        <div id="nc-conteudo" class="text-gray-800 text-base md:text-lg leading-relaxed font-serif whitespace-pre-line mb-8 rich-editor break-words"></div>
                         
+                        <!-- BOTÃO DE VOLTAR AO FIM DA MATÉRIA -->
                         <div class="mt-12 flex justify-center border-t border-gray-100 pt-8 pb-4">
                             <button onclick="voltarCapa()" class="bg-gray-100 hover:bg-gray-200 text-jornal-dark font-bold py-3 px-8 rounded-full uppercase tracking-widest text-xs transition-colors flex items-center gap-2">
                                 &larr; Voltar à Página Inicial
@@ -274,6 +315,8 @@
                 </div>
                 
                 <aside class="lg:w-[28%] w-full shrink-0 min-w-0">
+                    
+                    <!-- SISTEMA DE COMMODITIES -->
                     <div class="mb-8 bg-white border border-gray-200 shadow-sm rounded-sm overflow-hidden">
                         <div class="p-4 border-b border-gray-100 flex justify-between items-center">
                             <h2 class="text-sm font-black uppercase tracking-widest text-[#1a472a]">Sistema de Preços de Commodities</h2>
@@ -281,14 +324,50 @@
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-xs whitespace-nowrap">
                                 <thead class="bg-[#788b7d] text-white font-bold tracking-wider uppercase text-[9px]">
-                                    <tr><th class="p-3">Produto</th><th class="p-3">UF</th><th class="p-3">Praça</th><th class="p-3">Preço</th><th class="p-3">Var (%)</th></tr>
+                                    <tr>
+                                        <th class="p-3">Produto</th>
+                                        <th class="p-3">UF</th>
+                                        <th class="p-3">Praça</th>
+                                        <th class="p-3">Preço</th>
+                                        <th class="p-3">Var (%)</th>
+                                    </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100 bg-gray-50 text-gray-700 font-medium">
-                                    <tr class="hover:bg-white transition-colors"><td class="p-3 font-bold text-gray-900">ARROZ <span class="block text-[8px] font-normal text-gray-500">R$/SACA 50 KG</span></td><td class="p-3 font-bold">RS</td><td class="p-3 text-[10px] uppercase">Campanha</td><td class="p-3 font-black">R$ 60,24</td><td class="p-3 text-emerald-600 font-bold">3,84%</td></tr>
-                                    <tr class="hover:bg-white transition-colors"><td class="p-3 font-bold text-gray-900">ARROZ <span class="block text-[8px] font-normal text-gray-500">R$/SACA 50 KG</span></td><td class="p-3 font-bold">RS</td><td class="p-3 text-[10px] uppercase">Depressão Central</td><td class="p-3 font-black">R$ 58,63</td><td class="p-3 text-emerald-600 font-bold">5,98%</td></tr>
-                                    <tr class="hover:bg-white transition-colors"><td class="p-3 font-bold text-gray-900">ARROZ <span class="block text-[8px] font-normal text-gray-500">R$/SACA 50 KG</span></td><td class="p-3 font-bold">RS</td><td class="p-3 text-[10px] uppercase">Fronteira Oeste</td><td class="p-3 font-black">R$ 61,45</td><td class="p-3 text-emerald-600 font-bold">2,06%</td></tr>
-                                    <tr class="hover:bg-white transition-colors"><td class="p-3 font-bold text-gray-900">TRIGO <span class="block text-[8px] font-normal text-gray-500">R$/TON</span></td><td class="p-3 font-bold">PR</td><td class="p-3 text-[10px] uppercase">Norte do Paraná</td><td class="p-3 font-black">R$ 1.382,58</td><td class="p-3 text-red-500 font-bold">-0,39%</td></tr>
-                                    <tr class="hover:bg-white transition-colors"><td class="p-3 font-bold text-gray-900">TRIGO <span class="block text-[8px] font-normal text-gray-500">R$/TON</span></td><td class="p-3 font-bold">PR</td><td class="p-3 text-[10px] uppercase">Oeste do Paraná</td><td class="p-3 font-black">R$ 1.351,54</td><td class="p-3 text-emerald-600 font-bold">0,90%</td></tr>
+                                    <tr class="hover:bg-white transition-colors">
+                                        <td class="p-3 font-bold text-gray-900">ARROZ <span class="block text-[8px] font-normal text-gray-500">R$/SACA 50 KG</span></td>
+                                        <td class="p-3 font-bold">RS</td>
+                                        <td class="p-3 text-[10px] uppercase">Campanha</td>
+                                        <td class="p-3 font-black">R$ 60,24</td>
+                                        <td class="p-3 text-emerald-600 font-bold">3,84%</td>
+                                    </tr>
+                                    <tr class="hover:bg-white transition-colors">
+                                        <td class="p-3 font-bold text-gray-900">ARROZ <span class="block text-[8px] font-normal text-gray-500">R$/SACA 50 KG</span></td>
+                                        <td class="p-3 font-bold">RS</td>
+                                        <td class="p-3 text-[10px] uppercase">Depressão Central</td>
+                                        <td class="p-3 font-black">R$ 58,63</td>
+                                        <td class="p-3 text-emerald-600 font-bold">5,98%</td>
+                                    </tr>
+                                    <tr class="hover:bg-white transition-colors">
+                                        <td class="p-3 font-bold text-gray-900">ARROZ <span class="block text-[8px] font-normal text-gray-500">R$/SACA 50 KG</span></td>
+                                        <td class="p-3 font-bold">RS</td>
+                                        <td class="p-3 text-[10px] uppercase">Fronteira Oeste</td>
+                                        <td class="p-3 font-black">R$ 61,45</td>
+                                        <td class="p-3 text-emerald-600 font-bold">2,06%</td>
+                                    </tr>
+                                    <tr class="hover:bg-white transition-colors">
+                                        <td class="p-3 font-bold text-gray-900">TRIGO <span class="block text-[8px] font-normal text-gray-500">R$/TON</span></td>
+                                        <td class="p-3 font-bold">PR</td>
+                                        <td class="p-3 text-[10px] uppercase">Norte do Paraná</td>
+                                        <td class="p-3 font-black">R$ 1.382,58</td>
+                                        <td class="p-3 text-red-500 font-bold">-0,39%</td>
+                                    </tr>
+                                    <tr class="hover:bg-white transition-colors">
+                                        <td class="p-3 font-bold text-gray-900">TRIGO <span class="block text-[8px] font-normal text-gray-500">R$/TON</span></td>
+                                        <td class="p-3 font-bold">PR</td>
+                                        <td class="p-3 text-[10px] uppercase">Oeste do Paraná</td>
+                                        <td class="p-3 font-black">R$ 1.351,54</td>
+                                        <td class="p-3 text-emerald-600 font-bold">0,90%</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -320,6 +399,7 @@
                         </div>
                     </div>
 
+                    <!-- WIDGET CLIMA CLICÁVEL -->
                     <div class="mb-8 bg-white border border-gray-200 p-5 shadow-sm rounded-sm cursor-pointer hover:opacity-95 transition-opacity" onclick="abrirModalClima()">
                         <div class="border-b-4 border-sky-400 pb-2 mb-4 flex justify-between items-center">
                             <h2 class="text-xs font-black uppercase tracking-widest text-sky-500">Clima Local</h2>
@@ -345,6 +425,7 @@
                     <div class="border-t-4 border-jornal-red w-full pt-4 mb-6">
                         <h2 class="text-sm font-black uppercase tracking-widest text-jornal-red">Publicidade</h2>
                     </div>
+                    <!-- Container Lateral (Publicidade Carrossel) -->
                     <div class="lg:sticky lg:top-8 space-y-6 flex flex-col min-w-0" id="grid-propagandas-lateral"></div>
                 </aside>
             </div>
@@ -357,6 +438,7 @@
                         <h1 class="text-3xl font-black tracking-tighter uppercase text-slate-100">Notícias<span class="text-rose-600">Avulsas</span></h1>
                     </div>
                     <p class="text-gray-400 text-sm font-medium">Jornalismo sério. Assine a newsletter.</p>
+                    <!-- Redes Sociais no Rodapé -->
                     <div id="social-footer" class="flex gap-4 mt-6 hidden"></div>
                 </div>
                 <div class="min-w-0">
@@ -369,6 +451,7 @@
         </footer>
     </div>
 
+    <!-- Modal do Clima Completo (Detalhes Diários) -->
     <div id="modalClima" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="fecharModalClima()"></div>
         <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl relative z-10 overflow-hidden font-sans border-t-4 border-sky-500">
@@ -407,12 +490,14 @@
                 </div>
                 
                 <div class="flex justify-between text-center overflow-x-auto custom-scrollbar pb-2" id="modal-clima-previsao">
+                    <!-- Javascript preenche a previsão dos 7 dias -->
                     <div class="text-gray-400 text-xs py-4">A carregar detalhes da previsão...</div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Modal de Login -->
     <div id="modalLogin" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/80 backdrop-blur-sm" onclick="fecharModalLogin()"></div>
         <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-blue">
@@ -426,6 +511,7 @@
         </div>
     </div>
 
+    <!-- PAINEL ADMIN -->
     <div id="view-admin" class="hidden min-h-screen flex flex-col bg-gray-100 text-slate-800">
         <header class="bg-jornal-dark text-white border-b border-gray-800 sticky top-0 z-40 shadow-sm">
             <div class="max-w-[1000px] mx-auto flex justify-between items-center px-4 py-3">
@@ -438,6 +524,7 @@
         </header>
 
         <main class="max-w-[1000px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
+            <!-- Abas Admin -->
             <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar">
                 <button type="button" onclick="alternarAbaAdmin('form-noticia-container')" id="aba-noticia" class="py-3 md:py-2 px-4 md:px-6 font-bold text-xs md:text-sm bg-jornal-blue text-white uppercase tracking-wider whitespace-nowrap rounded-t-sm">Publicar</button>
                 <button type="button" onclick="alternarAbaAdmin('lista-noticias-container')" id="aba-lista" class="py-3 md:py-2 px-4 md:px-6 font-bold text-xs md:text-sm bg-gray-200 text-gray-600 hover:bg-gray-300 uppercase tracking-wider whitespace-nowrap rounded-t-sm">Gerir Matérias</button>
@@ -448,6 +535,7 @@
                 <button type="button" onclick="alternarAbaAdmin('form-placar-container')" id="aba-placar" class="py-3 md:py-2 px-4 md:px-6 font-bold text-xs md:text-sm bg-gray-200 text-gray-600 hover:bg-gray-300 uppercase tracking-wider whitespace-nowrap rounded-t-sm">Placar</button>
             </div>
 
+            <!-- Customizar Logótipo -->
             <div id="form-logo-container" class="hidden bg-white p-5 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-purple-600">
                 <h2 class="font-sans text-xl font-black mb-6 text-jornal-dark uppercase border-l-4 border-purple-600 pl-3">Inteligência Artificial & Design</h2>
                 <div class="mb-8 p-6 bg-purple-50 border border-purple-200 rounded-sm">
@@ -471,6 +559,7 @@
                 </div>
             </div>
 
+            <!-- Formulário de Notícia -->
             <div id="form-noticia-container" class="bg-white p-5 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <h2 class="font-sans text-xl font-black mb-6 text-jornal-dark uppercase border-l-4 border-jornal-red pl-3">Redigir Matéria</h2>
                 <form id="form-admin" onsubmit="salvarNoticia(event)" class="space-y-6">
@@ -502,6 +591,8 @@
 
                     <div>
                         <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Conteúdo (Rich Text Avançado)</label>
+                        
+                        <!-- Input escondido para Upload de Imagens no Texto -->
                         <input type="file" id="upload-imagem-conteudo" accept="image/*" class="hidden" onchange="processarUploadImagemConteudo(this)" />
                         
                         <div class="flex flex-wrap gap-1.5 p-2 bg-gray-100 border border-gray-300 border-b-0 rounded-t items-center">
@@ -526,6 +617,7 @@
                             <span class="w-[1px] h-6 bg-gray-300 mx-1"></span>
                             
                             <button type="button" onclick="inserirLinkRichEditor()" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-blue-600 rounded font-semibold shadow-sm" title="Inserir Link">🔗</button>
+                            <!-- NOVO BOTÃO DE UPLOAD DE IMAGEM NO TEXTO -->
                             <button type="button" onclick="inserirImagemRichEditor()" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-emerald-600 rounded font-semibold shadow-sm" title="Fazer Upload de Imagem para o Texto">🖼️</button>
                             <button type="button" onclick="inserirVideoRichEditor()" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-purple-600 rounded font-semibold shadow-sm" title="Inserir Vídeo (YouTube, X, Insta, TikTok)">📹</button>
                             
@@ -545,7 +637,7 @@
                                 <input type="file" id="admin-arquivo-imagem" accept="image/*" class="w-full text-sm file:mr-2 file:py-1.5 file:px-3 file:border-0 file:text-[10px] file:font-bold file:uppercase file:tracking-wider file:bg-jornal-dark file:text-white hover:file:opacity-90 cursor-pointer rounded-sm" onchange="verificarUploadMedia(this)" />
                             </div>
                             <div class="relative inline-block w-full min-w-0">
-                                <img id="preview-imagem" loading="lazy" src="" class="mt-3 w-full h-32 object-contain bg-gray-100 border border-gray-300 hidden rounded-sm" />
+                                <img id="preview-imagem" loading="lazy" src="" class="mt-3 w-full h-32 object-cover bg-gray-100 border border-gray-300 hidden rounded-sm" />
                             </div>
                         </div>
                         
@@ -593,6 +685,7 @@
                 </form>
             </div>
 
+            <!-- Listagem Admin -->
             <div id="lista-noticias-container" class="hidden bg-white p-6 shadow-sm border border-gray-200 rounded-sm">
                 <h2 class="font-sans text-xl font-black mb-6 text-jornal-dark uppercase border-l-4 border-jornal-red pl-3">Editar Publicações</h2>
                 <div class="overflow-x-auto">
@@ -612,18 +705,21 @@
                 </div>
             </div>
 
+            <!-- Configuração Capa Admin -->
             <div id="form-capa-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <h2 class="font-sans text-xl font-black mb-6 text-jornal-dark uppercase border-l-4 border-emerald-500 pl-3">Organizar Editorias da Capa</h2>
                 <form id="form-capa" onsubmit="salvarOrdemCapa(event)">
                     <p class="text-xs text-gray-500 mb-4">Escolha até 8 editorias que devem aparecer em destaque abaixo do carrossel principal e a ordem delas.</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" id="selects-capa-container">
-                        </div>
+                        <!-- Javascript preenche as 8 posições -->
+                    </div>
                     <div class="pt-4 border-t border-gray-200 flex justify-end">
                         <button type="submit" id="btn-salvar-capa" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-black px-10 py-3 uppercase text-sm rounded-sm transition-colors shadow-sm">Salvar Ordem</button>
                     </div>
                 </form>
             </div>
 
+            <!-- Anúncios Admin -->
             <div id="form-propaganda-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <h2 class="font-sans text-xl font-black mb-6 text-jornal-dark uppercase border-l-4 border-jornal-red pl-3">Novo Anúncio</h2>
                 <form id="form-propaganda" onsubmit="salvarPropaganda(event)">
@@ -662,6 +758,7 @@
                 </form>
             </div>
 
+            <!-- Redes Sociais Admin -->
             <div id="form-social-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <h2 class="font-sans text-xl font-black mb-6 text-jornal-dark uppercase border-l-4 border-jornal-red pl-3">Gestão de Redes Sociais</h2>
                 <form id="form-sociais" onsubmit="salvarRedesSociais(event)">
@@ -695,6 +792,7 @@
                 </form>
             </div>
 
+            <!-- Configuração Placar ao Vivo Admin -->
             <div id="form-placar-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <h2 class="font-sans text-xl font-black mb-2 text-jornal-dark uppercase border-l-4 border-jornal-red pl-3">Desporto ao Vivo</h2>
                 <form id="form-placar" onsubmit="salvarPlacarAoVivo(event)">
@@ -724,6 +822,7 @@
         </main>
     </div>
 
+    <!-- JAVASCRIPT GLOBAL BLINDADO -->
     <script>
         var IMG_FALLBACK = 'https://placehold.co/600x400/e2e8f0/475569?text=Sem+Foto';
         var ICON_HEART = '<svg class="w-3 h-3 fill-current inline" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
@@ -740,71 +839,112 @@
         window.addEventListener('message', function(e) {
             if (e.data && e.data.tipo === 'POPSTATE') {
                 var hash = e.data.hash.replace('#', '');
-                if (hash.startsWith('/noticia/')) abrirNoticia(hash.split('/noticia/')[1], false);
-                else if (hash.startsWith('/categoria/')) { fecharNoticiaUI(); filtrarCategoria(decodeURIComponent(hash.split('/categoria/')[1]), false); }
-                else { fecharNoticiaUI(); filtrarCategoria('Todas', false); }
+                if (hash.startsWith('/noticia/')) {
+                    abrirNoticia(hash.split('/noticia/')[1], false);
+                } else if (hash.startsWith('/categoria/')) { 
+                    fecharNoticiaUI(); 
+                    filtrarCategoria(decodeURIComponent(hash.split('/categoria/')[1]), false); 
+                } else { 
+                    fecharNoticiaUI(); 
+                    filtrarCategoria('Todas', false); 
+                }
             }
         });
 
         function atualizarURL(c, v) {
             try {
                 var url = new URL(window.location.href);
-                if (!v || v === 'Todas') url.searchParams.delete(c); else url.searchParams.set(c, v);
+                if (!v || v === 'Todas') { url.searchParams.delete(c); } else { url.searchParams.set(c, v); }
                 window.history.replaceState({path: url.href}, '', url.href);
+                window.parent.postMessage({tipo: 'NAVEGACAO', categoria: window.categoriaAtual, noticiaId: noticiaAbertaId}, '*');
             } catch(e) {}
         }
 
         window.categoriaAtual = 'Todas';
-        var noticiasGlobais = []; var comentariosGlobais = []; var noticiaAbertaId = null;
-        var configuracoesGlobais = {}; var listaCategoriasLocais = ['Política', 'Cidades'];
-        var slideIndex = 0; var carrosselTimer = null; var carrosselAdsTimers = {}; var dadosClimaGlobal = null;
-        window.agendaCarousels = []; window.agendaTimerStarted = false;
+        var noticiasGlobais = [];
+        var comentariosGlobais = [];
+        var noticiaAbertaId = null;
+        var configuracoesGlobais = {};
+        var listaCategoriasLocais = ['Política', 'Cidades'];
+        var slideIndex = 0;
+        var carrosselTimer = null;
+        var carrosselAdsTimers = {};
+        var dadosClimaGlobal = null;
 
         document.addEventListener("DOMContentLoaded", function() {
-            try { if (localStorage.getItem('admin_logado') === 'true') ativarModoLogado(); } catch (e) {}
+            try { 
+                if (localStorage.getItem('admin_logado') === 'true') { ativarModoLogado(); } 
+            } catch (e) {}
             carregarNoticias(false);
         });
 
         function carregarNoticias(forcarUpdate) {
-            document.getElementById('master-feed-wrapper').classList.add('hidden');
-            document.getElementById('loading-noticias').classList.remove('hidden');
-            
-            google.script.run.withSuccessHandler(function(res) {
-                document.getElementById('loading-noticias').classList.add('hidden');
-                if (res && res.sucesso) { 
-                    document.getElementById('master-feed-wrapper').classList.remove('hidden');
-                    processarDadosHome(res); 
-                    if (!forcarUpdate) {
-                        var p = new URLSearchParams(window.location.search);
-                        if(p.get('noticia')) abrirNoticia(p.get('noticia'), false);
-                        else if(p.get('categoria')) filtrarCategoria(p.get('categoria'), false);
-                        else if(p.get('pesquisa')) { document.getElementById('input-pesquisa').value = p.get('pesquisa'); pesquisarSite(new Event('submit')); }
-                        else filtrarCategoria('Todas', false);
-                    } else { 
-                        if (noticiaAbertaId) abrirNoticia(noticiaAbertaId, false);
-                        else if(window.categoriaAtual === 'Pesquisa') pesquisarSite(new Event('submit'));
-                        else filtrarCategoria(window.categoriaAtual, false); 
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                document.getElementById('master-feed-wrapper').classList.add('hidden');
+                document.getElementById('loading-noticias').classList.remove('hidden');
+                document.getElementById('debug-error-box').classList.add('hidden');
+                
+                var tId = setTimeout(function() {
+                    var loader = document.getElementById('loading-noticias');
+                    if (loader && !loader.classList.contains('hidden')) {
+                        mostrarErro("Tempo excedido. Google Apps Script falhou a responder.");
                     }
-                } else mostrarErro(res ? res.erro : "Resposta inválida.");
-            }).withFailureHandler(function(err) {
-                document.getElementById('loading-noticias').classList.add('hidden'); 
-                mostrarErro("Falha de Servidor: " + err.message);
-            }).getHomeData();
+                }, 15000);
+
+                google.script.run.withSuccessHandler(function(res) {
+                    clearTimeout(tId);
+                    document.getElementById('loading-noticias').classList.add('hidden');
+                    try {
+                        var d = typeof res === 'string' ? JSON.parse(res) : res;
+                        if (d && d.sucesso) { 
+                            document.getElementById('master-feed-wrapper').classList.remove('hidden');
+                            processarDadosHome(d); 
+                            if (!forcarUpdate) {
+                                var p = new URLSearchParams(window.location.search);
+                                if(p.get('noticia')) { abrirNoticia(p.get('noticia'), false); } 
+                                else if(p.get('categoria')) { filtrarCategoria(p.get('categoria'), false); } 
+                                else if(p.get('pesquisa')) { 
+                                    document.getElementById('input-pesquisa').value = p.get('pesquisa');
+                                    pesquisarSite(new Event('submit')); 
+                                }
+                                else { filtrarCategoria('Todas', false); }
+                            } else { 
+                                if (noticiaAbertaId) { abrirNoticia(noticiaAbertaId, false); } 
+                                else if(window.categoriaAtual === 'Pesquisa') { pesquisarSite(new Event('submit')); }
+                                else { filtrarCategoria(window.categoriaAtual, false); } 
+                            }
+                        } else { mostrarErro(d ? d.erro : "Resposta inválida."); }
+                    } catch(e) { mostrarErro("Falha no JS: " + e.message); }
+                }).withFailureHandler(function(err) {
+                    clearTimeout(tId);
+                    document.getElementById('loading-noticias').classList.add('hidden'); 
+                    mostrarErro("Falha de Servidor: " + err.message);
+                }).getHomeData();
+            } else {
+                mostrarErro("A ligação ao servidor Google não foi estabelecida.");
+            }
         }
 
         function mostrarErro(m) {
-            var dbg = document.getElementById('debug-error-box'); dbg.innerHTML = m; dbg.classList.remove('hidden');
+            var dbg = document.getElementById('debug-error-box'); 
+            dbg.innerHTML = m; 
+            dbg.classList.remove('hidden');
         }
 
         function pesquisarSite(e) {
             if(e) e.preventDefault();
-            var termo = (document.getElementById('input-pesquisa').value || document.getElementById('input-pesquisa-mobile').value).toLowerCase().trim();
+            var formMobile = document.getElementById('form-pesquisa-mobile');
+            var termoDesk = document.getElementById('input-pesquisa').value;
+            var termoMob = document.getElementById('input-pesquisa-mobile').value;
+            var termo = termoDesk || termoMob;
+            
+            termo = termo.toLowerCase().trim();
             if (!termo) { voltarCapa(); return; }
             
-            var formMobile = document.getElementById('form-pesquisa-mobile');
             if(formMobile) formMobile.classList.add('hidden');
             
-            window.categoriaAtual = 'Pesquisa'; atualizarURL('pesquisa', termo);
+            window.categoriaAtual = 'Pesquisa';
+            atualizarURL('pesquisa', termo);
             
             var grid = document.getElementById('grid-noticias');
             var dest = document.getElementById('destaque-noticia');
@@ -819,49 +959,74 @@
             
             var resultados = noticiasGlobais.filter(function(n) {
                 if (String(n.status).toLowerCase() !== 'ativa') return false;
-                var t = String(n.titulo).toLowerCase(); var f = String(n.linhaFina).toLowerCase(); var c = String(n.conteudo).toLowerCase();
+                var t = String(n.titulo).toLowerCase();
+                var f = String(n.linhaFina).toLowerCase();
+                var c = String(n.conteudo).toLowerCase();
                 return t.indexOf(termo) !== -1 || f.indexOf(termo) !== -1 || c.indexOf(termo) !== -1;
             });
             
-            grid.innerHTML = ''; grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
+            grid.innerHTML = '';
+            grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
             
-            if (resultados.length === 0) grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-500 font-bold bg-white border border-gray-200 rounded">Nenhum resultado encontrado para "' + termo + '".</div>';
-            else {
-                window.noticiasCategoriaAtual = resultados; window.itensExibidosCategoria = 16;
+            if (resultados.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-500 font-bold bg-white border border-gray-200 rounded">Nenhum resultado encontrado para "' + termo + '".</div>';
+            } else {
+                window.noticiasCategoriaAtual = resultados;
+                window.itensExibidosCategoria = 16;
                 resultados.slice(0, 16).forEach(function(n) { grid.innerHTML += htmlCard(n); });
+                
                 var btnMais = document.getElementById('btn-mostrar-mais');
-                if (btnMais) { if (resultados.length > 16) btnMais.classList.remove('hidden'); else btnMais.classList.add('hidden'); }
+                if (btnMais) {
+                    if (resultados.length > 16) btnMais.classList.remove('hidden');
+                    else btnMais.classList.add('hidden');
+                }
             }
             fecharNoticiaUI();
         }
 
         function focarPesquisaMobile() {
-            var f = document.getElementById('form-pesquisa-mobile'); var i = document.getElementById('input-pesquisa-mobile');
-            if(f && i) { f.classList.toggle('hidden'); if(!f.classList.contains('hidden')) i.focus(); }
+            var f = document.getElementById('form-pesquisa-mobile');
+            var i = document.getElementById('input-pesquisa-mobile');
+            if(f && i) {
+                f.classList.toggle('hidden');
+                if(!f.classList.contains('hidden')) i.focus();
+            }
         }
 
-        function fecharModalClima() { document.getElementById('modalClima').classList.add('hidden'); document.getElementById('modalClima').classList.remove('flex'); }
+        function fecharModalClima() {
+            document.getElementById('modalClima').classList.add('hidden');
+            document.getElementById('modalClima').classList.remove('flex');
+        }
 
         function abrirModalClima() {
-            var m = document.getElementById('modalClima'); m.classList.remove('hidden'); m.classList.add('flex');
+            var m = document.getElementById('modalClima');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+
             if(!dadosClimaGlobal || !dadosClimaGlobal.daily) return;
             
-            var divPrevisao = document.getElementById('modal-clima-previsao'); var htmlPrev = '';
+            var divPrevisao = document.getElementById('modal-clima-previsao');
+            var htmlPrev = '';
             var diasSemana = ['dom.', 'seg.', 'ter.', 'qua.', 'qui.', 'sex.', 'sáb.'];
 
             for(var i=0; i<Math.min(7, dadosClimaGlobal.daily.time.length); i++) {
-                var dtStr = dadosClimaGlobal.daily.time[i]; var dt = new Date(dtStr + 'T12:00:00Z');
+                var dtStr = dadosClimaGlobal.daily.time[i];
+                var dt = new Date(dtStr + 'T12:00:00Z');
                 var nomeDia = diasSemana[dt.getDay()];
-                var tMax = Math.round(dadosClimaGlobal.daily.temperature_2m_max[i]); var tMin = Math.round(dadosClimaGlobal.daily.temperature_2m_min[i]);
-                var wCode = dadosClimaGlobal.daily.weathercode[i]; var ico = '☀️';
-                if (wCode <= 3) ico = '☀️'; else if (wCode <= 48) ico = '⛅'; else if (wCode <= 67) ico = '🌧️'; else if (wCode <= 99) ico = '⛈️';
+                var tMax = Math.round(dadosClimaGlobal.daily.temperature_2m_max[i]);
+                var tMin = Math.round(dadosClimaGlobal.daily.temperature_2m_min[i]);
+                var wCode = dadosClimaGlobal.daily.weathercode[i];
+                var ico = '☀️';
+                if (wCode <= 3) { ico = '☀️'; } else if (wCode <= 48) { ico = '⛅'; } else if (wCode <= 67) { ico = '🌧️'; } else if (wCode <= 99) { ico = '⛈️'; }
                 
                 var bgClasse = i===0 ? 'bg-gray-100 rounded-lg shadow-inner' : 'hover:bg-gray-50 rounded-lg transition-colors';
                 var tituloDia = i===0 ? 'Hoje' : nomeDia;
 
                 htmlPrev += '<div class="flex flex-col items-center justify-center p-3 min-w-[70px] ' + bgClasse + '">' +
-                    '<span class="text-sm text-gray-700 font-bold mb-2">' + tituloDia + '</span><span class="text-3xl mb-3 drop-shadow-sm">' + ico + '</span>' +
-                    '<div class="flex gap-2 text-xs font-bold"><span class="text-gray-800">' + tMax + '&deg;</span><span class="text-gray-400">' + tMin + '&deg;</span></div></div>';
+                    '<span class="text-sm text-gray-700 font-bold mb-2">' + tituloDia + '</span>' +
+                    '<span class="text-3xl mb-3 drop-shadow-sm">' + ico + '</span>' +
+                    '<div class="flex gap-2 text-xs font-bold"><span class="text-gray-800">' + tMax + '&deg;</span><span class="text-gray-400">' + tMin + '&deg;</span></div>' +
+                '</div>';
             }
             divPrevisao.innerHTML = htmlPrev;
         }
@@ -869,12 +1034,15 @@
         function processarDadosHome(d) {
             if (d.config) configuracoesGlobais = d.config;
             if (configuracoesGlobais['LogoHTML']) document.getElementById('header-branding').innerHTML = configuracoesGlobais['LogoHTML'];
-            if (configuracoesGlobais['ChaveIA']) { var ic = document.getElementById('config-chave-ia'); if (ic) ic.value = configuracoesGlobais['ChaveIA']; }
+            if (configuracoesGlobais['ChaveIA']) { 
+                var ic = document.getElementById('config-chave-ia'); 
+                if (ic) ic.value = configuracoesGlobais['ChaveIA']; 
+            }
 
-            if (configuracoesGlobais['soc-inst-url']) document.getElementById('soc-inst-url').value = configuracoesGlobais['soc-inst-url'];
-            if (configuracoesGlobais['soc-fb-url']) document.getElementById('soc-fb-url').value = configuracoesGlobais['soc-fb-url'];
-            if (configuracoesGlobais['soc-x-url']) document.getElementById('soc-x-url').value = configuracoesGlobais['soc-x-url'];
-            if (configuracoesGlobais['soc-yt-url']) document.getElementById('soc-yt-url').value = configuracoesGlobais['soc-yt-url'];
+            if (configuracoesGlobais['soc-inst-url']) { document.getElementById('soc-inst-url').value = configuracoesGlobais['soc-inst-url']; }
+            if (configuracoesGlobais['soc-fb-url']) { document.getElementById('soc-fb-url').value = configuracoesGlobais['soc-fb-url']; }
+            if (configuracoesGlobais['soc-x-url']) { document.getElementById('soc-x-url').value = configuracoesGlobais['soc-x-url']; }
+            if (configuracoesGlobais['soc-yt-url']) { document.getElementById('soc-yt-url').value = configuracoesGlobais['soc-yt-url']; }
 
             var socFooter = document.getElementById('social-footer');
             if (socFooter) {
@@ -883,18 +1051,24 @@
                 if (configuracoesGlobais['soc-fb-url']) sHtml += '<a href="' + configuracoesGlobais['soc-fb-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.312h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/></svg></a>';
                 if (configuracoesGlobais['soc-x-url']) sHtml += '<a href="' + configuracoesGlobais['soc-x-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></a>';
                 if (configuracoesGlobais['soc-yt-url']) sHtml += '<a href="' + configuracoesGlobais['soc-yt-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>';
-                if (sHtml) { socFooter.innerHTML = sHtml; socFooter.classList.remove('hidden'); }
+
+                if (sHtml) {
+                    socFooter.innerHTML = sHtml;
+                    socFooter.classList.remove('hidden');
+                }
             }
 
             if (d.categorias) {
                 listaCategoriasLocais = d.categorias;
                 var nav = document.querySelector('#nav-categorias-publicas div');
                 var sidebarList = document.getElementById('lista-editorias-especiais');
-                nav.innerHTML = ''; sidebarList.innerHTML = ''; var temEsp = false;
+                nav.innerHTML = ''; 
+                sidebarList.innerHTML = '';
+                var temEsp = false;
 
                 d.categorias.forEach(function(c) { 
                     var cl = String(c).toLowerCase().trim();
-                    if(['carreira','carreiras'].indexOf(cl) !== -1) {
+                    if(['carreira','carreiras','agenda'].indexOf(cl) !== -1) {
                         temEsp = true;
                         sidebarList.innerHTML += '<button onclick="filtrarCategoria(\'' + c + '\', true)" class="w-full text-left px-4 py-3 bg-white hover:bg-gray-50 border border-gray-200 text-jornal-dark font-black text-[11px] uppercase tracking-widest rounded-sm transition-colors flex justify-between items-center group shadow-sm">' + c + ' <span class="text-gray-300 group-hover:text-jornal-red text-lg leading-none">&raquo;</span></button>';
                     } else if(cl.indexOf('opini') === -1) {
@@ -903,46 +1077,78 @@
                 });
                 if(temEsp) document.getElementById('sidebar-editorias-especiais').classList.remove('hidden');
             }
-            if (d.noticias) noticiasGlobais = d.noticias.map(function(n) { n.urlImagem = formatarUrlImagem(n.urlImagem); return n; });
+            if (d.noticias) {
+                noticiasGlobais = d.noticias.map(function(n) { 
+                    n.urlImagem = formatarUrlImagem(n.urlImagem); 
+                    return n; 
+                });
+            }
             if (d.comentarios) comentariosGlobais = d.comentarios;
 
             if (d.propagandas) {
-                var adsTopo = []; var adsLateral = [];
+                var adsTopo = [];
+                var adsLateral = [];
                 d.propagandas.forEach(function(p) {
-                    var partes = String(p.empresa || '').split('|||'); p.empresaReal = partes[0]; p.tempo = parseInt(partes[1]) || 5;
-                    if (p.local === 'Topo') adsTopo.push(p); else adsLateral.push(p);
+                    var partes = String(p.empresa || '').split('|||');
+                    p.empresaReal = partes[0];
+                    p.tempo = parseInt(partes[1]) || 5;
+                    
+                    if (p.local === 'Topo') { 
+                        adsTopo.push(p);
+                    } else { 
+                        adsLateral.push(p);
+                    }
                 });
-                iniciarCarrosselAnuncios('ads-topo-container', adsTopo); iniciarCarrosselAnuncios('grid-propagandas-lateral', adsLateral);
+                iniciarCarrosselAnuncios('ads-topo-container', adsTopo);
+                iniciarCarrosselAnuncios('grid-propagandas-lateral', adsLateral);
             }
             
-            renderizarOpinioes(); renderizarMaisLidas(); renderizarClimaEFinanceiro(); renderizarPlacarAoVivo();
+            renderizarOpinioes(); 
+            renderizarMaisLidas(); 
+            renderizarClimaEFinanceiro(); 
+            renderizarPlacarAoVivo();
         }
 
         function iniciarCarrosselAnuncios(containerId, anuncios) {
-            var container = document.getElementById(containerId); if (!container) return;
+            var container = document.getElementById(containerId);
+            if (!container) return;
+            
             if(carrosselAdsTimers[containerId]) clearTimeout(carrosselAdsTimers[containerId]);
-            if (anuncios.length === 0) { container.classList.add('hidden'); container.innerHTML = ''; return; }
-            container.classList.remove('hidden'); var index = 0;
+            
+            if (anuncios.length === 0) {
+                container.classList.add('hidden');
+                container.innerHTML = '';
+                return;
+            }
+            container.classList.remove('hidden');
+            var index = 0;
             
             function mostrarProximo() {
-                var ad = anuncios[index]; container.innerHTML = criarElementoAd(ad);
-                index = (index + 1) % anuncios.length; carrosselAdsTimers[containerId] = setTimeout(mostrarProximo, (ad.tempo || 5) * 1000);
+                var ad = anuncios[index];
+                container.innerHTML = criarElementoAd(ad);
+                var ms = (ad.tempo || 5) * 1000;
+                index = (index + 1) % anuncios.length;
+                carrosselAdsTimers[containerId] = setTimeout(mostrarProximo, ms);
             }
             mostrarProximo();
         }
 
         function renderizarOpinioes() {
-            var c = document.getElementById('sidebar-opinioes'); var c_in = document.getElementById('conteudo-opinioes');
-            var op = noticiasGlobais.filter(function(n) { return String(n.categoria).toLowerCase().indexOf('opini') !== -1 && String(n.status).toLowerCase() === 'ativa'; });
+            var c = document.getElementById('sidebar-opinioes');
+            var c_in = document.getElementById('conteudo-opinioes');
+            var op = noticiasGlobais.filter(function(n) { 
+                return String(n.categoria).toLowerCase().indexOf('opini') !== -1 && String(n.status).toLowerCase() === 'ativa';
+            });
             
             if (op.length === 0) { c.classList.add('hidden'); return; }
             c.classList.remove('hidden');
             
-            var d = op[0]; var letraAutor = d.autor ? d.autor.charAt(0).toUpperCase() : 'O';
+            var d = op[0];
+            var letraAutor = d.autor ? d.autor.charAt(0).toUpperCase() : 'O';
             var html = '<article onclick="abrirNoticia(\'' + d.id + '\', true)" class="group cursor-pointer flex flex-col mb-4 bg-gray-50 p-4 border border-gray-100 rounded-sm hover:shadow-md transition-shadow">' +
                 '<div class="flex items-center gap-3 mb-3"><div class="w-10 h-10 rounded-full bg-jornal-blue flex items-center justify-center text-white font-black text-xs shrink-0 shadow-inner">' + letraAutor + '</div>' +
                 '<div class="flex flex-col min-w-0"><span class="text-[10px] font-black uppercase tracking-widest text-jornal-red">Opinião</span><span class="text-xs font-bold text-gray-700 truncate w-full">' + (d.autor || 'Editorial') + '</span></div></div>' +
-                '<div class="w-full aspect-video mb-3 overflow-hidden rounded-sm bg-gray-200 shrink-0 relative"><img src="' + (d.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />' +
+                '<div class="w-full aspect-video mb-3 overflow-hidden rounded-sm bg-gray-200 shrink-0 relative"><img src="' + (d.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />' +
                 (d.creditosImagem ? '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded-tl">Foto: ' + d.creditosImagem + '</div>' : '') + '</div>' +
                 '<h3 class="font-serif font-black text-sm md:text-base leading-snug text-jornal-dark group-hover:text-jornal-blue line-clamp-3 mb-2">' + d.titulo + '</h3>' +
                 '<p class="text-xs text-gray-500 line-clamp-2 mb-3 italic">' + (d.linhaFina || removerHTML(d.conteudo)) + '</p>' +
@@ -952,7 +1158,7 @@
                 html += '<div class="flex flex-col gap-3 mt-2">';
                 for(var i=1; i<Math.min(op.length, 4); i++) {
                     html += '<article onclick="abrirNoticia(\'' + op[i].id + '\', true)" class="group cursor-pointer border-t border-gray-100 pt-3 flex gap-3 items-center hover:bg-gray-50 p-2 -mx-2 rounded transition-colors">' +
-                        '<div class="w-12 h-12 rounded bg-gray-200 shrink-0 overflow-hidden relative"><img src="' + (op[i].urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
+                        '<div class="w-12 h-12 rounded bg-gray-200 shrink-0 overflow-hidden relative"><img src="' + (op[i].urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
                         '<div class="flex-grow min-w-0 flex flex-col justify-center"><h4 class="font-bold text-xs text-gray-800 leading-tight group-hover:text-jornal-red line-clamp-2 mb-1">' + op[i].titulo + '</h4>' +
                         '<span class="text-[9px] font-bold text-gray-400 tracking-widest uppercase">' + (op[i].dataHora ? op[i].dataHora.split(' ')[0] : '') + '</span></div></article>';
                 }
@@ -963,20 +1169,24 @@
 
         function criarElementoAd(prop) {
             if(!prop) return '';
-            var ext = prop.tipo ? prop.tipo.toLowerCase() : ''; var urlSegura = prop.urlArquivo ? String(prop.urlArquivo) : '';
+            var ext = prop.tipo ? prop.tipo.toLowerCase() : '';
+            var urlSegura = prop.urlArquivo ? String(prop.urlArquivo) : '';
             var isVideo = ext.indexOf('video') !== -1 || urlSegura.endsWith('.mp4');
-            var mediaHtml = isVideo ? '<video src="' + urlSegura + '" autoplay loop muted playsinline class="w-full h-auto min-h-[100px] object-contain bg-gray-100 border border-gray-200"></video>' : '<img loading="lazy" src="' + urlSegura + '" alt="Anúncio" class="w-full h-auto min-h-[100px] object-contain bg-gray-100 border border-gray-200" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />';
+            var mediaHtml = isVideo ? '<video src="' + urlSegura + '" autoplay loop muted playsinline class="w-full h-auto min-h-[100px] object-cover bg-gray-100 border border-gray-200"></video>' : '<img loading="lazy" src="' + urlSegura + '" alt="Anúncio" class="w-full h-auto min-h-[100px] object-cover bg-gray-100 border border-gray-200" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />';
             return '<a href="' + prop.linkDestino + '" target="_blank" class="block w-full relative group hover:opacity-95 transition-opacity"><div class="absolute top-2 right-2 bg-white/90 text-[8px] uppercase font-black px-1.5 py-0.5 z-10 text-jornal-dark border border-gray-200">Publicidade</div>' + mediaHtml + '</a>';
         }
 
         function filtrarCategoria(cat, up) {
             if (up === undefined) up = true;
-            window.categoriaAtual = cat; if(up) atualizarURL('categoria', cat);
+            window.categoriaAtual = cat; 
+            if(up) atualizarURL('categoria', cat);
             
-            var grid = document.getElementById('grid-noticias'); var dest = document.getElementById('destaque-noticia');
+            var grid = document.getElementById('grid-noticias'); 
+            var dest = document.getElementById('destaque-noticia');
             if (!grid || !dest) return;
             
-            grid.innerHTML = ''; dest.innerHTML = '';
+            grid.innerHTML = ''; 
+            dest.innerHTML = '';
             document.getElementById('titulo-seccao-feed').innerText = cat === 'Todas' ? 'Últimas Notícias' : 'Editoria: ' + cat;
             document.getElementById('input-pesquisa').value = '';
             
@@ -993,39 +1203,66 @@
                 grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6";
                 var c_itens = f.filter(function(n) { return n.noCarrossel === 'true'; }).slice(0, 5);
                 if(c_itens.length > 0) { 
-                    montarCarrossel(c_itens); if(carrosselContainer) carrosselContainer.classList.remove('hidden'); 
-                    dest.classList.add('hidden'); f = f.filter(function(n) { return n.noCarrossel !== 'true'; }); 
-                } else { if(carrosselContainer) carrosselContainer.classList.add('hidden'); }
+                    montarCarrossel(c_itens); 
+                    if(carrosselContainer) carrosselContainer.classList.remove('hidden'); 
+                    dest.classList.add('hidden');
+                    f = f.filter(function(n) { return n.noCarrossel !== 'true'; }); 
+                } else {
+                    if(carrosselContainer) carrosselContainer.classList.add('hidden');
+                }
                 
-                montarGrelhaEditorias(f); if(gridEditorias) gridEditorias.classList.remove('hidden');
+                montarGrelhaEditorias(f);
+                if(gridEditorias) gridEditorias.classList.remove('hidden');
                 
                 f.slice(0, 15).forEach(function(n) { grid.innerHTML += htmlCard(n); });
-                var btnMais = document.getElementById('btn-mostrar-mais'); if(btnMais) btnMais.classList.add('hidden');
+                var btnMais = document.getElementById('btn-mostrar-mais');
+                if(btnMais) btnMais.classList.add('hidden');
             } else {
                 grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
-                if(gridEditorias) gridEditorias.classList.add('hidden'); if(carrosselContainer) carrosselContainer.classList.add('hidden');
-                if(f.length > 0) { dest.innerHTML = htmlHero(f[0]); dest.classList.remove('hidden'); f = f.slice(1); }
+                if(gridEditorias) gridEditorias.classList.add('hidden');
+                if(carrosselContainer) carrosselContainer.classList.add('hidden');
                 
-                window.noticiasCategoriaAtual = f; window.itensExibidosCategoria = 16;
+                if(f.length > 0) { 
+                    dest.innerHTML = htmlHero(f[0]); 
+                    dest.classList.remove('hidden'); 
+                    f = f.slice(1); 
+                }
+                
+                window.noticiasCategoriaAtual = f; 
+                window.itensExibidosCategoria = 16;
                 f.slice(0, 16).forEach(function(n) { grid.innerHTML += htmlCard(n); });
+                
                 var btnMais = document.getElementById('btn-mostrar-mais');
-                if (btnMais) { if (f.length > 16) btnMais.classList.remove('hidden'); else btnMais.classList.add('hidden'); }
+                if (btnMais) {
+                    if (f.length > 16) btnMais.classList.remove('hidden');
+                    else btnMais.classList.add('hidden');
+                }
             }
             fecharNoticiaUI();
         }
 
         function mostrarMaisNoticias() {
-            var grid = document.getElementById('grid-noticias'); var f = window.noticiasCategoriaAtual || [];
-            var start = window.itensExibidosCategoria; window.itensExibidosCategoria += 16;
-            f.slice(start, window.itensExibidosCategoria).forEach(function(n) { grid.innerHTML += htmlCard(n); });
+            var grid = document.getElementById('grid-noticias');
+            var f = window.noticiasCategoriaAtual || [];
+            var start = window.itensExibidosCategoria;
+            window.itensExibidosCategoria += 16;
+            
+            f.slice(start, window.itensExibidosCategoria).forEach(function(n) { 
+                grid.innerHTML += htmlCard(n); 
+            });
+            
             var btnMais = document.getElementById('btn-mostrar-mais');
-            if (window.itensExibidosCategoria >= f.length && btnMais) btnMais.classList.add('hidden');
+            if (window.itensExibidosCategoria >= f.length && btnMais) {
+                btnMais.classList.add('hidden');
+            }
         }
 
         function htmlCard(n) {
             var cHTML = '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 p-0 flex flex-col h-full hover:shadow-md transition-shadow rounded-sm w-full overflow-hidden min-w-0">' +
-                '<div class="relative w-full aspect-video bg-gray-100 border-b border-gray-200 shrink-0 overflow-hidden"><img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain group-hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>';
-            if (n.creditosImagem) cHTML += '<div class="text-[8px] text-gray-400 italic px-5 py-1 bg-gray-50 border-b border-gray-100 truncate text-right">Foto: ' + n.creditosImagem + '</div>';
+                '<div class="relative w-full aspect-video bg-gray-100 border-b border-gray-200 shrink-0 overflow-hidden"><img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>';
+            if (n.creditosImagem) {
+                cHTML += '<div class="text-[8px] text-gray-400 italic px-5 py-1 bg-gray-50 border-b border-gray-100 truncate text-right">Foto: ' + n.creditosImagem + '</div>';
+            }
             cHTML += '<div class="p-5 flex flex-col flex-grow w-full bg-white min-w-0"><span class="text-jornal-red text-[10px] font-black uppercase tracking-widest mb-2 block truncate">' + (n.categoria || 'Geral') + '</span>' +
                 '<h3 class="font-serif text-xl font-bold mb-3 leading-snug text-jornal-dark group-hover:text-jornal-blue line-clamp-3 break-words">' + (n.titulo || '') + '</h3>' +
                 (n.linhaFina ? '<p class="text-gray-500 text-xs font-medium mb-2 italic line-clamp-2 break-words">' + n.linhaFina + '</p>' : '') +
@@ -1037,8 +1274,10 @@
 
         function htmlHero(n) {
             var cHTML = '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 flex flex-col md:flex-row h-full overflow-hidden hover:shadow-md transition-shadow rounded-sm w-full">' +
-                '<div class="md:w-3/5 w-full bg-gray-100 min-h-[300px] shrink-0 overflow-hidden relative"><img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition duration-700 min-h-[300px]" />';
-            if (n.creditosImagem) cHTML += '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 rounded-tl">Foto: ' + n.creditosImagem + '</div>';
+                '<div class="md:w-3/5 w-full bg-gray-100 min-h-[300px] shrink-0 overflow-hidden relative"><img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700 min-h-[300px]" />';
+            if (n.creditosImagem) {
+                cHTML += '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 rounded-tl">Foto: ' + n.creditosImagem + '</div>';
+            }
             cHTML += '</div><div class="md:w-2/5 p-6 flex flex-col justify-center w-full min-w-0"><span class="text-jornal-red text-[10px] font-black uppercase tracking-widest mb-3 block w-full truncate">' + (n.categoria || 'Geral') + '</span>' +
                 '<h3 class="font-serif text-3xl font-black mb-4 leading-tight text-jornal-dark group-hover:text-jornal-blue break-words line-clamp-3">' + (n.titulo || '') + '</h3>' +
                 (n.linhaFina ? '<p class="text-gray-500 text-sm font-medium mb-3 italic line-clamp-2 break-words">' + n.linhaFina + '</p>' : '') +
@@ -1050,34 +1289,55 @@
         // NOVO: Navegação do Carrossel da Agenda
         function moverCarrosselAgenda(id, dir, len) {
             if(!window.agendaCarousels) return;
-            var c = window.agendaCarousels.find(function(x) { return x.id === id; }); if (!c) return;
+            var c = window.agendaCarousels.find(function(x) { return x.id === id; });
+            if (!c) return;
             c.index = (c.index + dir + len) % len;
             var inner = document.getElementById(id + '-inner');
-            if (inner) inner.style.transform = 'translateX(-' + (c.index * 100) + '%)';
+            if (inner) {
+                inner.style.transform = 'translateX(-' + (c.index * 100) + '%)';
+            }
         }
 
         function montarGrelhaEditorias(noticiasAtivas) {
-            var container = document.getElementById('grid-editorias-exclusivo'); if(!container) return;
-            container.innerHTML = ''; var categoriasBlocos = [];
+            var container = document.getElementById('grid-editorias-exclusivo');
+            if(!container) return;
+            container.innerHTML = '';
+            var categoriasBlocos = [];
             
-            if (configuracoesGlobais['CategoriasCapa']) { try { categoriasBlocos = JSON.parse(configuracoesGlobais['CategoriasCapa']); } catch(e) {} }
+            if (configuracoesGlobais['CategoriasCapa']) {
+                try {
+                    categoriasBlocos = JSON.parse(configuracoesGlobais['CategoriasCapa']);
+                } catch(e) {}
+            }
+            
             if (!categoriasBlocos || categoriasBlocos.length === 0) {
                 listaCategoriasLocais.forEach(function(c) {
                     var l = String(c).toLowerCase().trim();
-                    if (['opinião', 'opiniao', 'opiniões', 'opinioes', 'carreira', 'carreiras'].indexOf(l) === -1) { if(categoriasBlocos.length < 8) categoriasBlocos.push(c); }
+                    if (['opinião', 'opiniao', 'opiniões', 'opinioes', 'carreira', 'carreiras'].indexOf(l) === -1) {
+                        if(categoriasBlocos.length < 8) categoriasBlocos.push(c);
+                    }
                 });
             }
 
-            var htmlFinal = ''; var agora = new Date(); window.agendaCarousels = []; 
+            var htmlFinal = '';
+            var agora = new Date();
+            
+            window.agendaCarousels = []; // Limpa o controlo da agenda se re-renderizar
 
             categoriasBlocos.forEach(function(cat) {
                 if(!cat || cat.trim() === '') return;
-                var isAgenda = (cat.toLowerCase() === 'agenda'); var limite = isAgenda ? 5 : 4;
+                var isAgenda = (cat.toLowerCase() === 'agenda');
+                var limite = isAgenda ? 5 : 4;
                 
                 var nCat = noticiasAtivas.filter(function(n) { 
                     if (String(n.categoria).toLowerCase().indexOf(cat.toLowerCase()) === -1) return false;
+                    
+                    // Verificação para Remover Agenda Expirada
                     if (isAgenda && n.dataFimEvento && n.dataFimEvento.trim() !== '') {
-                        try { var dtFim = new Date(n.dataFimEvento); if (dtFim < agora) return false; } catch(e) {}
+                        try {
+                            var dtFim = new Date(n.dataFimEvento);
+                            if (dtFim < agora) return false;
+                        } catch(e) {}
                     }
                     return true;
                 }).slice(0, limite); 
@@ -1086,35 +1346,44 @@
                     htmlFinal += '<div class="w-full mb-12"><div class="border-b-4 border-gray-200 pb-2 mb-6 flex justify-between items-center"><h3 class="text-lg font-black uppercase tracking-widest text-jornal-dark"><span class="inline-block w-3 h-3 bg-rose-600 mr-1"></span>' + cat + '</h3><button onclick="filtrarCategoria(\'' + cat + '\', true)" class="text-[10px] font-bold uppercase text-gray-500 hover:text-jornal-red">Ver tudo &raquo;</button></div>';
                     
                     if (isAgenda) {
+                        // RENDERIZA A AGENDA COMO UM CARROSSEL COMPACTO
                         var carouselId = 'agenda-carousel-' + Math.floor(Math.random() * 1000000);
                         window.agendaCarousels.push({id: carouselId, index: 0, length: nCat.length});
                         
-                        htmlFinal += '<div class="relative overflow-hidden w-full bg-gray-100 rounded-sm group aspect-video md:aspect-[21/9]" id="' + carouselId + '"><div class="flex transition-transform duration-500 ease-in-out h-full" id="' + carouselId + '-inner" style="transform: translateX(0%);">';
+                        htmlFinal += '<div class="relative overflow-hidden w-full bg-gray-100 rounded-sm group aspect-video md:aspect-[21/9]" id="' + carouselId + '">';
+                        htmlFinal += '<div class="flex transition-transform duration-500 ease-in-out h-full" id="' + carouselId + '-inner" style="transform: translateX(0%);">';
                         
                         nCat.forEach(function(n) {
-                            htmlFinal += '<div class="w-full shrink-0 flex-none relative h-full cursor-pointer" onclick="abrirNoticia(\'' + n.id + '\', true)">' +
-                                '<img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain bg-black" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /><div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div><div class="absolute bottom-0 left-0 p-6 w-full text-white min-w-0 z-10">';
+                            htmlFinal += '<div class="w-full shrink-0 flex-none relative h-full cursor-pointer" onclick="abrirNoticia(\'' + n.id + '\', true)">';
+                            htmlFinal += '<img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain bg-black" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />';
+                            htmlFinal += '<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>';
+                            htmlFinal += '<div class="absolute bottom-0 left-0 p-6 w-full text-white min-w-0 z-10">';
+                            
                             if (n.dataFimEvento) {
                                 try {
-                                    var dP = n.dataFimEvento.split('T')[0].split('-'); var diaStr = dP[2] + '/' + dP[1];
+                                    var dP = n.dataFimEvento.split('T')[0].split('-');
+                                    var diaStr = dP[2] + '/' + dP[1];
                                     htmlFinal += '<span class="bg-amber-500 text-black text-[10px] font-black uppercase px-2 py-1 mb-2 inline-block rounded-sm shadow-sm">Evento Até ' + diaStr + '</span> ';
                                 } catch(e){}
-                            } else { htmlFinal += '<span class="bg-amber-500 text-black text-[10px] font-black uppercase px-2 py-1 mb-2 inline-block rounded-sm shadow-sm">Agenda</span> '; }
+                            } else {
+                                htmlFinal += '<span class="bg-amber-500 text-black text-[10px] font-black uppercase px-2 py-1 mb-2 inline-block rounded-sm shadow-sm">Agenda</span> ';
+                            }
                             
-                            htmlFinal += '<h4 class="font-serif text-xl md:text-2xl font-black mb-1 leading-tight break-words line-clamp-2 text-white">' + n.titulo + '</h4></div></div>';
+                            htmlFinal += '<h4 class="font-serif text-xl md:text-2xl font-black mb-1 leading-tight break-words line-clamp-2 text-white">' + n.titulo + '</h4>';
+                            htmlFinal += '</div></div>';
                         });
                         htmlFinal += '</div>';
                         
                         if (nCat.length > 1) {
-                            htmlFinal += '<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', -1, ' + nCat.length + ')" class="absolute left-2 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-10 h-10">&#10094;</button>' +
-                                         '<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', 1, ' + nCat.length + ')" class="absolute right-2 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-10 h-10">&#10095;</button>';
+                            htmlFinal += '<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', -1, ' + nCat.length + ')" class="absolute left-2 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-10 h-10">&#10094;</button>';
+                            htmlFinal += '<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', 1, ' + nCat.length + ')" class="absolute right-2 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-10 h-10">&#10095;</button>';
                         }
                         htmlFinal += '</div>';
                     } else {
                         htmlFinal += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">';
                         nCat.forEach(function(n) {
                             htmlFinal += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col h-full border border-gray-100 shadow-sm bg-white rounded-sm overflow-hidden min-w-0 hover:shadow-md transition-shadow">' +
-                                '<div class="relative w-full aspect-video bg-gray-200 shrink-0 overflow-hidden"><img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
+                                '<div class="relative w-full aspect-video bg-gray-200 shrink-0 overflow-hidden"><img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
                                 '<div class="p-4 flex flex-col flex-grow min-w-0 bg-white relative z-10"><h4 class="font-serif font-bold text-sm leading-snug text-jornal-dark group-hover:text-jornal-red line-clamp-3 mb-2">' + n.titulo + '</h4>' +
                                 '<span class="text-[9px] font-bold text-gray-400 mt-auto tracking-widest uppercase">' + (n.dataHora ? n.dataHora.replace(' ', ' às ') : '') + '</span></div></article>';
                         });
@@ -1126,57 +1395,113 @@
             container.innerHTML = htmlFinal;
 
             if (!window.agendaTimerStarted && window.agendaCarousels && window.agendaCarousels.length > 0) {
-                setInterval(function() { if (window.agendaCarousels) window.agendaCarousels.forEach(function(c) { moverCarrosselAgenda(c.id, 1, c.length); }); }, 4000);
+                setInterval(function() {
+                    if (window.agendaCarousels) {
+                        window.agendaCarousels.forEach(function(c) {
+                            moverCarrosselAgenda(c.id, 1, c.length);
+                        });
+                    }
+                }, 4000);
                 window.agendaTimerStarted = true;
             }
         }
 
         function montarCarrossel(itens) {
-            var inner = document.getElementById('carrossel-inner'); var ind = document.getElementById('carrossel-indicadores');
+            var inner = document.getElementById('carrossel-inner');
+            var ind = document.getElementById('carrossel-indicadores');
             if(!inner || !ind) return;
-            inner.innerHTML = ''; ind.innerHTML = '';
+            inner.innerHTML = ''; 
+            ind.innerHTML = '';
             itens.forEach(function(n, i) {
                 var credHtml = n.creditosImagem ? '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 z-20">Foto: ' + n.creditosImagem + '</div>' : '';
                 inner.innerHTML += '<div class="absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out cursor-pointer group carrossel-slide" style="opacity: 0; z-index: 0;" onclick="abrirNoticia(\'' + n.id + '\', true)">' +
-                '<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-black opacity-90" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'"/>' + credHtml +
+                '<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover bg-black opacity-90" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'"/>' + credHtml +
                 '<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>' +
                 '<div class="absolute bottom-0 left-0 p-6 md:p-12 w-full text-white min-w-0 z-10"><span class="bg-jornal-red text-white text-[10px] font-black uppercase px-2 py-1 mb-3 inline-block rounded-sm truncate">' + n.categoria + '</span>' +
                 '<h3 class="font-serif text-2xl md:text-4xl font-black mb-2 leading-tight break-words line-clamp-3">' + n.titulo + '</h3></div></div>';
                 ind.innerHTML += '<button onclick="irParaSlide(' + i + ')" class="w-3 h-3 rounded-full carrossel-indicador ' + (i === 0 ? 'bg-jornal-red' : 'bg-white/50') + '"></button>';
             });
-            slideIndex = 0; if(carrosselTimer) clearInterval(carrosselTimer);
-            carrosselTimer = setInterval(function() { moverCarrossel(1); }, 5000); atualizarCarrosselVisivel(); 
+            slideIndex = 0; 
+            if(carrosselTimer) clearInterval(carrosselTimer);
+            carrosselTimer = setInterval(function() { moverCarrossel(1); }, 5000);
+            atualizarCarrosselVisivel(); 
         }
 
-        function moverCarrossel(d) { var s = document.getElementsByClassName('carrossel-slide'); if(s.length > 0) { slideIndex = (slideIndex + d + s.length) % s.length; atualizarCarrosselVisivel(); } }
-        function irParaSlide(idx) { slideIndex = idx; atualizarCarrosselVisivel(); }
+        function moverCarrossel(d) { 
+            var s = document.getElementsByClassName('carrossel-slide'); 
+            if(s.length > 0) { 
+                slideIndex = (slideIndex + d + s.length) % s.length; 
+                atualizarCarrosselVisivel(); 
+            } 
+        }
+
+        function irParaSlide(idx) { 
+            slideIndex = idx; 
+            atualizarCarrosselVisivel(); 
+        }
+
         function atualizarCarrosselVisivel() {
-            var slides = document.getElementsByClassName('carrossel-slide'); var indics = document.getElementsByClassName('carrossel-indicador');
+            var slides = document.getElementsByClassName('carrossel-slide');
+            var indics = document.getElementsByClassName('carrossel-indicador');
             for (var i = 0; i < slides.length; i++) {
-                slides[i].style.opacity = (i === slideIndex ? '1' : '0'); slides[i].style.zIndex = (i === slideIndex ? '10' : '0');
-                if(indics[i]) indics[i].className = 'w-3 h-3 rounded-full carrossel-indicador ' + (i === slideIndex ? 'bg-jornal-red' : 'bg-white/50');
+                if(slides[i]) {
+                    slides[i].style.opacity = (i === slideIndex ? '1' : '0');
+                    slides[i].style.zIndex = (i === slideIndex ? '10' : '0');
+                }
+                if(indics[i]) {
+                    indics[i].className = 'w-3 h-3 rounded-full carrossel-indicador ' + (i === slideIndex ? 'bg-jornal-red' : 'bg-white/50');
+                }
             }
         }
 
         function renderizarClimaEFinanceiro() {
-            var tick = document.getElementById('ticker-content'); var usd = '--'; var eur = '--'; var btc = '--'; var clima = '--'; var iconeClima = '☀️'; var descClima = 'A Atualizar...';
+            var tick = document.getElementById('ticker-content'); 
+            var usd = '--'; var eur = '--'; var btc = '--'; var clima = '--'; var iconeClima = '☀️'; var descClima = 'A Atualizar...';
             
-            fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL').then(function(res) { return res.json(); }).then(function(dadosC) {
-                if(dadosC.USDBRL) { usd = parseFloat(dadosC.USDBRL.ask).toFixed(2); eur = parseFloat(dadosC.EURBRL.ask).toFixed(2); btc = parseFloat(dadosC.BTCBRL.ask).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+            fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL')
+            .then(function(res) { return res.json(); })
+            .then(function(dadosC) {
+                if(dadosC.USDBRL) {
+                    usd = parseFloat(dadosC.USDBRL.ask).toFixed(2);
+                    eur = parseFloat(dadosC.EURBRL.ask).toFixed(2);
+                    btc = parseFloat(dadosC.BTCBRL.ask).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
                 atualizarDOM();
             }).catch(function(e){ console.warn(e); atualizarDOM(); });
 
-            fetch('https://api.open-meteo.com/v1/forecast?latitude=-15.5961&longitude=-56.0967&current_weather=true&hourly=relativehumidity_2m,precipitation_probability,windspeed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=America/Cuiaba').then(function(res) { return res.json(); }).then(function(dadosClima) {
+            fetch('https://api.open-meteo.com/v1/forecast?latitude=-15.5961&longitude=-56.0967&current_weather=true&hourly=relativehumidity_2m,precipitation_probability,windspeed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=America/Cuiaba')
+            .then(function(res) { return res.json(); })
+            .then(function(dadosClima) {
                 dadosClimaGlobal = dadosClima;
                 if(dadosClima.current_weather) {
-                    clima = Math.round(dadosClima.current_weather.temperature); var wCode = dadosClima.current_weather.weathercode;
-                    if (wCode <= 3) { iconeClima = '☀️'; descClima = 'Céu Limpo'; } else if (wCode <= 48) { iconeClima = '⛅'; descClima = 'Nublado'; } else if (wCode <= 67) { iconeClima = '🌧️'; descClima = 'Chuva'; } else if (wCode <= 99) { iconeClima = '⛈️'; descClima = 'Tempestade'; }
+                    clima = Math.round(dadosClima.current_weather.temperature);
+                    var wCode = dadosClima.current_weather.weathercode;
+                    if (wCode <= 3) { iconeClima = '☀️'; descClima = 'Céu Limpo'; }
+                    else if (wCode <= 48) { iconeClima = '⛅'; descClima = 'Nublado'; }
+                    else if (wCode <= 67) { iconeClima = '🌧️'; descClima = 'Chuva'; }
+                    else if (wCode <= 99) { iconeClima = '⛈️'; descClima = 'Tempestade'; }
                     
-                    var elTemp = document.getElementById('temp-clima'); var elIcone = document.getElementById('icone-clima'); var elBgIcone = document.getElementById('bg-icone-clima'); var elDesc = document.getElementById('desc-clima');
-                    if (elTemp) elTemp.innerText = clima + '°C'; if (elIcone) elIcone.innerText = iconeClima; if (elBgIcone) elBgIcone.innerText = iconeClima; if (elDesc) elDesc.innerText = descClima;
+                    var elTemp = document.getElementById('temp-clima');
+                    var elIcone = document.getElementById('icone-clima');
+                    var elBgIcone = document.getElementById('bg-icone-clima');
+                    var elDesc = document.getElementById('desc-clima');
                     
-                    var mChuva = document.getElementById('modal-clima-chuva'); var mUmid = document.getElementById('modal-clima-umidade'); var mVento = document.getElementById('modal-clima-vento'); var mDesc = document.getElementById('modal-clima-desc'); var mTemp = document.getElementById('modal-clima-temp'); var mIcone = document.getElementById('modal-clima-icone');
-                    if(mDesc) mDesc.innerText = descClima; if(mTemp) mTemp.innerText = clima; if(mIcone) mIcone.innerText = iconeClima;
+                    if (elTemp) elTemp.innerText = clima + '°C';
+                    if (elIcone) elIcone.innerText = iconeClima;
+                    if (elBgIcone) elBgIcone.innerText = iconeClima;
+                    if (elDesc) elDesc.innerText = descClima;
+                    
+                    var mChuva = document.getElementById('modal-clima-chuva');
+                    var mUmid = document.getElementById('modal-clima-umidade');
+                    var mVento = document.getElementById('modal-clima-vento');
+                    var mDesc = document.getElementById('modal-clima-desc');
+                    var mTemp = document.getElementById('modal-clima-temp');
+                    var mIcone = document.getElementById('modal-clima-icone');
+
+                    if(mDesc) mDesc.innerText = descClima;
+                    if(mTemp) mTemp.innerText = clima;
+                    if(mIcone) mIcone.innerText = iconeClima;
+
                     if(dadosClima.hourly && dadosClima.hourly.precipitation_probability) {
                         if(mChuva) mChuva.innerText = dadosClima.hourly.precipitation_probability[0] + '%';
                         if(mUmid) mUmid.innerText = dadosClima.hourly.relativehumidity_2m[0] + '%';
@@ -1188,78 +1513,122 @@
 
             function atualizarDOM() {
                 var stringTicker = '<span class="text-amber-300 font-extrabold mr-2">💵 DÓLAR:</span> R$ ' + usd + ' | <span class="text-blue-300 font-extrabold mr-2">💶 EURO:</span> R$ ' + eur + ' | <span class="text-orange-400 font-extrabold mr-2">₿ BITCOIN:</span> R$ ' + btc + ' | <span class="text-sky-300 font-extrabold mr-2">☀️ CUIABÁ:</span> ' + clima + '°C | ';
-                var recentes = noticiasGlobais.slice(0, 5); recentes.forEach(function(n) { stringTicker += '<span class="mx-3 hover:text-red-200 cursor-pointer text-white underline" onclick="abrirNoticia(\'' + n.id + '\', true)">' + n.titulo + '</span> &bull; '; });
+                var recentes = noticiasGlobais.slice(0, 5);
+                recentes.forEach(function(n) { 
+                    stringTicker += '<span class="mx-3 hover:text-red-200 cursor-pointer text-white underline" onclick="abrirNoticia(\'' + n.id + '\', true)">' + n.titulo + '</span> &bull; '; 
+                });
                 if(tick) tick.innerHTML = stringTicker;
             }
             atualizarDOM();
         }
 
         function renderizarMaisLidas() {
-            var lista = document.getElementById('lista-mais-lidas'); if (!lista) return;
-            var top10 = noticiasGlobais.slice(0, 10); var htmlFinal = '';
+            var lista = document.getElementById('lista-mais-lidas'); 
+            if (!lista) return;
+            var top10 = noticiasGlobais.slice(0, 10);
+            var htmlFinal = '';
             top10.forEach(function(n, idx) {
                 htmlFinal += '<li class="flex gap-3 items-center group cursor-pointer py-3" onclick="abrirNoticia(\'' + n.id + '\', true)">' +
                     '<div class="w-8 h-8 rounded-full bg-jornal-blue text-white flex items-center justify-center font-black text-xs shrink-0">' + (idx+1) + '</div>' +
-                    '<div class="flex-grow w-full overflow-hidden min-w-0"><h4 class="text-xs font-bold text-jornal-dark leading-tight group-hover:text-jornal-blue line-clamp-2 break-words">' + n.titulo + '</h4></div></li>';
+                    '<div class="flex-grow w-full overflow-hidden min-w-0"><h4 class="text-xs font-bold text-jornal-dark leading-tight group-hover:text-jornal-blue line-clamp-2 break-words">' + n.titulo + '</h4></div>' +
+                '</li>';
             });
             lista.innerHTML = htmlFinal;
         }
 
         function traduzirTermoPlacar(texto) {
             if(!texto) return '';
-            var dicionario = { 'Scheduled': 'Agendado', 'Final': 'Encerrado', 'Halftime': 'Intervalo', 'Postponed': 'Adiado', 'Canceled': 'Cancelado', 'Delayed': 'Atrasado', 'Brazil': 'Brasil', 'England': 'Inglaterra', 'Italy': 'Itália', 'Netherlands': 'Holanda', 'Portugal': 'Portugal', 'Spain': 'Espanha', 'Germany': 'Alemanha', 'France': 'França', 'Argentina': 'Argentina', 'FIFA World Cup': 'Copa do Mundo FIFA', 'UEFA Champions League': 'Liga dos Campeões', 'CONMEBOL Libertadores': 'Taça Libertadores' };
+            var dicionario = {
+                'Scheduled': 'Agendado', 'Final': 'Encerrado', 'Halftime': 'Intervalo', 'Postponed': 'Adiado', 'Canceled': 'Cancelado', 'Delayed': 'Atrasado',
+                'Brazil': 'Brasil', 'England': 'Inglaterra', 'Italy': 'Itália', 'Netherlands': 'Holanda', 'Portugal': 'Portugal', 'Spain': 'Espanha', 
+                'Germany': 'Alemanha', 'France': 'França', 'Argentina': 'Argentina', 'FIFA World Cup': 'Copa do Mundo FIFA', 
+                'UEFA Champions League': 'Liga dos Campeões', 'CONMEBOL Libertadores': 'Taça Libertadores'
+            };
             if (dicionario[texto]) return dicionario[texto];
             return String(texto).replace('1st Half', '1º Tempo').replace('2nd Half', '2º Tempo').replace('Half', 'Intervalo').replace('FT', 'Fim');
         }
 
         function renderizarPlacarAoVivo() {
-            var placar = document.getElementById('widget-placar'); if(!placar) return;
+            var placar = document.getElementById('widget-placar'); 
+            if(!placar) return;
             var ligasAtivas = ['soccer/bra.1']; 
-            if (configuracoesGlobais['LigasPlacar']) { try { ligasAtivas = JSON.parse(configuracoesGlobais['LigasPlacar']); } catch(e){} }
+            if (configuracoesGlobais['LigasPlacar']) { 
+                try { ligasAtivas = JSON.parse(configuracoesGlobais['LigasPlacar']); } catch(e){} 
+            }
             
-            var dataHojeLocal = new Date().toISOString().split('T')[0]; placar.innerHTML = '<div class="text-center text-xs text-gray-400 py-4">A procurar jogos...</div>';
-            var htmlFinal = ''; var fetchesConcluidos = 0;
+            var dataHojeLocal = new Date().toISOString().split('T')[0];
+            placar.innerHTML = '<div class="text-center text-xs text-gray-400 py-4">A procurar jogos...</div>';
+            var htmlFinal = '';
+            var fetchesConcluidos = 0;
 
-            if(ligasAtivas.length === 0) { placar.innerHTML = '<div class="text-center text-xs text-gray-400 py-4">Nenhum campeonato ativo.</div>'; return; }
+            if(ligasAtivas.length === 0) {
+                placar.innerHTML = '<div class="text-center text-xs text-gray-400 py-4">Nenhum campeonato ativo.</div>';
+                return;
+            }
 
             ligasAtivas.forEach(function(liga) {
                 fetch('https://site.api.espn.com/apis/site/v2/sports/' + liga + '/scoreboard?lang=pt&region=br')
-                .then(function(res) { return res.ok ? res.json() : null; }).then(function(data) {
+                .then(function(res) { return res.ok ? res.json() : null; })
+                .then(function(data) {
                     if (data && data.events && data.events.length > 0) {
                         var nomeCompeticao = traduzirTermoPlacar(data.leagues && data.leagues[0] ? data.leagues[0].name : 'Competição');
                         var matchesHtml = '';
                         
                         data.events.forEach(function(jogo) {
                             if (!jogo.date) return;
-                            var dtJogo = new Date(jogo.date); var jogoAno = dtJogo.getFullYear(); var jogoMes = String(dtJogo.getMonth() + 1).padStart(2, '0'); var jogoDia = String(dtJogo.getDate()).padStart(2, '0');
+                            var dtJogo = new Date(jogo.date);
+                            var jogoAno = dtJogo.getFullYear();
+                            var jogoMes = String(dtJogo.getMonth() + 1).padStart(2, '0');
+                            var jogoDia = String(dtJogo.getDate()).padStart(2, '0');
                             var dataJogoLocal = jogoAno + '-' + jogoMes + '-' + jogoDia;
+                            
                             if (dataJogoLocal !== dataHojeLocal) return;
 
                             var matchInfo = jogo.competitions[0];
                             var casa = matchInfo.competitors.find(function(c) { return c.homeAway === 'home'; }) || matchInfo.competitors[0];
                             var fora = matchInfo.competitors.find(function(c) { return c.homeAway === 'away'; }) || matchInfo.competitors[1];
                             
-                            var logoCasa = casa.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽'; var logoFora = fora.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽';
-                            var isAoVivo = jogo.status.type.state === 'in'; var isEncerrado = jogo.status.type.state === 'post'; var isAgendado = jogo.status.type.state === 'pre';
-                            var corEstado = 'text-gray-400'; var bordaEstado = 'border-gray-200'; var bgPlacar = 'bg-jornal-dark text-white';
+                            var logoCasa = casa.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽';
+                            var logoFora = fora.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽';
 
-                            if (isAoVivo) { corEstado = 'text-red-600 animate-pulse'; bordaEstado = 'border-red-200 bg-red-50/10'; bgPlacar = 'bg-jornal-red text-white'; } else if (isAgendado) { corEstado = 'text-emerald-600'; }
+                            var isAoVivo = jogo.status.type.state === 'in';
+                            var isEncerrado = jogo.status.type.state === 'post';
+                            var isAgendado = jogo.status.type.state === 'pre';
+
+                            var corEstado = 'text-gray-400';
+                            var bordaEstado = 'border-gray-200';
+                            var bgPlacar = 'bg-jornal-dark text-white';
+
+                            if (isAoVivo) { corEstado = 'text-red-600 animate-pulse'; bordaEstado = 'border-red-200 bg-red-50/10'; bgPlacar = 'bg-jornal-red text-white'; }
+                            else if (isAgendado) { corEstado = 'text-emerald-600'; }
                             
                             var infoEstadoTexto = traduzirTermoPlacar(jogo.status.type.shortDetail);
-                            if (isAoVivo) { infoEstadoTexto = 'AO VIVO'; } else if (isAgendado) { var horas = String(dtJogo.getHours()).padStart(2, '0'); var minutos = String(dtJogo.getMinutes()).padStart(2, '0'); infoEstadoTexto = 'HOJE ÀS ' + horas + ':' + minutos; } else if (isEncerrado) { infoEstadoTexto = 'ENCERRADO'; }
+                            if (isAoVivo) { infoEstadoTexto = 'AO VIVO'; }
+                            else if (isAgendado) {
+                                var horas = String(dtJogo.getHours()).padStart(2, '0');
+                                var minutos = String(dtJogo.getMinutes()).padStart(2, '0');
+                                infoEstadoTexto = 'HOJE ÀS ' + horas + ':' + minutos;
+                            } else if (isEncerrado) { infoEstadoTexto = 'ENCERRADO'; }
                             
                             matchesHtml += '<div class="bg-white border ' + bordaEstado + ' rounded-lg p-3 mb-3 shadow-sm hover:shadow-md transition-shadow">' +
                                 '<div class="flex items-center justify-between w-full">' +
-                                '<div class="flex items-center justify-start gap-2 w-[35%] min-w-0"><img src="' + logoCasa + '" class="w-5 h-5 sm:w-6 sm:h-6 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'"><span class="font-bold text-gray-800 text-[10px] sm:text-[11px] text-left truncate w-full" title="' + traduzirTermoPlacar(casa.team.name) + '">' + traduzirTermoPlacar(casa.team.name) + '</span></div>' +
-                                '<div class="flex flex-col items-center justify-center w-[25%] shrink-0"><span class="' + bgPlacar + ' font-black text-xs px-2 sm:px-3 py-1 rounded-md tracking-widest mb-1 shadow-inner">' + (casa.score || '0') + ' - ' + (fora.score || '0') + '</span><span class="text-[8px] uppercase tracking-wider font-bold ' + corEstado + ' text-center whitespace-nowrap">' + infoEstadoTexto + '</span></div>' +
-                                '<div class="flex items-center justify-end gap-2 w-[35%] min-w-0"><span class="font-bold text-gray-800 text-[10px] sm:text-[11px] text-right truncate w-full" title="' + traduzirTermoPlacar(fora.team.name) + '">' + traduzirTermoPlacar(fora.team.name) + '</span><img src="' + logoFora + '" class="w-5 h-5 sm:w-6 sm:h-6 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'"></div></div></div>';
+                                    '<div class="flex items-center justify-start gap-2 w-[35%] min-w-0"><img src="' + logoCasa + '" class="w-5 h-5 sm:w-6 sm:h-6 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'"><span class="font-bold text-gray-800 text-[10px] sm:text-[11px] text-left truncate w-full" title="' + traduzirTermoPlacar(casa.team.name) + '">' + traduzirTermoPlacar(casa.team.name) + '</span></div>' +
+                                    '<div class="flex flex-col items-center justify-center w-[25%] shrink-0"><span class="' + bgPlacar + ' font-black text-xs px-2 sm:px-3 py-1 rounded-md tracking-widest mb-1 shadow-inner">' + (casa.score || '0') + ' - ' + (fora.score || '0') + '</span><span class="text-[8px] uppercase tracking-wider font-bold ' + corEstado + ' text-center whitespace-nowrap">' + infoEstadoTexto + '</span></div>' +
+                                    '<div class="flex items-center justify-end gap-2 w-[35%] min-w-0"><span class="font-bold text-gray-800 text-[10px] sm:text-[11px] text-right truncate w-full" title="' + traduzirTermoPlacar(fora.team.name) + '">' + traduzirTermoPlacar(fora.team.name) + '</span><img src="' + logoFora + '" class="w-5 h-5 sm:w-6 sm:h-6 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'"></div>' +
+                                '</div></div>';
                         });
 
-                        if (matchesHtml) htmlFinal += '<h5 class="text-[10px] uppercase font-black tracking-widest text-slate-400 mt-4 mb-3 border-b border-gray-100 pb-1">' + nomeCompeticao + '</h5>' + matchesHtml;
+                        if (matchesHtml) {
+                            htmlFinal += '<h5 class="text-[10px] uppercase font-black tracking-widest text-slate-400 mt-4 mb-3 border-b border-gray-100 pb-1">' + nomeCompeticao + '</h5>' + matchesHtml;
+                        }
                     }
-                }).catch(function(e){ console.warn(e); }).finally(function() {
+                })
+                .catch(function(e){ console.warn(e); })
+                .finally(function() {
                     fetchesConcluidos++;
-                    if(fetchesConcluidos === ligasAtivas.length) placar.innerHTML = htmlFinal || '<div class="text-center text-xs text-gray-400 py-4">Nenhum jogo agendado para hoje.</div>';
+                    if(fetchesConcluidos === ligasAtivas.length) {
+                        placar.innerHTML = htmlFinal || '<div class="text-center text-xs text-gray-400 py-4">Nenhum jogo agendado para hoje.</div>';
+                    }
                 });
             });
         }
@@ -1269,89 +1638,159 @@
             var noticia = noticiasGlobais.find(function(n) { return String(n.id) === String(idNoticia); }); 
             if(!noticia) return;
             
-            noticiaAbertaId = noticia.id; if (updateUrl) atualizarURL('noticia', idNoticia);
+            noticiaAbertaId = noticia.id;
+            if (updateUrl) atualizarURL('noticia', idNoticia);
             
-            document.getElementById('home-feed-container').classList.add('hidden'); document.getElementById('noticia-completa-container').classList.remove('hidden');
-            document.getElementById('nc-categoria').innerText = noticia.categoria; document.getElementById('nc-titulo').innerText = noticia.titulo;
-            document.getElementById('nc-autor').innerText = "Por: " + noticia.autor; document.getElementById('nc-data').innerText = noticia.dataHora ? "Publicado em " + noticia.dataHora.replace(' ', ' às ') : '';
+            document.getElementById('home-feed-container').classList.add('hidden');
+            document.getElementById('noticia-completa-container').classList.remove('hidden');
+            document.getElementById('nc-categoria').innerText = noticia.categoria;
+            document.getElementById('nc-titulo').innerText = noticia.titulo;
+            document.getElementById('nc-autor').innerText = "Por: " + noticia.autor;
+            document.getElementById('nc-data').innerText = noticia.dataHora ? "Publicado em " + noticia.dataHora.replace(' ', ' às ') : '';
             
             var conteudoFormatado = converterVideoUrlsParaPlayers(noticia.conteudo || '');
             document.getElementById('nc-conteudo').innerHTML = conteudoFormatado || '<p class="text-gray-400 italic">Sem conteúdo disponível para esta matéria.</p>';
             
-            // Injeta o script do Instagram caso haja posts
+            // Ativar os Embeds Nativos do Instagram e Twitter se a notícia tiver links
             if(conteudoFormatado.indexOf('instagram-media') !== -1) {
                 setTimeout(function(){ if(window.instgrm) window.instgrm.Embeds.process(); }, 500);
             }
+            if(conteudoFormatado.indexOf('twitter-tweet') !== -1) {
+                setTimeout(function(){ if(window.twttr) window.twttr.widgets.load(); }, 500);
+            }
             
             var ncImg = document.getElementById('nc-imagem');
-            if(noticia.urlImagem && noticia.urlImagem.trim() !== '') { ncImg.src = noticia.urlImagem; document.getElementById('nc-imagem-container').classList.remove('hidden'); } else { document.getElementById('nc-imagem-container').classList.add('hidden'); }
+            if(noticia.urlImagem && noticia.urlImagem.trim() !== '') { 
+                ncImg.src = noticia.urlImagem; 
+                document.getElementById('nc-imagem-container').classList.remove('hidden'); 
+            } else { 
+                document.getElementById('nc-imagem-container').classList.add('hidden'); 
+            }
             
-            document.getElementById('nc-creditos').innerText = noticia.creditosImagem ? 'Foto: ' + noticia.creditosImagem : '';
-            document.getElementById('nc-legenda').innerText = noticia.legendaImagem ? noticia.legendaImagem : '';
+            var ncCreditos = document.getElementById('nc-creditos');
+            if(noticia.creditosImagem) {
+                ncCreditos.innerText = 'Foto: ' + noticia.creditosImagem;
+            } else {
+                ncCreditos.innerText = '';
+            }
+
+            var ncLegenda = document.getElementById('nc-legenda');
+            if(noticia.legendaImagem) {
+                ncLegenda.innerText = noticia.legendaImagem;
+            } else {
+                ncLegenda.innerText = '';
+            }
             
             var coms = comentariosGlobais.filter(function(c) { return c && String(c.idNoticia) === String(idNoticia); });
             var divComs = document.getElementById('lista-comentarios'); 
             if (divComs) {
                 divComs.innerHTML = '';
-                if(coms.length === 0) divComs.innerHTML = '<p class="text-sm text-gray-400 italic">Seja o primeiro a comentar.</p>'; 
-                else { coms.forEach(function(c) { if(c) divComs.innerHTML += '<div class="bg-white p-4 border border-gray-200 rounded-sm"><div class="flex items-center gap-2 mb-2"><span class="font-bold text-sm text-jornal-dark">' + c.nome + '</span><span class="text-[10px] text-gray-400 uppercase">' + c.data + '</span></div><p class="text-sm text-gray-700">' + c.texto + '</p></div>'; }); }
+                if(coms.length === 0) { 
+                    divComs.innerHTML = '<p class="text-sm text-gray-400 italic">Seja o primeiro a comentar.</p>'; 
+                } else { 
+                    coms.forEach(function(c) { 
+                        if(c) divComs.innerHTML += '<div class="bg-white p-4 border border-gray-200 rounded-sm">' +
+                            '<div class="flex items-center gap-2 mb-2"><span class="font-bold text-sm text-jornal-dark">' + c.nome + '</span><span class="text-[10px] text-gray-400 uppercase">' + c.data + '</span></div>' +
+                            '<p class="text-sm text-gray-700">' + c.texto + '</p></div>'; 
+                    }); 
+                }
             }
             
-            // NOVO: Incrementar as visualizações da notícia silenciosamente
-            google.script.run.incrementarView({id: noticiaAbertaId});
+            // Atualizar os Views Silenciosamente
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.incrementarView(noticiaAbertaId);
+            }
             
             window.scrollTo(0,0);
         }
 
-        function fecharNoticiaUI() { noticiaAbertaId = null; document.getElementById('noticia-completa-container').classList.add('hidden'); document.getElementById('home-feed-container').classList.remove('hidden'); window.scrollTo(0,0); }
+        function fecharNoticiaUI() { 
+            noticiaAbertaId = null; 
+            document.getElementById('noticia-completa-container').classList.add('hidden'); 
+            document.getElementById('home-feed-container').classList.remove('hidden'); 
+            window.scrollTo(0,0);
+        }
+        
         function fecharNoticia() { atualizarURL('noticia', null); fecharNoticiaUI(); }
         function voltarCapa() { fecharNoticia(); filtrarCategoria('Todas', true); document.getElementById('input-pesquisa').value = ''; }
         function abrirModalLogin() { document.getElementById('modalLogin').classList.remove('hidden'); document.getElementById('modalLogin').classList.add('flex'); }
         function fecharModalLogin() { document.getElementById('modalLogin').classList.add('hidden'); }
 
         function mostrarMensagem(mensagem, tipo) {
-            if(tipo === undefined) tipo = 'sucesso'; var toast = document.getElementById('toast'); document.getElementById('toast-msg').innerText = mensagem;
+            if(tipo === undefined) tipo = 'sucesso';
+            var toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = mensagem;
             toast.className = tipo === 'erro' ? 'fixed top-5 right-5 px-6 py-4 font-bold shadow-xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-white border-red-600 text-red-600 rounded-sm' : 'fixed top-5 right-5 px-6 py-4 font-bold shadow-xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-jornal-dark border-jornal-dark text-white rounded-sm';
             document.getElementById('toast-icon').innerHTML = tipo === 'erro' ? '⚠️' : '✓';
-            toast.classList.remove('hidden'); setTimeout(function() { toast.classList.add('hidden'); }, 4500);
+            toast.classList.remove('hidden');
+            setTimeout(function() { toast.classList.add('hidden'); }, 4500);
         }
 
         function fazerLogin(e) {
-            e.preventDefault(); var u = document.getElementById('login-user').value; var p = document.getElementById('login-pass').value; var btn = document.getElementById('btn-fazer-login'); btn.innerHTML = "A VERIFICAR..."; btn.disabled = true;
+            e.preventDefault();
+            var u = document.getElementById('login-user').value;
+            var p = document.getElementById('login-pass').value;
+            var btn = document.getElementById('btn-fazer-login');
+            btn.innerHTML = "A VERIFICAR..."; btn.disabled = true;
 
-            google.script.run.withSuccessHandler(function(res) {
-                if (res && res.sucesso) { try { localStorage.setItem('admin_logado', 'true'); } catch(err) {} ativarModoLogado(); fecharModalLogin(); document.getElementById('view-portal').classList.add('hidden'); document.getElementById('view-admin').classList.remove('hidden'); window.scrollTo(0,0); carregarListaEdicao(); renderizarChecklistCategoriasAdmin(); preencherFormCapa(); } 
-                else { mostrarMensagem(res ? res.erro : "Resposta inválida.", 'erro'); }
-                btn.innerHTML = "ENTRAR"; btn.disabled = false;
-            }).withFailureHandler(function(erro) {
-                mostrarMensagem("Falha na rede: " + erro.message, 'erro'); btn.innerHTML = "ENTRAR"; btn.disabled = false;
-            }).verificarLogin({usuario: u, senha: p});
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if (res && res.sucesso) {
+                        try { localStorage.setItem('admin_logado', 'true'); } catch(err) {}
+                        ativarModoLogado(); fecharModalLogin(); document.getElementById('view-portal').classList.add('hidden'); document.getElementById('view-admin').classList.remove('hidden'); window.scrollTo(0,0); carregarListaEdicao(); renderizarChecklistCategoriasAdmin(); preencherFormCapa();
+                    } else { mostrarMensagem(res ? res.erro : "Resposta inválida.", 'erro'); }
+                    btn.innerHTML = "ENTRAR"; btn.disabled = false;
+                }).withFailureHandler(function(erro) {
+                    mostrarMensagem("Falha na rede: " + erro.message, 'erro'); btn.innerHTML = "ENTRAR"; btn.disabled = false;
+                }).verificarLogin(u, p);
+            }
         }
 
         function ativarModoLogado() {
-            var btnTop = document.getElementById('btn-top-login'); if(btnTop) { btnTop.innerHTML = '⚙️ Painel Admin'; btnTop.onclick = abrirPainelDireto; }
-            var btnHeader = document.getElementById('btn-header-login'); if(btnHeader) { btnHeader.innerHTML = 'PAINEL'; btnHeader.onclick = abrirPainelDireto; }
+            var btnTop = document.getElementById('btn-top-login');
+            if(btnTop) { btnTop.innerHTML = '⚙️ Painel Admin'; btnTop.onclick = abrirPainelDireto; }
+            var btnHeader = document.getElementById('btn-header-login');
+            if(btnHeader) { btnHeader.innerHTML = 'PAINEL'; btnHeader.onclick = abrirPainelDireto; }
         }
 
         function abrirPainelDireto() {
-            fecharNoticiaUI(); document.getElementById('view-portal').classList.add('hidden'); document.getElementById('view-admin').classList.remove('hidden'); window.scrollTo(0,0); 
-            carregarListaEdicao(); renderizarChecklistCategoriasAdmin(); preencherFormCapa();
+            fecharNoticiaUI();
+            document.getElementById('view-portal').classList.add('hidden'); 
+            document.getElementById('view-admin').classList.remove('hidden'); 
+            window.scrollTo(0,0); 
+            carregarListaEdicao(); 
+            renderizarChecklistCategoriasAdmin();
+            preencherFormCapa();
         }
         
-        function irParaPortal() { document.getElementById('view-admin').classList.add('hidden'); document.getElementById('view-portal').classList.remove('hidden'); carregarNoticias(true); window.scrollTo(0,0); }
+        function irParaPortal() { 
+            document.getElementById('view-admin').classList.add('hidden'); 
+            document.getElementById('view-portal').classList.remove('hidden'); 
+            carregarNoticias(true); 
+            window.scrollTo(0,0); 
+        }
 
         function encerrarSessao() {
             try { localStorage.removeItem('admin_logado'); } catch(err) {}
-            var btnTop = document.getElementById('btn-top-login'); if(btnTop) { btnTop.innerHTML = '🔒 Acesso Restrito'; btnTop.onclick = abrirModalLogin; }
-            var btnHeader = document.getElementById('btn-header-login'); if(btnHeader) { btnHeader.innerHTML = 'LOGIN'; btnHeader.onclick = abrirModalLogin; }
-            irParaPortal(); mostrarMensagem('Sessão encerrada com sucesso.');
+            var btnTop = document.getElementById('btn-top-login');
+            if(btnTop) { btnTop.innerHTML = '🔒 Acesso Restrito'; btnTop.onclick = abrirModalLogin; }
+            var btnHeader = document.getElementById('btn-header-login');
+            if(btnHeader) { btnHeader.innerHTML = 'LOGIN'; btnHeader.onclick = abrirModalLogin; }
+            irParaPortal();
+            mostrarMensagem('Sessão encerrada com sucesso.');
         }
         
         function alternarAbaAdmin(abaId) {
-            ['form-noticia-container', 'lista-noticias-container', 'form-logo-container', 'form-propaganda-container', 'form-social-container', 'form-placar-container', 'form-capa-container'].forEach(function(id) { var el = document.getElementById(id); if(el) el.classList.add('hidden'); });
-            ['aba-noticia', 'aba-lista', 'aba-logo', 'aba-propaganda', 'aba-social', 'aba-placar', 'aba-capa'].forEach(function(id) { var el = document.getElementById(id); if(el) el.className = "py-3 md:py-2 px-4 md:px-6 font-bold text-xs md:text-sm bg-gray-200 text-gray-600 hover:bg-gray-300 uppercase tracking-wider whitespace-nowrap rounded-t-sm"; });
+            ['form-noticia-container', 'lista-noticias-container', 'form-logo-container', 'form-propaganda-container', 'form-social-container', 'form-placar-container', 'form-capa-container'].forEach(function(id) { 
+                var el = document.getElementById(id); if(el) el.classList.add('hidden'); 
+            });
+            ['aba-noticia', 'aba-lista', 'aba-logo', 'aba-propaganda', 'aba-social', 'aba-placar', 'aba-capa'].forEach(function(id) { 
+                var el = document.getElementById(id); if(el) el.className = "py-3 md:py-2 px-4 md:px-6 font-bold text-xs md:text-sm bg-gray-200 text-gray-600 hover:bg-gray-300 uppercase tracking-wider whitespace-nowrap rounded-t-sm"; 
+            });
             
-            var targetEl = document.getElementById(abaId); if(targetEl) targetEl.classList.remove('hidden');
+            var targetEl = document.getElementById(abaId);
+            if(targetEl) targetEl.classList.remove('hidden');
+            
             var botaoId = ""; var classAtiva = "bg-jornal-blue text-white";
             
             if (abaId === 'form-noticia-container') botaoId = 'aba-noticia';
@@ -1362,232 +1801,343 @@
             else if (abaId === 'form-social-container') botaoId = 'aba-social';
             else if (abaId === 'form-placar-container') { botaoId = 'aba-placar'; preencherFormPlacar(); }
             
-            var btnEl = document.getElementById(botaoId); if(btnEl) btnEl.className = 'py-3 md:py-2 px-4 md:px-6 font-bold text-xs md:text-sm uppercase tracking-wider whitespace-nowrap rounded-t-sm ' + classAtiva;
+            var btnEl = document.getElementById(botaoId);
+            if(btnEl) btnEl.className = 'py-3 md:py-2 px-4 md:px-6 font-bold text-xs md:text-sm uppercase tracking-wider whitespace-nowrap rounded-t-sm ' + classAtiva;
+            
             if (abaId === 'lista-noticias-container') carregarListaEdicao();
         }
 
         function preencherFormCapa() {
-            var container = document.getElementById('selects-capa-container'); if(!container) return;
-            var html = ''; var ordemAtual = [];
-            if(configuracoesGlobais['CategoriasCapa']) { try { ordemAtual = JSON.parse(configuracoesGlobais['CategoriasCapa']); } catch(e){} }
+            var container = document.getElementById('selects-capa-container');
+            if(!container) return;
+            var html = '';
+            var ordemAtual = [];
+            if(configuracoesGlobais['CategoriasCapa']) {
+                try { ordemAtual = JSON.parse(configuracoesGlobais['CategoriasCapa']); } catch(e){}
+            }
             for(var i=1; i<=8; i++) {
                 var valorAtual = ordemAtual.length >= i ? ordemAtual[i-1] : '';
                 html += '<div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Posição ' + i + '</label>';
-                html += '<select id="capa-pos-' + i + '" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm uppercase rounded-sm"><option value="">-- NENHUMA --</option>';
-                listaCategoriasLocais.forEach(function(c) { html += '<option value="' + c + '"' + (c === valorAtual ? ' selected' : '') + '>' + c + '</option>'; });
+                html += '<select id="capa-pos-' + i + '" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm uppercase rounded-sm">';
+                html += '<option value="">-- NENHUMA --</option>';
+                listaCategoriasLocais.forEach(function(c) {
+                    var sel = (c === valorAtual) ? ' selected' : '';
+                    html += '<option value="' + c + '"' + sel + '>' + c + '</option>';
+                });
                 html += '</select></div>';
             }
             container.innerHTML = html;
         }
 
         function salvarOrdemCapa(e) {
-            e.preventDefault(); var btn = document.getElementById('btn-salvar-capa'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
+            e.preventDefault();
+            var btn = document.getElementById('btn-salvar-capa');
+            var txt = btn.innerHTML;
+            btn.innerHTML = "A SALVAR...";
+            btn.disabled = true;
+
             var selecionadas = [];
-            for(var i=1; i<=8; i++) { var val = document.getElementById('capa-pos-' + i).value; if(val) selecionadas.push(val); }
+            for(var i=1; i<=8; i++) {
+                var val = document.getElementById('capa-pos-' + i).value;
+                if(val) selecionadas.push(val);
+            }
+
             var jsonStr = JSON.stringify(selecionadas);
-            google.script.run.withSuccessHandler(function() {
-                mostrarMensagem("Ordem da capa atualizada!"); configuracoesGlobais['CategoriasCapa'] = jsonStr; btn.innerHTML = txt; btn.disabled = false; carregarNoticias(true);
-            }).salvarConfiguracaoHTMLCustom({chave: 'CategoriasCapa', valor: jsonStr});
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function() {
+                    mostrarMensagem("Ordem da capa atualizada!");
+                    configuracoesGlobais['CategoriasCapa'] = jsonStr;
+                    btn.innerHTML = txt;
+                    btn.disabled = false;
+                    carregarNoticias(true);
+                }).salvarConfiguracaoHTMLCustom('CategoriasCapa', jsonStr);
+            }
         }
 
         function salvarChaveIA() {
-            var val = document.getElementById('config-chave-ia').value.trim(); var btn = document.getElementById('btn-salvar-chave'); var txt = btn.innerText; btn.innerText = 'A GUARDAR...'; btn.disabled = true;
-            google.script.run.withSuccessHandler(function() {
-                mostrarMensagem('Chave da IA guardada com sucesso!'); configuracoesGlobais['ChaveIA'] = val; btn.innerText = txt; btn.disabled = false;
-            }).salvarConfiguracaoHTMLCustom({chave: 'ChaveIA', valor: val});
+            var val = document.getElementById('config-chave-ia').value.trim();
+            var btn = document.getElementById('btn-salvar-chave');
+            var txt = btn.innerText;
+            btn.innerText = 'A GUARDAR...'; btn.disabled = true;
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function() {
+                    mostrarMensagem('Chave da IA guardada com sucesso!');
+                    configuracoesGlobais['ChaveIA'] = val;
+                    btn.innerText = txt; btn.disabled = false;
+                }).salvarConfiguracaoHTMLCustom('ChaveIA', val);
+            }
         }
 
         function gerarLogoIA() {
-            var desc = document.getElementById('prompt-logo').value.trim(); if(!desc) { mostrarMensagem("Descreva como quer o logótipo.", "erro"); document.getElementById('prompt-logo').focus(); return; }
-            var btn = document.getElementById('btn-gerar-logo'); var txt = btn.innerText; btn.innerText = "A CRIAR..."; btn.disabled = true;
+            var desc = document.getElementById('prompt-logo').value.trim(); 
+            if(!desc) { mostrarMensagem("Descreva como quer o logótipo.", "erro"); document.getElementById('prompt-logo').focus(); return; }
+            var btn = document.getElementById('btn-gerar-logo'); 
+            var txt = btn.innerText; btn.innerText = "A CRIAR..."; btn.disabled = true;
             var promptFinal = "A highly professional, minimalist vector logo design for a digital news portal named 'Notícias Avulsas'. " + desc + ". Isolated on a clean white background, no text other than the brand name if strictly necessary, high resolution, corporate identity.";
             
-            google.script.run.withSuccessHandler(function(res) {
-                if(res && res.sucesso && res.base64) {
-                    var html = '<img src="data:image/png;base64,' + res.base64 + '" class="h-12 object-contain cursor-pointer" onclick="voltarCapa();"/>';
-                    document.getElementById('preview-logo-ia').innerHTML = html; document.getElementById('preview-logo-wrapper').classList.remove('hidden'); window.novaLogoHtml = html; mostrarMensagem("Logótipo criado com sucesso!");
-                } else { mostrarMensagem("Erro na IA: " + (res ? res.erro : "Desconhecido"), "erro"); }
-                btn.innerText = txt; btn.disabled = false;
-            }).withFailureHandler(function(error) {
-                mostrarMensagem("Falha na comunicação com o servidor da Google.", "erro"); btn.innerText = "✨ Gerar Logótipo com IA"; btn.disabled = false;
-            }).chamarGeminiImagemBackend({promptTexto: promptFinal});
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if(res && res.sucesso && res.base64) {
+                        var html = '<img src="data:image/png;base64,' + res.base64 + '" class="h-12 object-contain cursor-pointer" onclick="voltarCapa();"/>';
+                        document.getElementById('preview-logo-ia').innerHTML = html;
+                        document.getElementById('preview-logo-wrapper').classList.remove('hidden');
+                        window.novaLogoHtml = html;
+                        mostrarMensagem("Logótipo criado com sucesso!");
+                    } else { mostrarMensagem("Erro na IA: " + (res ? res.erro : "Desconhecido"), "erro"); }
+                    btn.innerText = txt; btn.disabled = false;
+                }).withFailureHandler(function(error) {
+                    mostrarMensagem("Falha na comunicação com o servidor da Google.", "erro"); btn.innerText = "✨ Gerar Logótipo com IA"; btn.disabled = false;
+                }).chamarGeminiImagemBackend(promptFinal);
+            }
         }
 
         function aplicarNovaLogo() {
-            if (!window.novaLogoHtml) return; var btn = document.getElementById('btn-aplicar-logo'); var txt = btn.innerText; btn.innerText = "A GUARDAR..."; btn.disabled = true;
-            google.script.run.withSuccessHandler(function(res) {
-                mostrarMensagem('Logo atualizado no servidor!'); document.getElementById('header-branding').innerHTML = window.novaLogoHtml; configuracoesGlobais['LogoHTML'] = window.novaLogoHtml; btn.innerText = txt; btn.disabled = false;
-            }).salvarConfiguracaoHTMLCustom({chave: 'LogoHTML', valor: window.novaLogoHtml});
+            if (!window.novaLogoHtml) return;
+            var btn = document.getElementById('btn-aplicar-logo'); 
+            var txt = btn.innerText; btn.innerText = "A GUARDAR..."; btn.disabled = true;
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    mostrarMensagem('Logo atualizado no servidor!');
+                    document.getElementById('header-branding').innerHTML = window.novaLogoHtml;
+                    configuracoesGlobais['LogoHTML'] = window.novaLogoHtml;
+                    btn.innerText = txt; btn.disabled = false;
+                }).salvarConfiguracaoHTMLCustom('LogoHTML', window.novaLogoHtml);
+            }
         }
 
         function gerarLinhaFinaIA() {
-            var t = document.getElementById('admin-titulo').value.trim(); if(!t) { mostrarMensagem("Preencha a Manchete primeiro.", "erro"); return; }
-            var btn = document.getElementById('btn-ia-linhafina'); var txt = btn.innerText; btn.innerText = "...";
-            google.script.run.withSuccessHandler(function(res) {
-                if(res && res.sucesso && res.texto) { document.getElementById('admin-linha-fina').value = res.texto.trim(); mostrarMensagem("Linha fina gerada com sucesso!"); } 
-                else { mostrarMensagem("Erro na IA: " + (res ? res.erro : "Falha"), "erro"); }
-                btn.innerText = txt;
-            }).chamarGeminiBackend({promptTexto: 'Escreva uma linha fina curta, atrativa e jornalística (apenas texto, sem aspas) para o título: "' + t + '"'});
+            var t = document.getElementById('admin-titulo').value.trim(); 
+            if(!t) { mostrarMensagem("Preencha a Manchete primeiro.", "erro"); return; }
+            var btn = document.getElementById('btn-ia-linhafina'); 
+            var txt = btn.innerText; btn.innerText = "...";
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if(res && res.sucesso && res.texto) {
+                        document.getElementById('admin-linha-fina').value = res.texto.trim();
+                        mostrarMensagem("Linha fina gerada com sucesso!");
+                    } else { mostrarMensagem("Erro na IA: " + (res ? res.erro : "Falha"), "erro"); }
+                    btn.innerText = txt;
+                }).withFailureHandler(function(error) {
+                    mostrarMensagem("Falha na comunicação com a IA.", "erro"); btn.innerText = "✨ Gerar com IA";
+                }).chamarGeminiBackend('Escreva uma linha fina curta, atrativa e jornalística (apenas texto, sem aspas) para o título: "' + t + '"');
+            }
         }
 
         function gerarConteudoIA() {
-            var t = document.getElementById('admin-titulo').value.trim(); if(!t) { mostrarMensagem("Preencha a Manchete primeiro.", "erro"); return; }
-            var btn = document.getElementById('btn-ia-conteudo'); var txt = btn.innerText; btn.innerText = "A escrever...";
+            var t = document.getElementById('admin-titulo').value.trim(); 
+            if(!t) { mostrarMensagem("Preencha a Manchete primeiro.", "erro"); return; }
+            var btn = document.getElementById('btn-ia-conteudo'); 
+            var txt = btn.innerText; btn.innerText = "A escrever...";
+            
             var lf = document.getElementById('admin-linha-fina').value.trim();
             var promptStr = 'Atue como um jornalista. Escreva uma notícia completa em HTML (use apenas tags <p>, <h2>, <ul> e não use a tag <html> ou <body> nem formatação markdown). Manchete: "' + t + '". ' + (lf ? 'Linha Fina: "' + lf + '"' : '');
             
-            google.script.run.withSuccessHandler(function(res) {
-                if(res && res.sucesso && res.texto) {
-                    var cleanHtml = res.texto.replace(/(\`\`\`html|\`\`\`)/gi, '').trim(); document.getElementById('admin-editor-rich').innerHTML = cleanHtml; mostrarMensagem("Texto gerado com sucesso!");
-                } else { mostrarMensagem("Erro na IA: " + (res ? res.erro : "Falha"), "erro"); }
-                btn.innerText = txt;
-            }).chamarGeminiBackend({promptTexto: promptStr});
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if(res && res.sucesso && res.texto) {
+                        var cleanHtml = res.texto.replace(/(\`\`\`html|\`\`\`)/gi, '').trim();
+                        document.getElementById('admin-editor-rich').innerHTML = cleanHtml;
+                        mostrarMensagem("Texto gerado com sucesso!");
+                    } else { mostrarMensagem("Erro na IA: " + (res ? res.erro : "Falha"), "erro"); }
+                    btn.innerText = txt;
+                }).withFailureHandler(function(error) {
+                    mostrarMensagem("Falha na comunicação com a IA.", "erro"); btn.innerText = "✨ Escrever Matéria com IA";
+                }).chamarGeminiBackend(promptStr);
+            }
         }
 
         function removerHTML(t) { return t ? String(t).replace(/<[^>]*>?/gm, '') : ''; }
-        
-        // NOVO: Conversor NATIVO de vídeos (Mostra Thumbnails do Insta, TikTok, Twitter e YouTube)
-        function converterVideoUrlsParaPlayers(t) { 
-            if (!t) return ""; var strT = String(t);
-            
-            // YouTube (Iframe padrão já mostra o thumbnail com botão de play)
-            var ytRegex = /(?:<a[^>]*href=")?(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:"[^>]*>.*?<\/a>)?/gi;
-            strT = strT.replace(ytRegex, function(match, id) {
-                return '<div class="aspect-video w-full my-4 shadow-md rounded overflow-hidden"><iframe class="w-full h-full" src="https://www.youtube.com/embed/' + id + '" frameborder="0" allowfullscreen></iframe></div>';
-            });
-
-            // Instagram (Usa o Blockquote Oficial do Instagram que renderiza o Reel/Post com Thumbnail Nativo)
-            var igRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[a-zA-Z0-9_-]+)(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
-            strT = strT.replace(igRegex, function(match, url) {
-                return '<blockquote class="instagram-media" data-instgrm-permalink="' + url + '/?utm_source=ig_embed" data-instgrm-version="14" style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px auto; max-width:540px; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);"></blockquote>';
-            });
-
-            // TikTok (Usa o Blockquote Oficial do TikTok)
-            var tkRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?tiktok\.com\/@[a-zA-Z0-9_.-]+\/video\/([0-9]+))(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
-            strT = strT.replace(tkRegex, function(match, fullUrl, id) {
-                return '<blockquote class="tiktok-embed" cite="' + fullUrl + '" data-video-id="' + id + '" style="max-width: 605px;min-width: 325px;" > <section> <a target="_blank" title="Video no TikTok" href="' + fullUrl + '">Assistir no TikTok</a> </section> </blockquote> <script async src="https://www.tiktok.com/embed.js"><\/script>';
-            });
-
-            // Twitter / X
-            var twRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?(?:twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/status\/[0-9]+)(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
-            strT = strT.replace(twRegex, function(match, url) {
-                var cleanUrl = url.replace('x.com', 'twitter.com');
-                return '<div class="my-4 overflow-hidden rounded"><blockquote class="twitter-tweet" data-dnt="true"><a href="' + cleanUrl + '"></a></blockquote></div>'; 
-            });
-
-            return strT;
-        } 
         
         function salvarNoticia(e) { 
             e.preventDefault(); 
             var editandoID = document.getElementById('admin-id-noticia').value;
             var noCarrossel = document.getElementById('admin-carrossel').checked;
+
             var prevSrc = document.getElementById('preview-imagem').src;
             var temImagemAnterior = prevSrc && (prevSrc.indexOf('http') !== -1 || prevSrc.indexOf('data:image') !== -1);
+
             var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
             if (checkboxes.length === 0) { mostrarMensagem("Selecione ao menos 1 Editoria.", "erro"); return; }
             var categoriasSelecionadas = Array.from(checkboxes).map(function(cb) { return cb.value; }).join(", ");
 
             var creditos = document.getElementById('admin-creditos-imagem').value.trim();
-            if ((base64StringNoticia || temImagemAnterior) && !creditos) { mostrarMensagem("Crédito de imagem é obrigatório.", "erro"); document.getElementById('admin-creditos-imagem').focus(); return; }
+            if ((base64StringNoticia || temImagemAnterior) && !creditos) {
+                mostrarMensagem("Atenção! Você anexou uma mídia, o crédito é obrigatório.", "erro");
+                document.getElementById('admin-creditos-imagem').focus(); return;
+            }
 
             var btn = document.getElementById('btn-salvar-noticia'); var txt = btn.innerHTML; btn.innerHTML = 'A publicar...'; btn.disabled = true;
             
             if (noCarrossel) {
                 var ativosCarrossel = noticiasGlobais.filter(function(n) { return String(n.noCarrossel) === 'true' && n.status === 'Ativa' && n.id !== editandoID; });
                 if (ativosCarrossel.length >= 5) {
-                    ativosCarrossel.reverse(); var numToRemove = (ativosCarrossel.length - 5) + 1;
-                    for(var i=0; i<numToRemove; i++) { var targetIdx = noticiasGlobais.findIndex(function(n) { return n.id === ativosCarrossel[i].id; }); if(targetIdx > -1) noticiasGlobais[targetIdx].noCarrossel = false; }
+                    ativosCarrossel.reverse(); 
+                    var numToRemove = (ativosCarrossel.length - 5) + 1;
+                    for(var i=0; i<numToRemove; i++) {
+                       var targetIdx = noticiasGlobais.findIndex(function(n) { return n.id === ativosCarrossel[i].id; });
+                       if(targetIdx > -1) noticiasGlobais[targetIdx].noCarrossel = false;
+                    }
                 }
             }
 
             var conteudoRich = document.getElementById('admin-editor-rich').innerHTML;
             var payload = {
-                id: editandoID, titulo: document.getElementById('admin-titulo').value, categoria: categoriasSelecionadas, linhaFina: document.getElementById('admin-linha-fina').value,
-                conteudo: conteudoRich, autor: document.getElementById('admin-autor').value, dataAgendamento: document.getElementById('admin-agendamento').value, 
-                dataFimEvento: document.getElementById('admin-data-fim-evento').value, noCarrossel: noCarrossel, legendaImagem: document.getElementById('admin-legenda-imagem').value, creditosImagem: creditos
+                id: editandoID, titulo: document.getElementById('admin-titulo').value, 
+                categoria: categoriasSelecionadas, linhaFina: document.getElementById('admin-linha-fina').value,
+                conteudo: conteudoRich, autor: document.getElementById('admin-autor').value,
+                dataAgendamento: document.getElementById('admin-agendamento').value, 
+                dataFimEvento: document.getElementById('admin-data-fim-evento').value,
+                noCarrossel: noCarrossel, legendaImagem: document.getElementById('admin-legenda-imagem').value,
+                creditosImagem: creditos
             };
 
             if (base64StringNoticia) { payload.isUpload = true; payload.base64 = base64StringNoticia; payload.mimeType = mimeStringNoticia; payload.fileName = nameStringNoticia; } 
             else { payload.isUpload = false; }
             
-            google.script.run.withSuccessHandler(function(res) {
-                if (res && res.sucesso) { mostrarMensagem('Matéria Guardada!'); limparFormNoticia(); carregarNoticias(true); setTimeout(function() { alternarAbaAdmin('lista-noticias-container'); }, 1500); } 
-                else { mostrarMensagem(res ? res.erro : "Erro ao guardar", 'erro'); }
-                btn.innerHTML = txt; btn.disabled = false;
-            }).salvarNoticiaNoSheets(payload);
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if (res && res.sucesso) { mostrarMensagem('Matéria Guardada!'); limparFormNoticia(); carregarNoticias(true); setTimeout(function() { alternarAbaAdmin('lista-noticias-container'); }, 1500); } 
+                    else { mostrarMensagem(res ? res.erro : "Erro ao guardar", 'erro'); }
+                    btn.innerHTML = txt; btn.disabled = false;
+                }).salvarNoticiaNoSheets(payload);
+            }
         }
         
         function salvarPropaganda(e) { 
-            e.preventDefault(); var btn = document.getElementById('btn-salvar-propaganda'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
-            var payload = { empresa: document.getElementById('prop-empresa').value + '|||' + document.getElementById('prop-tempo').value, local: document.getElementById('prop-local').value, linkDestino: document.getElementById('prop-link').value };
+            e.preventDefault(); 
+            var btn = document.getElementById('btn-salvar-propaganda'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
+            
+            var payload = { 
+                empresa: document.getElementById('prop-empresa').value + '|||' + document.getElementById('prop-tempo').value, 
+                local: document.getElementById('prop-local').value, 
+                linkDestino: document.getElementById('prop-link').value 
+            };
+
             if (base64StringProp) { payload.isUpload = true; payload.base64 = base64StringProp; payload.mimeType = mimeStringProp; payload.fileName = nameStringProp; payload.urlArquivo = ''; } 
             else { payload.isUpload = false; payload.urlArquivo = document.getElementById('prop-imagem').value; payload.tipo = 'link'; }
             
-            google.script.run.withSuccessHandler(function(res) { mostrarMensagem('Anúncio no ar!'); document.getElementById('form-propaganda').reset(); base64StringProp = ""; btn.innerHTML = txt; btn.disabled = false; carregarNoticias(true); }).salvarPropagandaNoSheets(payload);
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) { mostrarMensagem('Anúncio no ar!'); document.getElementById('form-propaganda').reset(); base64StringProp = ""; btn.innerHTML = txt; btn.disabled = false; carregarNoticias(true); }).salvarPropagandaNoSheets(payload);
+            }
         }
         
         function salvarRedesSociais(e) { 
-            e.preventDefault(); var btn = document.getElementById('btn-salvar-sociais'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
-            google.script.run.salvarConfiguracaoHTMLCustom({chave: 'soc-inst-url', valor: document.getElementById('soc-inst-url').value});
-            google.script.run.salvarConfiguracaoHTMLCustom({chave: 'soc-fb-url', valor: document.getElementById('soc-fb-url').value});
-            google.script.run.salvarConfiguracaoHTMLCustom({chave: 'soc-x-url', valor: document.getElementById('soc-x-url').value});
-            google.script.run.withSuccessHandler(function() { mostrarMensagem("Redes sociais atualizadas!"); btn.innerHTML = txt; btn.disabled = false; carregarNoticias(true); }).salvarConfiguracaoHTMLCustom({chave: 'soc-yt-url', valor: document.getElementById('soc-yt-url').value});
+            e.preventDefault();
+            var btn = document.getElementById('btn-salvar-sociais');
+            var txt = btn.innerHTML;
+            btn.innerHTML = "A SALVAR...";
+            btn.disabled = true;
+
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-inst-url', document.getElementById('soc-inst-url').value);
+                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-fb-url', document.getElementById('soc-fb-url').value);
+                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-x-url', document.getElementById('soc-x-url').value);
+                window.google.script.run.withSuccessHandler(function() {
+                    mostrarMensagem("Redes sociais atualizadas!");
+                    btn.innerHTML = txt;
+                    btn.disabled = false;
+                    carregarNoticias(true);
+                }).salvarConfiguracaoHTMLCustom('soc-yt-url', document.getElementById('soc-yt-url').value);
+            }
         }
 
-        var base64StringNoticia = ""; var mimeStringNoticia = ""; var nameStringNoticia = "";
         function verificarUploadMedia(input) {
-            var containerMetadados = document.getElementById('admin-imagem-metadados'); var inputCreditos = document.getElementById('admin-creditos-imagem');
-            if (input && input.files && input.files[0]) { if (containerMetadados) containerMetadados.classList.remove('hidden'); if (inputCreditos) inputCreditos.required = true; } 
-            else { var prevSrc = document.getElementById('preview-imagem').src; if (!prevSrc || prevSrc === "" || prevSrc.indexOf('via.placeholder') !== -1 || prevSrc.indexOf('placehold.co') !== -1) { if (containerMetadados) containerMetadados.classList.add('hidden'); if (inputCreditos) inputCreditos.required = false; } }
+            var containerMetadados = document.getElementById('admin-imagem-metadados');
+            var inputCreditos = document.getElementById('admin-creditos-imagem');
+            if (input && input.files && input.files[0]) {
+                if (containerMetadados) containerMetadados.classList.remove('hidden');
+                if (inputCreditos) inputCreditos.required = true;
+            } else {
+                var prevSrc = document.getElementById('preview-imagem').src;
+                if (!prevSrc || prevSrc === "" || prevSrc.indexOf('via.placeholder') !== -1 || prevSrc.indexOf('placehold.co') !== -1) {
+                    if (containerMetadados) containerMetadados.classList.add('hidden');
+                    if (inputCreditos) inputCreditos.required = false;
+                }
+            }
         }
 
         var adminArquivoInput = document.getElementById('admin-arquivo-imagem');
         if(adminArquivoInput) {
             adminArquivoInput.addEventListener('change', function(e) {
-                var file = e.target.files[0]; if (!file) { base64StringNoticia = ""; return; }
+                var file = e.target.files[0];
+                if (!file) { base64StringNoticia = ""; return; }
                 if (file.size > 5 * 1024 * 1024) { alert('Ficheiro excede 5MB.'); this.value = ""; return; }
                 mimeStringNoticia = file.type; nameStringNoticia = file.name;
                 var reader = new FileReader();
                 reader.onload = function(evt) { 
                     base64StringNoticia = evt.target.result.split(',')[1]; 
-                    document.getElementById('preview-imagem').src = evt.target.result; document.getElementById('preview-imagem').classList.remove('hidden'); verificarUploadMedia(e.target);
+                    document.getElementById('preview-imagem').src = evt.target.result;
+                    document.getElementById('preview-imagem').classList.remove('hidden');
+                    verificarUploadMedia(e.target);
                 };
                 reader.readAsDataURL(file);
             });
         }
 
         function limparFormNoticia() {
-            document.getElementById('form-admin').reset(); document.getElementById('admin-id-noticia').value = ""; document.getElementById('preview-imagem').classList.add('hidden'); document.getElementById('preview-imagem').src = "";
-            document.getElementById('admin-carrossel').checked = false; document.getElementById('admin-editor-rich').innerHTML = ""; document.getElementById('admin-imagem-metadados').classList.add('hidden');
-            document.getElementById('admin-creditos-imagem').required = false; document.getElementById('admin-data-fim-evento').value = ""; base64StringNoticia = "";
+            document.getElementById('form-admin').reset();
+            document.getElementById('admin-id-noticia').value = "";
+            document.getElementById('preview-imagem').classList.add('hidden'); document.getElementById('preview-imagem').src = "";
+            document.getElementById('admin-carrossel').checked = false;
+            document.getElementById('admin-editor-rich').innerHTML = "";
+            document.getElementById('admin-imagem-metadados').classList.add('hidden');
+            document.getElementById('admin-creditos-imagem').required = false;
+            document.getElementById('admin-data-fim-evento').value = "";
+            base64StringNoticia = "";
             document.querySelectorAll('input[name="admin-categorias-checkbox"]').forEach(function(cb) { cb.checked = false; });
         }
 
         function renderizarChecklistCategoriasAdmin() {
-            var checklistAdmin = document.getElementById('admin-categoria-checklist'); if(!checklistAdmin) return;
+            var checklistAdmin = document.getElementById('admin-categoria-checklist');
+            if(!checklistAdmin) return;
             checklistAdmin.innerHTML = '';
-            listaCategoriasLocais.forEach(function(c) { checklistAdmin.innerHTML += '<label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700"><input type="checkbox" name="admin-categorias-checkbox" value="' + c + '" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-300" />' + c.toUpperCase() + '</label>'; });
+            listaCategoriasLocais.forEach(function(c) {
+                checklistAdmin.innerHTML += '<label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">' +
+                        '<input type="checkbox" name="admin-categorias-checkbox" value="' + c + '" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-300" />' +
+                        c.toUpperCase() +
+                    '</label>';
+            });
         }
 
         function novaCategoria() {
-            var nome = prompt("Escreva o nome da nova editoria:"); if(!nome) return;
-            google.script.run.withSuccessHandler(function(res) { if(res && res.sucesso) { mostrarMensagem("Editoria adicionada!"); carregarNoticias(true); renderizarChecklistCategoriasAdmin(); } }).adicionarCategoriaNoSheets({nome: nome});
+            var nome = prompt("Escreva o nome da nova editoria:");
+            if(!nome) return;
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if(res && res.sucesso) { mostrarMensagem("Editoria adicionada!"); carregarNoticias(true); renderizarChecklistCategoriasAdmin(); }
+                }).adicionarCategoriaNoSheets({nome: nome});
+            }
         }
 
         function execCmd(command, arg) { if(arg === undefined) arg = null; document.execCommand(command, false, arg); document.getElementById('admin-editor-rich').focus(); }
+        
         function inserirLinkRichEditor() { var url = prompt("Insira a URL completa do hiperlink:"); if (url) execCmd('createLink', url); }
-        function inserirImagemRichEditor() { var input = document.getElementById('upload-imagem-conteudo'); if(input) input.click(); }
+        
+        function inserirImagemRichEditor() { 
+            var input = document.getElementById('upload-imagem-conteudo');
+            if(input) input.click();
+        }
 
         function processarUploadImagemConteudo(input) {
-            if (!input.files || !input.files[0]) return; var file = input.files[0]; var reader = new FileReader();
+            if (!input.files || !input.files[0]) return;
+            var file = input.files[0];
+            var reader = new FileReader();
             reader.onload = function(e) {
                 var img = new Image();
                 img.onload = function() {
-                    var canvas = document.createElement('canvas'); var ctx = canvas.getContext('2d'); var maxWidth = 800; var scale = 1;
-                    if (img.width > maxWidth) scale = maxWidth / img.width;
-                    canvas.width = img.width * scale; canvas.height = img.height * scale; ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    execCmd('insertImage', canvas.toDataURL('image/jpeg', 0.8)); input.value = '';
+                    var canvas = document.createElement('canvas');
+                    var ctx = canvas.getContext('2d');
+                    var maxWidth = 800; // Resize to max 800px to save space
+                    var scale = 1;
+                    if (img.width > maxWidth) { scale = maxWidth / img.width; }
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    var base64Resized = canvas.toDataURL('image/jpeg', 0.8);
+                    execCmd('insertImage', base64Resized);
+                    input.value = ''; // Reset
                 };
                 img.src = e.target.result;
             };
@@ -1596,30 +2146,40 @@
 
         function inserirVideoRichEditor() { var url = prompt("Insira o link do YouTube, Instagram, TikTok ou Twitter (X):"); if (url) execCmd('insertHTML', url + '<br><br>'); }
         
-        var base64StringProp = ""; var mimeStringProp = ""; var nameStringProp = "";
         var propArquivoInput = document.getElementById('prop-arquivo');
-        if (propArquivoInput) { propArquivoInput.addEventListener('change', function(e) { var file = e.target.files[0]; if (!file) return; mimeStringProp = file.type; nameStringProp = file.name; var reader = new FileReader(); reader.onload = function(evt) { base64StringProp = evt.target.result.split(',')[1]; }; reader.readAsDataURL(file); }); }
+        if (propArquivoInput) {
+            propArquivoInput.addEventListener('change', function(e) {
+                var file = e.target.files[0]; if (!file) return; mimeStringProp = file.type; nameStringProp = file.name;
+                var reader = new FileReader(); reader.onload = function(evt) { base64StringProp = evt.target.result.split(',')[1]; }; reader.readAsDataURL(file);
+            });
+        }
         
         function curtirNoticiaAtual() {
             if(!noticiaAbertaId) return;
             var icone = document.getElementById('icone-coracao'); if (icone) { icone.classList.add('text-jornal-red', 'fill-current', 'heart-beat'); setTimeout(function() { icone.classList.remove('heart-beat'); }, 300); }
             var spanLikes = document.getElementById('nc-likes'); if (spanLikes) spanLikes.innerText = parseInt(spanLikes.innerText) + 1;
             var idx = noticiasGlobais.findIndex(function(n) { return n.id === noticiaAbertaId; }); if(idx > -1) noticiasGlobais[idx].likes += 1;
-            google.script.run.curtirNoticiaNoSheets({id: noticiaAbertaId});
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { window.google.script.run.curtirNoticiaNoSheets(noticiaAbertaId); }
         }
 
         function enviarComentario(e) {
             e.preventDefault(); if(!noticiaAbertaId) return;
             var btn = document.getElementById('btn-enviar-comentario'); var txt = btn.innerHTML; btn.innerHTML = 'A enviar...'; btn.disabled = true;
-            google.script.run.withSuccessHandler(function(res) {
-                if (res && res.sucesso) { mostrarMensagem('Comentário publicado!'); document.getElementById('form-comentario').reset(); comentariosGlobais.push(res.comentario); abrirNoticia(noticiaAbertaId, false); }
-                btn.innerHTML = txt; btn.disabled = false;
-            }).salvarComentarioNoSheets({ idNoticia: noticiaAbertaId, nome: document.getElementById('com-nome').value, texto: document.getElementById('com-texto').value });
+            var payload = { idNoticia: noticiaAbertaId, nome: document.getElementById('com-nome').value, texto: document.getElementById('com-texto').value };
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if (res && res.sucesso) { mostrarMensagem('Comentário publicado!'); document.getElementById('form-comentario').reset(); comentariosGlobais.push(res.comentario); abrirNoticia(noticiaAbertaId, false); }
+                    btn.innerHTML = txt; btn.disabled = false;
+                }).salvarComentarioNoSheets(payload);
+            }
         }
         
-        function assinarNewsletter(e) { e.preventDefault(); google.script.run.withSuccessHandler(function(res) { if (res && res.sucesso) { mostrarMensagem('Inscrição registada!'); document.getElementById('form-newsletter').reset(); } }).inscreverNewsletter({email: document.getElementById('news-email').value}); }
-        
-        // NOVO: Função para Partilhar no Instagram copiando a matéria (Botão Admin)
+        function assinarNewsletter(e) {
+            e.preventDefault(); 
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { window.google.script.run.withSuccessHandler(function(res) { if (res && res.sucesso) { mostrarMensagem('Inscrição registada!'); document.getElementById('form-newsletter').reset(); } }).inscreverNewsletter({email: document.getElementById('news-email').value}); } 
+        }
+
+        // NOVO: Função para o Botão Instagram (Copia o texto formatado para publicar)
         function compartilharInstagram(idNoticia) {
             var noticia = noticiasGlobais.find(function(n) { return String(n.id) === String(idNoticia); });
             if (!noticia) return;
@@ -1633,78 +2193,140 @@
                 prompt("O seu navegador bloqueou a cópia automática. Copie o texto abaixo e cole no Instagram:", textoIG);
             });
         }
-
+        
         function carregarListaEdicao() {
-            var tbody = document.getElementById('admin-tabela-noticias'); if(!tbody) return;
+            var tbody = document.getElementById('admin-tabela-noticias'); 
+            if(!tbody) return;
             tbody.innerHTML = '';
             if (noticiasGlobais.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-xs text-gray-500">Nenhuma matéria.</td></tr>'; return; }
             noticiasGlobais.forEach(function(n) {
                 if (n) {
-                    var statusVal = n.status ? n.status.toLowerCase() : 'inativa'; var isAtivo = statusVal === 'ativa';
-                    // NOVO: Adicionado Visualizações (Views) e Botão INSTAGRAM
+                    var statusVal = n.status ? n.status.toLowerCase() : 'inativa';
+                    var isAtivo = statusVal === 'ativa';
+                    
                     tbody.innerHTML += '<tr class="hover:bg-gray-50 border-b border-gray-100">' +
                             '<td class="p-3 text-xs text-gray-500">' + (n.dataHora || '') + '</td>' +
                             '<td class="p-3"><span class="bg-gray-200 text-gray-700 px-2 py-1 rounded text-[10px] uppercase font-bold">' + (n.categoria || 'Geral') + '</span></td>' +
                             '<td class="p-3 font-medium text-jornal-dark truncate max-w-[200px]">' + (n.titulo || '') + '</td>' +
                             '<td class="p-3 text-center text-xs font-black text-jornal-blue">👁️ ' + (n.views || 0) + '</td>' +
                             '<td class="p-3 text-center">' +
-                                '<div class="flex justify-center items-center"><label class="relative inline-flex items-center cursor-pointer select-none">' +
-                                '<input type="checkbox" class="sr-only peer" ' + (isAtivo ? 'checked' : '') + ' onchange="alterarStatusRapido(\'' + n.id + '\', this)" />' +
-                                '<div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-emerald-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[\'\'] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>' +
-                                '<span class="ml-2 text-xs font-bold text-gray-600 select-none uppercase tracking-wide inline-block w-14 text-left">' + (isAtivo ? 'ATIVO' : 'INATIVO') + '</span></label></div></td>' +
+                                '<div class="flex justify-center items-center">' +
+                                    '<label class="relative inline-flex items-center cursor-pointer select-none">' +
+                                        '<input type="checkbox" class="sr-only peer" ' + (isAtivo ? 'checked' : '') + ' onchange="alterarStatusRapido(\'' + n.id + '\', this)" />' +
+                                        '<div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-emerald-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[\'\'] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>' +
+                                        '<span class="ml-2 text-xs font-bold text-gray-600 select-none uppercase tracking-wide inline-block w-14 text-left">' + (isAtivo ? 'ATIVO' : 'INATIVO') + '</span>' +
+                                    '</label>' +
+                                '</div>' +
+                            '</td>' +
                             '<td class="p-3 text-center flex gap-2 justify-center items-center">' +
                                 '<button type="button" onclick="editarNoticia(\'' + n.id + '\')" class="text-[10px] font-bold text-jornal-blue border border-gray-300 px-2 py-1 rounded hover:bg-gray-100 shadow-sm">Editar</button>' +
                                 '<button type="button" onclick="apagarMateria(\'' + n.id + '\')" class="text-[10px] font-bold text-red-500 border border-red-200 px-2 py-1 rounded hover:bg-red-50 shadow-sm">Excluir</button>' +
                                 '<button type="button" onclick="compartilharInstagram(\'' + n.id + '\')" class="text-[10px] font-black text-white bg-gradient-to-tr from-purple-600 to-pink-500 border border-pink-600 px-2 py-1 rounded hover:opacity-90 shadow-sm">Instagram</button>' +
-                            '</td></tr>';
+                            '</td>' +
+                        '</tr>';
                 }
             });
         }
         
         function alterarStatusRapido(id, checkbox) {
-            var isAtivo = checkbox.checked; var labelSpan = checkbox.nextElementSibling.nextElementSibling; if (labelSpan) labelSpan.innerText = isAtivo ? 'ATIVO' : 'INATIVO';
-            google.script.run.withSuccessHandler(function(res) { if(res && res.sucesso) { mostrarMensagem('Visibilidade atualizada para: ' + res.novoStatus); carregarNoticias(true); } }).alternarStatusNoticia({id: id});
+            var isAtivo = checkbox.checked;
+            var labelSpan = checkbox.nextElementSibling.nextElementSibling;
+            if (labelSpan) labelSpan.innerText = isAtivo ? 'ATIVO' : 'INATIVO';
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) { if(res && res.sucesso) { mostrarMensagem('Visibilidade atualizada para: ' + res.novoStatus); carregarNoticias(true); } }).alternarStatusNoticia(id);
+            }
         }
         
         function apagarMateria(id) {
             if(!confirm("Atenção! Vai eliminar a notícia permanentemente.")) return;
-            google.script.run.withSuccessHandler(function(res) { if(res && res.sucesso) { carregarNoticias(true); setTimeout(function() { carregarListaEdicao(); }, 1000); } }).excluirNoticia({id: id});
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) { if(res && res.sucesso) { carregarNoticias(true); setTimeout(function() { carregarListaEdicao(); }, 1000); } }).excluirNoticia(id);
+            }
         }
 
         function editarNoticia(id) {
-            var noticia = noticiasGlobais.find(function(n) { return n && String(n.id) === String(id); }); if(!noticia) return;
-            limparFormNoticia();
-            document.getElementById('admin-id-noticia').value = noticia.id; document.getElementById('admin-titulo').value = noticia.titulo || '';
-            document.getElementById('admin-linha-fina').value = noticia.linhaFina || ""; document.getElementById('admin-editor-rich').innerHTML = noticia.conteudo || '';
-            document.getElementById('admin-autor').value = noticia.autor !== "da redação" ? (noticia.autor || '') : "";
-            document.getElementById('admin-carrossel').checked = (String(noticia.noCarrossel) === 'true'); document.getElementById('admin-data-fim-evento').value = noticia.dataFimEvento || "";
+            var noticia = noticiasGlobais.find(function(n) { return n && String(n.id) === String(id); });
+            if(!noticia) return;
             
-            if (noticia.dataHora) { var parts = noticia.dataHora.split(/[\/\s:]/); if (parts.length >= 5) document.getElementById('admin-agendamento').value = parts[2] + '-' + parts[1] + '-' + parts[0] + 'T' + parts[3] + ':' + parts[4]; } 
-            else document.getElementById('admin-agendamento').value = "";
+            limparFormNoticia();
+            document.getElementById('admin-id-noticia').value = noticia.id;
+            document.getElementById('admin-titulo').value = noticia.titulo || '';
+            document.getElementById('admin-linha-fina').value = noticia.linhaFina || "";
+            document.getElementById('admin-editor-rich').innerHTML = noticia.conteudo || '';
+            document.getElementById('admin-autor').value = noticia.autor !== "da redação" ? (noticia.autor || '') : "";
+            document.getElementById('admin-carrossel').checked = (String(noticia.noCarrossel) === 'true');
+            
+            if (noticia.dataHora) {
+                var parts = noticia.dataHora.split(/[\/\s:]/); 
+                if (parts.length >= 5) {
+                    var dataISO = parts[2] + '-' + parts[1] + '-' + parts[0] + 'T' + parts[3] + ':' + parts[4];
+                    document.getElementById('admin-agendamento').value = dataISO;
+                }
+            } else {
+                document.getElementById('admin-agendamento').value = "";
+            }
+            
+            if (noticia.dataFimEvento) {
+                try {
+                    var dtFim = new Date(noticia.dataFimEvento);
+                    if(!isNaN(dtFim.getTime())) {
+                        var diaF = String(dtFim.getDate()).padStart(2, '0');
+                        var mesF = String(dtFim.getMonth() + 1).padStart(2, '0');
+                        var anoF = dtFim.getFullYear();
+                        var horaF = String(dtFim.getHours()).padStart(2, '0');
+                        var minF = String(dtFim.getMinutes()).padStart(2, '0');
+                        document.getElementById('admin-data-fim-evento').value = anoF + '-' + mesF + '-' + diaF + 'T' + horaF + ':' + minF;
+                    }
+                } catch(e){}
+            } else {
+                document.getElementById('admin-data-fim-evento').value = "";
+            }
             
             var categoriasNoticia = String(noticia.categoria).split(',').map(function(c) { return c.trim().toLowerCase(); });
-            document.querySelectorAll('input[name="admin-categorias-checkbox"]').forEach(function(cb) { cb.checked = categoriasNoticia.indexOf(cb.value.toLowerCase()) !== -1; });
-            document.getElementById('admin-legenda-imagem').value = noticia.legendaImagem || ''; document.getElementById('admin-creditos-imagem').value = noticia.creditosImagem || '';
+            var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]');
+            checkboxes.forEach(function(cb) { cb.checked = categoriasNoticia.indexOf(cb.value.toLowerCase()) !== -1; });
 
-            var prevImg = document.getElementById('preview-imagem'); var containerMetadados = document.getElementById('admin-imagem-metadados');
+            document.getElementById('admin-legenda-imagem').value = noticia.legendaImagem || '';
+            document.getElementById('admin-creditos-imagem').value = noticia.creditosImagem || '';
+
+            var prevImg = document.getElementById('preview-imagem');
+            var containerMetadados = document.getElementById('admin-imagem-metadados');
             if (prevImg) {
-                if(noticia.urlImagem) { prevImg.src = noticia.urlImagem; prevImg.classList.remove('hidden'); if (containerMetadados) containerMetadados.classList.remove('hidden'); } 
-                else { prevImg.src = ""; prevImg.classList.add('hidden'); if (containerMetadados) containerMetadados.classList.add('hidden'); }
+                if(noticia.urlImagem) {
+                    prevImg.src = noticia.urlImagem; prevImg.classList.remove('hidden');
+                    if (containerMetadados) containerMetadados.classList.remove('hidden');
+                } else { 
+                    prevImg.src = ""; prevImg.classList.add('hidden');
+                    if (containerMetadados) containerMetadados.classList.add('hidden');
+                }
             }
             alternarAbaAdmin('form-noticia-container'); window.scrollTo(0,0);
         }
 
         function salvarPlacarAoVivo(e) {
-            e.preventDefault(); var btn = document.getElementById('btn-salvar-placar'); btn.innerText = "A SALVAR..."; btn.disabled = true;
-            var checkboxes = document.querySelectorAll('input[name="liga-placar"]:checked'); var ligasSelecionadas = Array.from(checkboxes).map(function(cb) { return cb.value; });
-            google.script.run.withSuccessHandler(function(res) { 
-                mostrarMensagem("Placar atualizado!"); btn.innerText = "Salvar Ligas"; btn.disabled = false; configuracoesGlobais['LigasPlacar'] = JSON.stringify(ligasSelecionadas); renderizarPlacarAoVivo();
-            }).salvarConfiguracaoHTMLCustom({chave: "LigasPlacar", valor: JSON.stringify(ligasSelecionadas)});
+            e.preventDefault();
+            var btn = document.getElementById('btn-salvar-placar'); btn.innerText = "A SALVAR..."; btn.disabled = true;
+            
+            var checkboxes = document.querySelectorAll('input[name="liga-placar"]:checked');
+            var ligasSelecionadas = Array.from(checkboxes).map(function(cb) { return cb.value; });
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) { 
+                    mostrarMensagem("Placar atualizado!"); btn.innerText = "Salvar Ligas"; btn.disabled = false; 
+                    configuracoesGlobais['LigasPlacar'] = JSON.stringify(ligasSelecionadas);
+                    renderizarPlacarAoVivo();
+                }).salvarConfiguracaoHTMLCustom("LigasPlacar", JSON.stringify(ligasSelecionadas));
+            }
         }
 
         function preencherFormPlacar() {
-            var ligasAtivas = []; if (configuracoesGlobais['LigasPlacar']) { try { ligasAtivas = JSON.parse(configuracoesGlobais['LigasPlacar']); } catch(e){} }
-            document.querySelectorAll('input[name="liga-placar"]').forEach(function(cb) { cb.checked = ligasAtivas.indexOf(cb.value) !== -1; });
+            var ligasAtivas = [];
+            if (configuracoesGlobais['LigasPlacar']) {
+                try { ligasAtivas = JSON.parse(configuracoesGlobais['LigasPlacar']); } catch(e){}
+            }
+            var checkboxes = document.querySelectorAll('input[name="liga-placar"]');
+            checkboxes.forEach(function(cb) { cb.checked = ligasAtivas.indexOf(cb.value) !== -1; });
         }
 
         function shareLink(plataforma) {
