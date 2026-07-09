@@ -21,12 +21,12 @@
         
         const iframe = document.getElementById("portal-frame");
         
-        // 1. Gera o Link correto a partir da URL limpa do GitHub
+        // 1. Gera o Link correto do Google a partir da URL "limpa" do GitHub
         function getIframeUrl() {
-            let path = window.location.pathname;
+            let path = window.location.pathname; // Ex: /noticia/12345
             let query = '';
             
-            // Lê as secções "limpas" do URL e converte para parâmetros que o Apps Script compreende
+            // Lê as secções do URL e converte para parâmetros que o Apps Script compreende
             if (path.startsWith('/noticia/')) {
                 let id = path.split('/noticia/')[1];
                 if(id && id.endsWith('/')) id = id.slice(0, -1);
@@ -35,10 +35,6 @@
                 let cat = path.split('/categoria/')[1];
                 if(cat && cat.endsWith('/')) cat = cat.slice(0, -1);
                 query = '?categoria=' + encodeURIComponent(decodeURIComponent(cat));
-            } else if (path.startsWith('/pesquisa/')) {
-                let termo = path.split('/pesquisa/')[1];
-                if(termo && termo.endsWith('/')) termo = termo.slice(0, -1);
-                query = '?pesquisa=' + encodeURIComponent(decodeURIComponent(termo));
             }
             
             return URL_DO_SEU_WEB_APP_GOOGLE + query;
@@ -47,7 +43,7 @@
         // Carrega o site inicialmente
         iframe.src = getIframeUrl();
 
-        // 2. Escuta as mudanças LÁ DENTRO e atualiza a URL cá fora de forma limpa (sem o #)
+        // 2. Escuta as mudanças vindas DO INTERIOR do iframe e atualiza a URL cá fora
         window.addEventListener('message', function(event) {
             if (event.data && event.data.tipo === 'NAVEGACAO') {
                 
@@ -56,18 +52,19 @@
                 if (event.data.noticiaId) {
                     newPath = '/noticia/' + event.data.noticiaId;
                 } else if (event.data.categoria && event.data.categoria !== 'Todas' && event.data.categoria !== 'Pesquisa') {
-                    // Cria uma rota com o nome da categoria
+                    // Cria uma rota limpa com o nome da categoria
                     newPath = '/categoria/' + encodeURIComponent(event.data.categoria);
                 }
                 
-                // Se o caminho mudar, atualiza a barra de endereço sem recarregar a página!
+                // Se o caminho mudar, atualiza a barra de endereço do navegador sem recarregar a página!
                 if (window.location.pathname !== newPath) {
                     window.history.pushState(null, '', newPath);
                 }
             }
         });
 
-        // 3. Ao clicar nas setas de Voltar/Avançar do navegador, força o Iframe a atualizar
+        // 3. O botão de VOLTAR/AVANÇAR do navegador
+        // Ao clicar nas setas do PC ou Telemóvel, força o Iframe a recarregar a página que estava no histórico
         window.addEventListener('popstate', function(event) {
             iframe.src = getIframeUrl();
         });
