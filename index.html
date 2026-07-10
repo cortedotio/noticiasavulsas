@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
+    <!-- Scripts Oficiais para as Redes Sociais Embutidas -->
     <script async src="//www.instagram.com/embed.js"></script>
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
     
@@ -178,6 +179,7 @@
             <div id="loading-noticias" class="flex flex-col items-center justify-center py-20">
                 <div class="w-10 h-10 border-4 border-gray-200 border-t-jornal-blue rounded-full animate-spin mb-4"></div>
                 <p class="text-xs font-bold uppercase tracking-widest text-gray-500 animate-pulse">A carregar informações do servidor...</p>
+                <div id="debug-error-box" class="hidden mt-4 text-xs text-red-500 font-mono text-center p-4 bg-red-50 border border-red-200 rounded max-w-xl break-words w-full shadow-sm"></div>
             </div>
 
             <div id="master-feed-wrapper" class="flex flex-col lg:flex-row gap-8 items-start hidden min-w-0">
@@ -534,7 +536,6 @@
                     <div>
                         <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Conteúdo (Rich Text Avançado)</label>
                         
-                        <!-- Input escondido para Upload de Imagens no Texto -->
                         <input type="file" id="upload-imagem-conteudo" accept="image/*" class="hidden" onchange="processarUploadImagemConteudo(this)" />
                         
                         <div class="flex flex-wrap gap-1.5 p-2 bg-gray-100 border border-gray-300 border-b-0 rounded-t items-center">
@@ -578,7 +579,7 @@
                                 <input type="file" id="admin-arquivo-imagem" accept="image/*" class="w-full text-sm file:mr-2 file:py-1.5 file:px-3 file:border-0 file:text-[10px] file:font-bold file:uppercase file:tracking-wider file:bg-jornal-dark file:text-white hover:file:opacity-90 cursor-pointer rounded-sm" onchange="verificarUploadMedia(this)" />
                             </div>
                             <div class="relative inline-block w-full min-w-0">
-                                <img id="preview-imagem" loading="lazy" src="" class="mt-3 w-full h-32 object-contain bg-gray-100 border border-gray-300 hidden rounded-sm" />
+                                <img id="preview-imagem" loading="lazy" src="" class="mt-3 w-full h-32 object-contain bg-gray-900 border border-gray-300 hidden rounded-sm" />
                             </div>
                         </div>
                         
@@ -763,7 +764,7 @@
         </main>
     </div>
 
-    <!-- JAVASCRIPT GLOBAL BLINDADO (ES5) -->
+    <!-- JAVASCRIPT GLOBAL BLINDADO (ES5 CONCATENATION) -->
     <script>
         var IMG_FALLBACK = 'https://placehold.co/600x400/e2e8f0/475569?text=Sem+Foto';
         var ICON_HEART = '<svg class="w-3 h-3 fill-current inline" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
@@ -795,12 +796,9 @@
         function atualizarURL(c, v) {
             try {
                 var url = new URL(window.location.href);
-                if (!v || v === 'Todas') { 
-                    url.searchParams.delete(c); 
-                } else { 
-                    url.searchParams.set(c, v); 
-                }
+                if (!v || v === 'Todas') { url.searchParams.delete(c); } else { url.searchParams.set(c, v); }
                 window.history.replaceState({path: url.href}, '', url.href);
+                window.parent.postMessage({tipo: 'NAVEGACAO', categoria: window.categoriaAtual, noticiaId: noticiaAbertaId}, '*');
             } catch(e) {}
         }
 
@@ -814,10 +812,6 @@
         var carrosselTimer = null;
         var carrosselAdsTimers = {};
         var dadosClimaGlobal = null;
-        
-        // Controladores da Agenda
-        var agendaCarousels = [];
-        var agendaTimerStarted = false;
 
         document.addEventListener("DOMContentLoaded", function() {
             try { 
@@ -847,7 +841,6 @@
                         if (d && d.sucesso) { 
                             document.getElementById('master-feed-wrapper').classList.remove('hidden');
                             processarDadosHome(d); 
-                            
                             if (!forcarUpdate) {
                                 var p = new URLSearchParams(window.location.search);
                                 if(p.get('noticia')) { abrirNoticia(p.get('noticia'), false); } 
@@ -980,7 +973,7 @@
             divPrevisao.innerHTML = htmlPrev;
         }
 
-        // NOVO: Função para renderizar a Agenda da Barra Lateral
+        // Função para renderizar a Agenda da Barra Lateral
         function renderizarAgendaSidebar() {
             var sidebar = document.getElementById('sidebar-editorias-especiais');
             var container = document.getElementById('lista-editorias-especiais');
@@ -1003,9 +996,8 @@
                 sidebar.classList.remove('hidden');
                 
                 var carouselId = 'agenda-sidebar-carousel-' + Math.floor(Math.random() * 1000000);
-                agendaCarousels.push({id: carouselId, index: 0, length: agendaNoticias.length});
+                window.agendaCarousels.push({id: carouselId, index: 0, length: agendaNoticias.length});
 
-                // NOVO: Botão superior "AGENDA" que filtra as matérias
                 var html = '<div class="mb-2"><span onclick="filtrarCategoria(\'Agenda\', true)" class="text-[11px] font-black uppercase tracking-widest text-jornal-dark hover:text-jornal-red transition-colors cursor-pointer inline-flex items-center gap-1">Agenda &raquo;</span></div>';
                 
                 html += '<div class="relative overflow-hidden w-full bg-gray-100 rounded-sm group aspect-[4/3] mb-4 shadow-sm" id="' + carouselId + '">';
@@ -1043,7 +1035,7 @@
         }
 
         function processarDadosHome(d) {
-            agendaCarousels = []; // Limpa o estado da agenda para evitar duplicação
+            window.agendaCarousels = []; // Limpa o estado da agenda para evitar duplicação
 
             if (d.config) configuracoesGlobais = d.config;
             
@@ -1085,10 +1077,10 @@
 
                 d.categorias.forEach(function(c) { 
                     var cl = String(c).toLowerCase().trim();
-                    if(['carreira','carreiras'].indexOf(cl) !== -1) {
+                    if(['carreira','carreiras','agenda'].indexOf(cl) !== -1) {
                         temEsp = true;
                         sidebarList.innerHTML += '<button onclick="filtrarCategoria(\'' + c + '\', true)" class="w-full text-left px-4 py-3 bg-white hover:bg-gray-50 border border-gray-200 text-jornal-dark font-black text-[11px] uppercase tracking-widest rounded-sm transition-colors flex justify-between items-center group shadow-sm">' + c + ' <span class="text-gray-300 group-hover:text-jornal-red text-lg leading-none">&raquo;</span></button>';
-                    } else if(['opinião', 'opiniao', 'opiniões', 'opinioes', 'agenda'].indexOf(cl) === -1) {
+                    } else if(cl.indexOf('opini') === -1) {
                         nav.innerHTML += '<a href="javascript:void(0)" onclick="filtrarCategoria(\'' + c + '\', true)" class="hover:text-jornal-red transition-colors border-b-2 border-transparent hover:border-jornal-red whitespace-nowrap px-1 py-2">' + c + '</a>'; 
                     }
                 });
@@ -1126,7 +1118,7 @@
             }
             
             renderizarOpinioes(); 
-            renderizarAgendaSidebar(); // Renderiza a Agenda na Lateral
+            renderizarAgendaSidebar(); 
             renderizarMaisLidas(); 
             renderizarClimaEFinanceiro(); 
             renderizarPlacarAoVivo();
@@ -1231,7 +1223,6 @@
 
             if(cat === 'Todas') {
                 grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6";
-                // NOVO: Capacidade do carrossel principal alterada para 10 itens
                 var c_itens = f.filter(function(n) { return n.noCarrossel === 'true'; }).slice(0, 10);
                 
                 if(c_itens.length > 0) { 
@@ -2379,6 +2370,18 @@
             }
         }
         
+        function assinarNewsletter(e) { 
+            e.preventDefault(); 
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) { 
+                    if (res && res.sucesso) { 
+                        mostrarMensagem('Inscrição registada!'); 
+                        document.getElementById('form-newsletter').reset(); 
+                    } 
+                }).inscreverNewsletter({email: document.getElementById('news-email').value});
+            }
+        }
+        
         function compartilharInstagram(idNoticia) {
             var noticia = noticiasGlobais.find(function(n) { return String(n.id) === String(idNoticia); });
             if (!noticia) return;
@@ -2541,4 +2544,19 @@
             if (configuracoesGlobais['LigasPlacar']) { 
                 try { ligasAtivas = JSON.parse(configuracoesGlobais['LigasPlacar']); } catch(e){} 
             }
-            document.querySelectorAll('input[
+            document.querySelectorAll('input[name="liga-placar"]').forEach(function(cb) { 
+                cb.checked = ligasAtivas.indexOf(cb.value) !== -1; 
+            });
+        }
+
+        function shareLink(plataforma) {
+            if(!noticiaAbertaId) return; var noticia = noticiasGlobais.find(function(n) { return n && n.id === noticiaAbertaId; }); if(!noticia) return;
+            var urlEncoded = encodeURIComponent(window.location.href); var textoEncoded = encodeURIComponent(noticia.titulo || 'Notícia'); var link = '';
+            if(plataforma === 'whatsapp') link = 'https://api.whatsapp.com/send?text=' + textoEncoded + '%20-%20' + urlEncoded;
+            if(plataforma === 'x') link = 'https://twitter.com/intent/tweet?text=' + textoEncoded + '&url=' + urlEncoded;
+            if(plataforma === 'linkedin') link = 'https://www.linkedin.com/sharing/share-offsite/?url=' + urlEncoded;
+            window.open(link, '_blank', 'width=600,height=400');
+        }
+    </script>
+</body>
+</html>
