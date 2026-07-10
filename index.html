@@ -20,7 +20,7 @@
         // ================================================================
         
         // ⚠️ O SEU LINK DE EXECUÇÃO DA API DO GOOGLE (Não alterar)
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwL88cEi-UwA6MTXhGjPnkJqDgzu5Bug6kqT71gp6y3HSsqed0a61lARDUao2Pxcvk-/exec";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwPXH7k3kdbwgbdP3vG838s-BuNwYVQG4IDDLaAgcB5EUhgQvZkuCctIFQBkxav4EGG/exec";
         
         window.google = {
             script: {
@@ -183,6 +183,7 @@
                     </h1>
                 </div>
                 
+                <!-- Barra de Pesquisa Lupa -->
                 <form onsubmit="pesquisarSite(event)" class="relative hidden md:flex items-center mx-auto flex-grow max-w-sm">
                     <input type="text" id="input-pesquisa" placeholder="Pesquisar notícias..." class="w-full px-5 py-2.5 bg-gray-100 border border-gray-200 rounded-full text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-jornal-blue pr-12 transition-all" />
                     <button type="submit" class="absolute right-3 p-2 text-gray-400 hover:text-jornal-red transition-colors flex items-center justify-center">
@@ -199,6 +200,7 @@
                     <button id="btn-header-login" onclick="abrirModalLogin()" class="text-xs font-bold text-jornal-blue bg-gray-100 px-3 py-1.5 rounded-full">LOGIN</button>
                 </div>
             </div>
+            <!-- Barra Pesquisa Mobile Escondida -->
             <form id="form-pesquisa-mobile" onsubmit="pesquisarSite(event)" class="hidden w-full px-4 pb-4 bg-white border-b border-gray-100 lg:hidden">
                 <div class="relative w-full">
                     <input type="text" id="input-pesquisa-mobile" placeholder="Pesquisar..." class="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-sm text-sm focus:outline-none" />
@@ -213,6 +215,7 @@
         </nav>
 
         <main class="max-w-[1200px] mx-auto pt-6 md:pt-8 pb-16 px-4 flex-grow w-full min-w-0">
+            <!-- Container Topo (Publicidade Carrossel) -->
             <div id="ads-topo-container" class="w-full mb-8 hidden grid gap-4 grid-cols-1 md:grid-cols-2"></div>
 
             <div id="loading-noticias" class="flex flex-col items-center justify-center py-20">
@@ -286,6 +289,7 @@
 
                         <div id="nc-conteudo" class="text-gray-800 text-base md:text-lg leading-relaxed font-serif whitespace-pre-line mb-8 rich-editor break-words"></div>
                         
+                        <!-- BOTÃO DE VOLTAR AO FIM DA MATÉRIA -->
                         <div class="mt-12 flex justify-center border-t border-gray-100 pt-8 pb-4">
                             <button onclick="voltarCapa()" class="bg-gray-100 hover:bg-gray-200 text-jornal-dark font-bold py-3 px-8 rounded-full uppercase tracking-widest text-xs transition-colors flex items-center gap-2">
                                 &larr; Voltar à Página Inicial
@@ -319,6 +323,14 @@
                         <div id="lista-editorias-especiais" class="flex flex-col gap-2"></div>
                     </div>
 
+                    <div id="sidebar-opinioes" class="hidden mb-8 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
+                        <div class="border-b-4 border-jornal-red pb-2 mb-4">
+                            <h2 class="text-xs font-black uppercase tracking-widest text-jornal-red">Opinião</h2>
+                        </div>
+                        <div id="conteudo-opinioes" class="flex flex-col gap-4">
+                        </div>
+                    </div>
+
                     <div class="mb-8 bg-white border border-gray-200 p-4 shadow-sm rounded-sm">
                         <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-2">
                             <h2 class="text-[10px] font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
@@ -330,14 +342,7 @@
                         </div>
                     </div>
 
-                    <div id="sidebar-opinioes" class="hidden mb-8 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
-                        <div class="border-b-4 border-jornal-red pb-2 mb-4">
-                            <h2 class="text-xs font-black uppercase tracking-widest text-jornal-red">Opinião</h2>
-                        </div>
-                        <div id="conteudo-opinioes" class="flex flex-col gap-4">
-                        </div>
-                    </div>
-
+                    <!-- WIDGET CLIMA CLICÁVEL -->
                     <div class="mb-8 bg-white border border-gray-200 p-5 shadow-sm rounded-sm cursor-pointer hover:opacity-95 transition-opacity" onclick="abrirModalClima()">
                         <div class="border-b-4 border-sky-400 pb-2 mb-4 flex justify-between items-center">
                             <h2 class="text-xs font-black uppercase tracking-widest text-sky-500">Clima Local</h2>
@@ -363,6 +368,7 @@
                     <div class="border-t-4 border-jornal-red w-full pt-4 mb-6">
                         <h2 class="text-sm font-black uppercase tracking-widest text-jornal-red">Publicidade</h2>
                     </div>
+                    <!-- Container Lateral (Publicidade Carrossel) -->
                     <div class="lg:sticky lg:top-8 space-y-6 flex flex-col min-w-0" id="grid-propagandas-lateral"></div>
                 </aside>
             </div>
@@ -379,7 +385,7 @@
         </footer>
     </div>
 
-    <!-- Modal do Clima Completo -->
+    <!-- Modal do Clima Completo (Detalhes Diários) -->
     <div id="modalClima" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="fecharModalClima()"></div>
         <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl relative z-10 overflow-hidden font-sans border-t-4 border-sky-500">
@@ -418,6 +424,7 @@
                 </div>
                 
                 <div class="flex justify-between text-center overflow-x-auto custom-scrollbar pb-2" id="modal-clima-previsao">
+                    <!-- Javascript preenche a previsão dos 7 dias -->
                     <div class="text-gray-400 text-xs py-4">A carregar detalhes da previsão...</div>
                 </div>
             </div>
@@ -519,6 +526,7 @@
                     <div>
                         <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Conteúdo (Rich Text Avançado)</label>
                         
+                        <!-- Input escondido para Upload de Imagens no Texto -->
                         <input type="file" id="upload-imagem-conteudo" accept="image/*" class="hidden" onchange="processarUploadImagemConteudo(this)" />
                         
                         <div class="flex flex-wrap gap-1.5 p-2 bg-gray-100 border border-gray-300 border-b-0 rounded-t items-center">
@@ -562,7 +570,7 @@
                                 <input type="file" id="admin-arquivo-imagem" accept="image/*" class="w-full text-sm file:mr-2 file:py-1.5 file:px-3 file:border-0 file:text-[10px] file:font-bold file:uppercase file:tracking-wider file:bg-jornal-dark file:text-white hover:file:opacity-90 cursor-pointer rounded-sm" onchange="verificarUploadMedia(this)" />
                             </div>
                             <div class="relative inline-block w-full min-w-0">
-                                <img id="preview-imagem" loading="lazy" src="" class="mt-3 w-full h-32 object-contain bg-gray-900 border border-gray-300 hidden rounded-sm" />
+                                <img id="preview-imagem" loading="lazy" src="" class="mt-3 w-full h-32 object-contain bg-gray-100 border border-gray-300 hidden rounded-sm" />
                             </div>
                         </div>
                         
@@ -620,7 +628,6 @@
                                 <th class="p-3">Data</th>
                                 <th class="p-3">Editorias</th>
                                 <th class="p-3">Manchete</th>
-                                <th class="p-3 text-center">Visões</th>
                                 <th class="p-3 text-center">Visibilidade Rápida</th>
                                 <th class="p-3 text-center">Ações</th>
                             </tr>
@@ -747,7 +754,7 @@
         </main>
     </div>
 
-    <!-- JAVASCRIPT GLOBAL BLINDADO (ES5) -->
+    <!-- JAVASCRIPT GLOBAL BLINDADO -->
     <script>
         var IMG_FALLBACK = 'https://placehold.co/600x400/e2e8f0/475569?text=Sem+Foto';
         var ICON_HEART = '<svg class="w-3 h-3 fill-current inline" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
@@ -759,22 +766,6 @@
                 var m = s.match(/\/d\/([a-zA-Z0-9_-]+)/) || s.match(/id=([a-zA-Z0-9_-]+)/);
                 return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w1200' : s;
             } catch(e) { return url; }
-        }
-        
-        function formatarDataAgenda(dataOriginal) {
-            if (!dataOriginal) return '';
-            var diaStr = '';
-            if (dataOriginal.indexOf('T') !== -1) {
-                var dP = dataOriginal.split('T')[0].split('-');
-                if (dP.length >= 3) diaStr = dP[2] + '/' + dP[1];
-            } else if (dataOriginal.indexOf('/') !== -1) {
-                var dP = dataOriginal.split(' ')[0].split('/');
-                if (dP.length >= 2) diaStr = dP[0] + '/' + dP[1];
-            } else if (dataOriginal.indexOf('-') !== -1) {
-                var dP = dataOriginal.split(' ')[0].split('-');
-                if (dP.length >= 3) diaStr = dP[2] + '/' + dP[1];
-            }
-            return diaStr;
         }
 
         window.addEventListener('message', function(e) {
@@ -815,8 +806,9 @@
         var carrosselAdsTimers = {};
         var dadosClimaGlobal = null;
         
-        var agendaCarousels = [];
-        var agendaTimerStarted = false;
+        // Controladores da Agenda
+        window.agendaCarousels = [];
+        window.agendaTimerStarted = false;
 
         document.addEventListener("DOMContentLoaded", function() {
             try { 
@@ -980,63 +972,6 @@
             divPrevisao.innerHTML = htmlPrev;
         }
 
-        function renderizarAgendaSidebar() {
-            var sidebar = document.getElementById('sidebar-editorias-especiais');
-            var container = document.getElementById('lista-editorias-especiais');
-            if(!sidebar || !container) return;
-            
-            var agora = new Date();
-            var agendaNoticias = noticiasGlobais.filter(function(n) {
-                if (String(n.status).toLowerCase() !== 'ativa') return false;
-                if (String(n.categoria).toLowerCase().indexOf('agenda') === -1) return false;
-                if (n.dataFimEvento && n.dataFimEvento.trim() !== '') {
-                    try {
-                        var dtFim = new Date(n.dataFimEvento);
-                        if (dtFim < agora) return false;
-                    } catch(e) {}
-                }
-                return true;
-            });
-
-            if(agendaNoticias.length > 0) {
-                sidebar.classList.remove('hidden');
-                
-                var carouselId = 'agenda-sidebar-carousel-' + Math.floor(Math.random() * 1000000);
-                window.agendaCarousels.push({id: carouselId, index: 0, length: agendaNoticias.length});
-
-                var html = '<div class="mb-2"><span onclick="filtrarCategoria(\'Agenda\', true)" class="text-[11px] font-black uppercase tracking-widest text-jornal-dark hover:text-jornal-red transition-colors cursor-pointer inline-flex items-center gap-1">Agenda &raquo;</span></div>';
-                
-                html += '<div class="relative overflow-hidden w-full bg-gray-100 rounded-sm group aspect-[4/3] mb-4 shadow-sm" id="' + carouselId + '">';
-                html += '<div class="flex transition-transform duration-500 ease-in-out h-full" id="' + carouselId + '-inner" style="transform: translateX(0%);">';
-                
-                agendaNoticias.forEach(function(n) {
-                    html += '<div class="w-full shrink-0 flex-none relative h-full cursor-pointer" onclick="abrirNoticia(\'' + n.id + '\', true)">';
-                    html += '<img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain bg-gray-900" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />';
-                    html += '<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>';
-                    html += '<div class="absolute bottom-0 left-0 p-4 w-full text-white min-w-0 z-10">';
-                    
-                    var diaFim = formatarDataAgenda(n.dataFimEvento);
-                    if (diaFim) {
-                        html += '<span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Até ' + diaFim + '</span> ';
-                    } else {
-                        html += '<span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Agenda</span> ';
-                    }
-                    
-                    html += '<h4 class="font-serif text-sm font-bold mb-1 leading-tight break-words line-clamp-3 text-white">' + n.titulo + '</h4>';
-                    html += '</div></div>';
-                });
-                
-                html += '</div>';
-                if (agendaNoticias.length > 1) {
-                    html += '<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', -1, ' + agendaNoticias.length + ')" class="absolute left-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-1.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-8 h-8 text-xs">&#10094;</button>';
-                    html += '<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', 1, ' + agendaNoticias.length + ')" class="absolute right-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-1.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-8 h-8 text-xs">&#10095;</button>';
-                }
-                html += '</div>';
-
-                container.innerHTML = html + container.innerHTML;
-            }
-        }
-
         function processarDadosHome(d) {
             window.agendaCarousels = []; // Limpa o estado da agenda para evitar duplicação
 
@@ -1080,10 +1015,10 @@
 
                 d.categorias.forEach(function(c) { 
                     var cl = String(c).toLowerCase().trim();
-                    if(['carreira','carreiras'].indexOf(cl) !== -1) {
+                    if(['carreira','carreiras','agenda'].indexOf(cl) !== -1) {
                         temEsp = true;
                         sidebarList.innerHTML += '<button onclick="filtrarCategoria(\'' + c + '\', true)" class="w-full text-left px-4 py-3 bg-white hover:bg-gray-50 border border-gray-200 text-jornal-dark font-black text-[11px] uppercase tracking-widest rounded-sm transition-colors flex justify-between items-center group shadow-sm">' + c + ' <span class="text-gray-300 group-hover:text-jornal-red text-lg leading-none">&raquo;</span></button>';
-                    } else if(['opinião', 'opiniao', 'opiniões', 'opinioes', 'agenda'].indexOf(cl) === -1) {
+                    } else if(cl.indexOf('opini') === -1) {
                         nav.innerHTML += '<a href="javascript:void(0)" onclick="filtrarCategoria(\'' + c + '\', true)" class="hover:text-jornal-red transition-colors border-b-2 border-transparent hover:border-jornal-red whitespace-nowrap px-1 py-2">' + c + '</a>'; 
                     }
                 });
@@ -1215,10 +1150,18 @@
             document.getElementById('titulo-seccao-feed').innerText = cat === 'Todas' ? 'Últimas Notícias' : 'Editoria: ' + cat;
             document.getElementById('input-pesquisa').value = '';
             
+            var agoraFront = new Date();
             var f = noticiasGlobais.filter(function(n) {
-                var st = String(n.status).toLowerCase() === 'ativa';
-                if (cat === 'Todas') return st;
-                return st && String(n.categoria).toLowerCase().indexOf(cat.toLowerCase()) !== -1;
+                var isAtiva = String(n.status).toLowerCase() === 'ativa';
+                if (n.dataHora) {
+                    var pts = n.dataHora.split(/[\/\s:]/);
+                    if (pts.length >= 5) {
+                        var ndt = new Date(pts[2], pts[1]-1, pts[0], pts[3], pts[4]);
+                        if (ndt > agoraFront) isAtiva = false;
+                    }
+                }
+                if (cat === 'Todas') return isAtiva;
+                return isAtiva && String(n.categoria).toLowerCase().indexOf(cat.toLowerCase()) !== -1;
             });
             
             var carrosselContainer = document.getElementById('carrossel-destaques');
@@ -1226,7 +1169,7 @@
 
             if(cat === 'Todas') {
                 grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6";
-                var c_itens = f.filter(function(n) { return n.noCarrossel === 'true'; }).slice(0, 10);
+                var c_itens = f.filter(function(n) { return n.noCarrossel === 'true'; }).slice(0, 5);
                 
                 if(c_itens.length > 0) { 
                     montarCarrossel(c_itens); 
@@ -1325,6 +1268,7 @@
             return cHTML;
         }
 
+        // NOVO: Navegação do Carrossel da Agenda
         function moverCarrosselAgenda(id, dir, len) {
             if(!window.agendaCarousels) return;
             var c = window.agendaCarousels.find(function(x) { return x.id === id; }); 
@@ -1348,6 +1292,7 @@
             if (!categoriasBlocos || categoriasBlocos.length === 0) {
                 listaCategoriasLocais.forEach(function(c) {
                     var l = String(c).toLowerCase().trim();
+                    // AGENDA NÃO APARECE AQUI, APENAS NA LATERAL "EM FOCO"
                     if (['opinião', 'opiniao', 'opiniões', 'opinioes', 'carreira', 'carreiras', 'agenda'].indexOf(l) === -1) { 
                         if(categoriasBlocos.length < 8) categoriasBlocos.push(c); 
                     }
@@ -1536,9 +1481,7 @@
                 try { ligasAtivas = JSON.parse(configuracoesGlobais['LigasPlacar']); } catch(e){} 
             }
             
-            var hoje = new Date();
-            var dataHojeLocalStr = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
-            
+            var dataHojeLocal = new Date().toISOString().split('T')[0]; 
             placar.innerHTML = '<div class="text-center text-xs text-gray-400 py-4">A procurar jogos...</div>';
             var htmlFinal = ''; 
             var fetchesConcluidos = 0;
@@ -1555,18 +1498,17 @@
                     if (data && data.events && data.events.length > 0) {
                         var nomeCompeticao = traduzirTermoPlacar(data.leagues && data.leagues[0] ? data.leagues[0].name : 'Competição');
                         var matchesHtml = '';
-                        var exibidos = 0;
                         
                         data.events.forEach(function(jogo) {
                             if (!jogo.date) return;
                             var dtJogo = new Date(jogo.date); 
-                            var dataJogoLocal = dtJogo.getFullYear() + '-' + String(dtJogo.getMonth() + 1).padStart(2, '0') + '-' + String(dtJogo.getDate()).padStart(2, '0');
+                            var jogoAno = dtJogo.getFullYear(); 
+                            var jogoMes = String(dtJogo.getMonth() + 1).padStart(2, '0'); 
+                            var jogoDia = String(dtJogo.getDate()).padStart(2, '0');
+                            var dataJogoLocal = jogoAno + '-' + jogoMes + '-' + jogoDia;
                             
-                            // Filtra rigorosamente APENAS os jogos do dia de hoje
-                            if (dataJogoLocal !== dataHojeLocalStr) return;
-                            
-                            if (exibidos >= 4) return;
-                            
+                            if (dataJogoLocal !== dataHojeLocal) return;
+
                             var matchInfo = jogo.competitions[0];
                             var casa = matchInfo.competitors.find(function(c) { return c.homeAway === 'home'; }) || matchInfo.competitors[0];
                             var fora = matchInfo.competitors.find(function(c) { return c.homeAway === 'away'; }) || matchInfo.competitors[1];
@@ -1593,12 +1535,11 @@
                             if (isAoVivo) { 
                                 infoEstadoTexto = 'AO VIVO'; 
                             } else if (isAgendado) { 
-                                var dtJogo = new Date(jogo.date);
                                 var horas = String(dtJogo.getHours()).padStart(2, '0'); 
                                 var minutos = String(dtJogo.getMinutes()).padStart(2, '0'); 
-                                infoEstadoTexto = horas + ':' + minutos; 
+                                infoEstadoTexto = 'HOJE ÀS ' + horas + ':' + minutos; 
                             } else if (isEncerrado) { 
-                                infoEstadoTexto = 'FIM'; 
+                                infoEstadoTexto = 'ENCERRADO'; 
                             }
                             
                             matchesHtml += '<div class="bg-white border ' + bordaEstado + ' rounded-lg p-3 mb-3 shadow-sm hover:shadow-md transition-shadow">' +
@@ -1606,8 +1547,6 @@
                                 '<div class="flex items-center justify-start gap-2 w-[35%] min-w-0"><img src="' + logoCasa + '" class="w-5 h-5 sm:w-6 sm:h-6 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'"><span class="font-bold text-gray-800 text-[10px] sm:text-[11px] text-left truncate w-full" title="' + traduzirTermoPlacar(casa.team.name) + '">' + traduzirTermoPlacar(casa.team.name) + '</span></div>' +
                                 '<div class="flex flex-col items-center justify-center w-[25%] shrink-0"><span class="' + bgPlacar + ' font-black text-xs px-2 sm:px-3 py-1 rounded-md tracking-widest mb-1 shadow-inner">' + (casa.score || '0') + ' - ' + (fora.score || '0') + '</span><span class="text-[8px] uppercase tracking-wider font-bold ' + corEstado + ' text-center whitespace-nowrap">' + infoEstadoTexto + '</span></div>' +
                                 '<div class="flex items-center justify-end gap-2 w-[35%] min-w-0"><span class="font-bold text-gray-800 text-[10px] sm:text-[11px] text-right truncate w-full" title="' + traduzirTermoPlacar(fora.team.name) + '">' + traduzirTermoPlacar(fora.team.name) + '</span><img src="' + logoFora + '" class="w-5 h-5 sm:w-6 sm:h-6 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'"></div></div></div>';
-                            
-                            exibidos++;
                         });
 
                         if (matchesHtml) {
@@ -1619,7 +1558,7 @@
                 .finally(function() {
                     fetchesConcluidos++;
                     if(fetchesConcluidos === ligasAtivas.length) {
-                        placar.innerHTML = htmlFinal || '<div class="text-center text-xs text-gray-400 py-4">Sem jogos no momento.</div>';
+                        placar.innerHTML = htmlFinal || '<div class="text-center text-xs text-gray-400 py-4">Nenhum jogo agendado para hoje.</div>';
                     }
                 });
             });
@@ -2012,7 +1951,7 @@
             if (!t) return ""; 
             var strT = String(t);
             
-            var ytRegex = /(?:<a[^>]*href=")?(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:"[^>]*>.*?<\/a>)?/gi;
+            var ytRegex = /(?:<a[^>]*href=")?(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})[^\s<"]*(?:"[^>]*>.*?<\/a>)?/gi;
             strT = strT.replace(ytRegex, function(match, id) { 
                 return '<div class="aspect-video w-full my-4 shadow-md rounded overflow-hidden"><iframe class="w-full h-full" src="https://www.youtube.com/embed/' + id + '" frameborder="0" allowfullscreen></iframe></div>'; 
             });
@@ -2066,9 +2005,9 @@
                 var ativosCarrossel = noticiasGlobais.filter(function(n) { 
                     return String(n.noCarrossel) === 'true' && n.status === 'Ativa' && n.id !== editandoID; 
                 });
-                if (ativosCarrossel.length >= 10) {
+                if (ativosCarrossel.length >= 5) {
                     ativosCarrossel.reverse(); 
-                    var numToRemove = (ativosCarrossel.length - 10) + 1;
+                    var numToRemove = (ativosCarrossel.length - 5) + 1;
                     for(var i=0; i<numToRemove; i++) { 
                         var targetIdx = noticiasGlobais.findIndex(function(n) { return n.id === ativosCarrossel[i].id; }); 
                         if(targetIdx > -1) noticiasGlobais[targetIdx].noCarrossel = false; 
@@ -2497,17 +2436,7 @@
             }
             
             if (noticia.dataFimEvento) {
-                try {
-                    var dtFim = new Date(noticia.dataFimEvento);
-                    if(!isNaN(dtFim.getTime())) {
-                        var diaF = String(dtFim.getDate()).padStart(2, '0');
-                        var mesF = String(dtFim.getMonth() + 1).padStart(2, '0');
-                        var anoF = dtFim.getFullYear();
-                        var horaF = String(dtFim.getHours()).padStart(2, '0');
-                        var minF = String(dtFim.getMinutes()).padStart(2, '0');
-                        document.getElementById('admin-data-fim-evento').value = anoF + '-' + mesF + '-' + diaF + 'T' + horaF + ':' + minF;
-                    }
-                } catch(e){}
+                document.getElementById('admin-data-fim-evento').value = noticia.dataFimEvento;
             } else {
                 document.getElementById('admin-data-fim-evento').value = "";
             }
