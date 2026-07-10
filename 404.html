@@ -20,7 +20,7 @@
         // ================================================================
         
         // ⚠️ O SEU LINK DE EXECUÇÃO DA API DO GOOGLE (Não alterar)
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxiPStCL0RXy8XM8dHm13kRbOlhOYcYdLixIDA16ymQafI56G35ve-Ag5wwdnk73CpX/exec";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyXq_YwzfiBztPyl_Ouw5wItoh6hoMyBcb4EZQwqNNVq6vMUFcumb9Ey4JKPSxcZd0t/exec";
         
         window.google = {
             script: {
@@ -282,7 +282,8 @@
                         </div>
 
                         <div id="nc-imagem-container" class="mb-8 bg-gray-50 border border-gray-200 rounded">
-                            <img id="nc-imagem" loading="lazy" src="" class="w-full h-auto max-h-[500px] object-contain rounded shrink-0" onerror="this.onerror=null; this.src='https://placehold.co/800x400/e2e8f0/475569?text=Imagem+Indisponível'" />
+                            <!-- IMAGEM COM OBJECT-CONTAIN -->
+                            <img id="nc-imagem" loading="lazy" src="" class="w-full h-auto max-h-[500px] object-contain bg-gray-900 rounded shrink-0" onerror="this.onerror=null; this.src='https://placehold.co/800x400/e2e8f0/475569?text=Imagem+Indisponível'" />
                             <div id="nc-imagem-meta" class="p-2 text-xs text-gray-500 italic flex justify-between bg-white border-t border-gray-200 min-w-0">
                                 <span id="nc-legenda" class="break-words min-w-0 pr-2"></span>
                                 <span id="nc-creditos" class="font-semibold shrink-0"></span>
@@ -619,6 +620,7 @@
                             <span class="w-[1px] h-6 bg-gray-300 mx-1"></span>
                             
                             <button type="button" onclick="inserirLinkRichEditor()" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-blue-600 rounded font-semibold shadow-sm" title="Inserir Link">🔗</button>
+                            <!-- NOVO BOTÃO DE UPLOAD DE IMAGEM NO TEXTO -->
                             <button type="button" onclick="inserirImagemRichEditor()" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-emerald-600 rounded font-semibold shadow-sm" title="Fazer Upload de Imagem para o Texto">🖼️</button>
                             <button type="button" onclick="inserirVideoRichEditor()" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-purple-600 rounded font-semibold shadow-sm" title="Inserir Vídeo (YouTube, X, Insta, TikTok)">📹</button>
                             
@@ -638,7 +640,7 @@
                                 <input type="file" id="admin-arquivo-imagem" accept="image/*" class="w-full text-sm file:mr-2 file:py-1.5 file:px-3 file:border-0 file:text-[10px] file:font-bold file:uppercase file:tracking-wider file:bg-jornal-dark file:text-white hover:file:opacity-90 cursor-pointer rounded-sm" onchange="verificarUploadMedia(this)" />
                             </div>
                             <div class="relative inline-block w-full min-w-0">
-                                <img id="preview-imagem" loading="lazy" src="" class="mt-3 w-full h-32 object-contain bg-gray-100 border border-gray-300 hidden rounded-sm" />
+                                <img id="preview-imagem" loading="lazy" src="" class="mt-3 w-full h-32 object-contain bg-gray-900 border border-gray-300 hidden rounded-sm" />
                             </div>
                         </div>
                         
@@ -857,10 +859,10 @@
         function atualizarURL(c, v) {
             try {
                 var url = new URL(window.location.href);
-                if (!v || v === 'Todas') {
-                    url.searchParams.delete(c);
-                } else {
-                    url.searchParams.set(c, v);
+                if (!v || v === 'Todas') { 
+                    url.searchParams.delete(c); 
+                } else { 
+                    url.searchParams.set(c, v); 
                 }
                 window.history.pushState(null, '', url.href);
             } catch(e) {}
@@ -1079,10 +1081,10 @@
 
                 d.categorias.forEach(function(c) { 
                     var cl = String(c).toLowerCase().trim();
-                    if(['carreira','carreiras','agenda'].indexOf(cl) !== -1) {
+                    if(['carreira','carreiras'].indexOf(cl) !== -1) {
                         temEsp = true;
                         sidebarList.innerHTML += '<button onclick="filtrarCategoria(\'' + c + '\', true)" class="w-full text-left px-4 py-3 bg-white hover:bg-gray-50 border border-gray-200 text-jornal-dark font-black text-[11px] uppercase tracking-widest rounded-sm transition-colors flex justify-between items-center group shadow-sm">' + c + ' <span class="text-gray-300 group-hover:text-jornal-red text-lg leading-none">&raquo;</span></button>';
-                    } else if(cl.indexOf('opini') === -1) {
+                    } else if(['opinião', 'opiniao', 'opiniões', 'opinioes', 'agenda'].indexOf(cl) === -1) {
                         nav.innerHTML += '<a href="javascript:void(0)" onclick="filtrarCategoria(\'' + c + '\', true)" class="hover:text-jornal-red transition-colors border-b-2 border-transparent hover:border-jornal-red whitespace-nowrap px-1 py-2">' + c + '</a>'; 
                     }
                 });
@@ -1120,9 +1122,71 @@
             }
             
             renderizarOpinioes(); 
+            renderizarAgendaSidebar();
             renderizarMaisLidas(); 
             renderizarClimaEFinanceiro(); 
             renderizarPlacarAoVivo();
+        }
+
+        // NOVO: Função para renderizar a Agenda da Barra Lateral em formato de Carrossel
+        function renderizarAgendaSidebar() {
+            var sidebar = document.getElementById('sidebar-editorias-especiais');
+            var container = document.getElementById('lista-editorias-especiais');
+            if(!sidebar || !container) return;
+            
+            var agora = new Date();
+            var agendaNoticias = noticiasGlobais.filter(function(n) {
+                if (String(n.status).toLowerCase() !== 'ativa') return false;
+                if (String(n.categoria).toLowerCase().indexOf('agenda') === -1) return false;
+                
+                // Exclui automaticamente os eventos que já passaram da data
+                if (n.dataFimEvento && n.dataFimEvento.trim() !== '') {
+                    try {
+                        var dtFim = new Date(n.dataFimEvento);
+                        if (dtFim < agora) return false;
+                    } catch(e) {}
+                }
+                return true;
+            });
+
+            if(agendaNoticias.length > 0) {
+                sidebar.classList.remove('hidden');
+                
+                var carouselId = 'agenda-sidebar-carousel-' + Math.floor(Math.random() * 1000000);
+                window.agendaCarousels.push({id: carouselId, index: 0, length: agendaNoticias.length});
+
+                var html = '<div class="relative overflow-hidden w-full bg-gray-100 rounded-sm group aspect-[4/3] mb-4 shadow-sm" id="' + carouselId + '">';
+                html += '<div class="flex transition-transform duration-500 ease-in-out h-full" id="' + carouselId + '-inner" style="transform: translateX(0%);">';
+                
+                agendaNoticias.forEach(function(n) {
+                    html += '<div class="w-full shrink-0 flex-none relative h-full cursor-pointer" onclick="abrirNoticia(\'' + n.id + '\', true)">';
+                    html += '<img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain bg-gray-900" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />';
+                    html += '<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>';
+                    html += '<div class="absolute bottom-0 left-0 p-4 w-full text-white min-w-0 z-10">';
+                    
+                    if (n.dataFimEvento) {
+                        try {
+                            var dP = n.dataFimEvento.split('T')[0].split('-');
+                            var diaStr = dP[2] + '/' + dP[1];
+                            html += '<span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Até ' + diaStr + '</span> ';
+                        } catch(e){}
+                    } else {
+                        html += '<span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Agenda</span> ';
+                    }
+                    
+                    html += '<h4 class="font-serif text-sm font-bold mb-1 leading-tight break-words line-clamp-3 text-white">' + n.titulo + '</h4>';
+                    html += '</div></div>';
+                });
+                
+                html += '</div>';
+                if (agendaNoticias.length > 1) {
+                    html += '<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', -1, ' + agendaNoticias.length + ')" class="absolute left-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-1.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-8 h-8 text-xs">&#10094;</button>';
+                    html += '<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', 1, ' + agendaNoticias.length + ')" class="absolute right-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-1.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-8 h-8 text-xs">&#10095;</button>';
+                }
+                html += '</div>';
+
+                container.innerHTML = html + container.innerHTML;
+            }
         }
 
         function iniciarCarrosselAnuncios(containerId, anuncios) {
@@ -1170,7 +1234,7 @@
             var html = '<article onclick="abrirNoticia(\'' + d.id + '\', true)" class="group cursor-pointer flex flex-col mb-4 bg-gray-50 p-4 border border-gray-100 rounded-sm hover:shadow-md transition-shadow">' +
                 '<div class="flex items-center gap-3 mb-3"><div class="w-10 h-10 rounded-full bg-jornal-blue flex items-center justify-center text-white font-black text-xs shrink-0 shadow-inner">' + letraAutor + '</div>' +
                 '<div class="flex flex-col min-w-0"><span class="text-[10px] font-black uppercase tracking-widest text-jornal-red">Opinião</span><span class="text-xs font-bold text-gray-700 truncate w-full">' + (d.autor || 'Editorial') + '</span></div></div>' +
-                '<div class="w-full aspect-video mb-3 overflow-hidden rounded-sm bg-gray-200 shrink-0 relative"><img src="' + (d.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />' +
+                '<div class="w-full aspect-video mb-3 overflow-hidden rounded-sm bg-gray-200 shrink-0 relative"><img src="' + (d.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-900 group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />' +
                 (d.creditosImagem ? '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded-tl">Foto: ' + d.creditosImagem + '</div>' : '') + '</div>' +
                 '<h3 class="font-serif font-black text-sm md:text-base leading-snug text-jornal-dark group-hover:text-jornal-blue line-clamp-3 mb-2">' + d.titulo + '</h3>' +
                 '<p class="text-xs text-gray-500 line-clamp-2 mb-3 italic">' + (d.linhaFina || removerHTML(d.conteudo)) + '</p>' +
@@ -1180,7 +1244,7 @@
                 html += '<div class="flex flex-col gap-3 mt-2">';
                 for(var i=1; i<Math.min(op.length, 4); i++) {
                     html += '<article onclick="abrirNoticia(\'' + op[i].id + '\', true)" class="group cursor-pointer border-t border-gray-100 pt-3 flex gap-3 items-center hover:bg-gray-50 p-2 -mx-2 rounded transition-colors">' +
-                        '<div class="w-12 h-12 rounded bg-gray-200 shrink-0 overflow-hidden relative"><img src="' + (op[i].urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
+                        '<div class="w-12 h-12 rounded bg-gray-200 shrink-0 overflow-hidden relative"><img src="' + (op[i].urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-900 group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
                         '<div class="flex-grow min-w-0 flex flex-col justify-center"><h4 class="font-bold text-xs text-gray-800 leading-tight group-hover:text-jornal-red line-clamp-2 mb-1">' + op[i].titulo + '</h4>' +
                         '<span class="text-[9px] font-bold text-gray-400 tracking-widest uppercase">' + (op[i].dataHora ? op[i].dataHora.split(' ')[0] : '') + '</span></div></article>';
                 }
@@ -1194,7 +1258,7 @@
             var ext = prop.tipo ? prop.tipo.toLowerCase() : ''; 
             var urlSegura = prop.urlArquivo ? String(prop.urlArquivo) : '';
             var isVideo = ext.indexOf('video') !== -1 || urlSegura.endsWith('.mp4');
-            var mediaHtml = isVideo ? '<video src="' + urlSegura + '" autoplay loop muted playsinline class="w-full h-auto min-h-[100px] object-cover bg-gray-100 border border-gray-200"></video>' : '<img loading="lazy" src="' + urlSegura + '" alt="Anúncio" class="w-full h-auto min-h-[100px] object-cover bg-gray-100 border border-gray-200" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />';
+            var mediaHtml = isVideo ? '<video src="' + urlSegura + '" autoplay loop muted playsinline class="w-full h-auto min-h-[100px] object-contain bg-gray-100 border border-gray-200"></video>' : '<img loading="lazy" src="' + urlSegura + '" alt="Anúncio" class="w-full h-auto min-h-[100px] object-contain bg-gray-100 border border-gray-200" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />';
             return '<a href="' + prop.linkDestino + '" target="_blank" class="block w-full relative group hover:opacity-95 transition-opacity"><div class="absolute top-2 right-2 bg-white/90 text-[8px] uppercase font-black px-1.5 py-0.5 z-10 text-jornal-dark border border-gray-200">Publicidade</div>' + mediaHtml + '</a>';
         }
 
@@ -1290,7 +1354,7 @@
 
         function htmlCard(n) {
             var cHTML = '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 p-0 flex flex-col h-full hover:shadow-md transition-shadow rounded-sm w-full overflow-hidden min-w-0">' +
-                '<div class="relative w-full aspect-video bg-gray-100 border-b border-gray-200 shrink-0 overflow-hidden"><img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>';
+                '<div class="relative w-full aspect-video bg-gray-100 border-b border-gray-200 shrink-0 overflow-hidden"><img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain bg-gray-900 group-hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>';
             
             if (n.creditosImagem) {
                 cHTML += '<div class="text-[8px] text-gray-400 italic px-5 py-1 bg-gray-50 border-b border-gray-100 truncate text-right">Foto: ' + n.creditosImagem + '</div>';
@@ -1308,7 +1372,7 @@
 
         function htmlHero(n) {
             var cHTML = '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 flex flex-col md:flex-row h-full overflow-hidden hover:shadow-md transition-shadow rounded-sm w-full">' +
-                '<div class="md:w-3/5 w-full bg-gray-100 min-h-[300px] shrink-0 overflow-hidden relative"><img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700 min-h-[300px]" />';
+                '<div class="md:w-3/5 w-full bg-gray-100 min-h-[300px] shrink-0 overflow-hidden relative"><img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="absolute inset-0 w-full h-full object-contain bg-gray-900 group-hover:scale-105 transition duration-700 min-h-[300px]" />';
             
             if (n.creditosImagem) {
                 cHTML += '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 rounded-tl">Foto: ' + n.creditosImagem + '</div>';
@@ -1323,17 +1387,6 @@
             return cHTML;
         }
 
-        function moverCarrosselAgenda(id, dir, len) {
-            if(!window.agendaCarousels) return;
-            var c = window.agendaCarousels.find(function(x) { return x.id === id; }); 
-            if (!c) return;
-            c.index = (c.index + dir + len) % len;
-            var inner = document.getElementById(id + '-inner');
-            if (inner) {
-                inner.style.transform = 'translateX(-' + (c.index * 100) + '%)';
-            }
-        }
-
         function montarGrelhaEditorias(noticiasAtivas) {
             var container = document.getElementById('grid-editorias-exclusivo'); 
             if(!container) return;
@@ -1346,88 +1399,37 @@
             if (!categoriasBlocos || categoriasBlocos.length === 0) {
                 listaCategoriasLocais.forEach(function(c) {
                     var l = String(c).toLowerCase().trim();
-                    if (['opinião', 'opiniao', 'opiniões', 'opinioes', 'carreira', 'carreiras'].indexOf(l) === -1) { 
+                    if (['opinião', 'opiniao', 'opiniões', 'opinioes', 'carreira', 'carreiras', 'agenda'].indexOf(l) === -1) { 
                         if(categoriasBlocos.length < 8) categoriasBlocos.push(c); 
                     }
                 });
             }
 
             var htmlFinal = ''; 
-            var agora = new Date(); 
-            window.agendaCarousels = []; 
 
             categoriasBlocos.forEach(function(cat) {
                 if(!cat || cat.trim() === '') return;
-                var isAgenda = (cat.toLowerCase() === 'agenda'); 
-                var limite = isAgenda ? 5 : 4;
+                var limite = 4;
                 
                 var nCat = noticiasAtivas.filter(function(n) { 
                     if (String(n.categoria).toLowerCase().indexOf(cat.toLowerCase()) === -1) return false;
-                    if (isAgenda && n.dataFimEvento && n.dataFimEvento.trim() !== '') {
-                        try { 
-                            var dtFim = new Date(n.dataFimEvento); 
-                            if (dtFim < agora) return false; 
-                        } catch(e) {}
-                    }
                     return true;
                 }).slice(0, limite); 
                 
                 if (nCat.length > 0) {
                     htmlFinal += '<div class="w-full mb-12"><div class="border-b-4 border-gray-200 pb-2 mb-6 flex justify-between items-center"><h3 class="text-lg font-black uppercase tracking-widest text-jornal-dark"><span class="inline-block w-3 h-3 bg-rose-600 mr-1"></span>' + cat + '</h3><button onclick="filtrarCategoria(\'' + cat + '\', true)" class="text-[10px] font-bold uppercase text-gray-500 hover:text-jornal-red">Ver tudo &raquo;</button></div>';
                     
-                    if (isAgenda) {
-                        var carouselId = 'agenda-carousel-' + Math.floor(Math.random() * 1000000);
-                        window.agendaCarousels.push({id: carouselId, index: 0, length: nCat.length});
-                        
-                        htmlFinal += '<div class="relative overflow-hidden w-full bg-gray-100 rounded-sm group aspect-video md:aspect-[21/9]" id="' + carouselId + '"><div class="flex transition-transform duration-500 ease-in-out h-full" id="' + carouselId + '-inner" style="transform: translateX(0%);">';
-                        
-                        nCat.forEach(function(n) {
-                            htmlFinal += '<div class="w-full shrink-0 flex-none relative h-full cursor-pointer" onclick="abrirNoticia(\'' + n.id + '\', true)">' +
-                                '<img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover bg-black" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /><div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div><div class="absolute bottom-0 left-0 p-6 w-full text-white min-w-0 z-10">';
-                            if (n.dataFimEvento) {
-                                try {
-                                    var dP = n.dataFimEvento.split('T')[0].split('-'); 
-                                    var diaStr = dP[2] + '/' + dP[1];
-                                    htmlFinal += '<span class="bg-amber-500 text-black text-[10px] font-black uppercase px-2 py-1 mb-2 inline-block rounded-sm shadow-sm">Evento Até ' + diaStr + '</span> ';
-                                } catch(e){}
-                            } else { 
-                                htmlFinal += '<span class="bg-amber-500 text-black text-[10px] font-black uppercase px-2 py-1 mb-2 inline-block rounded-sm shadow-sm">Agenda</span> '; 
-                            }
-                            
-                            htmlFinal += '<h4 class="font-serif text-xl md:text-2xl font-black mb-1 leading-tight break-words line-clamp-2 text-white">' + n.titulo + '</h4></div></div>';
-                        });
-                        htmlFinal += '</div>';
-                        
-                        if (nCat.length > 1) {
-                            htmlFinal += '<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', -1, ' + nCat.length + ')" class="absolute left-2 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-10 h-10">&#10094;</button>' +
-                                         '<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', 1, ' + nCat.length + ')" class="absolute right-2 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-10 h-10">&#10095;</button>';
-                        }
-                        htmlFinal += '</div>';
-                    } else {
-                        htmlFinal += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">';
-                        nCat.forEach(function(n) {
-                            htmlFinal += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col h-full border border-gray-100 shadow-sm bg-white rounded-sm overflow-hidden min-w-0 hover:shadow-md transition-shadow">' +
-                                '<div class="relative w-full aspect-video bg-gray-200 shrink-0 overflow-hidden"><img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
-                                '<div class="p-4 flex flex-col flex-grow min-w-0 bg-white relative z-10"><h4 class="font-serif font-bold text-sm leading-snug text-jornal-dark group-hover:text-jornal-red line-clamp-3 mb-2">' + n.titulo + '</h4>' +
-                                '<span class="text-[9px] font-bold text-gray-400 mt-auto tracking-widest uppercase">' + (n.dataHora ? n.dataHora.replace(' ', ' às ') : '') + '</span></div></article>';
-                        });
-                        htmlFinal += '</div>';
-                    }
-                    htmlFinal += '</div>';
+                    htmlFinal += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">';
+                    nCat.forEach(function(n) {
+                        htmlFinal += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col h-full border border-gray-100 shadow-sm bg-white rounded-sm overflow-hidden min-w-0 hover:shadow-md transition-shadow">' +
+                            '<div class="relative w-full aspect-video bg-gray-200 shrink-0 overflow-hidden"><img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain bg-gray-900 transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
+                            '<div class="p-4 flex flex-col flex-grow min-w-0 bg-white relative z-10"><h4 class="font-serif font-bold text-sm leading-snug text-jornal-dark group-hover:text-jornal-red line-clamp-3 mb-2">' + n.titulo + '</h4>' +
+                            '<span class="text-[9px] font-bold text-gray-400 mt-auto tracking-widest uppercase">' + (n.dataHora ? n.dataHora.replace(' ', ' às ') : '') + '</span></div></article>';
+                    });
+                    htmlFinal += '</div></div>';
                 }
             });
             container.innerHTML = htmlFinal;
-
-            if (!window.agendaTimerStarted && window.agendaCarousels && window.agendaCarousels.length > 0) {
-                setInterval(function() { 
-                    if (window.agendaCarousels) {
-                        window.agendaCarousels.forEach(function(c) { 
-                            moverCarrosselAgenda(c.id, 1, c.length); 
-                        }); 
-                    }
-                }, 4000);
-                window.agendaTimerStarted = true;
-            }
         }
 
         function montarCarrossel(itens) {
@@ -1441,7 +1443,7 @@
             itens.forEach(function(n, i) {
                 var credHtml = n.creditosImagem ? '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 z-20">Foto: ' + n.creditosImagem + '</div>' : '';
                 inner.innerHTML += '<div class="absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out cursor-pointer group carrossel-slide" style="opacity: 0; z-index: 0;" onclick="abrirNoticia(\'' + n.id + '\', true)">' +
-                '<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover bg-black opacity-90" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'"/>' + credHtml +
+                '<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-900 opacity-90" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'"/>' + credHtml +
                 '<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>' +
                 '<div class="absolute bottom-0 left-0 p-6 md:p-12 w-full text-white min-w-0 z-10"><span class="bg-jornal-red text-white text-[10px] font-black uppercase px-2 py-1 mb-3 inline-block rounded-sm truncate">' + n.categoria + '</span>' +
                 '<h3 class="font-serif text-2xl md:text-4xl font-black mb-2 leading-tight break-words line-clamp-3">' + n.titulo + '</h3></div></div>';
@@ -1691,6 +1693,9 @@
             
             if(conteudoFormatado.indexOf('instagram-media') !== -1) {
                 setTimeout(function(){ if(window.instgrm) window.instgrm.Embeds.process(); }, 500);
+            }
+            if(conteudoFormatado.indexOf('twitter-tweet') !== -1) {
+                setTimeout(function(){ if(window.twttr) window.twttr.widgets.load(); }, 500);
             }
             
             var ncImg = document.getElementById('nc-imagem');
@@ -2311,6 +2316,10 @@
         function processarUploadImagemConteudo(input) {
             if (!input.files || !input.files[0]) return; 
             var file = input.files[0]; 
+            
+            var legenda = prompt("Digite a legenda para a imagem (ou deixe em branco):") || "";
+            var creditos = prompt("Digite os créditos da foto (obrigatório se houver direitos autorais):") || "";
+            
             var reader = new FileReader();
             
             reader.onload = function(e) {
@@ -2326,7 +2335,19 @@
                     canvas.width = img.width * scale; 
                     canvas.height = img.height * scale; 
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    execCmd('insertImage', canvas.toDataURL('image/jpeg', 0.8)); 
+                    var base64Resized = canvas.toDataURL('image/jpeg', 0.8); 
+                    
+                    var htmlImg = '<br><figure style="margin: 16px auto; text-align: center; max-width: 100%; display: block;">' +
+                                  '<img src="' + base64Resized + '" style="max-width: 100%; height: auto; border-radius: 8px; display: inline-block; margin: 0 auto; border: 1px solid #e2e8f0;" />';
+                    
+                    if (legenda || creditos) {
+                        var credTexto = creditos ? 'Foto: ' + creditos : '';
+                        var sep = (legenda && creditos) ? ' - ' : '';
+                        htmlImg += '<figcaption style="font-size: 12px; color: #64748b; margin-top: 8px; font-style: italic; text-align: center;">' + legenda + sep + credTexto + '</figcaption>';
+                    }
+                    htmlImg += '</figure><br><p>&#8203;</p>';
+                    
+                    execCmd('insertHTML', htmlImg); 
                     input.value = '';
                 };
                 img.src = e.target.result;
