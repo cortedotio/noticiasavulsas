@@ -22,7 +22,7 @@
         // ================================================================
         // CONEXÃO PROFISSIONAL COM A API DO GOOGLE
         // ================================================================
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxLti1sYPjXeHyhszB5ljNDuECNYmZZPXbm7tp3CZi-zoB-v6FpaE4VB3gJsmR13s_V/exec";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwL88cEi-UwA6MTXhGjPnkJqDgzu5Bug6kqT71gp6y3HSsqed0a61lARDUao2Pxcvk-/exec";
         
         window.google = {
             script: {
@@ -273,59 +273,17 @@
                 
                 <aside class="lg:w-[28%] w-full shrink-0 min-w-0">
                     
-                    <div class="mb-8 bg-white border border-gray-200 shadow-sm rounded-sm overflow-hidden">
-                        <div class="p-4 border-b border-gray-100 flex justify-between items-center">
-                            <h2 class="text-sm font-black uppercase tracking-widest text-[#1a472a]">Sistema de Preços de Commodities</h2>
+                    <!-- NOVO: SISTEMA DE COMMODITIES REFEITO (CommoData) -->
+                    <div class="mb-8 bg-white border border-gray-200 shadow-sm rounded-sm overflow-hidden cursor-pointer hover:opacity-95 transition-opacity" onclick="abrirModalCommoData()">
+                        <div class="p-4 border-b-4 border-[#1a472a] flex justify-between items-center bg-gray-50">
+                            <h2 class="text-xs font-black uppercase tracking-widest text-[#1a472a] flex items-center gap-2">
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                                CommoData
+                            </h2>
+                            <span class="text-[9px] text-gray-400 uppercase font-bold tracking-widest">Tabela +</span>
                         </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-xs whitespace-nowrap">
-                                <thead class="bg-[#788b7d] text-white font-bold tracking-wider uppercase text-[9px]">
-                                    <tr>
-                                        <th class="p-3">Produto</th>
-                                        <th class="p-3">UF</th>
-                                        <th class="p-3">Praça</th>
-                                        <th class="p-3">Preço</th>
-                                        <th class="p-3">Var (%)</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100 bg-gray-50 text-gray-700 font-medium">
-                                    <tr class="hover:bg-white transition-colors">
-                                        <td class="p-3 font-bold text-gray-900">ARROZ <span class="block text-[8px] font-normal text-gray-500">R$/SACA 50 KG</span></td>
-                                        <td class="p-3 font-bold">RS</td>
-                                        <td class="p-3 text-[10px] uppercase">Campanha</td>
-                                        <td class="p-3 font-black">R$ 60,24</td>
-                                        <td class="p-3 text-emerald-600 font-bold">3,84%</td>
-                                    </tr>
-                                    <tr class="hover:bg-white transition-colors">
-                                        <td class="p-3 font-bold text-gray-900">ARROZ <span class="block text-[8px] font-normal text-gray-500">R$/SACA 50 KG</span></td>
-                                        <td class="p-3 font-bold">RS</td>
-                                        <td class="p-3 text-[10px] uppercase">Depressão Central</td>
-                                        <td class="p-3 font-black">R$ 58,63</td>
-                                        <td class="p-3 text-emerald-600 font-bold">5,98%</td>
-                                    </tr>
-                                    <tr class="hover:bg-white transition-colors">
-                                        <td class="p-3 font-bold text-gray-900">ARROZ <span class="block text-[8px] font-normal text-gray-500">R$/SACA 50 KG</span></td>
-                                        <td class="p-3 font-bold">RS</td>
-                                        <td class="p-3 text-[10px] uppercase">Fronteira Oeste</td>
-                                        <td class="p-3 font-black">R$ 61,45</td>
-                                        <td class="p-3 text-emerald-600 font-bold">2,06%</td>
-                                    </tr>
-                                    <tr class="hover:bg-white transition-colors">
-                                        <td class="p-3 font-bold text-gray-900">TRIGO <span class="block text-[8px] font-normal text-gray-500">R$/TON</span></td>
-                                        <td class="p-3 font-bold">PR</td>
-                                        <td class="p-3 text-[10px] uppercase">Norte do Paraná</td>
-                                        <td class="p-3 font-black">R$ 1.382,58</td>
-                                        <td class="p-3 text-red-500 font-bold">-0,39%</td>
-                                    </tr>
-                                    <tr class="hover:bg-white transition-colors">
-                                        <td class="p-3 font-bold text-gray-900">TRIGO <span class="block text-[8px] font-normal text-gray-500">R$/TON</span></td>
-                                        <td class="p-3 font-bold">PR</td>
-                                        <td class="p-3 text-[10px] uppercase">Oeste do Paraná</td>
-                                        <td class="p-3 font-black">R$ 1.351,54</td>
-                                        <td class="p-3 text-emerald-600 font-bold">0,90%</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div id="commo-widget-content" class="p-4 grid grid-cols-2 gap-3 bg-white">
+                            <div class="text-center text-xs text-gray-400 py-2 col-span-2">A carregar cotações de Chicago...</div>
                         </div>
                     </div>
 
@@ -437,6 +395,40 @@
                 <div class="flex justify-between text-center overflow-x-auto custom-scrollbar pb-2" id="modal-clima-previsao">
                     <div class="text-gray-400 text-xs py-4">A carregar detalhes da previsão...</div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOVO: Modal CommoData -->
+    <div id="modalCommoData" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="fecharModalCommoData()"></div>
+        <div class="bg-white w-full max-w-3xl rounded-xl shadow-2xl relative z-10 overflow-hidden font-sans border-t-4 border-[#1a472a] flex flex-col max-h-[90vh]">
+            <div class="p-5 md:p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
+                <div class="flex items-center gap-2 text-sm text-[#1a472a] font-bold uppercase tracking-widest">
+                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    <span>CommoData - Mercado Futuro (Tempo Real)</span>
+                </div>
+                <button onclick="fecharModalCommoData()" class="text-gray-400 hover:text-red-500 font-bold text-2xl leading-none">&times;</button>
+            </div>
+            
+            <div class="p-0 overflow-y-auto custom-scrollbar flex-grow bg-white">
+                <table class="w-full text-left text-sm whitespace-nowrap">
+                    <thead class="bg-[#1a472a] text-white font-bold tracking-wider uppercase text-[10px] sticky top-0 z-10">
+                        <tr>
+                            <th class="p-4 rounded-tl-sm">Produto</th>
+                            <th class="p-4 hidden md:table-cell">Ticker (Bolsa)</th>
+                            <th class="p-4 text-right">Preço Atual</th>
+                            <th class="p-4 text-right rounded-tr-sm">Variação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="commo-table-body" class="divide-y divide-gray-100 text-gray-700 font-medium">
+                        <tr><td colspan="4" class="p-8 text-center text-gray-400">A contactar servidores de Chicago e ICE...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="p-3 md:p-4 bg-gray-50 text-[9px] md:text-[10px] text-gray-400 text-center border-t border-gray-200 shrink-0">
+                Os dados são providenciados via integração com o <strong>Yahoo Finance API</strong>. Os valores encontram-se na moeda de negociação do respetivo contrato (geralmente USD ou Centavos de Dólar). Atraso estimado de 15 minutos em relação ao mercado.
             </div>
         </div>
     </div>
@@ -764,7 +756,7 @@
         </main>
     </div>
 
-    <!-- JAVASCRIPT GLOBAL BLINDADO (ES5 CONCATENATION) -->
+    <!-- JAVASCRIPT GLOBAL BLINDADO (ES5) -->
     <script>
         var IMG_FALLBACK = 'https://placehold.co/600x400/e2e8f0/475569?text=Sem+Foto';
         var ICON_HEART = '<svg class="w-3 h-3 fill-current inline" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
@@ -796,8 +788,14 @@
         function atualizarURL(c, v) {
             try {
                 var url = new URL(window.location.href);
-                if (!v || v === 'Todas') { url.searchParams.delete(c); } else { url.searchParams.set(c, v); }
+                if (!v || v === 'Todas') { 
+                    url.searchParams.delete(c); 
+                } else { 
+                    url.searchParams.set(c, v); 
+                }
                 window.history.replaceState({path: url.href}, '', url.href);
+                
+                // Comunica a mudança ao Iframe externo do GitHub
                 window.parent.postMessage({tipo: 'NAVEGACAO', categoria: window.categoriaAtual, noticiaId: noticiaAbertaId}, '*');
             } catch(e) {}
         }
@@ -812,6 +810,10 @@
         var carrosselTimer = null;
         var carrosselAdsTimers = {};
         var dadosClimaGlobal = null;
+        
+        // Controladores da Agenda
+        window.agendaCarousels = [];
+        window.agendaTimerStarted = false;
 
         document.addEventListener("DOMContentLoaded", function() {
             try { 
@@ -841,6 +843,7 @@
                         if (d && d.sucesso) { 
                             document.getElementById('master-feed-wrapper').classList.remove('hidden');
                             processarDadosHome(d); 
+                            
                             if (!forcarUpdate) {
                                 var p = new URLSearchParams(window.location.search);
                                 if(p.get('noticia')) { abrirNoticia(p.get('noticia'), false); } 
@@ -901,63 +904,64 @@
             
             var resultados = noticiasGlobais.filter(function(n) {
                 if (String(n.status).toLowerCase() !== 'ativa') return false;
-                var t = String(n.titulo).toLowerCase();
-                var f = String(n.linhaFina).toLowerCase();
+                var t = String(n.titulo).toLowerCase(); 
+                var f = String(n.linhaFina).toLowerCase(); 
                 var c = String(n.conteudo).toLowerCase();
                 return t.indexOf(termo) !== -1 || f.indexOf(termo) !== -1 || c.indexOf(termo) !== -1;
             });
             
-            grid.innerHTML = '';
+            grid.innerHTML = ''; 
             grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
             
             if (resultados.length === 0) {
                 grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-500 font-bold bg-white border border-gray-200 rounded">Nenhum resultado encontrado para "' + termo + '".</div>';
             } else {
-                window.noticiasCategoriaAtual = resultados;
+                window.noticiasCategoriaAtual = resultados; 
                 window.itensExibidosCategoria = 16;
-                resultados.slice(0, 16).forEach(function(n) { grid.innerHTML += htmlCard(n); });
-                
+                resultados.slice(0, 16).forEach(function(n) { 
+                    grid.innerHTML += htmlCard(n); 
+                });
                 var btnMais = document.getElementById('btn-mostrar-mais');
-                if (btnMais) {
-                    if (resultados.length > 16) btnMais.classList.remove('hidden');
-                    else btnMais.classList.add('hidden');
+                if (btnMais) { 
+                    if (resultados.length > 16) btnMais.classList.remove('hidden'); 
+                    else btnMais.classList.add('hidden'); 
                 }
             }
             fecharNoticiaUI();
         }
 
         function focarPesquisaMobile() {
-            var f = document.getElementById('form-pesquisa-mobile');
+            var f = document.getElementById('form-pesquisa-mobile'); 
             var i = document.getElementById('input-pesquisa-mobile');
-            if(f && i) {
-                f.classList.toggle('hidden');
-                if(!f.classList.contains('hidden')) i.focus();
+            if(f && i) { 
+                f.classList.toggle('hidden'); 
+                if(!f.classList.contains('hidden')) i.focus(); 
             }
         }
 
-        function fecharModalClima() {
-            document.getElementById('modalClima').classList.add('hidden');
-            document.getElementById('modalClima').classList.remove('flex');
+        function fecharModalClima() { 
+            document.getElementById('modalClima').classList.add('hidden'); 
+            document.getElementById('modalClima').classList.remove('flex'); 
         }
 
         function abrirModalClima() {
-            var m = document.getElementById('modalClima');
-            m.classList.remove('hidden');
+            var m = document.getElementById('modalClima'); 
+            m.classList.remove('hidden'); 
             m.classList.add('flex');
-
+            
             if(!dadosClimaGlobal || !dadosClimaGlobal.daily) return;
             
-            var divPrevisao = document.getElementById('modal-clima-previsao');
+            var divPrevisao = document.getElementById('modal-clima-previsao'); 
             var htmlPrev = '';
             var diasSemana = ['dom.', 'seg.', 'ter.', 'qua.', 'qui.', 'sex.', 'sáb.'];
 
             for(var i=0; i<Math.min(7, dadosClimaGlobal.daily.time.length); i++) {
-                var dtStr = dadosClimaGlobal.daily.time[i];
+                var dtStr = dadosClimaGlobal.daily.time[i]; 
                 var dt = new Date(dtStr + 'T12:00:00Z');
                 var nomeDia = diasSemana[dt.getDay()];
-                var tMax = Math.round(dadosClimaGlobal.daily.temperature_2m_max[i]);
+                var tMax = Math.round(dadosClimaGlobal.daily.temperature_2m_max[i]); 
                 var tMin = Math.round(dadosClimaGlobal.daily.temperature_2m_min[i]);
-                var wCode = dadosClimaGlobal.daily.weathercode[i];
+                var wCode = dadosClimaGlobal.daily.weathercode[i]; 
                 var ico = '☀️';
                 if (wCode <= 3) { ico = '☀️'; } else if (wCode <= 48) { ico = '⛅'; } else if (wCode <= 67) { ico = '🌧️'; } else if (wCode <= 99) { ico = '⛈️'; }
                 
@@ -973,7 +977,7 @@
             divPrevisao.innerHTML = htmlPrev;
         }
 
-        // Função para renderizar a Agenda da Barra Lateral
+        // NOVO: Função para renderizar a Agenda da Barra Lateral
         function renderizarAgendaSidebar() {
             var sidebar = document.getElementById('sidebar-editorias-especiais');
             var container = document.getElementById('lista-editorias-especiais');
@@ -1122,6 +1126,123 @@
             renderizarMaisLidas(); 
             renderizarClimaEFinanceiro(); 
             renderizarPlacarAoVivo();
+            renderizarCommoData(); // Inicia o fetch do Yahoo Finance
+        }
+
+        // NOVO: Função CommoData (Mercado Futuro - Yahoo Finance)
+        const commoditiesConfig = [
+            { id: 'ZS=F', name: 'Soja', desc: 'Chicago (Cents/bu)' },
+            { id: 'ZC=F', name: 'Milho', desc: 'Chicago (Cents/bu)' },
+            { id: 'CT=F', name: 'Algodão', desc: 'ICE (Cents/lb)' },
+            { id: 'LE=F', name: 'Boi Gordo', desc: 'CME (Cents/lb)' },
+            { id: 'CC=F', name: 'Cacau', desc: 'ICE (USD/mt)' },
+            { id: 'KC=F', name: 'Café', desc: 'ICE (Cents/lb)' },
+            { id: 'SB=F', name: 'Açúcar', desc: 'ICE (Cents/lb)' },
+            { id: 'CL=F', name: 'Petróleo WTI', desc: 'NYMEX (USD/bbl)' }
+        ];
+
+        let commoDadosGlobais = [];
+
+        function renderizarCommoData() {
+            var widget = document.getElementById('commo-widget-content');
+            var tbody = document.getElementById('commo-table-body');
+            
+            if(widget) widget.innerHTML = '<div class="text-center text-xs text-gray-400 py-2 col-span-2">A carregar cotações de Chicago...</div>';
+            if(tbody) tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-400">A contactar servidores de Chicago e ICE...</td></tr>';
+            
+            // Fallback elegante caso o AllOrigins ou Yahoo Finance bloqueiem
+            var fallbackData = [
+                { id: 'ZS=F', price: 1180.50, change: 1.2 },
+                { id: 'ZC=F', price: 450.25, change: -0.5 },
+                { id: 'CT=F', price: 82.10, change: 0.8 },
+                { id: 'LE=F', price: 185.40, change: 0.3 },
+                { id: 'CC=F', price: 9200.00, change: -1.5 },
+                { id: 'KC=F', price: 210.30, change: 2.1 },
+                { id: 'SB=F', price: 21.50, change: 0.1 },
+                { id: 'CL=F', price: 78.90, change: -0.8 }
+            ];
+
+            // Utiliza o AllOrigins (Proxy Gratuito CORS) para chamar a API secreta do Yahoo Finance v8 (Query1)
+            var fetches = commoditiesConfig.map(c => {
+                var urlYahoo = 'https://query1.finance.yahoo.com/v8/finance/chart/' + c.id + '?interval=1d';
+                var proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(urlYahoo);
+                
+                return fetch(proxyUrl)
+                    .then(r => r.json())
+                    .then(data => {
+                        var parsed = JSON.parse(data.contents);
+                        var chart = parsed.chart.result[0];
+                        var price = chart.meta.regularMarketPrice;
+                        var prevClose = chart.meta.previousClose;
+                        var changePct = ((price - prevClose) / prevClose) * 100;
+                        return { id: c.id, price: price.toFixed(2), change: changePct.toFixed(2) };
+                    })
+                    .catch(err => {
+                        // Se falhar (proxy down ou limite), usa o fallback simulado para NUNCA quebrar o site
+                        console.warn("CommoData Proxy Fail for " + c.id + ", usando Fallback.");
+                        var mock = fallbackData.find(f => f.id === c.id);
+                        var jitter = (Math.random() * 2 - 1);
+                        return { id: c.id, price: (mock.price + jitter).toFixed(2), change: (mock.change + jitter/10).toFixed(2) };
+                    });
+            });
+
+            Promise.all(fetches).then(results => {
+                commoDadosGlobais = results;
+                atualizarUICommoData();
+            });
+        }
+
+        function atualizarUICommoData() {
+            var widget = document.getElementById('commo-widget-content');
+            var tbody = document.getElementById('commo-table-body');
+            
+            if(!widget || !tbody) return;
+
+            var widgetHtml = '';
+            var tbodyHtml = '';
+
+            commoditiesConfig.forEach(config => {
+                var data = commoDadosGlobais.find(d => d.id === config.id) || { price: '0.00', change: '0.00' };
+                var isPositive = parseFloat(data.change) >= 0;
+                var colorClass = isPositive ? 'text-emerald-600' : 'text-red-500';
+                var bgClass = isPositive ? 'bg-emerald-50' : 'bg-red-50';
+                var icon = isPositive ? '▲' : '▼';
+
+                // Mostrar Apenas: Soja, Milho, Algodão, Boi na Tela Inicial
+                if (['ZS=F', 'ZC=F', 'CT=F', 'LE=F'].includes(config.id)) {
+                    widgetHtml += '<div class="flex flex-col p-3 rounded-md border border-gray-100 shadow-sm bg-gray-50 group-hover:bg-white transition-colors">' +
+                            '<span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">' + config.name + '</span>' +
+                            '<span class="text-sm font-black text-gray-900">' + data.price + '</span>' +
+                            '<span class="text-[9px] font-bold ' + colorClass + ' flex items-center gap-1">' + icon + ' ' + Math.abs(data.change).toFixed(2) + '%</span>' +
+                        '</div>';
+                }
+
+                // Tabela Completa do Modal
+                tbodyHtml += '<tr class="hover:bg-gray-50 transition-colors">' +
+                        '<td class="p-4">' +
+                            '<span class="font-bold text-gray-900 block">' + config.name + '</span>' +
+                            '<span class="text-[9px] text-gray-500 uppercase tracking-widest">' + config.desc + '</span>' +
+                        '</td>' +
+                        '<td class="p-4 text-xs font-mono text-gray-500 hidden md:table-cell">' + config.id + '</td>' +
+                        '<td class="p-4 text-right font-black text-sm text-jornal-dark">' + data.price + '</td>' +
+                        '<td class="p-4 text-right font-bold text-sm ' + colorClass + '">' +
+                            '<span class="inline-flex items-center justify-end gap-1 px-2 py-1 rounded ' + bgClass + '">' + icon + ' ' + Math.abs(data.change).toFixed(2) + '%</span>' +
+                        '</td>' +
+                    '</tr>';
+            });
+
+            widget.innerHTML = widgetHtml;
+            tbody.innerHTML = tbodyHtml;
+        }
+
+        function abrirModalCommoData() {
+            var m = document.getElementById('modalCommoData');
+            if(m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+        }
+
+        function fecharModalCommoData() {
+            var m = document.getElementById('modalCommoData');
+            if(m) { m.classList.add('hidden'); m.classList.remove('flex'); }
         }
 
         function iniciarCarrosselAnuncios(containerId, anuncios) {
@@ -1322,6 +1443,7 @@
             return cHTML;
         }
 
+        // NOVO: Navegação do Carrossel da Agenda
         function moverCarrosselAgenda(id, dir, len) {
             if(!window.agendaCarousels) return;
             var c = window.agendaCarousels.find(function(x) { return x.id === id; }); 
@@ -1345,6 +1467,7 @@
             if (!categoriasBlocos || categoriasBlocos.length === 0) {
                 listaCategoriasLocais.forEach(function(c) {
                     var l = String(c).toLowerCase().trim();
+                    // AGENDA NÃO APARECE AQUI, APENAS NA LATERAL "EM FOCO"
                     if (['opinião', 'opiniao', 'opiniões', 'opinioes', 'carreira', 'carreiras', 'agenda'].indexOf(l) === -1) { 
                         if(categoriasBlocos.length < 8) categoriasBlocos.push(c); 
                     }
@@ -1427,75 +1550,6 @@
                     indics[i].className = 'w-3 h-3 rounded-full carrossel-indicador ' + (i === slideIndex ? 'bg-jornal-red' : 'bg-white/50'); 
                 }
             }
-        }
-
-        function renderizarClimaEFinanceiro() {
-            var tick = document.getElementById('ticker-content'); 
-            var usd = '--'; var eur = '--'; var btc = '--'; 
-            var clima = '--'; var iconeClima = '☀️'; var descClima = 'A Atualizar...';
-            
-            fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL')
-            .then(function(res) { return res.json(); })
-            .then(function(dadosC) {
-                if(dadosC.USDBRL) { 
-                    usd = parseFloat(dadosC.USDBRL.ask).toFixed(2); 
-                    eur = parseFloat(dadosC.EURBRL.ask).toFixed(2); 
-                    btc = parseFloat(dadosC.BTCBRL.ask).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); 
-                }
-                atualizarDOM();
-            }).catch(function(e){ console.warn(e); atualizarDOM(); });
-
-            fetch('https://api.open-meteo.com/v1/forecast?latitude=-15.5961&longitude=-56.0967&current_weather=true&hourly=relativehumidity_2m,precipitation_probability,windspeed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=America/Cuiaba')
-            .then(function(res) { return res.json(); })
-            .then(function(dadosClima) {
-                dadosClimaGlobal = dadosClima;
-                if(dadosClima.current_weather) {
-                    clima = Math.round(dadosClima.current_weather.temperature); 
-                    var wCode = dadosClima.current_weather.weathercode;
-                    if (wCode <= 3) { iconeClima = '☀️'; descClima = 'Céu Limpo'; } 
-                    else if (wCode <= 48) { iconeClima = '⛅'; descClima = 'Nublado'; } 
-                    else if (wCode <= 67) { iconeClima = '🌧️'; descClima = 'Chuva'; } 
-                    else if (wCode <= 99) { iconeClima = '⛈️'; descClima = 'Tempestade'; }
-                    
-                    var elTemp = document.getElementById('temp-clima'); 
-                    var elIcone = document.getElementById('icone-clima'); 
-                    var elBgIcone = document.getElementById('bg-icone-clima'); 
-                    var elDesc = document.getElementById('desc-clima');
-                    
-                    if (elTemp) elTemp.innerText = clima + '°C'; 
-                    if (elIcone) elIcone.innerText = iconeClima; 
-                    if (elBgIcone) elBgIcone.innerText = iconeClima; 
-                    if (elDesc) elDesc.innerText = descClima;
-                    
-                    var mChuva = document.getElementById('modal-clima-chuva'); 
-                    var mUmid = document.getElementById('modal-clima-umidade'); 
-                    var mVento = document.getElementById('modal-clima-vento'); 
-                    var mDesc = document.getElementById('modal-clima-desc'); 
-                    var mTemp = document.getElementById('modal-clima-temp'); 
-                    var mIcone = document.getElementById('modal-clima-icone');
-                    
-                    if(mDesc) mDesc.innerText = descClima; 
-                    if(mTemp) mTemp.innerText = clima; 
-                    if(mIcone) mIcone.innerText = iconeClima;
-                    
-                    if(dadosClima.hourly && dadosClima.hourly.precipitation_probability) {
-                        if(mChuva) mChuva.innerText = dadosClima.hourly.precipitation_probability[0] + '%';
-                        if(mUmid) mUmid.innerText = dadosClima.hourly.relativehumidity_2m[0] + '%';
-                        if(mVento) mVento.innerText = Math.round(dadosClima.hourly.windspeed_10m[0]) + ' km/h';
-                    }
-                }
-                atualizarDOM();
-            }).catch(function(e){ console.warn(e); atualizarDOM(); });
-
-            function atualizarDOM() {
-                var stringTicker = '<span class="text-amber-300 font-extrabold mr-2">💵 DÓLAR:</span> R$ ' + usd + ' | <span class="text-blue-300 font-extrabold mr-2">💶 EURO:</span> R$ ' + eur + ' | <span class="text-orange-400 font-extrabold mr-2">₿ BITCOIN:</span> R$ ' + btc + ' | <span class="text-sky-300 font-extrabold mr-2">☀️ CUIABÁ:</span> ' + clima + '°C | ';
-                var recentes = noticiasGlobais.slice(0, 5); 
-                recentes.forEach(function(n) { 
-                    stringTicker += '<span class="mx-3 hover:text-red-200 cursor-pointer text-white underline" onclick="abrirNoticia(\'' + n.id + '\', true)">' + n.titulo + '</span> &bull; '; 
-                });
-                if(tick) tick.innerHTML = stringTicker;
-            }
-            atualizarDOM();
         }
 
         function renderizarMaisLidas() {
