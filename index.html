@@ -371,6 +371,17 @@
             </div>
         </nav>
 
+        <div id="filtro-cidade-publico" class="hidden w-full bg-slate-50 border-b border-gray-200 shadow-sm">
+            <form onsubmit="filtrarCidadePublica(event)" class="max-w-[1200px] mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-end gap-3">
+                <div class="flex-grow">
+                    <label for="input-cidade-publico" class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Filtrar matérias de Cidades</label>
+                    <input type="search" id="input-cidade-publico" oninput="filtrarCidadePublica(event)" placeholder="Digite o nome da cidade..." autocomplete="address-level2" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm text-jornal-dark rounded-sm" />
+                </div>
+                <button type="submit" class="bg-jornal-blue text-white font-black px-6 py-3 uppercase tracking-widest text-xs rounded-sm hover:opacity-90 transition-opacity">Filtrar cidade</button>
+                <button type="button" onclick="limparFiltroCidadePublica()" class="px-5 py-3 border border-gray-300 text-gray-600 font-bold uppercase tracking-widest text-xs rounded-sm hover:bg-gray-100 transition-colors">Limpar</button>
+            </form>
+        </div>
+
         <main class="max-w-[1200px] mx-auto pt-6 md:pt-8 pb-16 px-4 flex-grow w-full min-w-0">
             <div id="ads-topo-container" class="w-full mb-8 hidden grid gap-4 grid-cols-1 md:grid-cols-2"></div>
 
@@ -690,6 +701,12 @@
                         </div>
                     </div>
 
+                    <div id="admin-cidade-container" class="hidden p-4 bg-blue-50 border border-blue-200 rounded-sm">
+                        <label for="admin-cidade" class="text-[10px] font-bold uppercase tracking-widest text-jornal-blue mb-1 block">Cidade *</label>
+                        <input type="text" id="admin-cidade" placeholder="Informe a cidade da matéria" autocomplete="address-level2" class="w-full px-4 py-3 bg-white border border-blue-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm" />
+                        <p class="text-[9px] text-gray-500 mt-1">Este campo aparece somente quando a editoria Cidades está selecionada.</p>
+                    </div>
+
                     <div>
                         <div class="flex justify-between items-end mb-1">
                             <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Linha Fina (Opcional - SEO)</label>
@@ -801,6 +818,18 @@
             <!-- Listagem Admin -->
             <div id="lista-noticias-container" class="hidden bg-white p-6 shadow-sm border border-gray-200 rounded-sm">
                 <h2 class="font-sans text-xl font-black mb-6 text-jornal-dark uppercase border-l-4 border-jornal-red pl-3">Editar Publicações</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 border border-gray-200 rounded-sm">
+                    <div>
+                        <label for="admin-filtro-editoria" class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Filtrar por editoria</label>
+                        <select id="admin-filtro-editoria" onchange="carregarListaEdicao()" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm">
+                            <option value="todas">Todas as editorias</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="admin-pesquisa-materia" class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Pesquisar matéria</label>
+                        <input type="search" id="admin-pesquisa-materia" oninput="carregarListaEdicao()" placeholder="Digite título ou conteúdo..." class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm text-jornal-dark rounded-sm" />
+                    </div>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm whitespace-nowrap">
                         <thead class="bg-gray-100 border-b border-gray-300 text-[10px] uppercase tracking-widest text-gray-500">
@@ -1327,7 +1356,7 @@
                 
                 agendaNoticias.forEach(function(n) {
                     html += '<div class="w-full shrink-0 flex-none relative h-full cursor-pointer" onclick="abrirNoticia(\'' + n.id + '\', true)">';
-                    html += '<img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover bg-gray-900" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />';
+                    html += '<img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain bg-gray-900" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />';
                     html += '<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>';
                     html += '<div class="absolute bottom-0 left-0 p-4 w-full text-white min-w-0 z-10">';
                     
@@ -1412,7 +1441,8 @@
                         temEsp = true;
                         sidebarList.innerHTML += '<button onclick="filtrarCategoria(\'' + c + '\', true)" class="w-full text-left px-4 py-3 bg-white hover:bg-gray-50 border border-gray-200 text-jornal-dark font-black text-[11px] uppercase tracking-widest rounded-sm transition-colors flex justify-between items-center group shadow-sm">' + c + ' <span class="text-gray-300 group-hover:text-jornal-red text-lg leading-none">&raquo;</span></button>';
                     } else if(['opinião', 'opiniao', 'opiniões', 'opinioes', 'agenda'].indexOf(cl) === -1) {
-                        nav.innerHTML += '<a href="javascript:void(0)" onclick="filtrarCategoria(\'' + c + '\', true)" class="hover:text-jornal-red transition-colors border-b-2 border-transparent hover:border-jornal-red whitespace-nowrap px-1 py-2">' + c + '</a>'; 
+                        var acaoMenu = cl === 'cidades' ? "abrirFiltroCidade('" + c + "', true)" : "filtrarCategoria('" + c + "', true)";
+                        nav.innerHTML += '<a href="javascript:void(0)" onclick="' + acaoMenu + '" class="hover:text-jornal-red transition-colors border-b-2 border-transparent hover:border-jornal-red whitespace-nowrap px-1 py-2">' + c + '</a>'; 
                     }
                 });
                 
@@ -1518,7 +1548,7 @@
             var html = '<article onclick="abrirNoticia(\'' + d.id + '\', true)" class="group cursor-pointer flex flex-col mb-4 bg-gray-50 p-4 border border-gray-100 rounded-sm hover:shadow-md transition-shadow">' +
                 '<div class="flex items-center gap-3 mb-3"><div class="w-10 h-10 rounded-full bg-jornal-blue flex items-center justify-center text-white font-black text-xs shrink-0 shadow-inner">' + letraAutor + '</div>' +
                 '<div class="flex flex-col min-w-0"><span class="text-[10px] font-black uppercase tracking-widest text-jornal-red">Opinião</span><span class="text-xs font-bold text-gray-700 truncate w-full">' + (d.autor || 'Editorial') + '</span></div></div>' +
-                '<div class="w-full aspect-video mb-3 overflow-hidden rounded-sm bg-gray-200 shrink-0 relative"><img src="' + (d.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />' +
+                '<div class="w-full aspect-video mb-3 overflow-hidden rounded-sm bg-gray-200 shrink-0 relative"><img src="' + (d.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-100" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />' +
                 (d.creditosImagem ? '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded-tl">Foto: ' + d.creditosImagem + '</div>' : '') + '</div>' +
                 '<h3 class="font-serif font-black text-sm md:text-base leading-snug text-jornal-dark group-hover:text-jornal-blue line-clamp-3 mb-2">' + d.titulo + '</h3>' +
                 '<p class="text-xs text-gray-500 line-clamp-2 mb-3 italic">' + (d.linhaFina || removerHTML(d.conteudo)) + '</p>' +
@@ -1528,7 +1558,7 @@
                 html += '<div class="flex flex-col gap-3 mt-2">';
                 for(var i=1; i<Math.min(op.length, 4); i++) {
                     html += '<article onclick="abrirNoticia(\'' + op[i].id + '\', true)" class="group cursor-pointer border-t border-gray-100 pt-3 flex gap-3 items-center hover:bg-gray-50 p-2 -mx-2 rounded transition-colors">' +
-                        '<div class="w-12 h-12 rounded bg-gray-200 shrink-0 overflow-hidden relative"><img src="' + (op[i].urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
+                        '<div class="w-12 h-12 rounded bg-gray-200 shrink-0 overflow-hidden relative"><img src="' + (op[i].urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-100" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
                         '<div class="flex-grow min-w-0 flex flex-col justify-center"><h4 class="font-bold text-xs text-gray-800 leading-tight group-hover:text-jornal-red line-clamp-2 mb-1">' + op[i].titulo + '</h4>' +
                         '<span class="text-[9px] font-bold text-gray-400 tracking-widest uppercase">' + (op[i].dataHora ? op[i].dataHora.split(' ')[0] : '') + '</span></div></article>';
                 }
@@ -1550,11 +1580,52 @@
             return '<a href="' + prop.linkDestino + '" target="_blank" class="block w-full relative group hover:opacity-95 transition-opacity"><div class="absolute top-2 right-2 bg-white/90 text-[8px] uppercase font-black px-1.5 py-0.5 z-10 text-jornal-dark border border-gray-200">Publicidade</div>' + mediaHtml + '</a>';
         }
 
+        function categoriaEhCidades(cat) {
+            return normalizarTextoFiltro(cat) === 'cidades';
+        }
+
+        function abrirFiltroCidade(cat, up) {
+            window.editoriaCidadesAtual = cat || 'Cidades';
+            window.cidadeAtual = '';
+            var painel = document.getElementById('filtro-cidade-publico');
+            var input = document.getElementById('input-cidade-publico');
+            if (painel) painel.classList.remove('hidden');
+            if (input) input.value = '';
+            filtrarCategoria(window.editoriaCidadesAtual, up);
+            if (input) setTimeout(function() { input.focus(); }, 50);
+        }
+
+        function filtrarCidadePublica(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            var input = document.getElementById('input-cidade-publico');
+            window.cidadeAtual = input ? input.value.trim() : '';
+            filtrarCategoria(window.editoriaCidadesAtual || 'Cidades', false);
+        }
+
+        function limparFiltroCidadePublica() {
+            var input = document.getElementById('input-cidade-publico');
+            if (input) input.value = '';
+            window.cidadeAtual = '';
+            filtrarCategoria(window.editoriaCidadesAtual || 'Cidades', false);
+            if (input) input.focus();
+        }
+
+        function fecharFiltroCidadePublica() {
+            var painel = document.getElementById('filtro-cidade-publico');
+            var input = document.getElementById('input-cidade-publico');
+            if (painel) painel.classList.add('hidden');
+            if (input) input.value = '';
+            window.cidadeAtual = '';
+        }
+
         function filtrarCategoria(cat, up) {
             if (up === undefined) {
                 up = true;
             }
-            window.categoriaAtual = cat; 
+            window.categoriaAtual = cat;
+            if (!categoriaEhCidades(cat)) {
+                fecharFiltroCidadePublica();
+            }
             
             if(up) {
                 atualizarURL('categoria', cat, true);
@@ -1576,8 +1647,16 @@
                 if (cat === 'Todas') {
                     return isPub;
                 }
-                return isPub && String(n.categoria).toLowerCase().indexOf(cat.toLowerCase()) !== -1;
+                return isPub && normalizarTextoFiltro(n.categoria).indexOf(normalizarTextoFiltro(cat)) !== -1;
             });
+
+            if (categoriaEhCidades(cat) && window.cidadeAtual) {
+                var cidadeNormalizada = normalizarTextoFiltro(window.cidadeAtual);
+                f = f.filter(function(n) {
+                    return normalizarTextoFiltro(n.cidade).indexOf(cidadeNormalizada) !== -1;
+                });
+                document.getElementById('titulo-seccao-feed').innerText = 'Cidades: ' + window.cidadeAtual;
+            }
             
             var carrosselContainer = document.getElementById('carrossel-destaques');
             var gridEditorias = document.getElementById('grid-editorias-exclusivo');
@@ -1616,6 +1695,9 @@
                     dest.innerHTML = htmlHero(f[0]); 
                     dest.classList.remove('hidden'); 
                     f = f.slice(1); 
+                } else {
+                    dest.classList.add('hidden');
+                    grid.innerHTML = '<div class="sm:col-span-2 lg:col-span-4 p-10 text-center bg-gray-50 border border-gray-200 text-sm text-gray-500">Nenhuma matéria encontrada para a cidade informada.</div>';
                 }
                 
                 window.noticiasCategoriaAtual = f; 
@@ -1655,8 +1737,8 @@
 
         function htmlCard(n) {
             var cHTML = '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 p-0 flex flex-col h-full hover:shadow-md transition-shadow rounded-sm w-full overflow-hidden min-w-0">' +
-                '<div class="relative w-full aspect-video bg-gray-100 border-b border-gray-200 shrink-0 overflow-hidden">' +
-                '<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />' +
+                '<div class="relative w-full bg-gray-100 border-b border-gray-200 shrink-0 overflow-hidden flex items-center justify-center">' +
+                '<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-auto max-h-[360px] object-contain transition duration-300" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />' +
                 '</div>';
             
             if (n.creditosImagem) {
@@ -1678,8 +1760,8 @@
 
         function htmlHero(n) {
             var cHTML = '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 flex flex-col md:flex-row h-full overflow-hidden hover:shadow-md transition-shadow rounded-sm w-full">' +
-                '<div class="md:w-3/5 w-full bg-gray-100 min-h-[300px] shrink-0 overflow-hidden relative">' +
-                '<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700 min-h-[300px]" />';
+                '<div class="md:w-3/5 w-full bg-gray-100 shrink-0 overflow-hidden relative flex items-center justify-center">' +
+                '<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="w-full h-auto max-h-[560px] object-contain transition duration-300" />';
             
             if (n.creditosImagem) {
                 cHTML += '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 rounded-tl">Foto: ' + n.creditosImagem + '</div>';
@@ -1745,7 +1827,7 @@
                     htmlFinal += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">';
                     nCat.forEach(function(n) {
                         htmlFinal += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col h-full border border-gray-100 shadow-sm bg-white rounded-sm overflow-hidden min-w-0 hover:shadow-md transition-shadow">' +
-                            '<div class="relative w-full aspect-video bg-gray-200 shrink-0 overflow-hidden"><img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
+                            '<div class="relative w-full bg-gray-200 shrink-0 overflow-hidden flex items-center justify-center"><img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-auto max-h-[320px] object-contain transition-transform duration-300" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
                             '<div class="p-4 flex flex-col flex-grow min-w-0 bg-white relative z-10"><h4 class="font-serif font-bold text-sm leading-snug text-jornal-dark group-hover:text-jornal-red line-clamp-3 mb-2">' + n.titulo + '</h4>' +
                             '<span class="text-[9px] font-bold text-gray-400 mt-auto tracking-widest uppercase">' + (n.dataHora ? n.dataHora.replace(' ', ' às ') : '') + '</span></div></article>';
                     });
@@ -1767,7 +1849,7 @@
                 var credHtml = n.creditosImagem ? '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 z-20">Foto: ' + n.creditosImagem + '</div>' : '';
                 
                 inner.innerHTML += '<div class="absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out cursor-pointer group carrossel-slide" style="opacity: 0; z-index: 0;" onclick="abrirNoticia(\'' + n.id + '\', true)">' +
-                '<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover bg-gray-900 opacity-90" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'"/>' + 
+                '<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-900 opacity-90" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'"/>' + 
                 credHtml +
                 '<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>' +
                 '<div class="absolute bottom-0 left-0 p-6 md:p-12 w-full text-white min-w-0 z-10">' +
@@ -2082,7 +2164,7 @@
             document.getElementById('home-feed-container').classList.add('hidden'); 
             document.getElementById('noticia-completa-container').classList.remove('hidden');
             
-            document.getElementById('nc-categoria').innerText = noticia.categoria; 
+            document.getElementById('nc-categoria').innerText = limparTextoNavegacao(noticia.categoria || 'Geral'); 
             document.getElementById('nc-titulo').innerText = noticia.titulo;
             document.getElementById('nc-autor').innerText = "Por: " + noticia.autor; 
             document.getElementById('nc-data').innerText = noticia.dataHora ? "Publicado em " + noticia.dataHora.replace(' ', ' às ') : '';
@@ -2173,6 +2255,41 @@
             fecharNoticia(); 
             filtrarCategoria('Todas', true); 
             document.getElementById('input-pesquisa').value = ''; 
+        }
+
+        function obterUrlPublicaNoticia() {
+            var url = new URL(window.location.href);
+            url.search = '';
+            if (noticiaAbertaId) {
+                url.searchParams.set('noticia', noticiaAbertaId);
+            }
+            return url.toString();
+        }
+
+        function shareLink(rede) {
+            var noticia = noticiasGlobais.find(function(n) {
+                return n && String(n.id) === String(noticiaAbertaId);
+            });
+            if (!noticia) {
+                mostrarMensagem('Não foi possível identificar a matéria para compartilhar.', 'erro');
+                return;
+            }
+
+            var url = obterUrlPublicaNoticia();
+            var texto = noticia.titulo + (noticia.linhaFina ? ' — ' + noticia.linhaFina : '') + '\n\n' + url;
+            var destino = '';
+
+            if (rede === 'whatsapp') {
+                destino = 'https://wa.me/?text=' + encodeURIComponent(texto);
+            } else if (rede === 'x') {
+                destino = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(noticia.titulo) + '&url=' + encodeURIComponent(url);
+            }
+
+            if (!destino) return;
+            var janela = window.open(destino, '_blank', 'noopener,noreferrer');
+            if (!janela) {
+                window.location.href = destino;
+            }
         }
 
         function abrirModalLogin() { 
@@ -2652,20 +2769,31 @@
         function removerHTML(t) { 
             return t ? String(t).replace(/<[^>]*>?/gm, '') : ''; 
         }
+
+        function limparTextoNavegacao(t) {
+            var texto = removerHTML(t || '');
+            texto = texto.replace(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/[^\s]+/gi, '');
+            texto = texto.replace(/(?:&amp;|&)(?:feature|source_ve_path|si|pp)=[^\s]+/gi, '');
+            texto = texto.replace(/[|>›»]+\s*$/g, '').replace(/\s{2,}/g, ' ').trim();
+            return texto || 'Geral';
+        }
         
         function converterVideoUrlsParaPlayers(t) { 
             if (!t) return ""; 
             var strT = String(t);
             
-            // Remove a tag de link (e tudo em volta) e preserva apenas o ID do YouTube
-            var ytCleanRegex = /(?:<a\b[^>]*href="[^"]*?(?:youtube\.com|youtu\.be)[^"]*?"[^>]*>)(.*?)(?:<\/a>)/gi;
-            strT = strT.replace(ytCleanRegex, '$1');
+            // Normaliza links do YouTube antes da conversão, removendo a âncora e qualquer texto residual.
+            var ytAnchorRegex = /<a\b[^>]*href=["']([^"']*(?:youtube\.com|youtu\.be)[^"']*)["'][^>]*>.*?<\/a>/gi;
+            strT = strT.replace(ytAnchorRegex, '$1');
             
-            // Regex que captura apenas o URL do Youtube até ao ID, ignorando parametros como &source_ve_path
-            var ytRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[&?][a-zA-Z0-9_=-]+)*/gi;
+            // Converte a URL completa (inclusive parâmetros de rastreamento) em um único player.
+            var ytRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[?&][^\s<>'"]*)?/gi;
             strT = strT.replace(ytRegex, function(match, id) { 
-                return '<div class="aspect-video w-full my-4 shadow-md rounded overflow-hidden"><iframe class="w-full h-full" src="https://www.youtube.com/embed/' + id + '" frameborder="0" allowfullscreen></iframe></div>'; 
+                return '<div class="aspect-video w-full my-4 shadow-md rounded overflow-hidden bg-black"><iframe class="w-full h-full" src="https://www.youtube-nocookie.com/embed/' + id + '" title="Vídeo incorporado" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>'; 
             });
+
+            // Remove fragmentos de parâmetros que alguns editores deixam visíveis após o link.
+            strT = strT.replace(/(?:&amp;|&)(?:feature|source_ve_path|si|pp)=[^\s<]+/gi, '');
 
             var igRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[a-zA-Z0-9_-]+)(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
             strT = strT.replace(igRegex, function(match, url) { 
@@ -2698,9 +2826,18 @@
                 mostrarMensagem("Selecione ao menos 1 Editoria.", "erro"); 
                 return; 
             }
-            var categoriasSelecionadas = Array.from(checkboxes).map(function(cb) { 
+            var categoriasSelecionadasArray = Array.from(checkboxes).map(function(cb) { 
                 return cb.value; 
-            }).join(", ");
+            });
+            var categoriasSelecionadas = categoriasSelecionadasArray.join(", ");
+            var possuiEditoriaCidades = categoriasSelecionadasArray.some(categoriaEhCidades);
+            var campoCidade = document.getElementById('admin-cidade');
+            var cidadeSelecionada = campoCidade ? campoCidade.value.trim() : '';
+            if (possuiEditoriaCidades && !cidadeSelecionada) {
+                mostrarMensagem("Informe a cidade da matéria.", "erro");
+                if (campoCidade) campoCidade.focus();
+                return;
+            }
 
             var creditos = document.getElementById('admin-creditos-imagem').value.trim();
             if ((base64StringNoticia || temImagemAnterior) && !creditos) { 
@@ -2738,6 +2875,7 @@
                 id: editandoID, 
                 titulo: document.getElementById('admin-titulo').value, 
                 categoria: categoriasSelecionadas, 
+                cidade: possuiEditoriaCidades ? cidadeSelecionada : '',
                 linhaFina: document.getElementById('admin-linha-fina').value,
                 conteudo: conteudoRich, 
                 autor: document.getElementById('admin-autor').value, 
@@ -2911,6 +3049,22 @@
             document.querySelectorAll('input[name="admin-categorias-checkbox"]').forEach(function(cb) { 
                 cb.checked = false; 
             });
+            var campoCidade = document.getElementById('admin-cidade');
+            if (campoCidade) campoCidade.value = '';
+            atualizarCampoCidadeAdmin();
+        }
+
+        function atualizarCampoCidadeAdmin() {
+            var selecionadas = Array.from(document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked'));
+            var mostrar = selecionadas.some(function(cb) { return categoriaEhCidades(cb.value); });
+            var container = document.getElementById('admin-cidade-container');
+            var input = document.getElementById('admin-cidade');
+            if (container) container.classList.toggle('hidden', !mostrar);
+            if (input) {
+                input.required = mostrar;
+                input.setAttribute('aria-required', mostrar ? 'true' : 'false');
+                if (!mostrar) input.value = '';
+            }
         }
 
         function renderizarChecklistCategoriasAdmin() {
@@ -2920,7 +3074,7 @@
             checklistAdmin.innerHTML = '';
             listaCategoriasLocais.forEach(function(c) { 
                 checklistAdmin.innerHTML += '<label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">' +
-                    '<input type="checkbox" name="admin-categorias-checkbox" value="' + c + '" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-300" />' + 
+                    '<input type="checkbox" name="admin-categorias-checkbox" value="' + c + '" onchange="atualizarCampoCidadeAdmin()" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-300" />' + 
                     c.toUpperCase() + 
                 '</label>'; 
             });
@@ -3142,18 +3296,59 @@
             });
         }
 
+        function normalizarTextoFiltro(valor) {
+            return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+        }
+
+        function atualizarFiltroEditoriasAdmin() {
+            var select = document.getElementById('admin-filtro-editoria');
+            if (!select) return;
+            var valorAtual = select.value || 'todas';
+            var categorias = [];
+            noticiasGlobais.forEach(function(n) {
+                String((n && n.categoria) || '').split(',').forEach(function(categoria) {
+                    var nome = categoria.trim();
+                    if (nome && categorias.map(normalizarTextoFiltro).indexOf(normalizarTextoFiltro(nome)) === -1) {
+                        categorias.push(nome);
+                    }
+                });
+            });
+            categorias.sort(function(a, b) { return a.localeCompare(b, 'pt-BR'); });
+            select.innerHTML = '<option value="todas">Todas as editorias</option>' + categorias.map(function(categoria) {
+                return '<option value="' + categoria.replace(/"/g, '&quot;') + '">' + categoria + '</option>';
+            }).join('');
+            var existe = Array.from(select.options).some(function(option) { return option.value === valorAtual; });
+            select.value = existe ? valorAtual : 'todas';
+        }
+
         function carregarListaEdicao() {
             var tbody = document.getElementById('admin-tabela-noticias'); 
             if(!tbody) return;
-            
+
+            atualizarFiltroEditoriasAdmin();
             tbody.innerHTML = '';
+
+            var selectEditoria = document.getElementById('admin-filtro-editoria');
+            var inputPesquisa = document.getElementById('admin-pesquisa-materia');
+            var editoriaSelecionada = normalizarTextoFiltro(selectEditoria ? selectEditoria.value : 'todas');
+            var termoPesquisa = normalizarTextoFiltro(inputPesquisa ? inputPesquisa.value : '');
+
+            var noticiasFiltradas = noticiasGlobais.filter(function(n) {
+                if (!n) return false;
+                var editorias = String(n.categoria || '').split(',').map(normalizarTextoFiltro);
+                var correspondeEditoria = editoriaSelecionada === 'todas' || editorias.indexOf(editoriaSelecionada) !== -1;
+                var textoMateria = normalizarTextoFiltro([n.titulo, n.linhaFina, removerHTML(n.conteudo), n.cidade].join(' '));
+                var correspondePesquisa = !termoPesquisa || textoMateria.indexOf(termoPesquisa) !== -1;
+                return correspondeEditoria && correspondePesquisa;
+            });
             
-            if (noticiasGlobais.length === 0) { 
-                tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-xs text-gray-500">Nenhuma matéria.</td></tr>'; 
+            if (noticiasFiltradas.length === 0) { 
+                var mensagem = noticiasGlobais.length === 0 ? 'Nenhuma matéria publicada.' : 'Nenhuma matéria encontrada com os filtros informados.';
+                tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-xs text-gray-500">' + mensagem + '</td></tr>'; 
                 return; 
             }
             
-            noticiasGlobais.forEach(function(n) {
+            noticiasFiltradas.forEach(function(n) {
                 if (n) {
                     var statusVal = n.status ? n.status.toLowerCase() : 'inativa'; 
                     var isAtivo = statusVal === 'ativa';
@@ -3273,6 +3468,9 @@
             document.querySelectorAll('input[name="admin-categorias-checkbox"]').forEach(function(cb) { 
                 cb.checked = categoriasNoticia.indexOf(cb.value.toLowerCase()) !== -1; 
             });
+            var campoCidade = document.getElementById('admin-cidade');
+            if (campoCidade) campoCidade.value = noticia.cidade || '';
+            atualizarCampoCidadeAdmin();
             
             document.getElementById('admin-legenda-imagem').value = noticia.legendaImagem || ''; 
             document.getElementById('admin-creditos-imagem').value = noticia.creditosImagem || '';
