@@ -27,7 +27,7 @@
         // ================================================================
         
         // ⚠️ O SEU LINK DE EXECUÇÃO DA API DO GOOGLE
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyVroxyx_f70Q2KkcnfMWtt2vV8EzQRsPBhF9nNL4frnKhdhe7t-oahNoJo9SCLfAbE/exec";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzMlO1NI66MXYoTpXs8bM3FUy8PkAvW8deiHaxC5U0VibHNtmUwwR9viarGC5vVm_MU/exec";
         
         window.google = {
             script: {
@@ -412,6 +412,9 @@
                         
                         <div id="grid-noticias" class="grid gap-6 w-full min-w-0"></div>
                         
+                        <!-- Anúncios Entre Editorias -->
+                        <div id="propaganda-entre-editorias" class="w-full my-8 hidden min-w-0 rounded-sm overflow-hidden"></div>
+                        
                         <div class="w-full flex justify-center mt-8">
                             <button id="btn-mostrar-mais" onclick="mostrarMaisNoticias()" class="border border-[#04724D] text-[#04724D] font-medium uppercase text-[11px] px-10 py-3 rounded-full hover:bg-emerald-50 transition-colors tracking-widest hidden shadow-sm w-full md:w-auto">Mostrar Mais</button>
                         </div>
@@ -463,6 +466,9 @@
                                 &larr; Voltar à Página Inicial
                             </button>
                         </div>
+
+                        <!-- NOTÍCIAS RELACIONADAS -->
+                        <div id="noticias-relacionadas-container" class="border-t-4 border-gray-100 pt-8 mt-8 mb-8 hidden"></div>
 
                         <div class="border-t-4 border-gray-100 pt-8 mt-4">
                             <h3 class="text-lg font-black font-sans uppercase tracking-tighter text-jornal-dark mb-6">Comentários</h3>
@@ -1073,7 +1079,8 @@
         function carregarNoticias(forcarUpdate) {
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 document.getElementById('master-feed-wrapper').classList.add('hidden');
-                document.getElementById('loading-noticias').classList.remove('hidden');
+                mostrarSkeletonNoticias();
+                document.getElementById('loading-noticias').classList.add('hidden');
                 document.getElementById('debug-error-box').classList.add('hidden');
                 
                 var tId = setTimeout(function() {
@@ -1086,6 +1093,8 @@
                 window.google.script.run.withSuccessHandler(function(res) {
                     clearTimeout(tId);
                     document.getElementById('loading-noticias').classList.add('hidden');
+                    var grid = document.getElementById('grid-noticias');
+                    if (grid) grid.innerHTML = '';
                     try {
                         var d = typeof res === 'string' ? JSON.parse(res) : res;
                         if (d && d.sucesso) { 
@@ -1465,6 +1474,7 @@
             if (d.propagandas) {
                 var adsTopo = []; 
                 var adsLateral = [];
+                var adsEntreEditorias = [];
                 
                 d.propagandas.forEach(function(p) {
                     var partes = String(p.empresa || '').split('|||'); 
@@ -1473,12 +1483,15 @@
                     
                     if (p.local === 'Topo') {
                         adsTopo.push(p); 
+                    } else if (p.local === 'Entre Editorias') {
+                        adsEntreEditorias.push(p);
                     } else {
                         adsLateral.push(p);
                     }
                 });
                 iniciarCarrosselAnuncios('ads-topo-container', adsTopo); 
                 iniciarCarrosselAnuncios('grid-propagandas-lateral', adsLateral);
+                iniciarCarrosselAnuncios('propaganda-entre-editorias', adsEntreEditorias);
             }
             
             // Restaura o Ícone e Logo do Painel
@@ -1494,9 +1507,10 @@
             
             atualizarIdentidadeVisual();
             renderizarOpinioes(); 
-            renderizarAgendaSidebar(); 
+            renderizarAgendaSidebar();
+            renderizarAnunciosEntreEditorias();
             renderizarMaisLidas(); 
-            renderizarClimaEFinanceiro(); 
+            renderizarClimaEFinanceiro();
             renderizarPlacarAoVivo();
         }
 
@@ -1985,6 +1999,26 @@
             atualizarDOM();
         }
 
+        function renderizarAnunciosEntreEditorias() {
+            var container = document.getElementById('propaganda-entre-editorias');
+            if (!container) return;
+            
+            var adsEntreEditorias = [];
+            if (window.propagandasGlobais) {
+                adsEntreEditorias = window.propagandasGlobais.filter(function(p) {
+                    return p.local === 'Entre Editorias';
+                });
+            }
+            
+            if (adsEntreEditorias.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+            
+            container.classList.remove('hidden');
+            iniciarCarrosselAnuncios('propaganda-entre-editorias', adsEntreEditorias);
+        }
+
         function renderizarMaisLidas() {
             var lista = document.getElementById('lista-mais-lidas'); 
             if (!lista) return;
@@ -2232,6 +2266,8 @@
                 }
             }
             
+            renderizarNoticiasRelacionadas(noticia);
+            
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.incrementarView(noticiaAbertaId);
             }
@@ -2266,9 +2302,10 @@
             return url.toString();
         }
 
-        function shareLink(rede) {
+        function shareLink(rede, noticiaId) {
+            var id = noticiaId || noticiaAbertaId;
             var noticia = noticiasGlobais.find(function(n) {
-                return n && String(n.id) === String(noticiaAbertaId);
+                return n && String(n.id) === String(id);
             });
             if (!noticia) {
                 mostrarMensagem('Não foi possível identificar a matéria para compartilhar.', 'erro');
@@ -2846,6 +2883,8 @@
                 return; 
             }
 
+            mostrarSkeletonNoticias();
+            
             var btn = document.getElementById('btn-salvar-noticia'); 
             var txt = btn.innerHTML; 
             btn.innerHTML = 'A publicar...'; 
@@ -2895,29 +2934,12 @@
                 payload.isUpload = false; 
             }
             
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.withSuccessHandler(function(res) {
-                    var finalRes = res; 
-                    if (res && res.result !== undefined) {
-                        finalRes = typeof res.result === 'string' ? JSON.parse(res.result) : res.result;
-                    } else if (typeof res === 'string') {
-                        try { finalRes = JSON.parse(res); } catch(e) {}
-                    }
-                    
-                    if (finalRes && finalRes.sucesso) { 
-                        mostrarMensagem('Matéria Guardada!'); 
-                        limparFormNoticia(); 
-                        carregarNoticias(true); 
-                        setTimeout(function() { 
-                            alternarAbaAdmin('lista-noticias-container'); 
-                        }, 1500); 
-                    } else { 
-                        mostrarMensagem(finalRes ? finalRes.erro : "Erro ao guardar", 'erro'); 
-                    }
-                    btn.innerHTML = txt; 
-                    btn.disabled = false;
-                }).salvarNoticiaNoSheets(payload);
-            }
+            salvarNoticiaComFeedback(payload);
+            
+            // Sincronizar Agenda após salvar
+            setTimeout(function() {
+                sincronizarAgendaComCarrossel();
+            }, 2000);
         }
         
         function salvarPropaganda(e) { 
@@ -3280,21 +3302,7 @@
             } 
         }
         
-        function compartilharInstagram(idNoticia) {
-            var noticia = noticiasGlobais.find(function(n) { 
-                return String(n.id) === String(idNoticia); 
-            });
-            if (!noticia) return;
-            
-            var textoIG = "📰 " + noticia.titulo + "\n\n" + (noticia.linhaFina ? noticia.linhaFina + "\n\n" : "") + "Leia a matéria completa no nosso portal!\nLink na Bio ou acesse: https://noticiasavulsas.com.br/?noticia=" + idNoticia;
-            
-            navigator.clipboard.writeText(textoIG).then(function() {
-                alert("Texto da matéria copiado para a Área de Transferência!\n\nFoi copiado o Título, a Linha Fina e o Link Direto.\nAgora o Instagram vai abrir, crie a sua publicação com a foto e faça 'Colar'.");
-                window.open('https://instagram.com', '_blank');
-            }).catch(function(err) { 
-                prompt("O seu navegador bloqueou a cópia automática. Copie o texto abaixo e cole no Instagram:", textoIG); 
-            });
-        }
+
 
         function normalizarTextoFiltro(valor) {
             return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
@@ -3398,6 +3406,40 @@
                         carregarNoticias(true); 
                     } 
                 }).alternarStatusNoticia(id);
+            }
+        }
+        
+        function compartilharInstagram(noticiaId) {
+            var noticia = noticiasGlobais.find(function(n) { return String(n.id) === String(noticiaId); });
+            if (!noticia) {
+                mostrarMensagem('Notícia não encontrada', 'erro');
+                return;
+            }
+            
+            var instagramUrl = configuracoesGlobais['soc-inst-url'];
+            if (!instagramUrl) {
+                mostrarMensagem('URL do Instagram não configurada', 'erro');
+                return;
+            }
+            
+            // Preparar dados para compartilhamento
+            var titulo = noticia.titulo;
+            var resumo = noticia.linhaFina || noticia.conteudo.substring(0, 100);
+            var imagem = noticia.urlImagem;
+            
+            // Abrir Instagram
+            window.open(instagramUrl, '_blank');
+            
+            // Copiar informações para clipboard
+            var textoCompartilhamento = titulo + '\n\n' + resumo;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(textoCompartilhamento).then(function() {
+                    mostrarMensagem('✓ Texto copiado! Abra o Instagram e crie um novo post com a imagem e o texto.', 'sucesso');
+                }).catch(function() {
+                    mostrarMensagem('Abra o Instagram e crie um novo post com a imagem principal, título e resumo acima.', 'sucesso');
+                });
+            } else {
+                mostrarMensagem('Abra o Instagram e crie um novo post com a imagem principal, título e resumo acima.', 'sucesso');
             }
         }
         
@@ -3525,6 +3567,133 @@
             document.querySelectorAll('input[name="liga-placar"]').forEach(function(cb) { 
                 cb.checked = ligasAtivas.indexOf(cb.value) !== -1; 
             });
+        }
+
+        // ================================================================
+        // NOÍCIAS RELACIONADAS, NOTIFICAÇÕES, SKELETON E INSTAGRAM
+        // ================================================================
+
+        function obterNoticiasRelacionadas(noticiaAtual, limite) {
+            if (!limite) limite = 3;
+            if (!noticiaAtual || !noticiaAtual.categoria) return [];
+            
+            var categoriasNoticia = String(noticiaAtual.categoria).split(',').map(function(c) { return normalizarTextoFiltro(c); });
+            
+            var relacionadas = noticiasGlobais.filter(function(n) {
+                if (n.id === noticiaAtual.id) return false;
+                if (!isNoticiaPublicada(n)) return false;
+                
+                var categoriasN = String(n.categoria).split(',').map(function(c) { return normalizarTextoFiltro(c); });
+                var temCategoriaComum = categoriasN.some(function(cat) {
+                    return categoriasNoticia.indexOf(cat) !== -1;
+                });
+                
+                return temCategoriaComum;
+            }).slice(0, limite);
+            
+            return relacionadas;
+        }
+
+        function renderizarNoticiasRelacionadas(noticiaAtual) {
+            var container = document.getElementById('noticias-relacionadas-container');
+            if (!container) return;
+            
+            var relacionadas = obterNoticiasRelacionadas(noticiaAtual, 3);
+            
+            if (relacionadas.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+            
+            container.classList.remove('hidden');
+            var html = '<h3 class="text-lg font-black font-sans uppercase tracking-tighter text-jornal-dark mb-6">Notícias Relacionadas</h3>';
+            html += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">';
+            
+            relacionadas.forEach(function(n) {
+                html += '<article class="group bg-white border border-gray-200 p-0 flex flex-col h-full hover:shadow-md transition-shadow rounded-sm w-full overflow-hidden min-w-0">' +
+                    '<div class="relative w-full bg-gray-100 border-b border-gray-200 shrink-0 overflow-hidden flex items-center justify-center cursor-pointer" onclick="abrirNoticia(\'' + n.id + '\', true)">' +
+                    '<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-auto max-h-[200px] object-contain" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />' +
+                    '</div>' +
+                    '<div class="p-4 flex flex-col flex-grow w-full bg-white min-w-0">' +
+                    '<span class="text-jornal-red text-[10px] font-black uppercase tracking-widest mb-2 block truncate cursor-pointer" onclick="abrirNoticia(\'' + n.id + '\', true)">' + (n.categoria || 'Geral') + '</span>' +
+                    '<h4 class="font-serif text-sm font-bold mb-2 leading-snug text-jornal-dark group-hover:text-jornal-blue line-clamp-2 break-words cursor-pointer" onclick="abrirNoticia(\'' + n.id + '\', true)">' + (n.titulo || '') + '</h4>' +
+                    '<p class="text-[12px] text-gray-500 line-clamp-2 cursor-pointer" onclick="abrirNoticia(\'' + n.id + '\', true)">' + (n.linhaFina || '') + '</p>' +
+                    '<div class="flex gap-2 mt-4 pt-3 border-t border-gray-100">' +
+                    '<button onclick="event.stopPropagation(); shareLink(\'whatsapp\', \'' + n.id + '\')" class="flex-1 px-2 py-1.5 bg-green-50 text-green-600 hover:bg-green-100 rounded text-[10px] font-bold uppercase tracking-widest transition-colors">WA</button>' +
+                    '<button onclick="event.stopPropagation(); shareLink(\'facebook\', \'' + n.id + '\')" class="flex-1 px-2 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded text-[10px] font-bold uppercase tracking-widest transition-colors">FB</button>' +
+                    '</div>' +
+                    '</div>' +
+                    '</article>';
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function salvarNoticiaComFeedback(payload) {
+            var btn = document.getElementById('btn-salvar-noticia');
+            var txt = btn.innerHTML;
+            btn.innerHTML = 'A publicar...';
+            btn.disabled = true;
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run
+                    .withSuccessHandler(function(res) {
+                        var finalRes = res;
+                        if (res && res.result !== undefined) {
+                            finalRes = typeof res.result === 'string' ? JSON.parse(res.result) : res.result;
+                        } else if (typeof res === 'string') {
+                            try { finalRes = JSON.parse(res); } catch(e) {}
+                        }
+                        
+                        if (finalRes && finalRes.sucesso) {
+                            mostrarMensagem('✓ Matéria guardada com sucesso!', 'sucesso');
+                            limparFormNoticia();
+                            carregarNoticias(true);
+                            setTimeout(function() {
+                                alternarAbaAdmin('lista-noticias-container');
+                            }, 1500);
+                        } else {
+                            mostrarMensagem('✗ Erro ao guardar: ' + (finalRes ? finalRes.erro : 'Erro desconhecido'), 'erro');
+                        }
+                        btn.innerHTML = txt;
+                        btn.disabled = false;
+                    })
+                    .withFailureHandler(function(err) {
+                        mostrarMensagem('✗ Erro de conexão: ' + err.message, 'erro');
+                        btn.innerHTML = txt;
+                        btn.disabled = false;
+                    })
+                    .salvarNoticiaNoSheets(payload);
+            }
+        }
+
+        function criarSkeletonLoader() {
+            return '<div class="animate-pulse bg-gray-200 rounded h-64 mb-4"></div>' +
+                   '<div class="animate-pulse bg-gray-200 rounded h-4 mb-2 w-3/4"></div>' +
+                   '<div class="animate-pulse bg-gray-200 rounded h-4 w-1/2"></div>';
+        }
+
+        function mostrarSkeletonNoticias() {
+            var grid = document.getElementById('grid-noticias');
+            if (!grid) return;
+            
+            grid.innerHTML = '';
+            for (var i = 0; i < 6; i++) {
+                grid.innerHTML += '<div class="bg-white border border-gray-200 rounded-sm overflow-hidden">' + criarSkeletonLoader() + '</div>';
+            }
+        }
+
+        function sincronizarAgendaComCarrossel() {
+            var agendaNoticias = noticiasGlobais.filter(function(n) {
+                return isNoticiaPublicada(n) && 
+                       normalizarTextoFiltro(n.categoria).indexOf('agenda') !== -1 &&
+                       n.dataFimEvento && n.dataFimEvento.trim() !== '';
+            });
+            
+            if (agendaNoticias.length > 0) {
+                renderizarAgendaSidebar();
+            }
         }
     </script>
 </body>
