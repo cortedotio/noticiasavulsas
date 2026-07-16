@@ -18,13 +18,25 @@
         window.google = {
             script: {
                 run: {
-                    withSuccessHandler: function(cb) { this._onSuccess = cb; return this; },
-                    withFailureHandler: function(cb) { this._onFailure = cb; return this; }
+                    withSuccessHandler: function(cb) { 
+                        this._onSuccess = cb; 
+                        return this; 
+                    },
+                    withFailureHandler: function(cb) { 
+                        this._onFailure = cb; 
+                        return this; 
+                    }
                 }
             }
         };
 
-        const apiFunctions = ['getHomeData', 'incrementarView', 'salvarComentarioNoSheets', 'inscreverNewsletter', 'curtirNoticiaNoSheets'];
+        const apiFunctions = [
+            'getHomeData', 
+            'incrementarView', 
+            'salvarComentarioNoSheets', 
+            'inscreverNewsletter', 
+            'curtirNoticiaNoSheets'
+        ];
 
         apiFunctions.forEach(function(funcName) {
             window.google.script.run[funcName] = function() {
@@ -32,23 +44,35 @@
                 var successCb = this._onSuccess;
                 var failureCb = this._onFailure;
                 
-                this._onSuccess = null; this._onFailure = null;
+                this._onSuccess = null; 
+                this._onFailure = null;
                 
                 fetch(GAS_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: funcName, args: argsArray })
                 })
-                .then(function(res) { return res.json(); })
+                .then(function(res) { 
+                    return res.json(); 
+                })
                 .then(function(result) {
                     if (successCb) {
                         var finalPayload = result;
-                        if (result && result.result !== undefined) finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
-                        else if (typeof result === 'string') { try { finalPayload = JSON.parse(result); } catch(e) {} }
+                        if (result && result.result !== undefined) {
+                            finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
+                        } else if (typeof result === 'string') { 
+                            try { finalPayload = JSON.parse(result); } catch(e) {} 
+                        }
                         successCb(finalPayload);
                     }
                 })
-                .catch(function(err) { if (failureCb) failureCb(err); else console.error("API Error:", err); });
+                .catch(function(err) { 
+                    if (failureCb) {
+                        failureCb(err); 
+                    } else {
+                        console.error("API Error:", err); 
+                    }
+                });
             };
         });
 
@@ -64,9 +88,27 @@
         };
 
         var configureTailwind = function() {
-            if (typeof tailwind === 'undefined') { setTimeout(configureTailwind, 10); return; }
+            if (typeof tailwind === 'undefined') { 
+                setTimeout(configureTailwind, 10); 
+                return; 
+            }
             tailwind.config = {
-                theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] }, colors: { jornal: { blue: '#0F172A', red: '#E11D48', gray: '#F8FAFC', dark: '#020617' } } } }
+                theme: { 
+                    extend: { 
+                        fontFamily: { 
+                            sans: ['Inter', 'sans-serif'], 
+                            serif: ['Merriweather', 'serif'] 
+                        }, 
+                        colors: { 
+                            jornal: { 
+                                blue: '#0F172A', 
+                                red: '#E11D48', 
+                                gray: '#F8FAFC', 
+                                dark: '#020617' 
+                            } 
+                        } 
+                    } 
+                }
             };
         };
         configureTailwind();
@@ -160,8 +202,7 @@
         </header>
 
         <nav class="border-y border-gray-200 border-b-4 border-b-jornal-blue sticky top-8 z-40 bg-white/95 backdrop-blur-sm w-full shadow-sm min-w-0 transition-all duration-500" id="nav-categorias-publicas">
-            <div id="nav-container-inner" class="max-w-[1200px] mx-auto px-4 flex items-center gap-6 overflow-x-auto whitespace-nowrap text-xs md:text-sm font-bold uppercase tracking-wider text-jornal-dark py-3 custom-scrollbar min-w-0">
-            </div>
+            <div id="nav-container-inner" class="max-w-[1200px] mx-auto px-4 flex items-center gap-6 overflow-x-auto whitespace-nowrap text-xs md:text-sm font-bold uppercase tracking-wider text-jornal-dark py-3 custom-scrollbar min-w-0"></div>
         </nav>
         
         <!-- BARRA INTELIGENTE DE CIDADES -->
@@ -268,23 +309,6 @@
                 </div>
                 
                 <aside class="lg:w-[28%] w-full shrink-0 min-w-0">
-                    
-                    <div id="sidebar-editorias-especiais" class="hidden mb-8 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
-                        <div class="border-b-4 border-jornal-blue pb-2 mb-4">
-                            <h2 class="text-xs font-black uppercase tracking-widest text-jornal-blue">Em Foco</h2>
-                        </div>
-                        <div id="lista-editorias-especiais" class="flex flex-col gap-2"></div>
-                    </div>
-
-                    <!-- Bloco de Opinião ACIMA do Placar -->
-                    <div id="sidebar-opinioes" class="hidden mb-8 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
-                        <div class="border-b-4 border-jornal-red pb-2 mb-4">
-                            <h2 class="text-xs font-black uppercase tracking-widest text-jornal-red">Opinião</h2>
-                        </div>
-                        <div id="conteudo-opinioes" class="flex flex-col gap-4"></div>
-                    </div>
-
-                    <!-- Bloco do Placar ABAIXO da Opinião -->
                     <div class="mb-8 bg-white border border-gray-200 p-4 shadow-sm rounded-sm">
                         <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-2">
                             <h2 class="text-[10px] font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
@@ -295,7 +319,22 @@
                             <div class="text-center text-xs font-bold text-gray-500">A carregar resultados...</div>
                         </div>
                     </div>
+                    
+                    <div id="sidebar-editorias-especiais" class="hidden mb-8 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
+                        <div class="border-b-4 border-jornal-blue pb-2 mb-4">
+                            <h2 class="text-xs font-black uppercase tracking-widest text-jornal-blue">Em Foco</h2>
+                        </div>
+                        <div id="lista-editorias-especiais" class="flex flex-col gap-2"></div>
+                    </div>
 
+                    <div id="sidebar-opinioes" class="hidden mb-8 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
+                        <div class="border-b-4 border-jornal-red pb-2 mb-4">
+                            <h2 class="text-xs font-black uppercase tracking-widest text-jornal-red">Opinião</h2>
+                        </div>
+                        <div id="conteudo-opinioes" class="flex flex-col gap-4"></div>
+                    </div>
+
+                    <!-- WIDGET CLIMA CLICÁVEL -->
                     <div class="mb-8 bg-white border border-gray-200 p-5 shadow-sm rounded-sm cursor-pointer hover:opacity-95 transition-opacity" onclick="abrirModalClima()">
                         <div class="border-b-4 border-sky-400 pb-2 mb-4 flex justify-between items-center">
                             <h2 class="text-xs font-black uppercase tracking-widest text-sky-500">Clima Local</h2>
@@ -321,23 +360,32 @@
                     <div class="border-t-4 border-jornal-red w-full pt-4 mb-6">
                         <h2 class="text-sm font-black uppercase tracking-widest text-jornal-red">Publicidade</h2>
                     </div>
+                    <!-- Container Lateral (Publicidade Carrossel) -->
                     <div class="lg:sticky lg:top-8 space-y-6 flex flex-col min-w-0" id="grid-propagandas-lateral"></div>
                 </aside>
             </div>
         </main>
 
         <footer class="mt-auto bg-jornal-dark text-white pt-12 pb-8 border-t-8 border-jornal-blue min-w-0">
-            <div class="max-w-[1200px] mx-auto px-4 flex flex-col items-center justify-center text-center min-w-0">
-                <div id="footer-branding" class="mb-2 min-w-0">
-                    <h1 class="text-3xl font-black tracking-tighter uppercase text-slate-100">Notícias<span class="text-rose-600">Avulsas</span></h1>
+            <div class="max-w-[1200px] mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-10 items-center min-w-0">
+                <div class="min-w-0">
+                    <div id="footer-branding" class="mb-2 min-w-0">
+                        <h1 class="text-3xl font-black tracking-tighter uppercase text-slate-100">Notícias<span class="text-rose-600">Avulsas</span></h1>
+                    </div>
+                    <p class="text-gray-400 text-sm font-medium">Jornalismo sério. Assine a newsletter.</p>
+                    <div id="social-footer" class="flex gap-4 mt-6 hidden"></div>
                 </div>
-                <p class="text-gray-400 text-sm font-medium">Jornalismo sério.</p>
-                <div id="social-footer" class="flex gap-4 mt-6 hidden"></div>
+                <div class="min-w-0">
+                    <form id="form-newsletter" onsubmit="assinarNewsletter(event)" class="flex flex-col sm:flex-row gap-0">
+                        <input type="email" id="news-email" placeholder="O seu e-mail" required class="flex-grow px-4 py-3 md:py-4 bg-white text-jornal-dark placeholder-gray-500 focus:outline-none border-0 text-sm font-medium rounded-t-sm sm:rounded-l-sm sm:rounded-tr-none min-w-0" />
+                        <button type="submit" id="btn-newsletter" class="bg-jornal-red text-white px-6 py-3 md:py-4 font-bold hover:opacity-80 transition-colors uppercase text-xs tracking-widest rounded-b-sm sm:rounded-r-sm sm:rounded-bl-none shrink-0 w-full sm:w-auto">Subscrever</button>
+                    </form>
+                </div>
             </div>
         </footer>
     </div>
 
-    <!-- Modal do Clima Completo -->
+    <!-- Modal do Clima Completo (Detalhes Diários) -->
     <div id="modalClima" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="fecharModalClima()"></div>
         <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl relative z-10 overflow-hidden font-sans border-t-4 border-sky-500">
@@ -382,54 +430,122 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT GLOBAL -->
     <script>
         var IMG_FALLBACK = 'https://placehold.co/600x400/e2e8f0/475569?text=Sem+Foto';
         var ICON_HEART = '<svg class="w-3 h-3 fill-current inline" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
 
         function formatarUrlImagem(url) {
-            if (!url) return '';
-            try {
-                var s = String(url).trim();
-                var m = s.match(/\/d\/([a-zA-Z0-9_-]+)/) || s.match(/id=([a-zA-Z0-9_-]+)/);
-                return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w1200' : s;
-            } catch(e) { 
-                return url; 
+            if(!url) return '';
+            try{ 
+                var s=String(url).trim(); 
+                var m=s.match(/\/d\/([a-zA-Z0-9_-]+)/)||s.match(/id=([a-zA-Z0-9_-]+)/); 
+                return m ? 'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w1200' : s; 
+            } catch(e){
+                return url;
             }
-        }
-
-        function isNoticiaPublicada(n) {
-            if (String(n.status).toLowerCase() !== 'ativa') {
-                return false;
-            }
-            if (n.dataHora) {
-                var pts = n.dataHora.split(/[\/\s:]/);
-                if (pts.length >= 5) {
-                    var dtP = new Date(pts[2], pts[1]-1, pts[0], pts[3], pts[4]);
-                    if (dtP > new Date()) {
-                        return false;
-                    }
-                }
-            }
-            return true;
         }
 
         window.addEventListener('popstate', function(e) {
             var p = new URLSearchParams(window.location.search);
             if(p.get('noticia')) {
-                abrirNoticia(p.get('noticia'), false);
-            } else if(p.get('pesquisa')) {
-                fecharNoticiaUI();
-                document.getElementById('input-pesquisa').value = p.get('pesquisa');
-                pesquisarSite(new Event('submit'));
-            } else if(p.get('categoria')) {
-                fecharNoticiaUI();
-                filtrarCategoria(p.get('categoria'), false);
-            } else {
-                fecharNoticiaUI();
-                filtrarCategoria('Todas', false);
+                abrirNoticia(p.get('noticia'), false); 
+            } else if(p.get('categoria')) { 
+                fecharNoticiaUI(); 
+                filtrarCategoria(p.get('categoria'), false); 
+            } else if(p.get('pesquisa')) { 
+                fecharNoticiaUI(); 
+                document.getElementById('input-pesquisa').value = p.get('pesquisa'); 
+                pesquisarSite(new Event('submit')); 
+            } else { 
+                fecharNoticiaUI(); 
+                filtrarCategoria('Todas', false); 
             }
         });
+
+        function atualizarURL(c, v, isPush) {
+            try { 
+                var url = new URL(window.location.href); 
+                url.searchParams.delete('categoria');
+                url.searchParams.delete('noticia');
+                url.searchParams.delete('pesquisa');
+
+                if (v && v !== 'Todas') {
+                    url.searchParams.set(c, v); 
+                }
+
+                if (isPush) {
+                    window.history.pushState({path: url.href}, '', url.href); 
+                } else {
+                    window.history.replaceState({path: url.href}, '', url.href); 
+                }
+            } catch(e) {}
+        }
+
+        window.categoriaAtual = 'Todas';
+        var noticiasGlobais = [], comentariosGlobais = [], noticiaAbertaId = null, configuracoesGlobais = {}, listaCategoriasLocais = ['Política', 'Cidades'];
+        var slideIndex = 0, carrosselTimer = null, carrosselAdsTimers = {}, dadosClimaGlobal = null;
+        window.agendaCarousels = []; window.agendaTimerStarted = false;
+
+        document.addEventListener("DOMContentLoaded", function() {
+            carregarNoticias(false);
+        });
+
+        function carregarNoticias(forcarUpdate) {
+            document.getElementById('master-feed-wrapper').classList.add('hidden'); 
+            document.getElementById('loading-noticias').classList.remove('hidden');
+            
+            window.google.script.run.withSuccessHandler(function(res) {
+                document.getElementById('loading-noticias').classList.add('hidden');
+                if (res && res.sucesso) { 
+                    document.getElementById('master-feed-wrapper').classList.remove('hidden'); 
+                    processarDadosHome(res); 
+                    if (!forcarUpdate) {
+                        var p = new URLSearchParams(window.location.search);
+                        if(p.get('noticia')) {
+                            abrirNoticia(p.get('noticia'), false); 
+                        } else if(p.get('categoria')) {
+                            filtrarCategoria(p.get('categoria'), false); 
+                        } else if(p.get('pesquisa')) { 
+                            document.getElementById('input-pesquisa').value = p.get('pesquisa'); 
+                            pesquisarSite(new Event('submit')); 
+                        } else {
+                            filtrarCategoria('Todas', false);
+                        }
+                    } else { 
+                        if (noticiaAbertaId) {
+                            abrirNoticia(noticiaAbertaId, false); 
+                        } else if(window.categoriaAtual === 'Pesquisa') {
+                            pesquisarSite(new Event('submit')); 
+                        } else {
+                            filtrarCategoria(window.categoriaAtual, false); 
+                        }
+                    }
+                } else {
+                    mostrarErro(res ? res.erro : "Resposta inválida.");
+                }
+            }).withFailureHandler(function(err) {
+                document.getElementById('loading-noticias').classList.add('hidden'); 
+                mostrarErro("Falha de Servidor: " + err.message);
+            }).getHomeData();
+        }
+
+        function mostrarErro(m) { 
+            var dbg = document.getElementById('debug-error-box'); 
+            dbg.innerHTML = m; 
+            dbg.classList.remove('hidden'); 
+        }
+
+        function isNoticiaPublicada(n) {
+            if (String(n.status).toLowerCase() !== 'ativa') return false;
+            if (n.dataHora) {
+                var pts = n.dataHora.split(/[\/\s:]/);
+                if (pts.length >= 5) {
+                    var dtP = new Date(pts[2], pts[1]-1, pts[0], pts[3], pts[4]);
+                    if (dtP > new Date()) return false;
+                }
+            }
+            return true;
+        }
 
         window.addEventListener('scroll', function() {
             var stickyLogo = document.getElementById('sticky-logo-container');
@@ -441,106 +557,6 @@
                 }
             }
         });
-
-        function atualizarURL(paramName, paramValue, isPush) {
-            try {
-                var url = new URL(window.location.href);
-                url.searchParams.delete('categoria');
-                url.searchParams.delete('noticia');
-                url.searchParams.delete('pesquisa');
-
-                if (paramValue && paramValue !== 'Todas') {
-                    url.searchParams.set(paramName, paramValue);
-                }
-
-                if (isPush) {
-                    window.history.pushState({path: url.href}, '', url.href);
-                } else {
-                    window.history.replaceState({path: url.href}, '', url.href);
-                }
-            } catch(e) {}
-        }
-
-        window.categoriaAtual = 'Todas';
-        var noticiasGlobais = [];
-        var comentariosGlobais = [];
-        var noticiaAbertaId = null;
-        var configuracoesGlobais = {};
-        var listaCategoriasLocais = ['Política', 'Cidades'];
-        var slideIndex = 0;
-        var carrosselTimer = null;
-        var carrosselAdsTimers = {};
-        var dadosClimaGlobal = null;
-        var agendaCarousels = [];
-
-        document.addEventListener("DOMContentLoaded", function() {
-            carregarNoticias(false);
-        });
-
-        function carregarNoticias(forcarUpdate) {
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                document.getElementById('master-feed-wrapper').classList.add('hidden');
-                document.getElementById('loading-noticias').classList.remove('hidden');
-                document.getElementById('debug-error-box').classList.add('hidden');
-                
-                var tId = setTimeout(function() {
-                    var loader = document.getElementById('loading-noticias');
-                    if (loader && !loader.classList.contains('hidden')) {
-                        mostrarErro("Tempo excedido. Google Apps Script falhou a responder.");
-                    }
-                }, 15000);
-
-                window.google.script.run.withSuccessHandler(function(res) {
-                    clearTimeout(tId);
-                    document.getElementById('loading-noticias').classList.add('hidden');
-                    try {
-                        var d = typeof res === 'string' ? JSON.parse(res) : res;
-                        if (d && d.sucesso) { 
-                            document.getElementById('master-feed-wrapper').classList.remove('hidden');
-                            processarDadosHome(d); 
-                            
-                            if (!forcarUpdate) {
-                                var p = new URLSearchParams(window.location.search);
-                                if(p.get('noticia')) { 
-                                    abrirNoticia(p.get('noticia'), false); 
-                                } else if(p.get('categoria')) { 
-                                    filtrarCategoria(p.get('categoria'), false); 
-                                } else if(p.get('pesquisa')) { 
-                                    document.getElementById('input-pesquisa').value = p.get('pesquisa');
-                                    pesquisarSite(new Event('submit')); 
-                                } else { 
-                                    filtrarCategoria('Todas', false); 
-                                }
-                            } else { 
-                                if (noticiaAbertaId) { 
-                                    abrirNoticia(noticiaAbertaId, false); 
-                                } else if(window.categoriaAtual === 'Pesquisa') { 
-                                    pesquisarSite(new Event('submit')); 
-                                } else { 
-                                    filtrarCategoria(window.categoriaAtual, false); 
-                                } 
-                            }
-                        } else { 
-                            mostrarErro(d ? d.erro : "Resposta inválida."); 
-                        }
-                    } catch(e) { 
-                        mostrarErro("Falha no JS: " + e.message); 
-                    }
-                }).withFailureHandler(function(err) {
-                    clearTimeout(tId);
-                    document.getElementById('loading-noticias').classList.add('hidden'); 
-                    mostrarErro("Falha de Servidor: " + err.message);
-                }).getHomeData();
-            } else {
-                mostrarErro("A ligação ao servidor Google não foi estabelecida.");
-            }
-        }
-
-        function mostrarErro(m) {
-            var dbg = document.getElementById('debug-error-box'); 
-            dbg.innerHTML = m; 
-            dbg.classList.remove('hidden');
-        }
 
         function atualizarIdentidadeVisual() {
             var classes = configuracoesGlobais['CorLogo'] || 'bg-gradient-to-r from-blue-800 to-sky-400'; 
@@ -564,9 +580,7 @@
             headerHtml += '<h1 class="text-4xl md:text-5xl font-black tracking-tighter cursor-pointer uppercase ' + textClasses + '" onclick="voltarCapa();">NOTÍCIAS AVULSAS</h1>';
             
             var headerBranding = document.getElementById('header-branding');
-            if (headerBranding) {
-                headerBranding.innerHTML = headerHtml;
-            }
+            if (headerBranding) headerBranding.innerHTML = headerHtml;
             
             var navContainer = document.getElementById('nav-container-inner');
             if (navContainer) {
@@ -598,242 +612,180 @@
             }
         }
 
+        function filtrarPorCidadeLocal() {
+            filtrarCategoria('Cidades', false);
+        }
+
         function pesquisarSite(e) {
-            if(e) {
-                e.preventDefault();
-            }
-            var formMobile = document.getElementById('form-pesquisa-mobile');
-            var termoDesk = document.getElementById('input-pesquisa').value;
-            var termoMob = document.getElementById('input-pesquisa-mobile').value;
-            var termo = termoDesk || termoMob;
+            if(e) e.preventDefault();
+            var termo = (document.getElementById('input-pesquisa').value || document.getElementById('input-pesquisa-mobile').value).toLowerCase().trim();
+            if (!termo) { voltarCapa(); return; }
+            var fM = document.getElementById('form-pesquisa-mobile'); if(fM) fM.classList.add('hidden');
             
-            termo = termo.toLowerCase().trim();
-            if (!termo) { 
-                voltarCapa(); 
-                return; 
-            }
-            
-            if(formMobile) {
-                formMobile.classList.add('hidden');
-            }
-            
-            window.categoriaAtual = 'Pesquisa';
+            window.categoriaAtual = 'Pesquisa'; 
             atualizarURL('pesquisa', termo, true);
             
-            var grid = document.getElementById('grid-noticias');
-            var dest = document.getElementById('destaque-noticia');
-            var carrosselContainer = document.getElementById('carrossel-destaques');
-            var gridEditorias = document.getElementById('grid-editorias-exclusivo');
+            var grid = document.getElementById('grid-noticias'); 
+            var dest = document.getElementById('destaque-noticia'); 
+            var cC = document.getElementById('carrossel-destaques'); 
+            var gE = document.getElementById('grid-editorias-exclusivo');
+            var subnav = document.getElementById('subnav-cidades');
             
-            if(carrosselContainer) {
-                carrosselContainer.classList.add('hidden');
-            }
-            if(gridEditorias) {
-                gridEditorias.classList.add('hidden');
-            }
-            if(dest) { 
-                dest.innerHTML = ''; 
-                dest.classList.add('hidden'); 
-            }
+            if(cC) cC.classList.add('hidden'); 
+            if(gE) gE.classList.add('hidden'); 
+            if(dest) { dest.innerHTML = ''; dest.classList.add('hidden'); }
+            if(subnav) subnav.classList.add('hidden');
             
-            document.getElementById('titulo-seccao-feed').innerText = 'Resultados da pesquisa: "' + termo + '"';
+            document.getElementById('titulo-seccao-feed').innerText = 'Resultados: "' + termo + '"';
             
-            var resultados = noticiasGlobais.filter(function(n) {
-                if (!isNoticiaPublicada(n)) {
-                    return false;
-                }
+            var res = noticiasGlobais.filter(function(n) {
+                if (!isNoticiaPublicada(n)) return false;
                 var t = String(n.titulo).toLowerCase(); 
                 var f = String(n.linhaFina).toLowerCase(); 
                 var c = String(n.conteudo).toLowerCase();
                 return t.indexOf(termo) !== -1 || f.indexOf(termo) !== -1 || c.indexOf(termo) !== -1;
             });
             
-            grid.innerHTML = ''; 
-            grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
-            
-            if (resultados.length === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-500 font-bold bg-white border border-gray-200 rounded">Nenhum resultado encontrado para "' + termo + '".</div>';
-            } else {
-                window.noticiasCategoriaAtual = resultados; 
-                window.itensExibidosCategoria = 16;
-                resultados.slice(0, 16).forEach(function(n) { 
-                    grid.innerHTML += htmlCard(n); 
-                });
-                var btnMais = document.getElementById('btn-mostrar-mais');
-                if (btnMais) { 
-                    if (resultados.length > 16) {
-                        btnMais.classList.remove('hidden'); 
-                    } else {
-                        btnMais.classList.add('hidden'); 
-                    }
-                }
+            grid.innerHTML = ''; grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
+            if (res.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-500 font-bold bg-white border border-gray-200 rounded">Nenhum resultado.</div>';
+            } else { 
+                window.noticiasCategoriaAtual = res; 
+                window.itensExibidosCategoria = 16; 
+                res.slice(0, 16).forEach(function(n) { grid.innerHTML += htmlCard(n); }); 
+                var btn = document.getElementById('btn-mostrar-mais'); 
+                if (btn) { 
+                    if (res.length > 16) btn.classList.remove('hidden'); 
+                    else btn.classList.add('hidden'); 
+                } 
             }
             fecharNoticiaUI();
         }
 
-        function focarPesquisaMobile() {
+        function focarPesquisaMobile() { 
             var f = document.getElementById('form-pesquisa-mobile'); 
-            var i = document.getElementById('input-pesquisa-mobile');
+            var i = document.getElementById('input-pesquisa-mobile'); 
             if(f && i) { 
                 f.classList.toggle('hidden'); 
-                if(!f.classList.contains('hidden')) {
-                    i.focus(); 
-                }
-            }
+                if(!f.classList.contains('hidden')) i.focus(); 
+            } 
         }
-
+        
         function fecharModalClima() { 
             document.getElementById('modalClima').classList.add('hidden'); 
             document.getElementById('modalClima').classList.remove('flex'); 
         }
 
         function abrirModalClima() {
-            var m = document.getElementById('modalClima'); 
-            m.classList.remove('hidden'); 
-            m.classList.add('flex');
-            
-            if(!dadosClimaGlobal || !dadosClimaGlobal.daily) {
-                return;
-            }
-            
-            var divPrevisao = document.getElementById('modal-clima-previsao'); 
-            var htmlPrev = '';
-            var diasSemana = ['dom.', 'seg.', 'ter.', 'qua.', 'qui.', 'sex.', 'sáb.'];
-
+            var m = document.getElementById('modalClima'); m.classList.remove('hidden'); m.classList.add('flex');
+            if(!dadosClimaGlobal || !dadosClimaGlobal.daily) return;
+            var dP = document.getElementById('modal-clima-previsao'); var h = ''; var dS = ['dom.', 'seg.', 'ter.', 'qua.', 'qui.', 'sex.', 'sáb.'];
             for(var i=0; i<Math.min(7, dadosClimaGlobal.daily.time.length); i++) {
-                var dtStr = dadosClimaGlobal.daily.time[i]; 
-                var dt = new Date(dtStr + 'T12:00:00Z');
-                var nomeDia = diasSemana[dt.getDay()];
-                var tMax = Math.round(dadosClimaGlobal.daily.temperature_2m_max[i]); 
-                var tMin = Math.round(dadosClimaGlobal.daily.temperature_2m_min[i]);
-                var wCode = dadosClimaGlobal.daily.weathercode[i]; 
-                var ico = '☀️';
-                if (wCode <= 3) { ico = '☀️'; } else if (wCode <= 48) { ico = '⛅'; } else if (wCode <= 67) { ico = '🌧️'; } else if (wCode <= 99) { ico = '⛈️'; }
-                
-                var bgClasse = i===0 ? 'bg-gray-100 rounded-lg shadow-inner' : 'hover:bg-gray-50 rounded-lg transition-colors';
-                var tituloDia = i===0 ? 'Hoje' : nomeDia;
-
-                htmlPrev += '<div class="flex flex-col items-center justify-center p-3 min-w-[70px] ' + bgClasse + '">' +
-                    '<span class="text-sm text-gray-700 font-bold mb-2">' + tituloDia + '</span>' +
-                    '<span class="text-3xl mb-3 drop-shadow-sm">' + ico + '</span>' +
-                    '<div class="flex gap-2 text-xs font-bold"><span class="text-gray-800">' + tMax + '&deg;</span><span class="text-gray-400">' + tMin + '&deg;</span></div>' +
-                '</div>';
+                var dtStr = dadosClimaGlobal.daily.time[i]; var dt = new Date(dtStr + 'T12:00:00Z'); var nD = dS[dt.getDay()];
+                var tMax = Math.round(dadosClimaGlobal.daily.temperature_2m_max[i]); var tMin = Math.round(dadosClimaGlobal.daily.temperature_2m_min[i]);
+                var wC = dadosClimaGlobal.daily.weathercode[i]; var ico = '☀️';
+                if (wC <= 3) ico = '☀️'; else if (wC <= 48) ico = '⛅'; else if (wC <= 67) ico = '🌧️'; else if (wC <= 99) ico = '⛈️';
+                var bg = i===0 ? 'bg-gray-100 rounded-lg shadow-inner' : 'hover:bg-gray-50 rounded-lg transition-colors'; var tD = i===0 ? 'Hoje' : nD;
+                h += '<div class="flex flex-col items-center justify-center p-3 min-w-[70px] ' + bg + '"><span class="text-sm text-gray-700 font-bold mb-2">' + tD + '</span><span class="text-3xl mb-3 drop-shadow-sm">' + ico + '</span><div class="flex gap-2 text-xs font-bold"><span class="text-gray-800">' + tMax + '&deg;</span><span class="text-gray-400">' + tMin + '&deg;</span></div></div>';
             }
-            divPrevisao.innerHTML = htmlPrev;
+            dP.innerHTML = h;
         }
 
         function renderizarAgendaSidebar() {
-            var sidebar = document.getElementById('sidebar-editorias-especiais');
-            var container = document.getElementById('lista-editorias-especiais');
-            if(!sidebar || !container) {
-                return;
-            }
+            var sb = document.getElementById('sidebar-editorias-especiais'); 
+            var ct = document.getElementById('lista-editorias-especiais'); 
+            if(!sb || !ct) return;
             
-            var agora = new Date();
-            var agendaNoticias = noticiasGlobais.filter(function(n) {
-                if (!isNoticiaPublicada(n)) {
-                    return false;
-                }
-                if (String(n.categoria).toLowerCase().indexOf('agenda') === -1) {
-                    return false;
-                }
-                if (n.dataFimEvento && n.dataFimEvento.trim() !== '') {
-                    try {
-                        var dtFim = new Date(n.dataFimEvento);
-                        if (dtFim < agora) {
-                            return false;
-                        }
-                    } catch(e) {}
+            var ag = new Date();
+            var aN = noticiasGlobais.filter(function(n) {
+                if (!isNoticiaPublicada(n) || String(n.categoria).toLowerCase().indexOf('agenda') === -1) return false;
+                if (n.dataFimEvento && n.dataFimEvento.trim() !== '') { 
+                    try { 
+                        var dF = new Date(n.dataFimEvento); 
+                        if (dF < ag) return false; 
+                    } catch(e) {} 
                 }
                 return true;
             });
-
-            if(agendaNoticias.length > 0) {
-                sidebar.classList.remove('hidden');
+            
+            if(aN.length > 0) {
+                sb.classList.remove('hidden'); 
+                var cId = 'agenda-sidebar-carousel-' + Math.floor(Math.random() * 1000000); 
+                window.agendaCarousels.push({id: cId, index: 0, length: aN.length});
                 
-                var carouselId = 'agenda-sidebar-carousel-' + Math.floor(Math.random() * 1000000);
-                window.agendaCarousels.push({id: carouselId, index: 0, length: agendaNoticias.length});
-
-                var html = '<div class="mb-2"><span onclick="filtrarCategoria(\'Agenda\', true)" class="text-[11px] font-black uppercase tracking-widest text-jornal-dark hover:text-jornal-red transition-colors cursor-pointer inline-flex items-center gap-1">Agenda &raquo;</span></div>';
+                var ht = '<div class="mb-2"><span onclick="filtrarCategoria(\'Agenda\', true)" class="text-[11px] font-black uppercase tracking-widest text-jornal-dark hover:text-jornal-red transition-colors cursor-pointer inline-flex items-center gap-1">Agenda &raquo;</span></div>';
+                ht += '<div class="relative overflow-hidden w-full bg-gray-100 rounded-sm group aspect-[4/3] mb-4 shadow-sm" id="' + cId + '"><div class="flex transition-transform duration-500 ease-in-out h-full" id="' + cId + '-inner" style="transform: translateX(0%);">';
                 
-                html += '<div class="relative overflow-hidden w-full bg-gray-100 rounded-sm group aspect-[4/3] mb-4 shadow-sm" id="' + carouselId + '">';
-                html += '<div class="flex transition-transform duration-500 ease-in-out h-full" id="' + carouselId + '-inner" style="transform: translateX(0%);">';
-                
-                agendaNoticias.forEach(function(n) {
-                    html += '<div class="w-full shrink-0 flex-none relative h-full cursor-pointer" onclick="abrirNoticia(\'' + n.id + '\', true)">';
-                    html += '<img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain bg-gray-900" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />';
-                    html += '<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>';
-                    html += '<div class="absolute bottom-0 left-0 p-4 w-full text-white min-w-0 z-10">';
-                    
-                    if (n.dataFimEvento) {
-                        try {
-                            var dP = n.dataFimEvento.split('T')[0].split('-');
-                            var diaStr = dP[2] + '/' + dP[1];
-                            html += '<span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Até ' + diaStr + '</span> ';
-                        } catch(e){}
+                aN.forEach(function(n) {
+                    ht += '<div class="w-full shrink-0 flex-none relative h-full cursor-pointer" onclick="abrirNoticia(\'' + n.id + '\', true)"><img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain bg-gray-900" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /><div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div><div class="absolute bottom-0 left-0 p-4 w-full text-white min-w-0 z-10">';
+                    if (n.dataFimEvento) { 
+                        try { 
+                            var dP = n.dataFimEvento.split('T')[0].split('-'); 
+                            ht += '<span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Até ' + dP[2] + '/' + dP[1] + '</span> '; 
+                        } catch(e){} 
                     } else {
-                        html += '<span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Agenda</span> ';
+                        ht += '<span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Agenda</span> ';
                     }
-                    
-                    html += '<h4 class="font-serif text-sm font-bold mb-1 leading-tight break-words line-clamp-3 text-white">' + n.titulo + '</h4>';
-                    html += '</div></div>';
+                    ht += '<h4 class="font-serif text-sm font-bold mb-1 leading-tight break-words line-clamp-3 text-white">' + n.titulo + '</h4></div></div>';
                 });
                 
-                html += '</div>';
-                if (agendaNoticias.length > 1) {
-                    html += '<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', -1, ' + agendaNoticias.length + ')" class="absolute left-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-1.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-8 h-8 text-xs">&#10094;</button>';
-                    html += '<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', 1, ' + agendaNoticias.length + ')" class="absolute right-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-1.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-8 h-8 text-xs">&#10095;</button>';
+                ht += '</div>';
+                if (aN.length > 1) {
+                    ht += '<button onclick="moverCarrosselAgenda(\'' + cId + '\', -1, ' + aN.length + ')" class="absolute left-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-1.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-8 h-8 text-xs">&#10094;</button>';
+                    ht += '<button onclick="moverCarrosselAgenda(\'' + cId + '\', 1, ' + aN.length + ')" class="absolute right-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-1.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-8 h-8 text-xs">&#10095;</button>';
                 }
-                html += '</div>';
-
-                container.innerHTML = html + container.innerHTML;
+                ht += '</div>'; 
+                ct.innerHTML = ht + ct.innerHTML;
             }
         }
 
         function processarDadosHome(d) {
             window.agendaCarousels = []; 
+            if (d.config) configuracoesGlobais = d.config;
 
-            if (d.config) {
-                configuracoesGlobais = d.config;
-            }
-            
             var socFooter = document.getElementById('social-footer');
             if (socFooter) {
-                var sHtml = '';
+                var sH = '';
+                
+                var iconeInsta = '<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>';
+                var iconeFB = '<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.312h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/></svg>';
+                var iconeX = '<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>';
+                var iconeYT = '<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>';
+
                 if (configuracoesGlobais['soc-inst-url']) {
-                    sHtml += '<a href="' + configuracoesGlobais['soc-inst-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>';
+                    sH += '<a href="' + configuracoesGlobais['soc-inst-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors">' + iconeInsta + '</a>';
                 }
                 if (configuracoesGlobais['soc-fb-url']) {
-                    sHtml += '<a href="' + configuracoesGlobais['soc-fb-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.312h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/></svg></a>';
+                    sH += '<a href="' + configuracoesGlobais['soc-fb-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors">' + iconeFB + '</a>';
                 }
                 if (configuracoesGlobais['soc-x-url']) {
-                    sHtml += '<a href="' + configuracoesGlobais['soc-x-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></a>';
+                    sH += '<a href="' + configuracoesGlobais['soc-x-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors">' + iconeX + '</a>';
                 }
                 if (configuracoesGlobais['soc-yt-url']) {
-                    sHtml += '<a href="' + configuracoesGlobais['soc-yt-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>';
+                    sH += '<a href="' + configuracoesGlobais['soc-yt-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors">' + iconeYT + '</a>';
                 }
                 
-                if (sHtml) {
-                    socFooter.innerHTML = sHtml;
-                    socFooter.classList.remove('hidden');
+                if (sH) { 
+                    socFooter.innerHTML = sH; 
+                    socFooter.classList.remove('hidden'); 
                 }
             }
 
             if (d.categorias) {
                 listaCategoriasLocais = d.categorias;
-                var nav = document.querySelector('#nav-categorias-publicas div');
-                var sidebarList = document.getElementById('lista-editorias-especiais');
+                var nav = document.querySelector('#nav-categorias-publicas div'); 
+                var sbList = document.getElementById('lista-editorias-especiais');
                 
                 nav.innerHTML = ''; 
-                sidebarList.innerHTML = '';
+                sbList.innerHTML = ''; 
                 var temEsp = false;
-
+                
                 d.categorias.forEach(function(c) { 
                     var cl = String(c).toLowerCase().trim();
-                    if(['carreira','carreiras'].indexOf(cl) !== -1) {
-                        temEsp = true;
-                        sidebarList.innerHTML += '<button onclick="filtrarCategoria(\'' + c + '\', true)" class="w-full text-left px-4 py-3 bg-white hover:bg-gray-50 border border-gray-200 text-jornal-dark font-black text-[11px] uppercase tracking-widest rounded-sm transition-colors flex justify-between items-center group shadow-sm">' + c + ' <span class="text-gray-300 group-hover:text-jornal-red text-lg leading-none">&raquo;</span></button>';
-                    } else if(['opinião', 'opiniao', 'opiniões', 'opinioes', 'agenda'].indexOf(cl) === -1) {
+                    if(['carreira','carreiras'].indexOf(cl) !== -1) { 
+                        temEsp = true; 
+                        sbList.innerHTML += '<button onclick="filtrarCategoria(\'' + c + '\', true)" class="w-full text-left px-4 py-3 bg-white hover:bg-gray-50 border border-gray-200 text-jornal-dark font-black text-[11px] uppercase tracking-widest rounded-sm transition-colors flex justify-between items-center group shadow-sm">' + c + ' <span class="text-gray-300 group-hover:text-jornal-red text-lg leading-none">&raquo;</span></button>'; 
+                    } else if(['opinião', 'opiniao', 'opiniões', 'opinioes', 'agenda'].indexOf(cl) === -1) { 
                         nav.innerHTML += '<a href="javascript:void(0)" onclick="filtrarCategoria(\'' + c + '\', true)" class="hover:text-jornal-red transition-colors border-b-2 border-transparent hover:border-jornal-red whitespace-nowrap px-1 py-2">' + c + '</a>'; 
                     }
                 });
@@ -849,116 +801,111 @@
                     return n; 
                 });
             }
-            
             if (d.comentarios) {
                 comentariosGlobais = d.comentarios;
             }
 
             if (d.propagandas) {
-                var adsTopo = []; 
-                var adsLateral = [];
-                
-                d.propagandas.forEach(function(p) {
-                    var partes = String(p.empresa || '').split('|||'); 
-                    p.empresaReal = partes[0]; 
-                    p.tempo = parseInt(partes[1]) || 5;
-                    
+                var aT = []; 
+                var aL = [];
+                d.propagandas.forEach(function(p) { 
+                    var pts = String(p.empresa || '').split('|||'); 
+                    p.empresaReal = pts[0]; 
+                    p.tempo = parseInt(pts[1]) || 5; 
                     if (p.local === 'Topo') {
-                        adsTopo.push(p); 
+                        aT.push(p); 
                     } else {
-                        adsLateral.push(p);
+                        aL.push(p); 
                     }
                 });
-                iniciarCarrosselAnuncios('ads-topo-container', adsTopo); 
-                iniciarCarrosselAnuncios('grid-propagandas-lateral', adsLateral);
+                iniciarCarrosselAnuncios('ads-topo-container', aT); 
+                iniciarCarrosselAnuncios('grid-propagandas-lateral', aL);
             }
             
-            atualizarIdentidadeVisual();
+            atualizarIdentidadeVisual(); 
             renderizarOpinioes(); 
-            renderizarAgendaSidebar(); 
             renderizarMaisLidas(); 
             renderizarClimaEFinanceiro(); 
-            renderizarPlacarAoVivo();
+            renderizarPlacarAoVivo(); 
+            renderizarAgendaSidebar();
         }
 
-        function iniciarCarrosselAnuncios(containerId, anuncios) {
-            var container = document.getElementById(containerId); 
-            if (!container) {
-                return;
+        function iniciarCarrosselAnuncios(cId, an) {
+            var c = document.getElementById(cId); 
+            if (!c) return;
+            
+            if(carrosselAdsTimers[cId]) {
+                clearTimeout(carrosselAdsTimers[cId]);
             }
             
-            if(carrosselAdsTimers[containerId]) {
-                clearTimeout(carrosselAdsTimers[containerId]);
-            }
-
-            if (anuncios.length === 0) { 
-                container.classList.add('hidden'); 
-                container.innerHTML = ''; 
+            if (an.length === 0) { 
+                c.classList.add('hidden'); 
+                c.innerHTML = ''; 
                 return; 
             }
-
-            container.classList.remove('hidden'); 
-            var index = 0;
             
-            function mostrarProximo() {
-                var ad = anuncios[index]; 
-                container.innerHTML = criarElementoAd(ad);
-                index = (index + 1) % anuncios.length; 
-                carrosselAdsTimers[containerId] = setTimeout(mostrarProximo, (ad.tempo || 5) * 1000);
+            c.classList.remove('hidden'); 
+            var i = 0;
+            
+            function nxt() { 
+                var a = an[i]; 
+                c.innerHTML = criarElementoAd(a); 
+                i = (i + 1) % an.length; 
+                carrosselAdsTimers[cId] = setTimeout(nxt, (a.tempo || 5) * 1000); 
             }
-            
-            mostrarProximo();
+            nxt();
         }
 
         function renderizarOpinioes() {
             var c = document.getElementById('sidebar-opinioes'); 
-            var c_in = document.getElementById('conteudo-opinioes');
+            var cIn = document.getElementById('conteudo-opinioes');
             
             var op = noticiasGlobais.filter(function(n) { 
-                return isNoticiaPublicada(n) && String(n.categoria).toLowerCase().indexOf('opini') !== -1;
+                return isNoticiaPublicada(n) && String(n.categoria).toLowerCase().indexOf('opini') !== -1; 
             });
             
             if (op.length === 0) { 
                 c.classList.add('hidden'); 
                 return; 
             }
-            c.classList.remove('hidden');
             
+            c.classList.remove('hidden');
             var d = op[0]; 
-            var letraAutor = d.autor ? d.autor.charAt(0).toUpperCase() : 'O';
-            var html = '<article onclick="abrirNoticia(\'' + d.id + '\', true)" class="group cursor-pointer flex flex-col mb-4 bg-gray-50 p-4 border border-gray-100 rounded-sm hover:shadow-md transition-shadow">' +
-                '<div class="flex items-center gap-3 mb-3"><div class="w-10 h-10 rounded-full bg-jornal-blue flex items-center justify-center text-white font-black text-xs shrink-0 shadow-inner">' + letraAutor + '</div>' +
+            var lt = d.autor ? d.autor.charAt(0).toUpperCase() : 'O';
+            
+            var h = '<article onclick="abrirNoticia(\'' + d.id + '\', true)" class="group cursor-pointer flex flex-col mb-4 bg-gray-50 p-4 border border-gray-100 rounded-sm hover:shadow-md transition-shadow">' +
+                '<div class="flex items-center gap-3 mb-3"><div class="w-10 h-10 rounded-full bg-jornal-blue flex items-center justify-center text-white font-black text-xs shrink-0 shadow-inner">' + lt + '</div>' +
                 '<div class="flex flex-col min-w-0"><span class="text-[10px] font-black uppercase tracking-widest text-jornal-red">Opinião</span><span class="text-xs font-bold text-gray-700 truncate w-full">' + (d.autor || 'Editorial') + '</span></div></div>' +
-                '<div class="w-full aspect-video mb-3 overflow-hidden rounded-sm bg-gray-200 shrink-0 relative"><img src="' + (d.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-900 group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />' +
+                '<div class="w-full aspect-video mb-3 overflow-hidden rounded-sm bg-gray-200 shrink-0 relative">' +
+                '<img src="' + (d.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-900 group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />' +
                 (d.creditosImagem ? '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded-tl">Foto: ' + d.creditosImagem + '</div>' : '') + '</div>' +
                 '<h3 class="font-serif font-black text-sm md:text-base leading-snug text-jornal-dark group-hover:text-jornal-blue line-clamp-3 mb-2">' + d.titulo + '</h3>' +
                 '<p class="text-xs text-gray-500 line-clamp-2 mb-3 italic">' + (d.linhaFina || removerHTML(d.conteudo)) + '</p>' +
                 '<div class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-auto">' + (d.dataHora ? d.dataHora.replace(' ', ' às ') : '') + '</div></article>';
             
             if(op.length > 1) {
-                html += '<div class="flex flex-col gap-3 mt-2">';
-                for(var i=1; i<Math.min(op.length, 4); i++) {
-                    html += '<article onclick="abrirNoticia(\'' + op[i].id + '\', true)" class="group cursor-pointer border-t border-gray-100 pt-3 flex gap-3 items-center hover:bg-gray-50 p-2 -mx-2 rounded transition-colors">' +
-                        '<div class="w-12 h-12 rounded bg-gray-200 shrink-0 overflow-hidden relative"><img src="' + (op[i].urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-900 group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
+                h += '<div class="flex flex-col gap-3 mt-2">';
+                for(var i=1; i<Math.min(op.length, 4); i++) { 
+                    h += '<article onclick="abrirNoticia(\'' + op[i].id + '\', true)" class="group cursor-pointer border-t border-gray-100 pt-3 flex gap-3 items-center hover:bg-gray-50 p-2 -mx-2 rounded transition-colors">' +
+                        '<div class="w-12 h-12 rounded bg-gray-200 shrink-0 overflow-hidden relative">' +
+                        '<img src="' + (op[i].urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-900 group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
                         '<div class="flex-grow min-w-0 flex flex-col justify-center"><h4 class="font-bold text-xs text-gray-800 leading-tight group-hover:text-jornal-red line-clamp-2 mb-1">' + op[i].titulo + '</h4>' +
-                        '<span class="text-[9px] font-bold text-gray-400 tracking-widest uppercase">' + (op[i].dataHora ? op[i].dataHora.split(' ')[0] : '') + '</span></div></article>';
+                        '<span class="text-[9px] font-bold text-gray-400 tracking-widest uppercase">' + (op[i].dataHora ? op[i].dataHora.split(' ')[0] : '') + '</span></div></article>'; 
                 }
-                html += '</div>';
+                h += '</div>';
             }
-            c_in.innerHTML = html;
+            cIn.innerHTML = h;
         }
 
-        function criarElementoAd(prop) {
-            if(!prop) {
-                return '';
-            }
-            var ext = prop.tipo ? prop.tipo.toLowerCase() : ''; 
-            var urlSegura = prop.urlArquivo ? String(prop.urlArquivo) : '';
-            var isVideo = ext.indexOf('video') !== -1 || urlSegura.endsWith('.mp4');
+        function criarElementoAd(p) {
+            var e = p.tipo ? p.tipo.toLowerCase() : ''; 
+            var u = p.urlArquivo ? String(p.urlArquivo) : ''; 
+            var isV = e.indexOf('video') !== -1 || u.endsWith('.mp4');
+            var mH = isV ? 
+                '<video src="' + u + '" autoplay loop muted playsinline class="w-full h-auto min-h-[100px] object-contain bg-gray-100 border border-gray-200"></video>' : 
+                '<img loading="lazy" src="' + u + '" alt="Anúncio" class="w-full h-auto min-h-[100px] object-contain bg-gray-100 border border-gray-200" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />';
             
-            var mediaHtml = isVideo ? '<video src="' + urlSegura + '" autoplay loop muted playsinline class="w-full h-auto min-h-[100px] object-contain bg-gray-100 border border-gray-200"></video>' : '<img loading="lazy" src="' + urlSegura + '" alt="Anúncio" class="w-full h-auto min-h-[100px] object-contain bg-gray-100 border border-gray-200" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />';
-            
-            return '<a href="' + prop.linkDestino + '" target="_blank" class="block w-full relative group hover:opacity-95 transition-opacity"><div class="absolute top-2 right-2 bg-white/90 text-[8px] uppercase font-black px-1.5 py-0.5 z-10 text-jornal-dark border border-gray-200">Publicidade</div>' + mediaHtml + '</a>';
+            return '<a href="' + p.linkDestino + '" target="_blank" class="block w-full relative group hover:opacity-95 transition-opacity"><div class="absolute top-2 right-2 bg-white/90 text-[8px] uppercase font-black px-1.5 py-0.5 z-10 text-jornal-dark border border-gray-200">Publicidade</div>' + mH + '</a>';
         }
 
         function filtrarPorCidadeLocal() {
@@ -967,8 +914,9 @@
 
         function filtrarCategoria(cat, up) {
             if (up === undefined) {
-                up = true;
+                up = true; 
             }
+            
             window.categoriaAtual = cat; 
             
             if(up) {
@@ -976,10 +924,9 @@
             }
             
             var grid = document.getElementById('grid-noticias'); 
-            var dest = document.getElementById('destaque-noticia');
-            if (!grid || !dest) {
-                return;
-            }
+            var dest = document.getElementById('destaque-noticia'); 
+            
+            if (!grid || !dest) return;
             
             var subnav = document.getElementById('subnav-cidades');
             if (subnav) {
@@ -990,10 +937,10 @@
                     document.getElementById('input-filtro-cidade').value = '';
                 }
             }
-            
+
             grid.innerHTML = ''; 
-            dest.innerHTML = '';
-            document.getElementById('titulo-seccao-feed').innerText = cat === 'Todas' ? 'Últimas Notícias' : 'Editoria: ' + cat;
+            dest.innerHTML = ''; 
+            document.getElementById('titulo-seccao-feed').innerText = cat === 'Todas' ? 'Últimas Notícias' : 'Editoria: ' + cat; 
             document.getElementById('input-pesquisa').value = '';
             
             var f = noticiasGlobais.filter(function(n) {
@@ -1013,41 +960,38 @@
                         return catL.indexOf(txtCidade) !== -1;
                     }
                 }
+                
                 return matchCat;
             });
             
-            var carrosselContainer = document.getElementById('carrossel-destaques');
-            var gridEditorias = document.getElementById('grid-editorias-exclusivo');
-
+            var cC = document.getElementById('carrossel-destaques'); 
+            var gE = document.getElementById('grid-editorias-exclusivo');
+            
             if(cat === 'Todas') {
                 grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6";
-                var c_itens = f.filter(function(n) { return n.noCarrossel === 'true'; }).slice(0, 5);
+                var cI = f.filter(function(n) { return n.noCarrossel === 'true'; }).slice(0, 5);
                 
-                if(c_itens.length > 0) { 
-                    montarCarrossel(c_itens); 
-                    if(carrosselContainer) carrosselContainer.classList.remove('hidden'); 
+                if(cI.length > 0) { 
+                    montarCarrossel(cI); 
+                    if(cC) cC.classList.remove('hidden'); 
                     dest.classList.add('hidden'); 
                     f = f.filter(function(n) { return n.noCarrossel !== 'true'; }); 
                 } else { 
-                    if(carrosselContainer) carrosselContainer.classList.add('hidden'); 
+                    if(cC) cC.classList.add('hidden'); 
                 }
                 
                 montarGrelhaEditorias(f); 
-                if(gridEditorias) gridEditorias.classList.remove('hidden');
+                if(gE) gE.classList.remove('hidden');
                 
                 f.slice(0, 15).forEach(function(n) { 
                     grid.innerHTML += htmlCard(n); 
                 });
-                
-                var btnMais = document.getElementById('btn-mostrar-mais'); 
-                if(btnMais) {
-                    btnMais.classList.add('hidden');
-                }
+                var bM = document.getElementById('btn-mostrar-mais'); 
+                if(bM) bM.classList.add('hidden');
             } else {
                 grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
-                
-                if(gridEditorias) gridEditorias.classList.add('hidden'); 
-                if(carrosselContainer) carrosselContainer.classList.add('hidden');
+                if(gE) gE.classList.add('hidden'); 
+                if(cC) cC.classList.add('hidden');
                 
                 if(f.length > 0) { 
                     dest.innerHTML = htmlHero(f[0]); 
@@ -1057,18 +1001,14 @@
                 
                 window.noticiasCategoriaAtual = f; 
                 window.itensExibidosCategoria = 16;
-                
                 f.slice(0, 16).forEach(function(n) { 
                     grid.innerHTML += htmlCard(n); 
                 });
                 
-                var btnMais = document.getElementById('btn-mostrar-mais');
-                if (btnMais) { 
-                    if (f.length > 16) {
-                        btnMais.classList.remove('hidden'); 
-                    } else {
-                        btnMais.classList.add('hidden'); 
-                    }
+                var bM = document.getElementById('btn-mostrar-mais'); 
+                if (bM) { 
+                    if (f.length > 16) bM.classList.remove('hidden'); 
+                    else bM.classList.add('hidden'); 
                 }
             }
             fecharNoticiaUI();
@@ -1076,17 +1016,16 @@
 
         function mostrarMaisNoticias() {
             var grid = document.getElementById('grid-noticias'); 
-            var f = window.noticiasCategoriaAtual || [];
+            var f = window.noticiasCategoriaAtual || []; 
             var start = window.itensExibidosCategoria; 
             window.itensExibidosCategoria += 16;
             
             f.slice(start, window.itensExibidosCategoria).forEach(function(n) { 
                 grid.innerHTML += htmlCard(n); 
             });
-            
-            var btnMais = document.getElementById('btn-mostrar-mais');
-            if (window.itensExibidosCategoria >= f.length && btnMais) {
-                btnMais.classList.add('hidden');
+            var bM = document.getElementById('btn-mostrar-mais'); 
+            if (window.itensExibidosCategoria >= f.length && bM) { 
+                bM.classList.add('hidden'); 
             }
         }
 
@@ -1190,6 +1129,20 @@
                 }
             });
             container.innerHTML = htmlFinal;
+        }
+
+        function moverCarrosselAgenda(id, dir, len) {
+            if(!window.agendaCarousels) return; 
+            var c = window.agendaCarousels.find(function(x) { 
+                return x.id === id; 
+            }); 
+            if (!c) return;
+            
+            c.index = (c.index + dir + len) % len; 
+            var i = document.getElementById(id + '-inner'); 
+            if (i) {
+                i.style.transform = 'translateX(-' + (c.index * 100) + '%)';
+            }
         }
 
         function montarCarrossel(itens) {
@@ -1676,9 +1629,9 @@
             }
         }
         
-        function assinarNewsletter(e) {
+        function assinarNewsletter(e) { 
             e.preventDefault(); 
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) { 
                     var pr = res; 
                     if (res && res.result !== undefined) {
@@ -1691,10 +1644,10 @@
                         mostrarMensagem('Inscrição registada!'); 
                         document.getElementById('form-newsletter').reset(); 
                     } 
-                }).inscreverNewsletter({email: document.getElementById('news-email').value}); 
-            } 
+                }).inscreverNewsletter({email: document.getElementById('news-email').value});
+            }
         }
-
+        
         function converterVideoUrlsParaPlayers(t) { 
             if (!t) return ""; 
             var strT = String(t);
@@ -1702,14 +1655,14 @@
             var ytCleanRegex = /(?:<a\b[^>]*href="[^"]*?(?:youtube\.com|youtu\.be)[^"]*?"[^>]*>)(.*?)(?:<\/a>)/gi;
             strT = strT.replace(ytCleanRegex, '$1');
             
-            var ytRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})[^\s<"]*/gi;
+            var ytRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[&?][a-zA-Z0-9_=-]+)*/gi;
             strT = strT.replace(ytRegex, function(match, id) { 
                 return '<div class="aspect-video w-full my-4 shadow-md rounded overflow-hidden"><iframe class="w-full h-full" src="https://www.youtube.com/embed/' + id + '" frameborder="0" allowfullscreen></iframe></div>'; 
             });
 
             var igRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[a-zA-Z0-9_-]+)(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
             strT = strT.replace(igRegex, function(match, url) { 
-                return '<blockquote class="instagram-media" data-instgrm-permalink="' + url + '/?utm_source=ig_embed" data-instgrm-version="14" style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px auto; max-width:540px; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);"></blockquote>'; 
+                return '<blockquote class="instagram-media" data-instgrm-permalink="' + url + '/?utm_source=ig_embed" data-instgrm-version="14" style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px auto; max-width:540px; min-width:326px; padding:0; width:99.375%; width:calc(100% - 2px);"></blockquote>'; 
             });
 
             var tkRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?tiktok\.com\/@[a-zA-Z0-9_.-]+\/video\/([0-9]+))(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
@@ -1788,12 +1741,19 @@
         }
 
         function abrirModalLogin() { 
-            document.getElementById('modalLogin').classList.remove('hidden'); 
-            document.getElementById('modalLogin').classList.add('flex'); 
+            // Somente aplicável se existir admin neste ecrã
+            var m = document.getElementById('modalLogin');
+            if(m) {
+                m.classList.remove('hidden'); 
+                m.classList.add('flex'); 
+            }
         }
 
         function fecharModalLogin() { 
-            document.getElementById('modalLogin').classList.add('hidden'); 
+            var m = document.getElementById('modalLogin');
+            if(m) {
+                m.classList.add('hidden'); 
+            }
         }
     </script>
 </body>
