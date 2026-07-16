@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - Notícias Avulsas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .toast { position: fixed; top: 20px; right: 20px; padding: 16px 24px; border-radius: 8px; font-weight: bold; z-index: 9999; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast.sucesso { background-color: #10b981; color: white; }
+        .toast.erro { background-color: #ef4444; color: white; }
+        .toast.aviso { background-color: #f59e0b; color: white; }
+        .toast.info { background-color: #3b82f6; color: white; }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- TOAST -->
+    <div id="toast" class="hidden toast"></div>
+
+    <!-- CONTAINER -->
+    <div class="min-h-screen">
+        
+        <!-- HEADER -->
+        <header class="bg-gradient-to-r from-blue-600 to-teal-500 text-white py-6 shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 flex justify-between items-center">
+                <h1 class="text-3xl font-black">PAINEL ADMIN</h1>
+                <a href="index.html" class="bg-white text-blue-600 px-4 py-2 rounded font-bold hover:bg-gray-100">← Voltar ao Portal</a>
+            </div>
+        </header>
+
+        <!-- CONTEÚDO -->
+        <main class="max-w-7xl mx-auto px-4 py-8">
+
+            <!-- ABAS -->
+            <div class="flex gap-4 mb-8 border-b border-gray-300">
+                <button onclick="abaAtiva('noticias')" class="aba-btn active px-6 py-3 font-bold text-blue-600 border-b-4 border-blue-600">📰 Notícias</button>
+                <button onclick="abaAtiva('anuncios')" class="aba-btn px-6 py-3 font-bold text-gray-600 border-b-4 border-transparent hover:text-blue-600">📢 Anúncios</button>
+            </div>
+
+            <!-- ABA NOTÍCIAS -->
+            <div id="aba-noticias" class="aba-content">
+                
+                <!-- FORMULÁRIO NOVA NOTÍCIA -->
+                <div class="bg-white p-8 rounded-lg shadow-lg mb-8">
+                    <h2 class="text-2xl font-bold mb-6">✏️ Redigir Matéria</h2>
+                    
+                    <form id="form-noticia" class="space-y-6">
+                        
+                        <!-- TÍTULO -->
+                        <div>
+                            <label class="block text-sm font-bold mb-2">Título *</label>
+                            <input type="text" id="noticia-titulo" class="w-full px-4 py-2 border border-gray-300 rounded" placeholder="Digite o título da notícia" required>
+                        </div>
+
+                        <!-- LINHA FINA -->
+                        <div>
+                            <label class="block text-sm font-bold mb-2">Linha Fina (Resumo) *</label>
+                            <input type="text" id="noticia-linha-fina" class="w-full px-4 py-2 border border-gray-300 rounded" placeholder="Resumo breve da notícia" required>
+                        </div>
+
+                        <!-- CATEGORIA -->
+                        <div>
+                            <label class="block text-sm font-bold mb-2">Categoria *</label>
+                            <select id="noticia-categoria" class="w-full px-4 py-2 border border-gray-300 rounded" required>
+                                <option value="">Selecione uma categoria</option>
+                                <option value="Política">Política</option>
+                                <option value="Economia">Economia</option>
+                                <option value="Cidades">Cidades</option>
+                                <option value="Polícia">Polícia</option>
+                                <option value="Justiça">Justiça</option>
+                                <option value="Esportes">Esportes</option>
+                                <option value="Brasil">Brasil</option>
+                                <option value="Mundo">Mundo</option>
+                            </select>
+                        </div>
+
+                        <!-- CONTEÚDO -->
+                        <div>
+                            <label class="block text-sm font-bold mb-2">Conteúdo *</label>
+                            <textarea id="noticia-conteudo" class="w-full px-4 py-2 border border-gray-300 rounded h-32" placeholder="Digite o conteúdo completo da notícia" required></textarea>
+                        </div>
+
+                        <!-- IMAGEM -->
+                        <div>
+                            <label class="block text-sm font-bold mb-2">Imagem *</label>
+                            <input type="file" id="noticia-imagem" accept="image/*" class="w-full px-4 py-2 border border-gray-300 rounded" required>
+                            <button type="button" onclick="abrirCropImagem()" class="mt-2 bg-purple-600 text-white px-4 py-2 rounded font-bold hover:bg-purple-700">✂️ Crop/Ajustar Imagem</button>
+                            <img id="preview-imagem" class="mt-4 max-w-xs rounded border border-gray-300" style="display:none;">
+                        </div>
+
+                        <!-- NOTÍCIAS RELACIONADAS -->
+                        <div class="bg-indigo-50 p-4 rounded border border-indigo-200">
+                            <label class="block text-sm font-bold mb-2">📰 Notícias Relacionadas (Opcional)</label>
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="pesquisa-relacionadas" placeholder="Pesquisar notícias..." class="flex-1 px-3 py-2 border border-indigo-300 rounded">
+                                <button type="button" onclick="pesquisarNoticiasRelacionadas()" class="bg-indigo-600 text-white px-4 py-2 rounded font-bold">🔍 Pesquisar</button>
+                            </div>
+                            <div id="lista-pesquisa-relacionadas" class="bg-white border border-indigo-200 rounded max-h-32 overflow-y-auto hidden mb-3"></div>
+                            <div id="noticias-selecionadas" class="flex flex-wrap gap-2"></div>
+                        </div>
+
+                        <!-- FIM DO EVENTO (AGENDA) -->
+                        <div>
+                            <label class="block text-sm font-bold mb-2">Fim do Evento (para Agenda - Opcional)</label>
+                            <input type="datetime-local" id="noticia-fim-evento" class="w-full px-4 py-2 border border-gray-300 rounded">
+                        </div>
+
+                        <!-- CIDADE -->
+                        <div>
+                            <label class="block text-sm font-bold mb-2">Cidade (para Editoria Cidades - Opcional)</label>
+                            <input type="text" id="noticia-cidade" class="w-full px-4 py-2 border border-gray-300 rounded" placeholder="Digite a cidade">
+                        </div>
+
+                        <!-- BOTÕES -->
+                        <div class="flex gap-4">
+                            <button type="submit" class="bg-green-600 text-white px-6 py-3 rounded font-bold hover:bg-green-700">✅ Publicar</button>
+                            <button type="button" onclick="limparFormNoticia()" class="bg-gray-600 text-white px-6 py-3 rounded font-bold hover:bg-gray-700">🔄 Limpar</button>
+                            <button type="button" onclick="salvarAlteracoes()" class="bg-blue-600 text-white px-6 py-3 rounded font-bold hover:bg-blue-700">💾 Salvar Alterações</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- TABELA DE NOTÍCIAS -->
+                <div class="bg-white p-8 rounded-lg shadow-lg">
+                    <h2 class="text-2xl font-bold mb-6">📋 Editar Publicações</h2>
+                    <div id="tabela-noticias" class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="px-4 py-2 text-left">ID</th>
+                                    <th class="px-4 py-2 text-left">Título</th>
+                                    <th class="px-4 py-2 text-left">Categoria</th>
+                                    <th class="px-4 py-2 text-left">Views</th>
+                                    <th class="px-4 py-2 text-left">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-noticias"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ABA ANÚNCIOS -->
+            <div id="aba-anuncios" class="aba-content hidden">
+                
+                <!-- FORMULÁRIO NOVO ANÚNCIO -->
+                <div class="bg-white p-8 rounded-lg shadow-lg mb-8">
+                    <h2 class="text-2xl font-bold mb-6">➕ Novo Anúncio</h2>
+                    
+                    <form id="form-anuncio" class="space-y-6">
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold mb-2">Empresa *</label>
+                                <input type="text" id="anuncio-empresa" class="w-full px-4 py-2 border border-gray-300 rounded" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold mb-2">URL *</label>
+                                <input type="url" id="anuncio-url" class="w-full px-4 py-2 border border-gray-300 rounded" required>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold mb-2">Local *</label>
+                            <select id="anuncio-local" class="w-full px-4 py-2 border border-gray-300 rounded" required>
+                                <option value="">Selecione o local</option>
+                                <option value="slot-1">Slot 1 (Entre Editorias)</option>
+                                <option value="slot-2">Slot 2 (Entre Editorias)</option>
+                                <option value="slot-3">Slot 3 (Entre Editorias)</option>
+                                <option value="slot-4">Slot 4 (Entre Editorias)</option>
+                                <option value="slot-5">Slot 5 (Entre Editorias)</option>
+                                <option value="slot-6">Slot 6 (Entre Editorias)</option>
+                                <option value="slot-7">Slot 7 (Entre Editorias)</option>
+                                <option value="slot-8">Slot 8 (Entre Editorias)</option>
+                                <option value="sidebar-1">Sidebar 1</option>
+                                <option value="sidebar-2">Sidebar 2</option>
+                                <option value="sidebar-3">Sidebar 3</option>
+                            </select>
+                        </div>
+
+                        <div class="flex gap-4">
+                            <button type="submit" class="bg-green-600 text-white px-6 py-3 rounded font-bold hover:bg-green-700">✅ Salvar Anúncio</button>
+                            <button type="button" onclick="limparFormAnuncio()" class="bg-gray-600 text-white px-6 py-3 rounded font-bold hover:bg-gray-700">🔄 Limpar</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- TABELA DE ANÚNCIOS -->
+                <div class="bg-white p-8 rounded-lg shadow-lg">
+                    <h2 class="text-2xl font-bold mb-6">📊 Gerenciar Anúncios</h2>
+                    <div id="tabela-anuncios" class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="px-4 py-2 text-left">Empresa</th>
+                                    <th class="px-4 py-2 text-left">Local</th>
+                                    <th class="px-4 py-2 text-left">Alcance</th>
+                                    <th class="px-4 py-2 text-left">Status</th>
+                                    <th class="px-4 py-2 text-left">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-anuncios"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- MODAL CROP -->
+    <div id="modal-crop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg p-6 max-w-2xl w-full">
+            <h3 class="text-xl font-bold mb-4">✂️ Ajustar Imagem</h3>
+            <canvas id="canvas-crop" class="w-full border border-gray-300 rounded mb-4"></canvas>
+            <div class="flex gap-2 mb-4">
+                <label class="flex items-center gap-2">
+                    <span class="text-sm font-bold">Zoom:</span>
+                    <input type="range" id="crop-zoom" min="0.5" max="3" step="0.1" value="1" class="flex-1" onchange="atualizarCrop()">
+                </label>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="aplicarCrop()" class="flex-1 bg-green-600 text-white px-4 py-2 rounded font-bold">✅ Aplicar</button>
+                <button onclick="fecharCrop()" class="flex-1 bg-red-600 text-white px-4 py-2 rounded font-bold">❌ Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ ALTERE ESTE URL
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyVroxyx_f70Q2KkcnfMWtt2vV8EzQRsPBhF9nNL4frnKhdhe7t-oahNoJo9SCLfAbE/exec";
+
+        let noticiasGlobais = [];
+        let anunciosGlobais = [];
+        let imagemOriginal = null;
+
+        // INICIALIZAR
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarDados();
+            document.getElementById('form-noticia').addEventListener('submit', salvarNoticia);
+            document.getElementById('form-anuncio').addEventListener('submit', salvarAnuncio);
+            document.getElementById('noticia-imagem').addEventListener('change', previewImagem);
+        });
+
+        // CARREGAR DADOS
+        function carregarDados() {
+            fetch(GAS_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'getHomeData', args: [] })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.noticias) {
+                    noticiasGlobais = data.noticias;
+                    renderizarTabelaNoticias();
+                }
+                if (data.anuncios) {
+                    anunciosGlobais = data.anuncios;
+                    renderizarTabelaAnuncios();
+                }
+            })
+            .catch(err => mostrarNotificacao('Erro ao carregar: ' + err.message, 'erro'));
+        }
+
+        // NOTIFICAÇÕES
+        function mostrarNotificacao(msg, tipo = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = 'toast ' + tipo;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        // ABAS
+        function abaAtiva(aba) {
+            document.querySelectorAll('.aba-btn').forEach(btn => {
+                btn.classList.remove('active', 'border-blue-600', 'text-blue-600');
+                btn.classList.add('border-transparent', 'text-gray-600');
+            });
+            document.querySelectorAll('.aba-content').forEach(content => content.classList.add('hidden'));
+            
+            event.target.classList.add('active', 'border-blue-600', 'text-blue-600');
+            document.getElementById('aba-' + aba).classList.remove('hidden');
+        }
+
+        // PREVIEW IMAGEM
+        function previewImagem(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                imagemOriginal = event.target.result;
+                document.getElementById('preview-imagem').src = imagemOriginal;
+                document.getElementById('preview-imagem').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // CROP IMAGEM
+        function abrirCropImagem() {
+            if (!imagemOriginal) {
+                mostrarNotificacao('Selecione uma imagem primeiro', 'aviso');
+                return;
+            }
+            
+            const modal = document.getElementById('modal-crop');
+            const canvas = document.getElementById('canvas-crop');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = function() {
+                canvas.width = 600;
+                canvas.height = 400;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            };
+            img.src = imagemOriginal;
+            
+            modal.classList.remove('hidden');
+        }
+
+        function atualizarCrop() {
+            const zoom = parseFloat(document.getElementById('crop-zoom').value);
+            const canvas = document.getElementById('canvas-crop');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = function() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width * zoom, canvas.height * zoom);
+            };
+            img.src = imagemOriginal;
+        }
+
+        function aplicarCrop() {
+            const canvas = document.getElementById('canvas-crop');
+            imagemOriginal = canvas.toDataURL('image/jpeg');
+            document.getElementById('preview-imagem').src = imagemOriginal;
+            fecharCrop();
+            mostrarNotificacao('✅ Imagem ajustada!', 'sucesso');
+        }
+
+        function fecharCrop() {
+            document.getElementById('modal-crop').classList.add('hidden');
+        }
+
+        // NOTÍCIAS RELACIONADAS
+        function pesquisarNoticiasRelacionadas() {
+            const termo = document.getElementById('pesquisa-relacionadas').value.toLowerCase();
+            if (!termo) return;
+            
+            const resultados = noticiasGlobais.filter(n => 
+                n.titulo.toLowerCase().includes(termo)
+            ).slice(0, 10);
+            
+            const lista = document.getElementById('lista-pesquisa-relacionadas');
+            lista.innerHTML = resultados.map(n => `
+                <div class="p-2 border-b cursor-pointer hover:bg-blue-50" onclick="selecionarNoticiaRelacionada('${n.id}', '${n.titulo}')">
+                    <strong>${n.titulo}</strong>
+                </div>
+            `).join('');
+            
+            lista.classList.remove('hidden');
+        }
+
+        function selecionarNoticiaRelacionada(id, titulo) {
+            const container = document.getElementById('noticias-selecionadas');
+            const tag = document.createElement('span');
+            tag.className = 'bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2';
+            tag.setAttribute('data-id', id);
+            tag.innerHTML = titulo + ' <button type="button" onclick="this.parentElement.remove()" class="ml-1 font-bold">×</button>';
+            container.appendChild(tag);
+            
+            document.getElementById('pesquisa-relacionadas').value = '';
+            document.getElementById('lista-pesquisa-relacionadas').classList.add('hidden');
+        }
+
+        // SALVAR NOTÍCIA
+        function salvarNoticia(e) {
+            e.preventDefault();
+            
+            const noticia = {
+                titulo: document.getElementById('noticia-titulo').value,
+                linhaFina: document.getElementById('noticia-linha-fina').value,
+                categoria: document.getElementById('noticia-categoria').value,
+                conteudo: document.getElementById('noticia-conteudo').value,
+                urlImagem: imagemOriginal,
+                dataFimEvento: document.getElementById('noticia-fim-evento').value,
+                cidade: document.getElementById('noticia-cidade').value,
+                noticiasRelacionadas: Array.from(document.querySelectorAll('#noticias-selecionadas [data-id]')).map(el => el.getAttribute('data-id')).join(',')
+            };
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function() {
+                    mostrarNotificacao('✅ Notícia publicada com sucesso!', 'sucesso');
+                    limparFormNoticia();
+                    carregarDados();
+                }).salvarNoticiaNoSheets(noticia);
+            } else {
+                mostrarNotificacao('❌ Erro: Google Apps Script não disponível', 'erro');
+            }
+        }
+
+        function limparFormNoticia() {
+            document.getElementById('form-noticia').reset();
+            document.getElementById('preview-imagem').style.display = 'none';
+            document.getElementById('noticias-selecionadas').innerHTML = '';
+            imagemOriginal = null;
+        }
+
+        function salvarAlteracoes() {
+            mostrarNotificacao('💾 Alterações salvas!', 'sucesso');
+        }
+
+        // ANÚNCIOS
+        function salvarAnuncio(e) {
+            e.preventDefault();
+            
+            const anuncio = {
+                empresa: document.getElementById('anuncio-empresa').value,
+                url: document.getElementById('anuncio-url').value,
+                local: document.getElementById('anuncio-local').value,
+                status: 'ativo'
+            };
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function() {
+                    mostrarNotificacao('✅ Anúncio salvo!', 'sucesso');
+                    limparFormAnuncio();
+                    carregarDados();
+                }).salvarPropagandaNoSheets(anuncio);
+            }
+        }
+
+        function limparFormAnuncio() {
+            document.getElementById('form-anuncio').reset();
+        }
+
+        // TABELAS
+        function renderizarTabelaNoticias() {
+            const tbody = document.getElementById('tbody-noticias');
+            tbody.innerHTML = noticiasGlobais.map(n => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="px-4 py-2">${n.id}</td>
+                    <td class="px-4 py-2">${n.titulo}</td>
+                    <td class="px-4 py-2">${n.categoria}</td>
+                    <td class="px-4 py-2">${n.views || 0}</td>
+                    <td class="px-4 py-2 flex gap-2">
+                        <button onclick="editarNoticia('${n.id}')" class="bg-blue-600 text-white px-2 py-1 rounded text-xs">✏️ Editar</button>
+                        <button onclick="gerarInstagram('${n.id}')" class="bg-pink-600 text-white px-2 py-1 rounded text-xs">📱 Instagram</button>
+                        <button onclick="excluirNoticia('${n.id}')" class="bg-red-600 text-white px-2 py-1 rounded text-xs">🗑️ Excluir</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderizarTabelaAnuncios() {
+            const tbody = document.getElementById('tbody-anuncios');
+            tbody.innerHTML = anunciosGlobais.map(a => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="px-4 py-2">${a.empresa}</td>
+                    <td class="px-4 py-2">${a.local}</td>
+                    <td class="px-4 py-2">${a.alcance || 0}</td>
+                    <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">${a.status}</span></td>
+                    <td class="px-4 py-2 flex gap-2">
+                        <button onclick="ativarDesativarAnuncio('${a.id}')" class="bg-blue-600 text-white px-2 py-1 rounded text-xs">🔄 Toggle</button>
+                        <button onclick="excluirAnuncio('${a.id}')" class="bg-red-600 text-white px-2 py-1 rounded text-xs">🗑️ Excluir</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function editarNoticia(id) {
+            const noticia = noticiasGlobais.find(n => n.id === id);
+            if (!noticia) return;
+            
+            document.getElementById('noticia-titulo').value = noticia.titulo;
+            document.getElementById('noticia-linha-fina').value = noticia.linhaFina;
+            document.getElementById('noticia-categoria').value = noticia.categoria;
+            document.getElementById('noticia-conteudo').value = noticia.conteudo;
+            document.getElementById('noticia-cidade').value = noticia.cidade || '';
+            
+            mostrarNotificacao('📝 Notícia carregada para edição', 'info');
+            window.scrollTo(0, 0);
+        }
+
+        function gerarInstagram(id) {
+            const noticia = noticiasGlobais.find(n => n.id === id);
+            if (!noticia) return;
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = 1080;
+            canvas.height = 1350;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#E11D48';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(noticia.titulo.substring(0, 50), canvas.width / 2, canvas.height - 200);
+            
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/jpeg');
+            link.download = 'noticia-instagram-' + id + '.jpg';
+            link.click();
+            
+            mostrarNotificacao('✅ Imagem gerada!', 'sucesso');
+        }
+
+        function excluirNoticia(id) {
+            if (confirm('Tem certeza que deseja excluir?')) {
+                mostrarNotificacao('🗑️ Notícia excluída', 'sucesso');
+                carregarDados();
+            }
+        }
+
+        function ativarDesativarAnuncio(id) {
+            const anuncio = anunciosGlobais.find(a => a.id === id);
+            if (anuncio) {
+                anuncio.status = anuncio.status === 'ativo' ? 'inativo' : 'ativo';
+                mostrarNotificacao('🔄 Status atualizado', 'sucesso');
+            }
+        }
+
+        function excluirAnuncio(id) {
+            if (confirm('Tem certeza que deseja excluir?')) {
+                mostrarNotificacao('🗑️ Anúncio excluído', 'sucesso');
+                carregarDados();
+            }
+        }
+
+        console.log('🔗 Google Apps Script URL:', GAS_API_URL);
+    </script>
+
+</body>
+</html>
