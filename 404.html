@@ -298,9 +298,40 @@
             width: 99.375%; 
             width: calc(100% - 2px); 
         }
-    </style>
+    
+        .skeleton-loader {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .skeleton-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .skeleton-overlay.hidden {
+            display: none;
+        }
+</style>
 </head>
 <body class="antialiased min-h-screen flex flex-col relative selection:bg-jornal-red selection:text-white">
+    <div id="skeleton-overlay" class="skeleton-overlay">
+        <div class="spinner"></div>
+        <p class="mt-4 text-gray-600 font-bold">Carregando portal...</p>
+    </div>
+
 
     <div id="toast" class="hidden fixed top-5 right-5 px-6 py-4 font-bold shadow-xl transition-all duration-300 z-[99999] flex items-center gap-3 border rounded-sm">
         <span id="toast-icon" class="text-xl"></span>
@@ -758,6 +789,18 @@
                             <button type="button" id="btn-ia-conteudo" onclick="gerarConteudoIA()" class="ml-auto px-3 py-1.5 bg-purple-100 hover:bg-purple-200 border border-purple-300 text-xs text-purple-800 font-bold rounded flex items-center gap-1 shadow-sm transition-colors mt-2 md:mt-0 w-full md:w-auto justify-center">✨ Escrever com IA</button>
                         </div>
                         <div id="admin-editor-rich" contenteditable="true" class="w-full px-4 py-4 bg-gray-50 border border-gray-300 rounded-b min-h-[250px] max-h-[500px] overflow-y-auto focus:outline-none focus:bg-white text-base leading-relaxed font-serif custom-scrollbar rich-editor"></div>
+
+                    <div class="p-4 bg-indigo-50 border border-indigo-200 rounded-sm">
+                        <h4 class="text-xs font-black text-indigo-800 uppercase tracking-widest mb-3">📰 Notícias Relacionadas (Opcional)</h4>
+                        <div class="flex gap-2 mb-3">
+                            <input type="text" id="admin-pesquisa-relacionadas" placeholder="Pesquisar notícias..." class="flex-1 px-3 py-2 bg-white border border-indigo-300 text-xs rounded-sm focus:outline-none" />
+                            <button type="button" onclick="pesquisarNoticiasRelacionadas()" class="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-sm hover:bg-indigo-700">🔍 Pesquisar</button>
+                        </div>
+                        <div id="admin-lista-pesquisa-relacionadas" class="bg-white border border-indigo-200 rounded-sm max-h-32 overflow-y-auto custom-scrollbar hidden"></div>
+                        <div id="admin-noticias-selecionadas" class="mt-3 flex flex-wrap gap-2"></div>
+                    </div>
+
+                    </div>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 border border-gray-200 rounded-sm">
@@ -2301,10 +2344,7 @@
             document.getElementById('modalLogin').classList.add('hidden'); 
         }
 
-        function mostrarMensagem(mensagem, tipo) {
-            if(tipo === undefined) {
-                tipo = 'sucesso'; 
-            }
+        
             var toast = document.getElementById('toast'); 
             document.getElementById('toast-msg').innerText = mensagem;
             
@@ -2871,9 +2911,11 @@
             }
 
             var conteudoRich = document.getElementById('admin-editor-rich').innerHTML;
+                var noticiasRelacionadas = obterNoticiasRelacionadasSelecionadas();
             var payload = {
                 id: editandoID, 
-                titulo: document.getElementById('admin-titulo').value, 
+                titulo: document.getElementById('admin-titulo').value,
+                noticiasRelacionadas: noticiasRelacionadas, 
                 categoria: categoriasSelecionadas, 
                 cidade: possuiEditoriaCidades ? cidadeSelecionada : '',
                 linhaFina: document.getElementById('admin-linha-fina').value,
@@ -3052,6 +3094,19 @@
             var campoCidade = document.getElementById('admin-cidade');
             if (campoCidade) campoCidade.value = '';
             atualizarCampoCidadeAdmin();
+            
+            // Restaurar notícias relacionadas
+            if (noticia.noticiasRelacionadas) {
+                var container = document.getElementById('admin-noticias-selecionadas');
+                container.innerHTML = '';
+                var ids = String(noticia.noticiasRelacionadas).split(',').filter(function(id) { return id.trim(); });
+                ids.forEach(function(id) {
+                    var noticiaRel = noticiasGlobais.find(function(n) { return String(n.id) === String(id.trim()); });
+                    if (noticiaRel) {
+                        selecionarNoticiaRelacionada(noticiaRel.id, noticiaRel.titulo);
+                    }
+                });
+            }
         }
 
         function atualizarCampoCidadeAdmin() {
@@ -3472,6 +3527,19 @@
             if (campoCidade) campoCidade.value = noticia.cidade || '';
             atualizarCampoCidadeAdmin();
             
+            // Restaurar notícias relacionadas
+            if (noticia.noticiasRelacionadas) {
+                var container = document.getElementById('admin-noticias-selecionadas');
+                container.innerHTML = '';
+                var ids = String(noticia.noticiasRelacionadas).split(',').filter(function(id) { return id.trim(); });
+                ids.forEach(function(id) {
+                    var noticiaRel = noticiasGlobais.find(function(n) { return String(n.id) === String(id.trim()); });
+                    if (noticiaRel) {
+                        selecionarNoticiaRelacionada(noticiaRel.id, noticiaRel.titulo);
+                    }
+                });
+            }
+            
             document.getElementById('admin-legenda-imagem').value = noticia.legendaImagem || ''; 
             document.getElementById('admin-creditos-imagem').value = noticia.creditosImagem || '';
 
@@ -3526,6 +3594,407 @@
                 cb.checked = ligasAtivas.indexOf(cb.value) !== -1; 
             });
         }
-    </script>
+    
+        function mostrarSkeletonLoader() {
+            var overlay = document.getElementById('skeleton-overlay');
+            if (overlay) overlay.classList.remove('hidden');
+        }
+        
+        function ocultarSkeletonLoader() {
+            var overlay = document.getElementById('skeleton-overlay');
+            if (overlay) overlay.classList.add('hidden');
+        }
+
+
+        function pesquisarNoticiasRelacionadas() {
+            var termo = document.getElementById('admin-pesquisa-relacionadas').value.trim().toLowerCase();
+            if (!termo) {
+                document.getElementById('admin-lista-pesquisa-relacionadas').classList.add('hidden');
+                return;
+            }
+            
+            var resultados = noticiasGlobais.filter(function(n) {
+                var id_atual = document.getElementById('admin-id-noticia').value;
+                if (String(n.id) === String(id_atual)) return false;
+                
+                var titulo = String(n.titulo).toLowerCase();
+                var linhaFina = String(n.linhaFina).toLowerCase();
+                return titulo.indexOf(termo) !== -1 || linhaFina.indexOf(termo) !== -1;
+            });
+            
+            var lista = document.getElementById('admin-lista-pesquisa-relacionadas');
+            lista.innerHTML = '';
+            
+            if (resultados.length === 0) {
+                lista.innerHTML = '<p class="p-2 text-xs text-gray-500">Nenhuma notícia encontrada</p>';
+            } else {
+                resultados.slice(0, 10).forEach(function(n) {
+                    var item = document.createElement('div');
+                    item.className = 'p-2 border-b border-indigo-100 cursor-pointer hover:bg-indigo-50 text-xs';
+                    item.innerHTML = '<strong>' + n.titulo + '</strong><br><span class="text-gray-500">' + n.linhaFina + '</span>';
+                    item.onclick = function() { selecionarNoticiaRelacionada(n.id, n.titulo); };
+                    lista.appendChild(item);
+                });
+            }
+            
+            lista.classList.remove('hidden');
+        }
+        
+        function selecionarNoticiaRelacionada(id, titulo) {
+            var container = document.getElementById('admin-noticias-selecionadas');
+            var ids = Array.from(container.querySelectorAll('[data-id]')).map(function(el) { return el.getAttribute('data-id'); });
+            
+            if (ids.indexOf(String(id)) === -1) {
+                var tag = document.createElement('span');
+                tag.className = 'bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2';
+                tag.setAttribute('data-id', id);
+                tag.innerHTML = titulo + ' <button type="button" onclick="this.parentElement.remove()" class="ml-1 font-bold">×</button>';
+                container.appendChild(tag);
+            }
+            
+            document.getElementById('admin-pesquisa-relacionadas').value = '';
+            document.getElementById('admin-lista-pesquisa-relacionadas').classList.add('hidden');
+        }
+        
+        function obterNoticiasRelacionadasSelecionadas() {
+            var ids = Array.from(document.getElementById('admin-noticias-selecionadas').querySelectorAll('[data-id]')).map(function(el) { return el.getAttribute('data-id'); });
+            return ids.join(',');
+        }
+
+
+        // ============ FASE 3-4: CROP DE IMAGEM ============
+        function abrirCropImagem() {
+            var img = document.getElementById('preview-imagem');
+            if (!img || !img.src) {
+                mostrarNotificacao('Selecione uma imagem primeiro', 'aviso');
+                return;
+            }
+            
+            var modal = document.createElement('div');
+            modal.id = 'modal-crop-imagem';
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-[99999] flex items-center justify-center p-4';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg max-w-2xl w-full p-6">
+                    <h3 class="text-xl font-bold mb-4">Ajustar Imagem</h3>
+                    <div class="flex flex-col gap-4">
+                        <canvas id="canvas-crop" class="w-full border border-gray-300 rounded"></canvas>
+                        <div class="flex gap-2">
+                            <label class="flex items-center gap-2">
+                                <span class="text-sm font-bold">Zoom:</span>
+                                <input type="range" id="crop-zoom" min="0.5" max="3" step="0.1" value="1" class="flex-1" />
+                            </label>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="aplicarCrop()" class="flex-1 bg-green-600 text-white px-4 py-2 rounded font-bold">✅ Aplicar</button>
+                            <button onclick="fecharCropImagem()" class="flex-1 bg-red-600 text-white px-4 py-2 rounded font-bold">❌ Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            var canvas = document.getElementById('canvas-crop');
+            var ctx = canvas.getContext('2d');
+            var image = new Image();
+            image.onload = function() {
+                canvas.width = 600;
+                canvas.height = 400;
+                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+            };
+            image.src = img.src;
+            
+            document.getElementById('crop-zoom').addEventListener('input', function() {
+                var zoom = parseFloat(this.value);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(image, 0, 0, canvas.width * zoom, canvas.height * zoom);
+            });
+        }
+        
+        function aplicarCrop() {
+            var canvas = document.getElementById('canvas-crop');
+            var novaImg = canvas.toDataURL('image/jpeg');
+            document.getElementById('preview-imagem').src = novaImg;
+            fecharCropImagem();
+            mostrarNotificacao('Imagem ajustada com sucesso', 'sucesso');
+        }
+        
+        function fecharCropImagem() {
+            var modal = document.getElementById('modal-crop-imagem');
+            if (modal) modal.remove();
+        }
+        
+        // ============ FASE 5-6: ANÚNCIOS + CARROSSEL ============
+        function renderizarAnuncios() {
+            if (!window.anunciosGlobais) return;
+            
+            // 8 slots entre editorias
+            for (var i = 1; i <= 8; i++) {
+                var slot = document.getElementById('slot-anuncio-' + i);
+                if (!slot) continue;
+                
+                var anuncios = window.anunciosGlobais.filter(function(a) { 
+                    return a.local === 'slot-' + i && a.status === 'ativo'; 
+                });
+                
+                if (anuncios.length > 0) {
+                    slot.innerHTML = '<div class="bg-gray-100 p-4 rounded text-center text-sm font-bold text-gray-600">Anúncio: ' + anuncios[0].empresa + '</div>';
+                    if (anuncios.length > 1) {
+                        iniciarCarrosselAnuncios('slot-anuncio-' + i, anuncios);
+                    }
+                }
+            }
+            
+            // 3 slots na sidebar
+            for (var i = 1; i <= 3; i++) {
+                var slot = document.getElementById('slot-sidebar-' + i);
+                if (!slot) continue;
+                
+                var anuncios = window.anunciosGlobais.filter(function(a) { 
+                    return a.local === 'sidebar-' + i && a.status === 'ativo'; 
+                });
+                
+                if (anuncios.length > 0) {
+                    slot.innerHTML = '<div class="bg-gray-100 p-4 rounded text-center text-sm font-bold text-gray-600">Anúncio: ' + anuncios[0].empresa + '</div>';
+                    if (anuncios.length > 1) {
+                        iniciarCarrosselAnuncios('slot-sidebar-' + i, anuncios);
+                    }
+                }
+            }
+        }
+        
+        function iniciarCarrosselAnuncios(slotId, anuncios) {
+            var slot = document.getElementById(slotId);
+            if (!slot || anuncios.length <= 1) return;
+            
+            var indice = 0;
+            setInterval(function() {
+                indice = (indice + 1) % anuncios.length;
+                slot.innerHTML = '<div class="bg-gray-100 p-4 rounded text-center text-sm font-bold text-gray-600">Anúncio: ' + anuncios[indice].empresa + '</div>';
+            }, 5000);
+        }
+        
+        // ============ FASE 8: GERAÇÃO INSTAGRAM ============
+        function gerarImagemInstagram(noticiaId) {
+            var noticia = noticiasGlobais.find(function(n) { return String(n.id) === String(noticiaId); });
+            if (!noticia) return;
+            
+            var canvas = document.createElement('canvas');
+            canvas.width = 1080;
+            canvas.height = 1350;
+            var ctx = canvas.getContext('2d');
+            
+            // Fundo
+            ctx.fillStyle = '#E11D48';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Imagem
+            var img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height * 0.6);
+                
+                // Overlay escuro
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(0, canvas.height * 0.5, canvas.width, canvas.height * 0.5);
+                
+                // Texto
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = 'bold 48px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(noticia.titulo.substring(0, 50), canvas.width / 2, canvas.height - 200);
+                
+                ctx.font = '32px Arial';
+                ctx.fillText(noticia.linhaFina.substring(0, 80), canvas.width / 2, canvas.height - 100);
+                
+                // Download
+                var link = document.createElement('a');
+                link.href = canvas.toDataURL('image/jpeg');
+                link.download = 'noticia-instagram-' + noticiaId + '.jpg';
+                link.click();
+                
+                mostrarNotificacao('Imagem gerada com sucesso!', 'sucesso');
+            };
+            img.src = noticia.urlImagem;
+        }
+        
+        // ============ FASE 10: CRUD ANÚNCIOS ============
+        function salvarAnuncio(e) {
+            e.preventDefault();
+            var empresa = document.getElementById('admin-anuncio-empresa').value.trim();
+            var url = document.getElementById('admin-anuncio-url').value.trim();
+            var local = document.getElementById('admin-anuncio-local').value;
+            
+            if (!empresa || !url || !local) {
+                mostrarNotificacao('Preencha todos os campos', 'erro');
+                return;
+            }
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    mostrarNotificacao('Anúncio salvo com sucesso!', 'sucesso');
+                    document.getElementById('form-admin-anuncio').reset();
+                    carregarListaAnuncios();
+                }).salvarPropagandaNoSheets({
+                    empresa: empresa,
+                    url: url,
+                    local: local,
+                    status: 'ativo'
+                });
+            }
+        }
+        
+        function carregarListaAnuncios() {
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    window.anunciosGlobais = res || [];
+                    renderizarListaAnuncios();
+                    renderizarAnuncios();
+                }).getHomeData();
+            }
+        }
+        
+        function renderizarListaAnuncios() {
+            var lista = document.getElementById('admin-lista-anuncios');
+            if (!lista || !window.anunciosGlobais) return;
+            
+            lista.innerHTML = window.anunciosGlobais.map(function(a) {
+                return `
+                    <div class="p-4 bg-white border border-gray-200 rounded flex justify-between items-center">
+                        <div>
+                            <p class="font-bold">${a.empresa}</p>
+                            <p class="text-xs text-gray-500">Local: ${a.local} | Alcance: ${a.alcance || 0}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="ativarDesativarAnuncio('${a.id}')" class="px-3 py-1 bg-blue-600 text-white text-xs rounded">${a.status === 'ativo' ? 'Desativar' : 'Ativar'}</button>
+                            <button onclick="excluirAnuncio('${a.id}')" class="px-3 py-1 bg-red-600 text-white text-xs rounded">Excluir</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function ativarDesativarAnuncio(id) {
+            var anuncio = window.anunciosGlobais.find(function(a) { return a.id === id; });
+            if (!anuncio) return;
+            
+            anuncio.status = anuncio.status === 'ativo' ? 'inativo' : 'ativo';
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function() {
+                    mostrarNotificacao('Status atualizado', 'sucesso');
+                    carregarListaAnuncios();
+                }).salvarPropagandaNoSheets(anuncio);
+            }
+        }
+        
+        function excluirAnuncio(id) {
+            if (!confirm('Tem certeza que deseja excluir este anúncio?')) return;
+            
+            window.anunciosGlobais = window.anunciosGlobais.filter(function(a) { return a.id !== id; });
+            mostrarNotificacao('Anúncio excluído', 'sucesso');
+            carregarListaAnuncios();
+        }
+        
+        // ============ FASE 11: TOP 10 MAIS LIDAS (ÚLTIMOS 10 DIAS) ============
+        function renderizarTop10MaisLidas() {
+            var agora = new Date();
+            var dez_dias_atras = new Date(agora.getTime() - 10 * 24 * 60 * 60 * 1000);
+            
+            var top10 = noticiasGlobais
+                .filter(function(n) {
+                    if (!n.dataHora) return false;
+                    var parts = n.dataHora.split(/[\/\s:]/);
+                    if (parts.length < 3) return false;
+                    var dt = new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
+                    return dt >= dez_dias_atras;
+                })
+                .sort(function(a, b) { return (b.views || 0) - (a.views || 0); })
+                .slice(0, 10);
+            
+            var container = document.getElementById('top10-mais-lidas');
+            if (!container) return;
+            
+            container.innerHTML = top10.map(function(n, idx) {
+                return `
+                    <div class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded cursor-pointer hover:shadow-md transition" onclick="abrirNoticia('${n.id}')">
+                        <span class="text-2xl font-black text-jornal-red">${idx + 1}</span>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-bold text-sm line-clamp-2">${n.titulo}</p>
+                            <p class="text-xs text-gray-500">👁️ ${n.views || 0} visualizações</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // ============ FASE 12: SINCRONIZAÇÃO AGENDA ============
+        function sincronizarAgendaComCarrossel() {
+            var agora = new Date();
+            var noticiasAgenda = noticiasGlobais.filter(function(n) {
+                if (!n.dataFimEvento) return false;
+                try {
+                    var dtFim = new Date(n.dataFimEvento);
+                    return dtFim > agora && isNoticiaPublicada(n);
+                } catch(e) { return false; }
+            });
+            
+            var container = document.getElementById('carrossel-agenda');
+            if (!container) return;
+            
+            if (noticiasAgenda.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhum evento agendado</p>';
+                return;
+            }
+            
+            container.innerHTML = noticiasAgenda.map(function(n) {
+                return htmlCard(n);
+            }).join('');
+        }
+        
+        // Inicializar ao carregar notícias
+        var carregarNoticiasOriginal = window.carregarNoticias;
+        window.carregarNoticias = function(forcarReload) {
+            carregarNoticiasOriginal.call(this, forcarReload);
+            setTimeout(function() {
+                renderizarTop10MaisLidas();
+                sincronizarAgendaComCarrossel();
+                carregarListaAnuncios();
+            }, 500);
+        };
+
+</script>
 </body>
 </html>
+        function mostrarNotificacao(mensagem, tipo = 'info', duracao = 3000) {
+            var toast = document.getElementById('toast');
+            var toastMsg = document.getElementById('toast-msg');
+            var toastIcon = document.getElementById('toast-icon');
+            
+            if (!toast || !toastMsg) return;
+            
+            // Cores e ícones por tipo
+            var config = {
+                'sucesso': { cor: 'bg-green-500', icon: '✅', texto: 'text-white' },
+                'erro': { cor: 'bg-red-500', icon: '❌', texto: 'text-white' },
+                'aviso': { cor: 'bg-yellow-500', icon: '⚠️', texto: 'text-white' },
+                'info': { cor: 'bg-blue-500', icon: 'ℹ️', texto: 'text-white' }
+            };
+            
+            var cfg = config[tipo] || config['info'];
+            
+            toast.className = 'fixed top-5 right-5 px-6 py-4 font-bold shadow-xl transition-all duration-300 z-[99999] flex items-center gap-3 border rounded-sm ' + cfg.cor + ' ' + cfg.texto;
+            toastIcon.textContent = cfg.icon;
+            toastMsg.textContent = mensagem;
+            
+            toast.classList.remove('hidden');
+            
+            setTimeout(function() {
+                toast.classList.add('hidden');
+            }, duracao);
+        }
+        
+        // Compatibilidade com função antiga
+        function mostrarMensagem(msg) {
+            mostrarNotificacao(msg, 'info');
+        }
+
