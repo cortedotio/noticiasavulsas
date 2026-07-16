@@ -5,12 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notícias Avulsas - Portal de Informação</title>
     
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Redes Sociais Embeds -->
     <script async src="//www.instagram.com/embed.js"></script>
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+    
+    <script id="gas-params" type="application/json">
+        <?!= typeof urlParams !== 'undefined' ? urlParams : '{}' ?>
+    </script>
     
     <script>
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw_rujHHDMsuPMo7djH3tkWhwt5kAfK9TIB-GM1OJC-dgPRTZTsXs_TUDVFFbnqSnim/exec";
@@ -145,6 +154,19 @@
 </head>
 <body class="antialiased min-h-screen flex flex-col relative selection:bg-jornal-red selection:text-white">
 
+    <!-- ARQUIVO DE ÍCONES SVG (Poupa espaço e evita quebras de linha) -->
+    <svg width="0" height="0" class="hidden">
+        <symbol id="icon-search" viewBox="0 0 24 24"><path d="M10 2a8 8 0 015.293 14.121l5.414 5.414a1 1 0 01-1.414 1.414l-5.414-5.414A8 8 0 1110 2zm0 2a6 6 0 100 12 6 6 0 000-12z"/></symbol>
+        <symbol id="icon-heart-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></symbol>
+        <symbol id="icon-heart-solid" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></symbol>
+        <symbol id="icon-whatsapp" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></symbol>
+        <symbol id="icon-x" viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></symbol>
+        <symbol id="icon-insta" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></symbol>
+        <symbol id="icon-fb" viewBox="0 0 24 24"><path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.312h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/></symbol>
+        <symbol id="icon-yt" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></symbol>
+        <symbol id="icon-clima" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></symbol>
+    </svg>
+
     <div id="toast" class="hidden fixed top-5 right-5 px-6 py-4 font-bold shadow-xl transition-all duration-300 z-[99999] flex items-center gap-3 border rounded-sm">
         <span id="toast-icon" class="text-xl"></span>
         <span id="toast-msg" class="text-sm"></span>
@@ -181,7 +203,7 @@
                 <form onsubmit="pesquisarSite(event)" class="relative hidden md:flex items-center mx-auto flex-grow max-w-sm">
                     <input type="text" id="input-pesquisa" placeholder="Pesquisar notícias..." class="w-full px-5 py-2.5 bg-gray-100 border border-gray-200 rounded-full text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-jornal-blue pr-12 transition-all" />
                     <button type="submit" class="absolute right-3 p-2 text-gray-400 hover:text-jornal-red transition-colors flex items-center justify-center">
-                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M10 2a8 8 0 015.293 14.121l5.414 5.414a1 1 0 01-1.414 1.414l-5.414-5.414A8 8 0 1110 2zm0 2a6 6 0 100 12 6 6 0 000-12z"/></svg>
+                        <svg class="w-4 h-4 fill-current"><use href="#icon-search"></use></svg>
                     </button>
                 </form>
 
@@ -190,7 +212,9 @@
                     <button onclick="carregarNoticias(true)" class="text-sm font-bold text-jornal-blue hover:text-jornal-red transition-colors flex items-center gap-1 mt-1">↻ Atualizar Edição</button>
                 </div>
                 <div class="flex items-center gap-3 lg:hidden shrink-0">
-                    <button onclick="focarPesquisaMobile()" class="p-2 text-gray-600 bg-gray-100 rounded-full"><svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M10 2a8 8 0 015.293 14.121l5.414 5.414a1 1 0 01-1.414 1.414l-5.414-5.414A8 8 0 1110 2zm0 2a6 6 0 100 12 6 6 0 000-12z"/></svg></button>
+                    <button onclick="focarPesquisaMobile()" class="p-2 text-gray-600 bg-gray-100 rounded-full">
+                        <svg class="w-4 h-4 fill-current"><use href="#icon-search"></use></svg>
+                    </button>
                 </div>
             </div>
             <form id="form-pesquisa-mobile" onsubmit="pesquisarSite(event)" class="hidden w-full px-4 pb-4 bg-white border-b border-gray-100 lg:hidden">
@@ -202,7 +226,8 @@
         </header>
 
         <nav class="border-y border-gray-200 border-b-4 border-b-jornal-blue sticky top-8 z-40 bg-white/95 backdrop-blur-sm w-full shadow-sm min-w-0 transition-all duration-500" id="nav-categorias-publicas">
-            <div id="nav-container-inner" class="max-w-[1200px] mx-auto px-4 flex items-center gap-6 overflow-x-auto whitespace-nowrap text-xs md:text-sm font-bold uppercase tracking-wider text-jornal-dark py-3 custom-scrollbar min-w-0"></div>
+            <div id="nav-container-inner" class="max-w-[1200px] mx-auto px-4 flex items-center gap-6 overflow-x-auto whitespace-nowrap text-xs md:text-sm font-bold uppercase tracking-wider text-jornal-dark py-3 custom-scrollbar min-w-0">
+            </div>
         </nav>
         
         <!-- BARRA INTELIGENTE DE CIDADES -->
@@ -257,9 +282,7 @@
                             </div>
                             
                             <button id="btn-curtir" onclick="curtirNoticiaAtual()" class="flex justify-center items-center gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-4 py-2.5 rounded-full transition-colors group shrink-0 w-full sm:w-auto">
-                                <svg xmlns="http://www.w3.org/2000/svg" id="icone-coracao" class="h-5 w-5 text-gray-400 group-hover:text-jornal-red transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                </svg>
+                                <svg id="icone-coracao" class="h-5 w-5 text-gray-400 group-hover:text-jornal-red transition-colors"><use href="#icon-heart-outline"></use></svg>
                                 <span id="nc-likes" class="text-sm font-bold text-gray-600">0</span>
                             </button>
                         </div>
@@ -267,10 +290,10 @@
                         <div class="flex flex-wrap items-center gap-2 md:gap-4 mb-6">
                             <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Partilhar:</span>
                             <button onclick="shareLink('whatsapp')" class="p-2 bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors" title="Compartilhar no WhatsApp">
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                                <svg class="w-4 h-4 fill-current"><use href="#icon-whatsapp"></use></svg>
                             </button>
                             <button onclick="shareLink('x')" class="p-2 bg-gray-50 text-gray-800 rounded hover:bg-gray-200 transition-colors" title="Compartilhar no X (Twitter)">
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>
+                                <svg class="w-4 h-4 fill-current"><use href="#icon-x"></use></svg>
                             </button>
                         </div>
 
@@ -385,14 +408,14 @@
         </footer>
     </div>
 
-    <!-- Modal do Clima Completo (Detalhes Diários) -->
+    <!-- Modal do Clima Completo -->
     <div id="modalClima" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="fecharModalClima()"></div>
         <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl relative z-10 overflow-hidden font-sans border-t-4 border-sky-500">
             <div class="p-6">
                 <div class="flex justify-between items-start mb-4 border-b border-gray-100 pb-3">
                     <div class="flex items-center gap-2 text-sm text-sky-700 font-bold uppercase tracking-widest">
-                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                        <svg class="w-4 h-4 fill-current"><use href="#icon-clima"></use></svg>
                         <span>Cuiabá, Mato Grosso</span>
                     </div>
                     <button onclick="fecharModalClima()" class="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
@@ -430,19 +453,28 @@
         </div>
     </div>
 
+    <!-- JAVASCRIPT GLOBAL -->
     <script>
         var IMG_FALLBACK = 'https://placehold.co/600x400/e2e8f0/475569?text=Sem+Foto';
-        var ICON_HEART = '<svg class="w-3 h-3 fill-current inline" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+        var ICON_HEART = '<svg class="w-3 h-3 fill-current inline"><use href="#icon-heart-solid"></use></svg>';
 
         function formatarUrlImagem(url) {
             if(!url) return '';
             try{ 
-                var s=String(url).trim(); 
-                var m=s.match(/\/d\/([a-zA-Z0-9_-]+)/)||s.match(/id=([a-zA-Z0-9_-]+)/); 
-                return m ? 'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w1200' : s; 
+                var s = String(url).trim(); 
+                var m = s.match(/\/d\/([a-zA-Z0-9_-]+)/) || s.match(/id=([a-zA-Z0-9_-]+)/); 
+                return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w1200' : s; 
             } catch(e){
                 return url;
             }
+        }
+
+        function removerHTML(t) {
+            return t ? String(t).replace(/<[^>]*>?/gm, '') : '';
+        }
+
+        function normalizarTextoFiltro(valor) {
+            return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
         }
 
         window.addEventListener('popstate', function(e) {
@@ -617,175 +649,255 @@
         }
 
         function pesquisarSite(e) {
-            if(e) e.preventDefault();
-            var termo = (document.getElementById('input-pesquisa').value || document.getElementById('input-pesquisa-mobile').value).toLowerCase().trim();
-            if (!termo) { voltarCapa(); return; }
-            var fM = document.getElementById('form-pesquisa-mobile'); if(fM) fM.classList.add('hidden');
+            if(e) {
+                e.preventDefault();
+            }
+            var formMobile = document.getElementById('form-pesquisa-mobile');
+            var termoDesk = document.getElementById('input-pesquisa').value;
+            var termoMob = document.getElementById('input-pesquisa-mobile').value;
+            var termo = termoDesk || termoMob;
             
-            window.categoriaAtual = 'Pesquisa'; 
+            termo = termo.toLowerCase().trim();
+            if (!termo) { 
+                voltarCapa(); 
+                return; 
+            }
+            
+            if(formMobile) {
+                formMobile.classList.add('hidden');
+            }
+            
+            window.categoriaAtual = 'Pesquisa';
             atualizarURL('pesquisa', termo, true);
             
-            var grid = document.getElementById('grid-noticias'); 
-            var dest = document.getElementById('destaque-noticia'); 
-            var cC = document.getElementById('carrossel-destaques'); 
-            var gE = document.getElementById('grid-editorias-exclusivo');
+            var grid = document.getElementById('grid-noticias');
+            var dest = document.getElementById('destaque-noticia');
+            var carrosselContainer = document.getElementById('carrossel-destaques');
+            var gridEditorias = document.getElementById('grid-editorias-exclusivo');
             var subnav = document.getElementById('subnav-cidades');
             
-            if(cC) cC.classList.add('hidden'); 
-            if(gE) gE.classList.add('hidden'); 
-            if(dest) { dest.innerHTML = ''; dest.classList.add('hidden'); }
-            if(subnav) subnav.classList.add('hidden');
+            if(carrosselContainer) {
+                carrosselContainer.classList.add('hidden');
+            }
+            if(gridEditorias) {
+                gridEditorias.classList.add('hidden');
+            }
+            if(dest) { 
+                dest.innerHTML = ''; 
+                dest.classList.add('hidden'); 
+            }
+            if(subnav) {
+                subnav.classList.add('hidden');
+            }
             
-            document.getElementById('titulo-seccao-feed').innerText = 'Resultados: "' + termo + '"';
+            document.getElementById('titulo-seccao-feed').innerText = 'Resultados da pesquisa: "' + termo + '"';
             
-            var res = noticiasGlobais.filter(function(n) {
-                if (!isNoticiaPublicada(n)) return false;
+            var resultados = noticiasGlobais.filter(function(n) {
+                if (!isNoticiaPublicada(n)) {
+                    return false;
+                }
                 var t = String(n.titulo).toLowerCase(); 
                 var f = String(n.linhaFina).toLowerCase(); 
                 var c = String(n.conteudo).toLowerCase();
                 return t.indexOf(termo) !== -1 || f.indexOf(termo) !== -1 || c.indexOf(termo) !== -1;
             });
             
-            grid.innerHTML = ''; grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
-            if (res.length === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-500 font-bold bg-white border border-gray-200 rounded">Nenhum resultado.</div>';
-            } else { 
-                window.noticiasCategoriaAtual = res; 
-                window.itensExibidosCategoria = 16; 
-                res.slice(0, 16).forEach(function(n) { grid.innerHTML += htmlCard(n); }); 
-                var btn = document.getElementById('btn-mostrar-mais'); 
-                if (btn) { 
-                    if (res.length > 16) btn.classList.remove('hidden'); 
-                    else btn.classList.add('hidden'); 
-                } 
+            grid.innerHTML = ''; 
+            grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
+            
+            if (resultados.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-500 font-bold bg-white border border-gray-200 rounded">Nenhum resultado encontrado para "' + termo + '".</div>';
+            } else {
+                window.noticiasCategoriaAtual = resultados; 
+                window.itensExibidosCategoria = 16;
+                resultados.slice(0, 16).forEach(function(n) { 
+                    grid.innerHTML += htmlCard(n); 
+                });
+                var btnMais = document.getElementById('btn-mostrar-mais');
+                if (btnMais) { 
+                    if (resultados.length > 16) {
+                        btnMais.classList.remove('hidden'); 
+                    } else {
+                        btnMais.classList.add('hidden'); 
+                    }
+                }
             }
             fecharNoticiaUI();
         }
 
-        function focarPesquisaMobile() { 
+        function focarPesquisaMobile() {
             var f = document.getElementById('form-pesquisa-mobile'); 
-            var i = document.getElementById('input-pesquisa-mobile'); 
+            var i = document.getElementById('input-pesquisa-mobile');
             if(f && i) { 
                 f.classList.toggle('hidden'); 
-                if(!f.classList.contains('hidden')) i.focus(); 
-            } 
+                if(!f.classList.contains('hidden')) {
+                    i.focus(); 
+                }
+            }
         }
-        
+
         function fecharModalClima() { 
             document.getElementById('modalClima').classList.add('hidden'); 
             document.getElementById('modalClima').classList.remove('flex'); 
         }
 
         function abrirModalClima() {
-            var m = document.getElementById('modalClima'); m.classList.remove('hidden'); m.classList.add('flex');
-            if(!dadosClimaGlobal || !dadosClimaGlobal.daily) return;
-            var dP = document.getElementById('modal-clima-previsao'); var h = ''; var dS = ['dom.', 'seg.', 'ter.', 'qua.', 'qui.', 'sex.', 'sáb.'];
-            for(var i=0; i<Math.min(7, dadosClimaGlobal.daily.time.length); i++) {
-                var dtStr = dadosClimaGlobal.daily.time[i]; var dt = new Date(dtStr + 'T12:00:00Z'); var nD = dS[dt.getDay()];
-                var tMax = Math.round(dadosClimaGlobal.daily.temperature_2m_max[i]); var tMin = Math.round(dadosClimaGlobal.daily.temperature_2m_min[i]);
-                var wC = dadosClimaGlobal.daily.weathercode[i]; var ico = '☀️';
-                if (wC <= 3) ico = '☀️'; else if (wC <= 48) ico = '⛅'; else if (wC <= 67) ico = '🌧️'; else if (wC <= 99) ico = '⛈️';
-                var bg = i===0 ? 'bg-gray-100 rounded-lg shadow-inner' : 'hover:bg-gray-50 rounded-lg transition-colors'; var tD = i===0 ? 'Hoje' : nD;
-                h += '<div class="flex flex-col items-center justify-center p-3 min-w-[70px] ' + bg + '"><span class="text-sm text-gray-700 font-bold mb-2">' + tD + '</span><span class="text-3xl mb-3 drop-shadow-sm">' + ico + '</span><div class="flex gap-2 text-xs font-bold"><span class="text-gray-800">' + tMax + '&deg;</span><span class="text-gray-400">' + tMin + '&deg;</span></div></div>';
+            var m = document.getElementById('modalClima'); 
+            m.classList.remove('hidden'); 
+            m.classList.add('flex');
+            
+            if(!dadosClimaGlobal || !dadosClimaGlobal.daily) {
+                return;
             }
-            dP.innerHTML = h;
+            
+            var divPrevisao = document.getElementById('modal-clima-previsao'); 
+            var htmlPrev = '';
+            var diasSemana = ['dom.', 'seg.', 'ter.', 'qua.', 'qui.', 'sex.', 'sáb.'];
+
+            for(var i=0; i<Math.min(7, dadosClimaGlobal.daily.time.length); i++) {
+                var dtStr = dadosClimaGlobal.daily.time[i]; 
+                var dt = new Date(dtStr + 'T12:00:00Z');
+                var nomeDia = diasSemana[dt.getDay()];
+                var tMax = Math.round(dadosClimaGlobal.daily.temperature_2m_max[i]); 
+                var tMin = Math.round(dadosClimaGlobal.daily.temperature_2m_min[i]);
+                var wCode = dadosClimaGlobal.daily.weathercode[i]; 
+                var ico = '☀️';
+                if (wCode <= 3) { ico = '☀️'; } else if (wCode <= 48) { ico = '⛅'; } else if (wCode <= 67) { ico = '🌧️'; } else if (wCode <= 99) { ico = '⛈️'; }
+                
+                var bgClasse = i===0 ? 'bg-gray-100 rounded-lg shadow-inner' : 'hover:bg-gray-50 rounded-lg transition-colors';
+                var tituloDia = i===0 ? 'Hoje' : nomeDia;
+
+                htmlPrev += '<div class="flex flex-col items-center justify-center p-3 min-w-[70px] ' + bgClasse + '">' +
+                    '<span class="text-sm text-gray-700 font-bold mb-2">' + tituloDia + '</span>' +
+                    '<span class="text-3xl mb-3 drop-shadow-sm">' + ico + '</span>' +
+                    '<div class="flex gap-2 text-xs font-bold"><span class="text-gray-800">' + tMax + '&deg;</span><span class="text-gray-400">' + tMin + '&deg;</span></div>' +
+                '</div>';
+            }
+            divPrevisao.innerHTML = htmlPrev;
         }
 
         function renderizarAgendaSidebar() {
-            var sb = document.getElementById('sidebar-editorias-especiais'); 
-            var ct = document.getElementById('lista-editorias-especiais'); 
-            if(!sb || !ct) return;
+            var sidebar = document.getElementById('sidebar-editorias-especiais');
+            var container = document.getElementById('lista-editorias-especiais');
+            if(!sidebar || !container) {
+                return;
+            }
             
-            var ag = new Date();
-            var aN = noticiasGlobais.filter(function(n) {
-                if (!isNoticiaPublicada(n) || String(n.categoria).toLowerCase().indexOf('agenda') === -1) return false;
-                if (n.dataFimEvento && n.dataFimEvento.trim() !== '') { 
-                    try { 
-                        var dF = new Date(n.dataFimEvento); 
-                        if (dF < ag) return false; 
-                    } catch(e) {} 
+            var agora = new Date();
+            var agendaNoticias = noticiasGlobais.filter(function(n) {
+                if (!isNoticiaPublicada(n)) {
+                    return false;
+                }
+                if (String(n.categoria).toLowerCase().indexOf('agenda') === -1) {
+                    return false;
+                }
+                if (n.dataFimEvento && n.dataFimEvento.trim() !== '') {
+                    try {
+                        var dtFim = new Date(n.dataFimEvento);
+                        if (dtFim < agora) {
+                            return false;
+                        }
+                    } catch(e) {}
                 }
                 return true;
             });
-            
-            if(aN.length > 0) {
-                sb.classList.remove('hidden'); 
-                var cId = 'agenda-sidebar-carousel-' + Math.floor(Math.random() * 1000000); 
-                window.agendaCarousels.push({id: cId, index: 0, length: aN.length});
+
+            if(agendaNoticias.length > 0) {
+                sidebar.classList.remove('hidden');
                 
-                var ht = '<div class="mb-2"><span onclick="filtrarCategoria(\'Agenda\', true)" class="text-[11px] font-black uppercase tracking-widest text-jornal-dark hover:text-jornal-red transition-colors cursor-pointer inline-flex items-center gap-1">Agenda &raquo;</span></div>';
-                ht += '<div class="relative overflow-hidden w-full bg-gray-100 rounded-sm group aspect-[4/3] mb-4 shadow-sm" id="' + cId + '"><div class="flex transition-transform duration-500 ease-in-out h-full" id="' + cId + '-inner" style="transform: translateX(0%);">';
+                var carouselId = 'agenda-sidebar-carousel-' + Math.floor(Math.random() * 1000000);
+                window.agendaCarousels.push({id: carouselId, index: 0, length: agendaNoticias.length});
+
+                var html = '<div class="mb-2"><span onclick="filtrarCategoria(\'Agenda\', true)" class="text-[11px] font-black uppercase tracking-widest text-jornal-dark hover:text-jornal-red transition-colors cursor-pointer inline-flex items-center gap-1">Agenda &raquo;</span></div>';
                 
-                aN.forEach(function(n) {
-                    ht += '<div class="w-full shrink-0 flex-none relative h-full cursor-pointer" onclick="abrirNoticia(\'' + n.id + '\', true)"><img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain bg-gray-900" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /><div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div><div class="absolute bottom-0 left-0 p-4 w-full text-white min-w-0 z-10">';
-                    if (n.dataFimEvento) { 
-                        try { 
-                            var dP = n.dataFimEvento.split('T')[0].split('-'); 
-                            ht += '<span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Até ' + dP[2] + '/' + dP[1] + '</span> '; 
-                        } catch(e){} 
+                html += '<div class="relative overflow-hidden w-full bg-gray-100 rounded-sm group aspect-[4/3] mb-4 shadow-sm" id="' + carouselId + '">';
+                html += '<div class="flex transition-transform duration-500 ease-in-out h-full" id="' + carouselId + '-inner" style="transform: translateX(0%);">';
+                
+                agendaNoticias.forEach(function(n) {
+                    html += '<div class="w-full shrink-0 flex-none relative h-full cursor-pointer" onclick="abrirNoticia(\'' + n.id + '\', true)">';
+                    html += '<img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain bg-gray-900" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />';
+                    html += '<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>';
+                    html += '<div class="absolute bottom-0 left-0 p-4 w-full text-white min-w-0 z-10">';
+                    
+                    if (n.dataFimEvento) {
+                        try {
+                            var dP = n.dataFimEvento.split('T')[0].split('-');
+                            var diaStr = dP[2] + '/' + dP[1];
+                            html += '<span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Até ' + diaStr + '</span> ';
+                        } catch(e){}
                     } else {
-                        ht += '<span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Agenda</span> ';
+                        html += '<span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Agenda</span> ';
                     }
-                    ht += '<h4 class="font-serif text-sm font-bold mb-1 leading-tight break-words line-clamp-3 text-white">' + n.titulo + '</h4></div></div>';
+                    
+                    html += '<h4 class="font-serif text-sm font-bold mb-1 leading-tight break-words line-clamp-3 text-white">' + n.titulo + '</h4>';
+                    html += '</div></div>';
                 });
                 
-                ht += '</div>';
-                if (aN.length > 1) {
-                    ht += '<button onclick="moverCarrosselAgenda(\'' + cId + '\', -1, ' + aN.length + ')" class="absolute left-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-1.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-8 h-8 text-xs">&#10094;</button>';
-                    ht += '<button onclick="moverCarrosselAgenda(\'' + cId + '\', 1, ' + aN.length + ')" class="absolute right-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-1.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-8 h-8 text-xs">&#10095;</button>';
+                html += '</div>';
+                if (agendaNoticias.length > 1) {
+                    html += '<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', -1, ' + agendaNoticias.length + ')" class="absolute left-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-1.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-8 h-8 text-xs">&#10094;</button>';
+                    html += '<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', 1, ' + agendaNoticias.length + ')" class="absolute right-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-1.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-8 h-8 text-xs">&#10095;</button>';
                 }
-                ht += '</div>'; 
-                ct.innerHTML = ht + ct.innerHTML;
+                html += '</div>';
+
+                container.innerHTML = html + container.innerHTML;
             }
         }
 
         function processarDadosHome(d) {
             window.agendaCarousels = []; 
-            if (d.config) configuracoesGlobais = d.config;
+
+            if (d.config) {
+                configuracoesGlobais = d.config;
+            }
+            
+            if (configuracoesGlobais['soc-inst-url']) { document.getElementById('soc-inst-url').value = configuracoesGlobais['soc-inst-url']; }
+            if (configuracoesGlobais['soc-fb-url']) { document.getElementById('soc-fb-url').value = configuracoesGlobais['soc-fb-url']; }
+            if (configuracoesGlobais['soc-x-url']) { document.getElementById('soc-x-url').value = configuracoesGlobais['soc-x-url']; }
+            if (configuracoesGlobais['soc-yt-url']) { document.getElementById('soc-yt-url').value = configuracoesGlobais['soc-yt-url']; }
 
             var socFooter = document.getElementById('social-footer');
             if (socFooter) {
-                var sH = '';
-                
+                var sHtml = '';
                 var iconeInsta = '<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>';
                 var iconeFB = '<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.312h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/></svg>';
                 var iconeX = '<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>';
                 var iconeYT = '<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>';
 
                 if (configuracoesGlobais['soc-inst-url']) {
-                    sH += '<a href="' + configuracoesGlobais['soc-inst-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors">' + iconeInsta + '</a>';
+                    sHtml += '<a href="' + configuracoesGlobais['soc-inst-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors">' + iconeInsta + '</a>';
                 }
                 if (configuracoesGlobais['soc-fb-url']) {
-                    sH += '<a href="' + configuracoesGlobais['soc-fb-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors">' + iconeFB + '</a>';
+                    sHtml += '<a href="' + configuracoesGlobais['soc-fb-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors">' + iconeFB + '</a>';
                 }
                 if (configuracoesGlobais['soc-x-url']) {
-                    sH += '<a href="' + configuracoesGlobais['soc-x-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors">' + iconeX + '</a>';
+                    sHtml += '<a href="' + configuracoesGlobais['soc-x-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors">' + iconeX + '</a>';
                 }
                 if (configuracoesGlobais['soc-yt-url']) {
-                    sH += '<a href="' + configuracoesGlobais['soc-yt-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors">' + iconeYT + '</a>';
+                    sHtml += '<a href="' + configuracoesGlobais['soc-yt-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors">' + iconeYT + '</a>';
                 }
                 
-                if (sH) { 
-                    socFooter.innerHTML = sH; 
-                    socFooter.classList.remove('hidden'); 
+                if (sHtml) {
+                    socFooter.innerHTML = sHtml;
+                    socFooter.classList.remove('hidden');
                 }
             }
 
             if (d.categorias) {
                 listaCategoriasLocais = d.categorias;
-                var nav = document.querySelector('#nav-categorias-publicas div'); 
-                var sbList = document.getElementById('lista-editorias-especiais');
+                var nav = document.querySelector('#nav-categorias-publicas div');
+                var sidebarList = document.getElementById('lista-editorias-especiais');
                 
                 nav.innerHTML = ''; 
-                sbList.innerHTML = ''; 
+                sidebarList.innerHTML = '';
                 var temEsp = false;
-                
+
                 d.categorias.forEach(function(c) { 
                     var cl = String(c).toLowerCase().trim();
-                    if(['carreira','carreiras'].indexOf(cl) !== -1) { 
-                        temEsp = true; 
-                        sbList.innerHTML += '<button onclick="filtrarCategoria(\'' + c + '\', true)" class="w-full text-left px-4 py-3 bg-white hover:bg-gray-50 border border-gray-200 text-jornal-dark font-black text-[11px] uppercase tracking-widest rounded-sm transition-colors flex justify-between items-center group shadow-sm">' + c + ' <span class="text-gray-300 group-hover:text-jornal-red text-lg leading-none">&raquo;</span></button>'; 
-                    } else if(['opinião', 'opiniao', 'opiniões', 'opinioes', 'agenda'].indexOf(cl) === -1) { 
+                    if(['carreira','carreiras'].indexOf(cl) !== -1) {
+                        temEsp = true;
+                        sidebarList.innerHTML += '<button onclick="filtrarCategoria(\'' + c + '\', true)" class="w-full text-left px-4 py-3 bg-white hover:bg-gray-50 border border-gray-200 text-jornal-dark font-black text-[11px] uppercase tracking-widest rounded-sm transition-colors flex justify-between items-center group shadow-sm">' + c + ' <span class="text-gray-300 group-hover:text-jornal-red text-lg leading-none">&raquo;</span></button>';
+                    } else if(['opinião', 'opiniao', 'opiniões', 'opinioes', 'agenda'].indexOf(cl) === -1) {
                         nav.innerHTML += '<a href="javascript:void(0)" onclick="filtrarCategoria(\'' + c + '\', true)" class="hover:text-jornal-red transition-colors border-b-2 border-transparent hover:border-jornal-red whitespace-nowrap px-1 py-2">' + c + '</a>'; 
                     }
                 });
@@ -806,54 +918,59 @@
             }
 
             if (d.propagandas) {
-                var aT = []; 
-                var aL = [];
-                d.propagandas.forEach(function(p) { 
-                    var pts = String(p.empresa || '').split('|||'); 
-                    p.empresaReal = pts[0]; 
-                    p.tempo = parseInt(pts[1]) || 5; 
+                var adsTopo = []; 
+                var adsLateral = [];
+                
+                d.propagandas.forEach(function(p) {
+                    var partes = String(p.empresa || '').split('|||'); 
+                    p.empresaReal = partes[0]; 
+                    p.tempo = parseInt(partes[1]) || 5;
+                    
                     if (p.local === 'Topo') {
-                        aT.push(p); 
+                        adsTopo.push(p); 
                     } else {
-                        aL.push(p); 
+                        adsLateral.push(p);
                     }
                 });
-                iniciarCarrosselAnuncios('ads-topo-container', aT); 
-                iniciarCarrosselAnuncios('grid-propagandas-lateral', aL);
+                iniciarCarrosselAnuncios('ads-topo-container', adsTopo); 
+                iniciarCarrosselAnuncios('grid-propagandas-lateral', adsLateral);
             }
             
-            atualizarIdentidadeVisual(); 
+            atualizarIdentidadeVisual();
             renderizarOpinioes(); 
+            renderizarAgendaSidebar(); 
             renderizarMaisLidas(); 
             renderizarClimaEFinanceiro(); 
-            renderizarPlacarAoVivo(); 
-            renderizarAgendaSidebar();
+            renderizarPlacarAoVivo();
         }
 
-        function iniciarCarrosselAnuncios(cId, an) {
-            var c = document.getElementById(cId); 
-            if (!c) return;
-            
-            if(carrosselAdsTimers[cId]) {
-                clearTimeout(carrosselAdsTimers[cId]);
+        function iniciarCarrosselAnuncios(containerId, anuncios) {
+            var container = document.getElementById(containerId); 
+            if (!container) {
+                return;
             }
             
-            if (an.length === 0) { 
-                c.classList.add('hidden'); 
-                c.innerHTML = ''; 
+            if(carrosselAdsTimers[containerId]) {
+                clearTimeout(carrosselAdsTimers[containerId]);
+            }
+
+            if (anuncios.length === 0) { 
+                container.classList.add('hidden'); 
+                container.innerHTML = ''; 
                 return; 
             }
+
+            container.classList.remove('hidden'); 
+            var index = 0;
             
-            c.classList.remove('hidden'); 
-            var i = 0;
-            
-            function nxt() { 
-                var a = an[i]; 
-                c.innerHTML = criarElementoAd(a); 
-                i = (i + 1) % an.length; 
-                carrosselAdsTimers[cId] = setTimeout(nxt, (a.tempo || 5) * 1000); 
+            function mostrarProximo() {
+                var ad = anuncios[index]; 
+                container.innerHTML = criarElementoAd(ad);
+                index = (index + 1) % anuncios.length; 
+                carrosselAdsTimers[containerId] = setTimeout(mostrarProximo, (ad.tempo || 5) * 1000);
             }
-            nxt();
+            
+            mostrarProximo();
         }
 
         function renderizarOpinioes() {
@@ -861,62 +978,56 @@
             var cIn = document.getElementById('conteudo-opinioes');
             
             var op = noticiasGlobais.filter(function(n) { 
-                return isNoticiaPublicada(n) && String(n.categoria).toLowerCase().indexOf('opini') !== -1; 
+                return isNoticiaPublicada(n) && String(n.categoria).toLowerCase().indexOf('opini') !== -1;
             });
             
             if (op.length === 0) { 
                 c.classList.add('hidden'); 
                 return; 
             }
-            
             c.classList.remove('hidden');
-            var d = op[0]; 
-            var lt = d.autor ? d.autor.charAt(0).toUpperCase() : 'O';
             
-            var h = '<article onclick="abrirNoticia(\'' + d.id + '\', true)" class="group cursor-pointer flex flex-col mb-4 bg-gray-50 p-4 border border-gray-100 rounded-sm hover:shadow-md transition-shadow">' +
-                '<div class="flex items-center gap-3 mb-3"><div class="w-10 h-10 rounded-full bg-jornal-blue flex items-center justify-center text-white font-black text-xs shrink-0 shadow-inner">' + lt + '</div>' +
+            var d = op[0]; 
+            var letraAutor = d.autor ? d.autor.charAt(0).toUpperCase() : 'O';
+            var html = '<article onclick="abrirNoticia(\'' + d.id + '\', true)" class="group cursor-pointer flex flex-col mb-4 bg-gray-50 p-4 border border-gray-100 rounded-sm hover:shadow-md transition-shadow">' +
+                '<div class="flex items-center gap-3 mb-3"><div class="w-10 h-10 rounded-full bg-jornal-blue flex items-center justify-center text-white font-black text-xs shrink-0 shadow-inner">' + letraAutor + '</div>' +
                 '<div class="flex flex-col min-w-0"><span class="text-[10px] font-black uppercase tracking-widest text-jornal-red">Opinião</span><span class="text-xs font-bold text-gray-700 truncate w-full">' + (d.autor || 'Editorial') + '</span></div></div>' +
-                '<div class="w-full aspect-video mb-3 overflow-hidden rounded-sm bg-gray-200 shrink-0 relative">' +
-                '<img src="' + (d.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-900 group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />' +
+                '<div class="w-full aspect-video mb-3 overflow-hidden rounded-sm bg-gray-200 shrink-0 relative"><img src="' + (d.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-900 group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />' +
                 (d.creditosImagem ? '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded-tl">Foto: ' + d.creditosImagem + '</div>' : '') + '</div>' +
                 '<h3 class="font-serif font-black text-sm md:text-base leading-snug text-jornal-dark group-hover:text-jornal-blue line-clamp-3 mb-2">' + d.titulo + '</h3>' +
                 '<p class="text-xs text-gray-500 line-clamp-2 mb-3 italic">' + (d.linhaFina || removerHTML(d.conteudo)) + '</p>' +
                 '<div class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-auto">' + (d.dataHora ? d.dataHora.replace(' ', ' às ') : '') + '</div></article>';
             
             if(op.length > 1) {
-                h += '<div class="flex flex-col gap-3 mt-2">';
-                for(var i=1; i<Math.min(op.length, 4); i++) { 
-                    h += '<article onclick="abrirNoticia(\'' + op[i].id + '\', true)" class="group cursor-pointer border-t border-gray-100 pt-3 flex gap-3 items-center hover:bg-gray-50 p-2 -mx-2 rounded transition-colors">' +
-                        '<div class="w-12 h-12 rounded bg-gray-200 shrink-0 overflow-hidden relative">' +
-                        '<img src="' + (op[i].urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-900 group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
+                html += '<div class="flex flex-col gap-3 mt-2">';
+                for(var i=1; i<Math.min(op.length, 4); i++) {
+                    html += '<article onclick="abrirNoticia(\'' + op[i].id + '\', true)" class="group cursor-pointer border-t border-gray-100 pt-3 flex gap-3 items-center hover:bg-gray-50 p-2 -mx-2 rounded transition-colors">' +
+                        '<div class="w-12 h-12 rounded bg-gray-200 shrink-0 overflow-hidden relative"><img src="' + (op[i].urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-900 group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
                         '<div class="flex-grow min-w-0 flex flex-col justify-center"><h4 class="font-bold text-xs text-gray-800 leading-tight group-hover:text-jornal-red line-clamp-2 mb-1">' + op[i].titulo + '</h4>' +
-                        '<span class="text-[9px] font-bold text-gray-400 tracking-widest uppercase">' + (op[i].dataHora ? op[i].dataHora.split(' ')[0] : '') + '</span></div></article>'; 
+                        '<span class="text-[9px] font-bold text-gray-400 tracking-widest uppercase">' + (op[i].dataHora ? op[i].dataHora.split(' ')[0] : '') + '</span></div></article>';
                 }
-                h += '</div>';
+                html += '</div>';
             }
-            cIn.innerHTML = h;
+            cIn.innerHTML = html;
         }
 
-        function criarElementoAd(p) {
-            var e = p.tipo ? p.tipo.toLowerCase() : ''; 
-            var u = p.urlArquivo ? String(p.urlArquivo) : ''; 
-            var isV = e.indexOf('video') !== -1 || u.endsWith('.mp4');
-            var mH = isV ? 
-                '<video src="' + u + '" autoplay loop muted playsinline class="w-full h-auto min-h-[100px] object-contain bg-gray-100 border border-gray-200"></video>' : 
-                '<img loading="lazy" src="' + u + '" alt="Anúncio" class="w-full h-auto min-h-[100px] object-contain bg-gray-100 border border-gray-200" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />';
+        function criarElementoAd(prop) {
+            if(!prop) {
+                return '';
+            }
+            var ext = prop.tipo ? prop.tipo.toLowerCase() : ''; 
+            var urlSegura = prop.urlArquivo ? String(prop.urlArquivo) : '';
+            var isVideo = ext.indexOf('video') !== -1 || urlSegura.endsWith('.mp4');
             
-            return '<a href="' + p.linkDestino + '" target="_blank" class="block w-full relative group hover:opacity-95 transition-opacity"><div class="absolute top-2 right-2 bg-white/90 text-[8px] uppercase font-black px-1.5 py-0.5 z-10 text-jornal-dark border border-gray-200">Publicidade</div>' + mH + '</a>';
-        }
-
-        function filtrarPorCidadeLocal() {
-            filtrarCategoria('Cidades', false);
+            var mediaHtml = isVideo ? '<video src="' + urlSegura + '" autoplay loop muted playsinline class="w-full h-auto min-h-[100px] object-contain bg-gray-100 border border-gray-200"></video>' : '<img loading="lazy" src="' + urlSegura + '" alt="Anúncio" class="w-full h-auto min-h-[100px] object-contain bg-gray-100 border border-gray-200" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />';
+            
+            return '<a href="' + prop.linkDestino + '" target="_blank" class="block w-full relative group hover:opacity-95 transition-opacity"><div class="absolute top-2 right-2 bg-white/90 text-[8px] uppercase font-black px-1.5 py-0.5 z-10 text-jornal-dark border border-gray-200">Publicidade</div>' + mediaHtml + '</a>';
         }
 
         function filtrarCategoria(cat, up) {
             if (up === undefined) {
-                up = true; 
+                up = true;
             }
-            
             window.categoriaAtual = cat; 
             
             if(up) {
@@ -924,9 +1035,10 @@
             }
             
             var grid = document.getElementById('grid-noticias'); 
-            var dest = document.getElementById('destaque-noticia'); 
-            
-            if (!grid || !dest) return;
+            var dest = document.getElementById('destaque-noticia');
+            if (!grid || !dest) {
+                return;
+            }
             
             var subnav = document.getElementById('subnav-cidades');
             if (subnav) {
@@ -939,8 +1051,8 @@
             }
 
             grid.innerHTML = ''; 
-            dest.innerHTML = ''; 
-            document.getElementById('titulo-seccao-feed').innerText = cat === 'Todas' ? 'Últimas Notícias' : 'Editoria: ' + cat; 
+            dest.innerHTML = '';
+            document.getElementById('titulo-seccao-feed').innerText = cat === 'Todas' ? 'Últimas Notícias' : 'Editoria: ' + cat;
             document.getElementById('input-pesquisa').value = '';
             
             var f = noticiasGlobais.filter(function(n) {
@@ -951,64 +1063,74 @@
                     return true;
                 }
                 
-                var catL = String(n.categoria).toLowerCase();
-                var matchCat = catL.indexOf(cat.toLowerCase()) !== -1;
+                var catL = normalizarTextoFiltro(n.categoria);
+                var matchCat = catL.indexOf(normalizarTextoFiltro(cat)) !== -1;
                 
                 if (cat === 'Cidades' && matchCat) {
-                    var txtCidade = document.getElementById('input-filtro-cidade').value.toLowerCase().trim();
+                    var txtCidade = normalizarTextoFiltro(document.getElementById('input-filtro-cidade').value);
                     if (txtCidade) {
-                        return catL.indexOf(txtCidade) !== -1;
+                        return normalizarTextoFiltro(n.cidade || n.categoria).indexOf(txtCidade) !== -1;
                     }
                 }
                 
                 return matchCat;
             });
             
-            var cC = document.getElementById('carrossel-destaques'); 
-            var gE = document.getElementById('grid-editorias-exclusivo');
-            
+            var carrosselContainer = document.getElementById('carrossel-destaques');
+            var gridEditorias = document.getElementById('grid-editorias-exclusivo');
+
             if(cat === 'Todas') {
                 grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6";
-                var cI = f.filter(function(n) { return n.noCarrossel === 'true'; }).slice(0, 5);
+                var c_itens = f.filter(function(n) { return n.noCarrossel === 'true'; }).slice(0, 5);
                 
-                if(cI.length > 0) { 
-                    montarCarrossel(cI); 
-                    if(cC) cC.classList.remove('hidden'); 
+                if(c_itens.length > 0) { 
+                    montarCarrossel(c_itens); 
+                    if(carrosselContainer) carrosselContainer.classList.remove('hidden'); 
                     dest.classList.add('hidden'); 
                     f = f.filter(function(n) { return n.noCarrossel !== 'true'; }); 
                 } else { 
-                    if(cC) cC.classList.add('hidden'); 
+                    if(carrosselContainer) carrosselContainer.classList.add('hidden'); 
                 }
                 
                 montarGrelhaEditorias(f); 
-                if(gE) gE.classList.remove('hidden');
+                if(gridEditorias) gridEditorias.classList.remove('hidden');
                 
                 f.slice(0, 15).forEach(function(n) { 
                     grid.innerHTML += htmlCard(n); 
                 });
-                var bM = document.getElementById('btn-mostrar-mais'); 
-                if(bM) bM.classList.add('hidden');
+                
+                var btnMais = document.getElementById('btn-mostrar-mais'); 
+                if(btnMais) {
+                    btnMais.classList.add('hidden');
+                }
             } else {
                 grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
-                if(gE) gE.classList.add('hidden'); 
-                if(cC) cC.classList.add('hidden');
+                
+                if(gridEditorias) gridEditorias.classList.add('hidden'); 
+                if(carrosselContainer) carrosselContainer.classList.add('hidden');
                 
                 if(f.length > 0) { 
                     dest.innerHTML = htmlHero(f[0]); 
                     dest.classList.remove('hidden'); 
                     f = f.slice(1); 
+                } else {
+                    dest.classList.add('hidden');
                 }
                 
                 window.noticiasCategoriaAtual = f; 
                 window.itensExibidosCategoria = 16;
+                
                 f.slice(0, 16).forEach(function(n) { 
                     grid.innerHTML += htmlCard(n); 
                 });
                 
-                var bM = document.getElementById('btn-mostrar-mais'); 
-                if (bM) { 
-                    if (f.length > 16) bM.classList.remove('hidden'); 
-                    else bM.classList.add('hidden'); 
+                var btnMais = document.getElementById('btn-mostrar-mais');
+                if (btnMais) { 
+                    if (f.length > 16) {
+                        btnMais.classList.remove('hidden'); 
+                    } else {
+                        btnMais.classList.add('hidden'); 
+                    }
                 }
             }
             fecharNoticiaUI();
@@ -1016,16 +1138,17 @@
 
         function mostrarMaisNoticias() {
             var grid = document.getElementById('grid-noticias'); 
-            var f = window.noticiasCategoriaAtual || []; 
+            var f = window.noticiasCategoriaAtual || [];
             var start = window.itensExibidosCategoria; 
             window.itensExibidosCategoria += 16;
             
             f.slice(start, window.itensExibidosCategoria).forEach(function(n) { 
                 grid.innerHTML += htmlCard(n); 
             });
-            var bM = document.getElementById('btn-mostrar-mais'); 
-            if (window.itensExibidosCategoria >= f.length && bM) { 
-                bM.classList.add('hidden'); 
+            
+            var btnMais = document.getElementById('btn-mostrar-mais');
+            if (window.itensExibidosCategoria >= f.length && btnMais) {
+                btnMais.classList.add('hidden');
             }
         }
 
@@ -1156,14 +1279,16 @@
             itens.forEach(function(n, i) {
                 var credHtml = n.creditosImagem ? '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 z-20">Foto: ' + n.creditosImagem + '</div>' : '';
                 
-                inner.innerHTML += '<div class="absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out cursor-pointer group carrossel-slide" style="opacity: 0; z-index: 0;" onclick="abrirNoticia(\'' + n.id + '\', true)">' +
-                '<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-900 opacity-90" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'"/>' + 
-                credHtml +
-                '<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>' +
-                '<div class="absolute bottom-0 left-0 p-6 md:p-12 w-full text-white min-w-0 z-10">' +
-                '<span class="bg-jornal-red text-white text-[10px] font-black uppercase px-2 py-1 mb-3 inline-block rounded-sm truncate">' + n.categoria + '</span>' +
-                '<h3 class="font-serif text-2xl md:text-4xl font-black mb-2 leading-tight break-words line-clamp-3">' + n.titulo + '</h3>' +
-                '</div></div>';
+                var slideHtml = '<div class="absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out cursor-pointer group carrossel-slide" style="opacity: 0; z-index: 0;" onclick="abrirNoticia(\'' + n.id + '\', true)">';
+                slideHtml += '<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-900 opacity-90" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'"/>';
+                slideHtml += credHtml;
+                slideHtml += '<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>';
+                slideHtml += '<div class="absolute bottom-0 left-0 p-6 md:p-12 w-full text-white min-w-0 z-10">';
+                slideHtml += '<span class="bg-jornal-red text-white text-[10px] font-black uppercase px-2 py-1 mb-3 inline-block rounded-sm truncate">' + n.categoria + '</span>';
+                slideHtml += '<h3 class="font-serif text-2xl md:text-4xl font-black mb-2 leading-tight break-words line-clamp-3">' + n.titulo + '</h3>';
+                slideHtml += '</div></div>';
+                
+                inner.innerHTML += slideHtml;
                 
                 ind.innerHTML += '<button onclick="irParaSlide(' + i + ')" class="w-3 h-3 rounded-full carrossel-indicador ' + (i === 0 ? 'bg-jornal-red' : 'bg-white/50') + '"></button>';
             });
@@ -1647,7 +1772,7 @@
                 }).inscreverNewsletter({email: document.getElementById('news-email').value});
             }
         }
-        
+
         function converterVideoUrlsParaPlayers(t) { 
             if (!t) return ""; 
             var strT = String(t);
@@ -1657,8 +1782,10 @@
             
             var ytRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[&?][a-zA-Z0-9_=-]+)*/gi;
             strT = strT.replace(ytRegex, function(match, id) { 
-                return '<div class="aspect-video w-full my-4 shadow-md rounded overflow-hidden"><iframe class="w-full h-full" src="https://www.youtube.com/embed/' + id + '" frameborder="0" allowfullscreen></iframe></div>'; 
+                return '<div class="aspect-video w-full my-4 shadow-md rounded overflow-hidden bg-black"><iframe class="w-full h-full" src="https://www.youtube-nocookie.com/embed/' + id + '" title="Vídeo incorporado" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>'; 
             });
+
+            strT = strT.replace(/(?:&amp;|&)(?:feature|source_ve_path|si|pp)=[^\s<]+/gi, '');
 
             var igRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[a-zA-Z0-9_-]+)(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
             strT = strT.replace(igRegex, function(match, url) { 
@@ -1738,22 +1865,6 @@
             setTimeout(function() { 
                 toast.classList.add('hidden'); 
             }, 4500);
-        }
-
-        function abrirModalLogin() { 
-            // Somente aplicável se existir admin neste ecrã
-            var m = document.getElementById('modalLogin');
-            if(m) {
-                m.classList.remove('hidden'); 
-                m.classList.add('flex'); 
-            }
-        }
-
-        function fecharModalLogin() { 
-            var m = document.getElementById('modalLogin');
-            if(m) {
-                m.classList.add('hidden'); 
-            }
         }
     </script>
 </body>
