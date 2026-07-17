@@ -10,6 +10,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
+    <script id="gas-params" type="application/json">
+        <?!= typeof urlParams !== 'undefined' ? urlParams : '{}' ?>
+    </script>
+    
     <script>
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzQJn5HGM76bFMyCa8fAiSmzzk0uUuZ-dLE2CNakU5DHBd1IBNq6HkQN4OXjtfd8lDD/exec";
         
@@ -25,7 +29,7 @@
         const apiFunctions = [
             'getHomeData', 'verificarLogin', 'salvarConfiguracaoHTMLCustom',
             'salvarNoticiaNoSheets', 'alternarStatusNoticia', 'excluirNoticia',
-            'salvarPropagandaNoSheets', 'alternarStatusPropaganda', 'excluirPropaganda', 
+            'salvarPropagandaNoSheets', 'alternarStatusPropaganda', 'excluirPropagandaNoSheets',
             'adicionarCategoriaNoSheets', 'chamarGeminiBackend', 'chamarGeminiImagemBackend'
         ];
 
@@ -34,6 +38,7 @@
                 var argsArray = Array.prototype.slice.call(arguments);
                 var successCb = this._onSuccess;
                 var failureCb = this._onFailure;
+                
                 this._onSuccess = null; this._onFailure = null;
                 
                 fetch(GAS_API_URL, {
@@ -85,9 +90,7 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-        /* Impede ecrã desconfigurado ao carregar */
-        #view-admin { display: none; }
-        #modalLogin { display: none; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #999; }
         .rich-editor img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px auto; border: 1px solid #e2e8f0; display: block; }
         .rich-editor iframe, .rich-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; background: #000; }
         .rich-editor a { color: #2563eb; text-decoration: underline; font-weight: 500; }
@@ -106,424 +109,363 @@
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
-    <div id="loading-principal" class="fixed inset-0 bg-jornal-dark z-[99999] flex flex-col items-center justify-center">
-        <div class="w-12 h-12 border-4 border-gray-600 border-t-white rounded-full animate-spin mb-4"></div>
-        <p class="text-xs font-bold uppercase tracking-widest text-white animate-pulse">A carregar painel...</p>
-    </div>
-
-    <!-- Modal de Login -->
-    <div id="modalLogin" class="fixed inset-0 z-[9999] items-center justify-center p-4 bg-jornal-dark/95 backdrop-blur-sm">
+    <div id="modalLogin" class="fixed inset-0 z-[9999] items-center justify-center p-4 flex">
+        <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-sm"></div>
         <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-blue">
             <div class="mb-6 text-center">
                 <h2 class="font-sans text-xl font-black uppercase text-jornal-dark tracking-tighter">Painel de Redação</h2>
                 <p class="text-xs text-gray-500 mt-2">Acesso restrito a administradores.</p>
             </div>
             <form onsubmit="fazerLogin(event)" class="space-y-4">
-                <input type="text" id="login-user" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm rounded-sm" required placeholder="Usuário" />
-                <input type="password" id="login-pass" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm rounded-sm" required placeholder="Senha" />
-                <button type="submit" id="btn-fazer-login" class="w-full bg-jornal-blue text-white font-bold py-3 hover:opacity-90 transition-colors text-sm uppercase tracking-widest rounded-sm">Entrar no Painel</button>
+                <input type="text" id="login-user" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm rounded-sm" required placeholder="admin" />
+                <input type="password" id="login-pass" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm rounded-sm" required placeholder="......" />
+                <button type="submit" id="btn-fazer-login" class="w-full bg-jornal-dark text-white font-bold py-3 hover:opacity-90 transition-colors text-sm uppercase tracking-widest rounded-sm">Entrar no Painel</button>
             </form>
         </div>
     </div>
 
-    <!-- PAINEL ADMIN PRINCIPAL -->
-    <div id="view-admin" class="min-h-screen flex flex-col bg-gray-100 text-slate-800">
+    <div id="view-admin" class="hidden min-h-screen flex flex-col bg-gray-100 text-slate-800">
         <header class="bg-jornal-dark text-white border-b border-gray-800 sticky top-0 z-40 shadow-sm">
-            <div class="max-w-[1200px] mx-auto flex justify-between items-center px-4 py-3">
+            <div class="max-w-[1000px] mx-auto flex justify-between items-center px-4 py-3">
                 <span class="font-sans font-black tracking-tighter text-lg uppercase text-slate-100 flex items-center gap-2"><span class="text-xl">⚙️</span> Painel<span class="text-rose-600">Admin</span></span>
                 <div class="flex items-center gap-4">
-                    <button type="button" onclick="window.location.href='index_simples.html'" class="text-gray-400 hover:text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1 hidden md:flex">← Ir para o Site</button>
+                    <button type="button" onclick="irParaPortal()" class="text-gray-400 hover:text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1 hidden md:flex">← Ir para o Site</button>
                     <button type="button" onclick="encerrarSessao()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-sm text-xs font-bold uppercase tracking-wider transition-colors shadow-sm">Sair (Logout)</button>
                 </div>
             </div>
         </header>
 
-        <main class="max-w-[1200px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
+        <main class="max-w-[1000px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
             
-            <div id="debug-error-box" class="hidden mb-4 text-xs text-red-500 font-mono text-left p-4 bg-red-50 border border-red-200 rounded max-w-xl break-words w-full shadow-sm"></div>
+            <div id="loading-noticias" class="flex flex-col items-center justify-center py-20 hidden">
+                <div class="w-10 h-10 border-4 border-gray-200 border-t-jornal-blue rounded-full animate-spin mb-4"></div>
+                <p class="text-xs font-bold uppercase tracking-widest text-gray-500 animate-pulse">A carregar banco de dados...</p>
+                <div id="debug-error-box" class="hidden mt-4 text-xs text-red-500 font-mono text-left p-4 bg-red-50 border border-red-200 rounded max-w-xl break-words w-full shadow-sm"></div>
+            </div>
 
-            <!-- Abas Admin -->
             <div id="abas-container" class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar">
                 <button type="button" onclick="alternarAbaAdmin('form-noticia-container')" id="aba-noticia" class="py-3 md:py-2 px-4 md:px-6 font-bold text-xs md:text-sm bg-jornal-blue text-white uppercase tracking-wider whitespace-nowrap rounded-t-sm">Publicar</button>
                 <button type="button" onclick="alternarAbaAdmin('lista-noticias-container')" id="aba-lista" class="py-3 md:py-2 px-4 md:px-6 font-bold text-xs md:text-sm bg-gray-200 text-gray-600 hover:bg-gray-300 uppercase tracking-wider whitespace-nowrap rounded-t-sm">Gerir Matérias</button>
                 <button type="button" onclick="alternarAbaAdmin('form-capa-container')" id="aba-capa" class="py-3 md:py-2 px-4 md:px-6 font-bold text-xs md:text-sm bg-gray-200 text-gray-600 hover:bg-gray-300 uppercase tracking-wider whitespace-nowrap rounded-t-sm">Layout Capa</button>
-                <button type="button" onclick="alternarAbaAdmin('form-propaganda-container')" id="aba-propaganda" class="py-3 md:py-2 px-4 md:px-6 font-bold text-xs md:text-sm bg-gray-200 text-gray-600 hover:bg-gray-300 uppercase tracking-wider whitespace-nowrap rounded-t-sm">Anúncios</button>
                 <button type="button" onclick="alternarAbaAdmin('form-logo-container')" id="aba-logo" class="py-3 md:py-2 px-4 md:px-6 font-bold text-xs md:text-sm bg-gray-200 text-gray-600 hover:bg-purple-200 uppercase tracking-wider whitespace-nowrap rounded-t-sm">IA & Design</button>
+                <button type="button" onclick="alternarAbaAdmin('form-propaganda-container')" id="aba-propaganda" class="py-3 md:py-2 px-4 md:px-6 font-bold text-xs md:text-sm bg-gray-200 text-gray-600 hover:bg-gray-300 uppercase tracking-wider whitespace-nowrap rounded-t-sm">Anúncios</button>
                 <button type="button" onclick="alternarAbaAdmin('form-social-container')" id="aba-social" class="py-3 md:py-2 px-4 md:px-6 font-bold text-xs md:text-sm bg-gray-200 text-gray-600 hover:bg-gray-300 uppercase tracking-wider whitespace-nowrap rounded-t-sm">Redes</button>
                 <button type="button" onclick="alternarAbaAdmin('form-placar-container')" id="aba-placar" class="py-3 md:py-2 px-4 md:px-6 font-bold text-xs md:text-sm bg-gray-200 text-gray-600 hover:bg-gray-300 uppercase tracking-wider whitespace-nowrap rounded-t-sm">Placar</button>
             </div>
 
-            <!-- Customizar Logótipo -->
             <div id="form-logo-container" class="hidden bg-white p-5 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-purple-600">
                 <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-6 border-l-4 border-purple-600 pl-3 gap-4">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase">Inteligência Artificial & Design</h2>
-                    
                     <div class="flex flex-col items-start md:items-end bg-purple-50 p-3 rounded border border-purple-100 min-w-[200px]">
                         <label class="text-[10px] font-bold uppercase tracking-widest text-purple-700 mb-2 cursor-pointer hover:text-purple-900 flex items-center gap-2">
-                            <span class="text-xl">📸</span> Fazer Upload de Ícone (Logo)
+                            Fazer Upload de Ícone (Logo)
                             <input type="file" id="upload-icone-logo" accept="image/png, image/svg+xml" class="hidden" onchange="processarIconeLogo(this)">
                         </label>
                         <div class="flex items-center gap-3">
                             <img id="preview-icone-admin" class="h-8 w-8 object-contain hidden bg-white border border-gray-200 rounded p-1" />
                             <button type="button" id="btn-remover-icone" onclick="removerIconeLogo()" class="text-[9px] text-red-500 font-bold uppercase hover:underline hidden">Remover</button>
                         </div>
-                        <p class="text-[8px] text-gray-400 mt-2 max-w-[180px] text-left md:text-right">Recomendado: Imagem PNG ou SVG com fundo transparente.</p>
                     </div>
                 </div>
 
                 <div class="mb-8 p-6 bg-purple-50 border border-purple-200 rounded-sm">
                     <h3 class="font-bold text-sm uppercase tracking-widest text-purple-800 mb-2">Chave de Acesso da IA (API Key)</h3>
-                    <p class="text-[10px] text-gray-600 mb-4">Insira a sua chave do Google Studio para ativar a IA.</p>
                     <div class="flex flex-col md:flex-row gap-4 md:items-center">
-                        <input type="password" id="config-chave-ia" class="flex-grow px-4 py-3 md:py-2 border border-gray-300 focus:border-purple-500 focus:outline-none text-sm rounded-sm shadow-sm min-w-0" placeholder="Ex: AIzaSy..." />
-                        <button type="button" onclick="salvarChaveIA()" id="btn-salvar-chave" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 md:py-2 font-bold uppercase text-[10px] tracking-widest rounded-sm whitespace-nowrap transition-colors shrink-0">Guardar Chave</button>
+                        <input type="password" id="config-chave-ia" class="flex-grow px-4 py-3 border border-gray-300 focus:outline-none text-sm rounded-sm shadow-sm" placeholder="AIzaSy..." />
+                        <button type="button" onclick="salvarChaveIA()" id="btn-salvar-chave" class="bg-purple-600 text-white px-6 py-3 font-bold uppercase text-[10px] tracking-widest rounded-sm whitespace-nowrap shrink-0">Guardar Chave</button>
                     </div>
                 </div>
+                
                 <div class="space-y-4 bg-purple-50/50 p-5 md:p-6 border border-purple-100 rounded">
                     <div>
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Descrição (Prompt para a IA)</label>
-                        <input type="text" id="prompt-logo" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm rounded-sm shadow-sm" placeholder="Ex: deixe a logo com um azul e verde gradiente" />
+                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Prompt para a IA</label>
+                        <input type="text" id="prompt-logo" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none text-sm rounded-sm" placeholder="Ex: azul e verde gradiente" />
                     </div>
-                    <button type="button" id="btn-gerar-logo" onclick="gerarLogoIA()" class="bg-purple-600 text-white px-6 py-3 font-bold hover:bg-purple-700 transition-colors uppercase text-[10px] tracking-widest rounded-sm flex items-center justify-center gap-2 w-full md:w-auto shadow-md">✨ Gerar Estilo com IA</button>
+                    <button type="button" id="btn-gerar-logo" onclick="gerarLogoIA()" class="bg-purple-600 text-white px-6 py-3 font-bold uppercase text-[10px] tracking-widest rounded-sm w-full md:w-auto shadow-md">✨ Gerar Estilo com IA</button>
                     
                     <div id="preview-logo-wrapper" class="mt-8 hidden">
                         <div class="p-6 bg-gray-100 border border-gray-300 rounded flex items-center justify-center min-h-[150px]">
                             <div id="preview-logo-ia"></div>
                         </div>
                         <div class="mt-4 pt-4 border-t border-gray-200 flex justify-end">
-                            <button type="button" id="btn-aplicar-logo" onclick="aplicarNovaLogo()" class="bg-jornal-blue text-white font-black w-full md:w-auto px-10 py-3 uppercase text-sm rounded-sm hover:opacity-90">Aplicar ao Site</button>
+                            <button type="button" onclick="aplicarNovaLogo()" class="bg-jornal-blue text-white font-black px-10 py-3 uppercase text-sm rounded-sm hover:opacity-90">Aplicar ao Site</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Formulário de Notícia -->
             <div id="form-noticia-container" class="bg-white p-5 md:p-8 shadow-sm border border-gray-200 rounded-sm">
-                <h2 class="font-sans text-xl font-black mb-6 text-jornal-dark uppercase border-l-4 border-jornal-red pl-3">Redigir Matéria</h2>
+                <h2 class="font-sans text-xl font-black mb-6 text-jornal-dark uppercase border-l-4 border-jornal-red pl-3">REDIGIR MATÉRIA</h2>
                 <form id="form-admin" onsubmit="salvarNoticia(event)" class="space-y-6">
                     <input type="hidden" id="admin-id-noticia" value="" />
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="md:col-span-2">
-                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Manchete</label>
-                            <input type="text" id="admin-titulo" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue font-serif font-bold text-lg text-jornal-dark rounded-sm" required />
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 space-y-4">
+                            <div>
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">MANCHETE</label>
+                                <input type="text" id="admin-titulo" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue font-serif font-bold text-lg text-jornal-dark rounded-sm" required />
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-end mb-1">
+                                    <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500">LINHA FINA (OPCIONAL - SEO)</label>
+                                    <button type="button" onclick="gerarLinhaFinaIA()" class="text-[10px] font-bold text-purple-600 flex items-center gap-1 hover:bg-purple-50 transition-colors">✨ Gerar com IA</button>
+                                </div>
+                                <input type="text" id="admin-linha-fina" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-medium text-gray-700 rounded-sm" placeholder="Breve resumo..." />
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">AUTOR / ASSINATURA</label>
+                                <input type="text" id="admin-autor" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm" placeholder="Ex: João Silva (Vazio = 'da redação')" />
+                            </div>
                         </div>
-                        <div class="min-w-0">
-                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Editorias (Múltipla Seleção)</label>
-                            <div id="admin-categoria-checklist" class="p-3 bg-gray-50 border border-gray-300 rounded-sm max-h-32 overflow-y-auto custom-scrollbar flex flex-col gap-1.5"></div>
-                            <button type="button" onclick="novaCategoria()" class="text-[10px] font-bold text-jornal-red hover:opacity-80 mt-1.5 flex items-center gap-1 mb-2">+ Nova Editoria</button>
+                        
+                        <div class="min-w-0 bg-gray-50 p-4 border border-gray-200 rounded-sm">
+                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">EDITORIAS (MÚLTIPLA SELEÇÃO)</label>
+                            <div id="admin-categoria-checklist" class="p-3 bg-white border border-gray-300 rounded-sm h-[140px] overflow-y-auto custom-scrollbar flex flex-col gap-2">
+                                <!-- Preenchido por JS -->
+                            </div>
+                            <button type="button" onclick="novaCategoria()" class="text-[10px] font-bold text-jornal-red hover:underline mt-2 inline-block">+ Nova Editoria</button>
                             
-                            <!-- CAIXA DA CIDADE -->
-                            <div id="container-cidade" class="hidden bg-blue-50 border border-blue-200 p-2 rounded-sm mt-2">
-                                <label class="text-[9px] font-bold uppercase tracking-widest text-blue-800 mb-1 block">Qual Cidade?</label>
-                                <input type="text" id="admin-nome-cidade" class="w-full px-3 py-2 bg-white border border-blue-300 focus:outline-none focus:border-blue-500 text-xs font-medium text-gray-700 rounded-sm" placeholder="Ex: Cuiabá" />
+                            <div id="container-cidade" class="hidden mt-3">
+                                <label class="text-[9px] font-bold uppercase tracking-widest text-jornal-blue mb-1 block">QUAL CIDADE?</label>
+                                <input type="text" id="admin-nome-cidade" class="w-full px-3 py-2 bg-white border border-blue-300 text-xs font-medium rounded-sm focus:outline-none" placeholder="Ex: Cuiabá" />
                             </div>
                         </div>
                     </div>
 
                     <div>
-                        <div class="flex justify-between items-end mb-1">
-                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Linha Fina (Opcional - SEO)</label>
-                            <button type="button" id="btn-ia-linhafina" onclick="gerarLinhaFinaIA()" class="text-[10px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 px-2 py-0.5 rounded hover:bg-purple-50 transition-colors">✨ Gerar com IA</button>
-                        </div>
-                        <input type="text" id="admin-linha-fina" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-medium text-gray-700 rounded-sm" placeholder="Breve resumo..." />
-                    </div>
-
-                    <div>
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Autor / Assinatura</label>
-                        <input type="text" id="admin-autor" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm" placeholder="Ex: João Silva (Vazio = 'da redação')" />
-                    </div>
-
-                    <div>
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Conteúdo (Rich Text Avançado)</label>
+                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">CONTEÚDO (RICH TEXT AVANÇADO)</label>
                         <input type="file" id="upload-imagem-conteudo" accept="image/*" class="hidden" onchange="processarUploadImagemConteudo(this)" />
                         
                         <div class="flex flex-wrap gap-1.5 p-2 bg-gray-100 border border-gray-300 border-b-0 rounded-t items-center">
                             <button type="button" onclick="execCmd('bold')" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm">B</button>
                             <button type="button" onclick="execCmd('italic')" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm">I</button>
                             <button type="button" onclick="execCmd('underline')" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs underline rounded shadow-sm">U</button>
-                            <button type="button" onclick="execCmd('strikeThrough')" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs line-through rounded shadow-sm">S</button>
                             <span class="w-[1px] h-6 bg-gray-300 mx-1"></span>
-                            <div class="relative flex items-center">
-                                <span class="text-xs font-bold mr-1 text-gray-600 hidden sm:block">TT</span>
-                                <select onchange="execCmd('fontSize', this.value); this.selectedIndex=1;" class="px-2 py-1 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer">
-                                    <option value="1">Pequeno</option><option value="3" selected>Normal</option><option value="5">Grande</option><option value="7">Enorme</option>
-                                </select>
-                            </div>
+                            <select onchange="execCmd('fontSize', this.value); this.selectedIndex=1;" class="px-2 py-1 bg-white border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer">
+                                <option value="1">Pequeno</option><option value="3" selected>Normal</option><option value="5">Grande</option>
+                            </select>
                             <span class="w-[1px] h-6 bg-gray-300 mx-1"></span>
                             <button type="button" onclick="execCmd('justifyLeft')" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Esq</button>
                             <button type="button" onclick="execCmd('justifyCenter')" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Cen</button>
-                            <button type="button" onclick="execCmd('justifyRight')" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Dir</button>
-                            <span class="w-[1px] h-6 bg-gray-300 mx-1 hidden sm:block"></span>
-                            <button type="button" onclick="execCmd('insertUnorderedList')" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm hidden sm:block">UL</button>
-                            <button type="button" onclick="execCmd('insertOrderedList')" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm hidden sm:block">OL</button>
                             <span class="w-[1px] h-6 bg-gray-300 mx-1"></span>
-                            
-                            <button type="button" onclick="inserirLinkRichEditor()" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-blue-600 rounded font-semibold shadow-sm" title="Inserir Link">🔗</button>
-                            <button type="button" onclick="inserirImagemRichEditor()" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-emerald-600 rounded font-semibold shadow-sm" title="Fazer Upload de Imagem para o Texto">🖼️</button>
-                            <button type="button" onclick="inserirVideoRichEditor()" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-purple-600 rounded font-semibold shadow-sm" title="Inserir Vídeo">📹</button>
-                            
-                            <span class="w-[1px] h-6 bg-gray-300 mx-1"></span>
-                            <button type="button" onclick="execCmd('formatBlock', 'H2')" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm">H2</button>
-                            <button type="button" onclick="execCmd('formatBlock', 'blockquote')" class="px-2 py-1 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm">""</button>
-                            <button type="button" onclick="execCmd('removeFormat')" class="px-2 py-1 bg-red-50 hover:bg-red-100 border border-red-200 text-xs text-red-600 rounded shadow-sm">Limpar</button>
-                            <button type="button" id="btn-ia-conteudo" onclick="gerarConteudoIA()" class="ml-auto px-3 py-1.5 bg-purple-100 hover:bg-purple-200 border border-purple-300 text-xs text-purple-800 font-bold rounded flex items-center gap-1 shadow-sm transition-colors mt-2 md:mt-0 w-full md:w-auto justify-center">✨ Escrever com IA</button>
+                            <button type="button" onclick="inserirLinkRichEditor()" class="px-2 py-1 bg-white border border-gray-300 text-xs text-blue-600 rounded font-semibold shadow-sm">🔗 Link</button>
+                            <button type="button" onclick="inserirImagemRichEditor()" class="px-2 py-1 bg-white border border-gray-300 text-xs text-emerald-600 rounded font-semibold shadow-sm">🖼️ Img</button>
+                            <button type="button" onclick="inserirVideoRichEditor()" class="px-2 py-1 bg-white border border-gray-300 text-xs text-purple-600 rounded font-semibold shadow-sm">📹 Vídeo</button>
+                            <button type="button" onclick="gerarConteudoIA()" class="ml-auto px-3 py-1.5 bg-purple-100 border border-purple-300 text-xs text-purple-800 font-bold rounded shadow-sm">✨ Escrever com IA</button>
                         </div>
-                        <div id="admin-editor-rich" contenteditable="true" class="w-full px-4 py-4 bg-gray-50 border border-gray-300 rounded-b min-h-[250px] max-h-[500px] overflow-y-auto focus:outline-none focus:bg-white text-base leading-relaxed font-serif custom-scrollbar rich-editor"></div>
+                        <div id="admin-editor-rich" contenteditable="true" class="w-full px-4 py-4 bg-white border border-gray-300 rounded-b min-h-[250px] max-h-[500px] overflow-y-auto focus:outline-none text-base leading-relaxed font-serif custom-scrollbar rich-editor"></div>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 border border-gray-200 rounded-sm">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 bg-gray-50 border border-gray-200 rounded-sm">
                         <div>
-                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Upload da Foto de Capa</label>
-                            <div class="flex gap-2 items-center">
-                                <input type="file" id="admin-arquivo-imagem" accept="image/*" class="w-full text-sm file:mr-2 file:py-1.5 file:px-3 file:border-0 file:text-[10px] file:font-bold file:uppercase file:tracking-wider file:bg-jornal-dark file:text-white hover:file:opacity-90 cursor-pointer rounded-sm" onchange="verificarUploadMedia(this)" />
+                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">UPLOAD DA FOTO DE CAPA</label>
+                            <div class="flex items-center gap-3">
+                                <label class="cursor-pointer bg-jornal-dark text-white px-4 py-2 text-xs font-bold rounded-sm hover:opacity-90 whitespace-nowrap">
+                                    ESCOLHER ARQUIVO
+                                    <input type="file" id="admin-arquivo-imagem" accept="image/*" class="hidden" onchange="verificarUploadMedia(this)" />
+                                </label>
+                                <span id="nome-arquivo-noticia" class="text-xs text-gray-500 truncate">Nenhum arquivo escolhido</span>
                             </div>
-                            <div class="relative inline-block w-full min-w-0">
-                                <img id="preview-imagem" loading="lazy" src="" class="mt-3 w-full h-32 object-contain bg-gray-900 border border-gray-300 hidden rounded-sm" />
-                            </div>
+                            <img id="preview-imagem" loading="lazy" src="" class="mt-4 w-full h-32 object-contain bg-gray-900 border border-gray-300 hidden rounded-sm" />
                         </div>
                         
                         <div class="flex flex-col gap-4">
                             <div>
-                                <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 block mb-2">Agendamento ou Publicação Retroativa</label>
-                                <input type="datetime-local" id="admin-agendamento" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue text-xs font-bold text-jornal-dark rounded-sm shadow-sm" />
-                                <p class="text-[9px] text-gray-400 mt-2">Data passada publica na hora com a data antiga. Futura agenda.</p>
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 block mb-1">AGENDAMENTO OU PUBLICAÇÃO RETROATIVA</label>
+                                <input type="datetime-local" id="admin-agendamento" class="w-full px-4 py-2 bg-white border border-gray-300 focus:outline-none text-sm rounded-sm" />
+                                <p class="text-[8px] text-gray-400 mt-1">Data passada publica na hora com data antiga. Futura agenda.</p>
                             </div>
                             <div>
-                                <label class="text-[10px] font-bold uppercase tracking-widest text-rose-600 block mb-2">Fim do Evento (Obrigatório se for Agenda)</label>
-                                <input type="datetime-local" id="admin-data-fim-evento" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-rose-500 text-xs font-bold text-jornal-dark rounded-sm shadow-sm" />
-                                <p class="text-[9px] text-gray-400 mt-2">Se for uma matéria de Agenda, ela sai do carrossel automaticamente após esta data.</p>
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-rose-600 block mb-1">FIM DO EVENTO (P/ AGENDA)</label>
+                                <input type="datetime-local" id="admin-data-fim-evento" class="w-full px-4 py-2 bg-white border border-gray-300 focus:outline-none text-sm rounded-sm" />
                             </div>
                         </div>
                     </div>
 
                     <div id="admin-imagem-metadados" class="hidden p-4 bg-amber-50 border border-amber-200 space-y-4 rounded-sm">
-                        <h4 class="text-xs font-black text-amber-800 uppercase tracking-widest flex items-center gap-1.5">⚠️ Créditos de Imagem Obrigatórios</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Legenda (Opcional)</label>
                                 <input type="text" id="admin-legenda-imagem" class="w-full px-3 py-2 bg-white border border-gray-300 text-xs focus:outline-none rounded-sm" />
                             </div>
                             <div>
-                                <label class="text-[10px] font-bold uppercase tracking-widest text-red-600 mb-1 block">Créditos / Fonte da Imagem *</label>
-                                <input type="text" id="admin-creditos-imagem" class="w-full px-3 py-2 bg-white border border-red-300 text-xs focus:outline-none rounded-sm" placeholder="Ex: João Silva / Agência Reuters" />
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-red-600 mb-1 block">Créditos da Imagem *</label>
+                                <input type="text" id="admin-creditos-imagem" class="w-full px-3 py-2 bg-white border border-red-300 text-xs focus:outline-none rounded-sm" placeholder="Ex: João Silva" />
                             </div>
                         </div>
                     </div>
 
-                    <!-- NOVIDADE: MATÉRIAS RELACIONADAS -->
-                    <div class="p-4 bg-blue-50/50 border border-blue-100 rounded-sm mt-4">
-                        <h3 class="text-[10px] font-bold uppercase tracking-widest text-jornal-blue mb-2">Sugestões de Leitura (Até 3 Matérias Relacionadas)</h3>
-                        <input type="text" id="input-busca-relacionadas" onkeyup="pesquisarRelacionadasAdmin()" placeholder="Pesquise por uma matéria existente para sugerir..." class="w-full px-4 py-2 border border-gray-300 rounded-sm text-sm focus:border-jornal-blue focus:outline-none shadow-sm mb-2" />
-                        <div id="lista-busca-relacionadas" class="max-h-40 overflow-y-auto bg-white border border-gray-200 rounded-sm hidden shadow-sm divide-y divide-gray-100"></div>
-                        <div id="relacionadas-selecionadas" class="flex flex-col gap-2 mt-3 empty:hidden"></div>
+                    <div class="p-5 bg-blue-50/50 border border-blue-200 rounded-sm">
+                        <h3 class="text-[10px] font-bold uppercase tracking-widest text-jornal-blue mb-3">NOTÍCIAS RELACIONADAS</h3>
+                        <div class="flex gap-2 mb-2">
+                            <input type="text" id="input-busca-relacionadas" onkeyup="if(event.key==='Enter') pesquisarRelacionadasAdmin()" placeholder="Pesquisar por título, editoria ou cidade..." class="flex-grow px-4 py-2 border border-gray-300 rounded-sm text-sm focus:border-jornal-blue focus:outline-none shadow-sm" />
+                            <button type="button" class="bg-indigo-600 text-white px-6 py-2 rounded-sm text-sm font-bold shadow-sm hover:opacity-90" onclick="pesquisarRelacionadasAdmin()">Pesquisar</button>
+                        </div>
+                        <p class="text-[9px] text-gray-400 mb-3">Selecione até 3 matérias que aparecerão ao final do texto.</p>
+                        
+                        <div id="lista-busca-relacionadas" class="max-h-40 overflow-y-auto bg-white border border-gray-200 rounded-sm hidden shadow-sm divide-y divide-gray-100 mb-3"></div>
+                        <div id="relacionadas-selecionadas" class="flex flex-col gap-2 empty:hidden"></div>
                         <input type="hidden" id="admin-relacionadas-ids" value="" />
                     </div>
 
-                    <div class="px-4 py-4 bg-gray-50 border border-gray-200 rounded-sm mt-4">
+                    <div class="px-4 py-4 bg-gray-50 border border-gray-200 rounded-sm">
                         <label class="flex items-center gap-3 cursor-pointer">
-                            <input type="checkbox" id="admin-carrossel" class="w-5 h-5 text-jornal-blue border-gray-300 rounded focus:ring-jornal-blue" />
-                            <div>
-                                <span class="text-sm font-black text-jornal-blue uppercase tracking-widest block">Adicionar ao Carrossel de Destaques Principal</span>
-                            </div>
+                            <input type="checkbox" id="admin-carrossel" class="w-5 h-5 text-jornal-blue border-gray-300 rounded" />
+                            <span class="text-sm font-black text-jornal-blue uppercase tracking-widest block">ADICIONAR AO CARROSSEL DE DESTAQUES</span>
                         </label>
                     </div>
 
                     <div class="pt-4 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
-                        <button type="button" onclick="limparFormNoticia()" class="text-xs font-bold text-gray-500 hover:text-jornal-red uppercase tracking-wider w-full md:w-auto text-center md:text-left py-2">Limpar Form</button>
-                        <button type="submit" id="btn-salvar-noticia" class="w-full md:w-auto bg-jornal-blue text-white font-black px-10 py-4 hover:opacity-90 transition-colors uppercase tracking-widest text-sm rounded-sm shadow-md">Publicar Matéria</button>
+                        <button type="button" onclick="limparFormNoticia()" class="text-xs font-bold text-gray-500 hover:text-jornal-red uppercase tracking-wider">Limpar Form</button>
+                        <button type="submit" id="btn-salvar-noticia" class="w-full md:w-auto bg-jornal-dark text-white font-black px-10 py-4 uppercase text-sm rounded-sm hover:bg-jornal-blue transition-colors">PUBLICAR MATÉRIA</button>
                     </div>
                 </form>
             </div>
 
-            <!-- Listagem Admin -->
-            <div id="lista-noticias-container" class="hidden bg-white p-6 shadow-sm border border-gray-200 rounded-sm">
-                <h2 class="font-sans text-xl font-black mb-6 text-jornal-dark uppercase border-l-4 border-jornal-red pl-3">Editar Publicações</h2>
+            <div id="lista-noticias-container" class="hidden bg-white p-5 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+                <h2 class="font-sans text-xl font-black mb-6 text-jornal-dark uppercase border-l-4 border-jornal-red pl-3">EDITAR PUBLICAÇÕES</h2>
                 
-                <div class="flex flex-col md:flex-row gap-4 mb-6 bg-gray-50 p-4 rounded-sm border border-gray-200">
-                    <div class="flex-grow">
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Pesquisar por Manchete</label>
-                        <input type="text" id="filtro-busca-materia" placeholder="Digite uma palavra..." class="w-full px-4 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-jornal-blue shadow-sm" onkeyup="carregarListaEdicao()">
-                    </div>
-                    <div class="md:w-64 shrink-0">
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Filtrar por Editoria</label>
-                        <select id="filtro-editoria-materia" class="w-full px-4 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-jornal-blue shadow-sm" onchange="carregarListaEdicao()">
-                            <option value="">Todas as Editorias</option>
-                        </select>
-                    </div>
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <input type="text" id="filtro-busca-materia" placeholder="Pesquisar por manchete..." class="px-4 py-3 border border-gray-300 rounded-sm text-sm flex-grow focus:outline-none focus:border-jornal-blue shadow-sm" onkeyup="carregarListaEdicao()">
+                    <select id="filtro-editoria-materia" class="px-4 py-3 border border-gray-300 rounded-sm text-sm w-full md:w-64 focus:outline-none focus:border-jornal-blue shadow-sm" onchange="carregarListaEdicao()">
+                        <option value="">Todas as Editorias</option>
+                    </select>
                 </div>
 
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto border border-gray-200 rounded-sm">
                     <table class="w-full text-left text-sm whitespace-nowrap">
-                        <thead class="bg-gray-100 border-b border-gray-300 text-[10px] uppercase tracking-widest text-gray-500">
+                        <thead class="bg-gray-50 border-b border-gray-200 text-[10px] uppercase tracking-widest text-gray-500">
                             <tr>
-                                <th class="p-3">Data</th>
-                                <th class="p-3">Editorias</th>
-                                <th class="p-3">Manchete</th>
-                                <th class="p-3 text-center">Visões</th>
-                                <th class="p-3 text-center">Ações Rápidas</th>
-                                <th class="p-3 text-center">Gestão</th>
+                                <th class="p-4 font-bold">DATA</th>
+                                <th class="p-4 font-bold">EDITORIAS</th>
+                                <th class="p-4 font-bold">MANCHETE</th>
+                                <th class="p-4 font-bold text-center">VISÕES</th>
+                                <th class="p-4 font-bold text-center">VISIBILIDADE</th>
+                                <th class="p-4 font-bold text-center">AÇÕES</th>
                             </tr>
                         </thead>
-                        <tbody id="admin-tabela-noticias" class="divide-y divide-gray-200"></tbody>
+                        <tbody id="admin-tabela-noticias" class="divide-y divide-gray-100 bg-white"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Configuração Capa Admin -->
-            <div id="form-capa-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
-                <h2 class="font-sans text-xl font-black mb-6 text-jornal-dark uppercase border-l-4 border-emerald-500 pl-3">Organizar Editorias da Capa</h2>
+            <div id="form-capa-container" class="hidden bg-white p-5 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+                <h2 class="font-sans text-xl font-black mb-6 text-jornal-dark uppercase border-l-4 border-emerald-500 pl-3">ORGANIZAR CAPA</h2>
                 <form id="form-capa" onsubmit="salvarOrdemCapa(event)">
-                    <p class="text-xs text-gray-500 mb-4">Escolha até 8 editorias que devem aparecer em destaque abaixo do carrossel principal e a ordem delas.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" id="selects-capa-container">
-                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" id="selects-capa-container"></div>
                     <div class="pt-4 border-t border-gray-200 flex justify-end">
-                        <button type="submit" id="btn-salvar-capa" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-black px-10 py-3 uppercase text-sm rounded-sm transition-colors shadow-sm">Salvar Ordem</button>
+                        <button type="submit" id="btn-salvar-capa" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-10 py-3 uppercase text-sm rounded-sm">Salvar Ordem</button>
                     </div>
                 </form>
             </div>
 
-            <!-- Anúncios Admin -->
-            <div id="form-propaganda-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
-                <h2 class="font-sans text-xl font-black mb-6 text-jornal-dark uppercase border-l-4 border-jornal-red pl-3">Gestão de Anúncios</h2>
+            <div id="form-propaganda-container" class="hidden bg-white p-5 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+                <h2 class="font-sans text-xl font-black mb-6 text-jornal-dark uppercase border-l-4 border-jornal-red pl-3">GERENCIAMENTO DE ANÚNCIOS</h2>
+                
+                <div class="flex border-b border-gray-200 mb-6">
+                    <button type="button" id="btn-aba-ad-entre" class="py-2 px-4 border-b-2 border-jornal-dark font-bold text-sm text-jornal-dark" onclick="mudarAbaAd('entre')">Entre Editorias (8)</button>
+                    <button type="button" id="btn-aba-ad-sidebar" class="py-2 px-4 border-b-2 border-transparent font-bold text-sm text-gray-500 hover:text-jornal-dark transition-colors" onclick="mudarAbaAd('sidebar')">Sidebar (3)</button>
+                    <button type="button" id="btn-aba-ad-topo" class="py-2 px-4 border-b-2 border-transparent font-bold text-sm text-gray-500 hover:text-jornal-dark transition-colors" onclick="mudarAbaAd('topo')">Topo (1)</button>
+                </div>
                 
                 <form id="form-propaganda" onsubmit="salvarPropaganda(event)" class="mb-10 bg-gray-50 p-6 border border-gray-200 rounded-sm">
-                    <h3 class="font-black text-sm uppercase tracking-widest text-jornal-blue mb-4">Adicionar Novo Anúncio</h3>
+                    <input type="hidden" id="prop-tipo-local" value="entre">
+                    
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                         <div>
-                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Nome do Cliente/Campanha</label>
-                            <input type="text" id="prop-empresa" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm rounded-sm shadow-sm focus:border-jornal-blue focus:outline-none" required />
+                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">POSIÇÃO</label>
+                            <select id="prop-posicao" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-jornal-blue" required></select>
                         </div>
                         <div>
-                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Local de Exibição no Site</label>
-                            <select id="prop-local" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm font-bold text-jornal-dark rounded-sm shadow-sm focus:border-jornal-blue focus:outline-none" required>
-                                <option value="Topo">Topo do Site (Cabeçalho)</option>
-                                <option value="Lateral 1">Barra Lateral 1 (Cima)</option>
-                                <option value="Lateral 2">Barra Lateral 2 (Meio)</option>
-                                <option value="Lateral 3">Barra Lateral 3 (Fundo)</option>
-                                <option value="Entre Editorias 1">Entre Editorias 1 (No meio da página principal)</option>
-                                <option value="Entre Editorias 2">Entre Editorias 2</option>
-                                <option value="Entre Editorias 3">Entre Editorias 3</option>
-                                <option value="Entre Editorias 4">Entre Editorias 4</option>
-                                <option value="Entre Editorias 5">Entre Editorias 5</option>
-                                <option value="Entre Editorias 6">Entre Editorias 6</option>
-                                <option value="Entre Editorias 7">Entre Editorias 7</option>
-                                <option value="Entre Editorias 8">Entre Editorias 8</option>
+                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">EMPRESA</label>
+                            <input type="text" id="prop-empresa" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-jornal-blue" required />
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                        <div>
+                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">TEMPO DE EXIBIÇÃO (SEGUNDOS)</label>
+                            <input type="number" id="prop-tempo" value="5" min="1" max="60" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-jornal-blue" required />
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">STATUS</label>
+                            <select id="prop-status" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-jornal-blue">
+                                <option value="Ativa">Ativo</option>
+                                <option value="Inativa">Inativo</option>
                             </select>
                         </div>
                     </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                        <div>
-                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Link Destino (Ação ao Clicar)</label>
-                            <input type="url" id="prop-link" placeholder="https://" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm rounded-sm shadow-sm focus:border-jornal-blue focus:outline-none" required />
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Tempo de Rotação (Se houver vários no mesmo local)</label>
-                            <div class="flex items-center gap-2">
-                                <input type="number" id="prop-tempo" value="5" min="1" max="60" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm rounded-sm shadow-sm focus:border-jornal-blue focus:outline-none" required />
-                                <span class="text-xs text-gray-500 font-bold">Segundos</span>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="p-4 border border-dashed border-jornal-blue bg-blue-50/20 mb-4 rounded-sm">
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-jornal-blue mb-2 block">Upload do Banner (Imagem, GIF ou Vídeo MP4)</label>
-                        <input type="file" id="prop-arquivo" accept="image/*,video/*" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:border-0 file:bg-jornal-blue file:text-white cursor-pointer rounded-sm hover:file:opacity-90" />
-                        <p class="text-[9px] text-gray-500 mt-2 italic">Ou insira uma URL direta da imagem abaixo:</p>
-                        <input type="url" id="prop-imagem" placeholder="https://..." class="w-full px-4 py-2 mt-1 bg-white border border-gray-300 text-xs rounded-sm shadow-sm focus:border-jornal-blue focus:outline-none" />
+                    <div class="p-5 border border-dashed border-gray-300 bg-white mb-6 rounded-sm">
+                        <label class="text-[10px] font-bold uppercase tracking-widest text-jornal-dark mb-3 block">IMAGEM / ARQUIVO</label>
+                        <div class="flex items-center gap-3">
+                            <label class="cursor-pointer bg-jornal-dark text-white px-5 py-2.5 text-xs font-bold uppercase tracking-widest rounded-sm hover:opacity-90 whitespace-nowrap shadow-sm">
+                                Escolher arquivo
+                                <input type="file" id="prop-arquivo" accept="image/*,video/*" class="hidden" onchange="atualizarNomeArquivoAd(this)" />
+                            </label>
+                            <span id="nome-arquivo-ad" class="text-xs text-gray-500 font-medium">Nenhum arquivo escolhido</span>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-100">
+                            <label class="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-1 block">OU LINK DIRETO DA IMAGEM:</label>
+                            <input type="url" id="prop-imagem" placeholder="https://..." class="w-full px-4 py-2 bg-gray-50 border border-gray-300 text-sm rounded-sm focus:outline-none" />
+                        </div>
                     </div>
                     
-                    <div class="pt-4 border-t border-gray-200 flex justify-end">
-                        <button type="submit" id="btn-salvar-propaganda" class="w-full md:w-auto bg-jornal-red text-white font-black px-10 py-3 uppercase text-sm rounded-sm hover:opacity-90 transition-opacity shadow-md">Ativar Anúncio no Site</button>
+                    <div class="mb-6">
+                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">LINK DESTINO (AÇÃO NO CLIQUE)</label>
+                        <input type="url" id="prop-link" placeholder="https://" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-jornal-blue" required />
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button type="submit" id="btn-salvar-propaganda" class="w-full md:w-auto bg-emerald-600 text-white font-black px-10 py-3 uppercase tracking-widest text-sm rounded-sm shadow-md hover:bg-emerald-700">Salvar Anúncio</button>
                     </div>
                 </form>
 
-                <h3 class="font-black text-sm uppercase tracking-widest text-jornal-dark mb-4 border-l-4 border-gray-400 pl-2">Anúncios Ativos no Sistema</h3>
-                <div class="overflow-x-auto bg-white border border-gray-200 rounded-sm">
+                <h3 class="font-black text-sm uppercase tracking-widest text-jornal-dark mb-4 border-l-4 border-gray-400 pl-2">ANÚNCIOS ATIVOS</h3>
+                <div class="overflow-x-auto border border-gray-200 rounded-sm">
                     <table class="w-full text-left text-sm whitespace-nowrap">
-                        <thead class="bg-gray-100 border-b border-gray-300 text-[10px] uppercase tracking-widest text-gray-500">
+                        <thead class="bg-gray-50 border-b border-gray-200 text-[10px] uppercase tracking-widest text-gray-500">
                             <tr>
-                                <th class="p-3">Campanha</th>
-                                <th class="p-3">Localização</th>
-                                <th class="p-3 text-center">Visões</th>
-                                <th class="p-3 text-center">Cliques</th>
-                                <th class="p-3 text-center">Estado</th>
-                                <th class="p-3 text-center">Ações</th>
+                                <th class="p-4">POSIÇÃO</th>
+                                <th class="p-4">EMPRESA</th>
+                                <th class="p-4 text-center">VISÕES</th>
+                                <th class="p-4 text-center">CLIQUES</th>
+                                <th class="p-4 text-center">STATUS</th>
+                                <th class="p-4 text-center">AÇÕES</th>
                             </tr>
                         </thead>
-                        <tbody id="admin-tabela-anuncios" class="divide-y divide-gray-200"></tbody>
+                        <tbody id="admin-tabela-anuncios" class="divide-y divide-gray-100 bg-white"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Redes Sociais Admin -->
             <div id="form-social-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <h2 class="font-sans text-xl font-black mb-6 text-jornal-dark uppercase border-l-4 border-jornal-red pl-3">Gestão de Redes Sociais</h2>
                 <form id="form-sociais" onsubmit="salvarRedesSociais(event)">
-                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 border border-gray-100 bg-gray-50 rounded-sm mb-2">
-                        <div class="flex items-center gap-3">
-                            <div class="font-bold text-sm w-24">Instagram</div>
-                        </div>
-                        <input type="url" id="soc-inst-url" placeholder="https://instagram.com/..." class="w-full md:flex-grow px-4 py-2 border border-gray-300 text-sm rounded-sm min-w-0" />
-                    </div>
-                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 border border-gray-100 bg-gray-50 rounded-sm mb-2">
-                        <div class="flex items-center gap-3">
-                            <div class="font-bold text-sm w-24">Facebook</div>
-                        </div>
-                        <input type="url" id="soc-fb-url" placeholder="https://facebook.com/..." class="w-full md:flex-grow px-4 py-2 border border-gray-300 text-sm rounded-sm min-w-0" />
-                    </div>
-                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 border border-gray-100 bg-gray-50 rounded-sm mb-2">
-                        <div class="flex items-center gap-3">
-                            <div class="font-bold text-sm w-24">X (Twitter)</div>
-                        </div>
-                        <input type="url" id="soc-x-url" placeholder="https://x.com/..." class="w-full md:flex-grow px-4 py-2 border border-gray-300 text-sm rounded-sm min-w-0" />
-                    </div>
-                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 border border-gray-100 bg-gray-50 rounded-sm">
-                        <div class="flex items-center gap-3">
-                            <div class="font-bold text-sm w-24">YouTube</div>
-                        </div>
-                        <input type="url" id="soc-yt-url" placeholder="https://youtube.com/..." class="w-full md:flex-grow px-4 py-2 border border-gray-300 text-sm rounded-sm min-w-0" />
-                    </div>
-                    <div class="pt-4 border-t border-gray-200 flex justify-end mt-4">
-                        <button type="submit" id="btn-salvar-sociais" class="w-full md:w-auto bg-jornal-blue text-white font-black px-10 py-3 uppercase text-sm rounded-sm">Salvar Redes Sociais</button>
-                    </div>
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 bg-gray-50 rounded-sm mb-2"><div class="font-bold text-sm w-24">Instagram</div><input type="url" id="soc-inst-url" class="w-full md:flex-grow px-4 py-2 border border-gray-300 text-sm rounded-sm min-w-0" /></div>
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 bg-gray-50 rounded-sm mb-2"><div class="font-bold text-sm w-24">Facebook</div><input type="url" id="soc-fb-url" class="w-full md:flex-grow px-4 py-2 border border-gray-300 text-sm rounded-sm min-w-0" /></div>
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 bg-gray-50 rounded-sm mb-2"><div class="font-bold text-sm w-24">X (Twitter)</div><input type="url" id="soc-x-url" class="w-full md:flex-grow px-4 py-2 border border-gray-300 text-sm rounded-sm min-w-0" /></div>
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 bg-gray-50 rounded-sm"><div class="font-bold text-sm w-24">YouTube</div><input type="url" id="soc-yt-url" class="w-full md:flex-grow px-4 py-2 border border-gray-300 text-sm rounded-sm min-w-0" /></div>
+                    <div class="pt-4 border-t border-gray-200 flex justify-end mt-4"><button type="submit" id="btn-salvar-sociais" class="bg-jornal-blue text-white font-black px-10 py-3 uppercase text-sm rounded-sm">Salvar</button></div>
                 </form>
             </div>
 
-            <!-- Configuração Placar ao Vivo Admin -->
             <div id="form-placar-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <h2 class="font-sans text-xl font-black mb-2 text-jornal-dark uppercase border-l-4 border-jornal-red pl-3">Desporto ao Vivo</h2>
                 <form id="form-placar" onsubmit="salvarPlacarAoVivo(event)">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                        <div class="p-4 bg-gray-50 border border-gray-200 rounded-sm">
-                            <h3 class="text-[10px] font-black uppercase tracking-widest text-jornal-blue mb-3 border-b border-gray-200 pb-1">Futebol: Brasil</h3>
-                            <label class="flex items-center gap-2 mb-2 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/bra.1" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-300" /><span class="text-sm font-bold text-gray-700">Brasileirão Série A</span></label>
-                            <label class="flex items-center gap-2 mb-2 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/bra.2" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-300" /><span class="text-sm font-bold text-gray-700">Brasileirão Série B</span></label>
-                            <label class="flex items-center gap-2 mb-2 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/bra.copa_do_brasil" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-300" /><span class="text-sm font-bold text-gray-700">Copa do Brasil</span></label>
-                        </div>
-                        <div class="p-4 bg-gray-50 border border-gray-200 rounded-sm">
-                            <h3 class="text-[10px] font-black uppercase tracking-widest text-green-700 mb-3 border-b border-gray-200 pb-1">Futebol: Internacional</h3>
-                            <label class="flex items-center gap-2 mb-2 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/conmebol.libertadores" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-300" /><span class="text-sm font-bold text-gray-700">Copa Libertadores</span></label>
-                            <label class="flex items-center gap-2 mb-2 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/conmebol.sudamericana" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-300" /><span class="text-sm font-bold text-gray-700">Copa Sul-Americana</span></label>
-                            <label class="flex items-center gap-2 mb-2 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/uefa.champions" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-300" /><span class="text-sm font-bold text-gray-700">Champions League</span></label>
-                        </div>
-                        <div class="p-4 bg-gray-50 border border-gray-200 rounded-sm">
-                            <h3 class="text-[10px] font-black uppercase tracking-widest text-orange-600 mb-3 border-b border-gray-200 pb-1">Basquete & Ténis</h3>
-                            <label class="flex items-center gap-2 mb-2 cursor-pointer"><input type="checkbox" name="liga-placar" value="basketball/nba" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-300" /><span class="text-sm font-bold text-gray-700">NBA</span></label>
-                        </div>
+                        <div class="p-4 bg-gray-50 border border-gray-200 rounded-sm"><h3 class="text-[10px] font-black uppercase tracking-widest text-jornal-blue mb-3 border-b border-gray-200 pb-1">Futebol: Brasil</h3><label class="flex items-center gap-2 mb-2 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/bra.1" class="w-4 h-4 text-jornal-blue" /><span class="text-sm font-bold text-gray-700">Série A</span></label><label class="flex items-center gap-2 mb-2 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/bra.2" class="w-4 h-4 text-jornal-blue" /><span class="text-sm font-bold text-gray-700">Série B</span></label><label class="flex items-center gap-2 mb-2 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/bra.copa_do_brasil" class="w-4 h-4 text-jornal-blue" /><span class="text-sm font-bold text-gray-700">Copa do Brasil</span></label></div>
+                        <div class="p-4 bg-gray-50 border border-gray-200 rounded-sm"><h3 class="text-[10px] font-black uppercase tracking-widest text-green-700 mb-3 border-b border-gray-200 pb-1">Internacional</h3><label class="flex items-center gap-2 mb-2 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/conmebol.libertadores" class="w-4 h-4 text-jornal-blue" /><span class="text-sm font-bold text-gray-700">Libertadores</span></label><label class="flex items-center gap-2 mb-2 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/conmebol.sudamericana" class="w-4 h-4 text-jornal-blue" /><span class="text-sm font-bold text-gray-700">Sul-Americana</span></label><label class="flex items-center gap-2 mb-2 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/uefa.champions" class="w-4 h-4 text-jornal-blue" /><span class="text-sm font-bold text-gray-700">Champions</span></label></div>
+                        <div class="p-4 bg-gray-50 border border-gray-200 rounded-sm"><h3 class="text-[10px] font-black uppercase tracking-widest text-orange-600 mb-3 border-b border-gray-200 pb-1">Basquete & Ténis</h3><label class="flex items-center gap-2 mb-2 cursor-pointer"><input type="checkbox" name="liga-placar" value="basketball/nba" class="w-4 h-4 text-jornal-blue" /><span class="text-sm font-bold text-gray-700">NBA</span></label></div>
                     </div>
-                    <div class="pt-4 border-t border-gray-200 flex justify-end">
-                        <button type="submit" id="btn-salvar-placar" class="w-full md:w-auto bg-jornal-blue text-white font-black px-10 py-3 uppercase text-sm rounded-sm">Salvar Ligas</button>
-                    </div>
+                    <div class="pt-4 border-t border-gray-200 flex justify-end"><button type="submit" id="btn-salvar-placar" class="bg-jornal-blue text-white font-black px-10 py-3 uppercase text-sm rounded-sm">Salvar Ligas</button></div>
                 </form>
             </div>
         </main>
     </div>
 
-    <!-- TELA OCULTA PARA DESENHAR O POST DO INSTAGRAM -->
     <canvas id="ig-canvas" width="1080" height="1080" class="hidden"></canvas>
 
-    <!-- JAVASCRIPT GLOBAL DO ADMIN -->
     <script>
         var IMG_FALLBACK = 'https://placehold.co/600x400/e2e8f0/475569?text=Sem+Foto';
 
@@ -533,81 +475,69 @@
                 var s = String(url).trim();
                 var m = s.match(/\/d\/([a-zA-Z0-9_-]+)/) || s.match(/id=([a-zA-Z0-9_-]+)/);
                 return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w1200' : s;
-            } catch(e) { 
-                return url; 
-            }
+            } catch(e) { return url; }
         }
 
         var noticiasGlobais = [];
         var propagandasGlobais = [];
         var configuracoesGlobais = {};
-        var listaCategoriasLocais = ['Política', 'Cidades'];
+        var listaCategoriasLocais = ['Política', 'Cidades', 'Economia', 'Esportes'];
         var novaCorLogo = "";
         var iconeLogoAtual = undefined;
         var novaLogoHtml = "";
-        
-        var relacionadasSelecionadas = []; // Guarda os IDs das matérias relacionadas
+        var relacionadasSelecionadas = [];
 
         document.addEventListener("DOMContentLoaded", function() {
             try { 
                 if (localStorage.getItem('admin_logado') === 'true') { 
                     ativarModoLogado(); 
                 } else {
-                    document.getElementById('loading-principal').classList.add('hidden');
+                    document.getElementById('loading-noticias').classList.add('hidden');
                     abrirModalLogin();
                 }
             } catch (e) {
-                document.getElementById('loading-principal').classList.add('hidden');
+                document.getElementById('loading-noticias').classList.add('hidden');
             }
         });
 
         function carregarDadosAdmin() {
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                document.getElementById('loading-principal').classList.remove('hidden');
-                
+                document.getElementById('loading-noticias').classList.remove('hidden');
                 window.google.script.run.withSuccessHandler(function(res) {
-                    document.getElementById('loading-principal').classList.add('hidden');
-                    
+                    document.getElementById('loading-noticias').classList.add('hidden');
                     var d = typeof res === 'string' ? JSON.parse(res) : res;
                     if (d && d.sucesso) { 
                         noticiasGlobais = d.noticias || [];
                         propagandasGlobais = d.propagandas || [];
                         configuracoesGlobais = d.config || {};
-                        listaCategoriasLocais = d.categorias || [];
                         
-                        if (configuracoesGlobais['ChaveIA']) { 
-                            var ic = document.getElementById('config-chave-ia'); 
-                            if (ic) ic.value = configuracoesGlobais['ChaveIA']; 
+                        if (d.categorias && d.categorias.length > 0) {
+                            listaCategoriasLocais = d.categorias;
                         }
+                        
+                        if (configuracoesGlobais['ChaveIA']) { document.getElementById('config-chave-ia').value = configuracoesGlobais['ChaveIA']; }
                         if (configuracoesGlobais['soc-inst-url']) document.getElementById('soc-inst-url').value = configuracoesGlobais['soc-inst-url'];
                         if (configuracoesGlobais['soc-fb-url']) document.getElementById('soc-fb-url').value = configuracoesGlobais['soc-fb-url'];
                         if (configuracoesGlobais['soc-x-url']) document.getElementById('soc-x-url').value = configuracoesGlobais['soc-x-url'];
+                        if (configuracoesGlobais['soc-yt-url']) document.getElementById('soc-yt-url').value = configuracoesGlobais['soc-yt-url'];
 
                         if (configuracoesGlobais['IconeLogoBase64']) {
                             window.iconeLogoAtual = configuracoesGlobais['IconeLogoBase64'];
-                            var previewIcone = document.getElementById('preview-icone-admin');
-                            if (previewIcone) {
-                                previewIcone.src = window.iconeLogoAtual;
-                                previewIcone.classList.remove('hidden');
-                                document.getElementById('btn-remover-icone').classList.remove('hidden');
-                            }
+                            var prev = document.getElementById('preview-icone-admin');
+                            if (prev) { prev.src = window.iconeLogoAtual; prev.classList.remove('hidden'); document.getElementById('btn-remover-icone').classList.remove('hidden'); }
                         }
                         
-                        atualizarFiltroEditoriasAdmin(); // Define dropdowns
                         carregarListaEdicao(); 
                         renderizarTabelaAnuncios();
                         renderizarChecklistCategoriasAdmin(); 
                         preencherFormCapa();
                         preencherFormPlacar();
-                    } else { 
-                        mostrarMensagem(d ? d.erro : "Resposta inválida.", "erro"); 
-                    }
+                    } else { mostrarMensagem(d ? d.erro : "Resposta inválida.", "erro"); }
                 }).withFailureHandler(function(err) {
-                    document.getElementById('loading-principal').classList.add('hidden'); 
+                    document.getElementById('loading-noticias').classList.add('hidden'); 
                     mostrarMensagem("Falha de Servidor: " + err.message, "erro");
                 }).getHomeData();
             } else {
-                document.getElementById('loading-principal').classList.add('hidden'); 
                 mostrarMensagem("A ligação ao servidor Google não foi estabelecida.", "erro");
             }
         }
@@ -616,41 +546,124 @@
             return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
         }
 
-        // ====== FUNÇÕES DA TABELA DE NOTÍCIAS & FILTROS GLOBAIS ====== //
+        function abrirModalLogin() { document.getElementById('modalLogin').classList.remove('hidden'); document.getElementById('modalLogin').classList.add('flex'); }
+        function fecharModalLogin() { document.getElementById('modalLogin').classList.add('hidden'); }
+
+        function mostrarMensagem(mensagem, tipo) {
+            var toast = document.getElementById('toast'); document.getElementById('toast-msg').innerText = mensagem;
+            toast.className = (tipo === 'erro') ? 'fixed top-5 right-5 px-6 py-4 font-bold shadow-xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-white border-red-600 text-red-600 rounded-sm' : 'fixed top-5 right-5 px-6 py-4 font-bold shadow-xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-jornal-dark border-jornal-dark text-white rounded-sm';
+            document.getElementById('toast-icon').innerHTML = (tipo === 'erro') ? '⚠️' : '✓';
+            toast.classList.remove('hidden'); setTimeout(function() { toast.classList.add('hidden'); }, 4500);
+        }
+
+        function fazerLogin(e) {
+            e.preventDefault(); 
+            var u = document.getElementById('login-user').value; var p = document.getElementById('login-pass').value; 
+            var btn = document.getElementById('btn-fazer-login'); btn.innerHTML = "A VERIFICAR..."; btn.disabled = true;
+
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    var payload = (res && res.result !== undefined) ? (typeof res.result === 'string' ? JSON.parse(res.result) : res.result) : (typeof res === 'string' ? JSON.parse(res) : res);
+                    if (payload && payload.sucesso) { 
+                        try { localStorage.setItem('admin_logado', 'true'); } catch(err) {} 
+                        ativarModoLogado(); fecharModalLogin(); 
+                    } else { mostrarMensagem(payload ? payload.erro : "Resposta inválida.", 'erro'); }
+                    btn.innerHTML = "ENTRAR NO PAINEL"; btn.disabled = false;
+                }).withFailureHandler(function(erro) {
+                    mostrarMensagem("Falha na rede: " + erro.message, 'erro'); btn.innerHTML = "ENTRAR NO PAINEL"; btn.disabled = false;
+                }).verificarLogin(u, p);
+            }
+        }
+
+        function ativarModoLogado() {
+            document.getElementById('loading-noticias').classList.add('hidden');
+            document.getElementById('view-admin').classList.remove('hidden'); 
+            document.getElementById('view-admin').classList.add('flex');
+            carregarDadosAdmin();
+            mudarAbaAd('entre'); // Inicializar as tabs de anúncios
+        }
+
+        function encerrarSessao() {
+            try { localStorage.removeItem('admin_logado'); } catch(err) {}
+            document.getElementById('view-admin').classList.add('hidden'); document.getElementById('view-admin').classList.remove('flex');
+            abrirModalLogin(); mostrarMensagem('Sessão encerrada com sucesso.');
+        }
+
+        function irParaPortal() { window.location.href = 'index_simples.html'; }
+
+        function alternarAbaAdmin(abaId) {
+            ['form-noticia-container', 'lista-noticias-container', 'form-logo-container', 'form-propaganda-container', 'form-social-container', 'form-placar-container', 'form-capa-container'].forEach(function(id) { 
+                var el = document.getElementById(id); if(el) el.classList.add('hidden'); 
+            });
+            ['aba-noticia', 'aba-lista', 'aba-logo', 'aba-propaganda', 'aba-social', 'aba-placar', 'aba-capa'].forEach(function(id) { 
+                var el = document.getElementById(id); if(el) el.className = "py-3 md:py-2 px-4 md:px-6 font-bold text-xs md:text-sm bg-gray-200 text-gray-600 hover:bg-gray-300 uppercase tracking-wider whitespace-nowrap rounded-t-sm"; 
+            });
+            
+            var targetEl = document.getElementById(abaId); if(targetEl) targetEl.classList.remove('hidden');
+            var botaoId = ""; var classAtiva = "bg-jornal-blue text-white";
+            
+            if (abaId === 'form-noticia-container') { botaoId = 'aba-noticia'; }
+            else if (abaId === 'lista-noticias-container') { botaoId = 'aba-lista'; }
+            else if (abaId === 'form-capa-container') { botaoId = 'aba-capa'; classAtiva = "bg-emerald-600 text-white"; preencherFormCapa(); }
+            else if (abaId === 'form-logo-container') { botaoId = 'aba-logo'; classAtiva = "bg-purple-100 text-purple-700"; }
+            else if (abaId === 'form-propaganda-container') { botaoId = 'aba-propaganda'; mudarAbaAd('entre'); }
+            else if (abaId === 'form-social-container') { botaoId = 'aba-social'; }
+            else if (abaId === 'form-placar-container') { botaoId = 'aba-placar'; preencherFormPlacar(); }
+            
+            var btnEl = document.getElementById(botaoId); if(btnEl) btnEl.className = 'py-3 md:py-2 px-4 md:px-6 font-bold text-xs md:text-sm uppercase tracking-wider whitespace-nowrap rounded-t-sm ' + classAtiva;
+            if (abaId === 'lista-noticias-container') carregarListaEdicao();
+        }
+
         window.atualizarFiltroEditoriasAdmin = function() {
-            var select = document.getElementById('filtro-editoria-materia');
-            if (!select) return;
-            
-            var valorAtual = select.value || '';
-            var categoriasUnicas = [];
-            
+            var select = document.getElementById('filtro-editoria-materia'); if (!select) return;
+            var valorAtual = select.value || ''; var categoriasUnicas = [];
             noticiasGlobais.forEach(function(n) {
                 if (n && n.categoria) {
                     String(n.categoria).split(',').forEach(function(cat) {
-                        var cTrim = cat.trim();
-                        if (cTrim && categoriasUnicas.indexOf(cTrim) === -1) {
-                            categoriasUnicas.push(cTrim);
-                        }
+                        var cTrim = cat.trim(); if (cTrim && categoriasUnicas.indexOf(cTrim) === -1) categoriasUnicas.push(cTrim);
                     });
                 }
             });
-            
             categoriasUnicas.sort(function(a, b) { return a.localeCompare(b, 'pt-BR'); });
-            
             var htmlOpts = '<option value="">Todas as Editorias</option>';
-            categoriasUnicas.forEach(function(c) {
-                htmlOpts += '<option value="' + c + '">' + c + '</option>';
-            });
-            
+            categoriasUnicas.forEach(function(c) { htmlOpts += '<option value="' + c + '">' + c + '</option>'; });
             select.innerHTML = htmlOpts;
             var temValor = Array.from(select.options).some(function(opt) { return opt.value === valorAtual; });
             select.value = temValor ? valorAtual : '';
         };
 
-        function carregarListaEdicao() {
-            var tbody = document.getElementById('admin-tabela-noticias'); 
-            if(!tbody) return;
+        function renderizarChecklistCategoriasAdmin() {
+            var checklistAdmin = document.getElementById('admin-categoria-checklist'); 
+            if(!checklistAdmin) return;
+            checklistAdmin.innerHTML = '';
+            listaCategoriasLocais.forEach(function(c) { 
+                checklistAdmin.innerHTML += '<label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700"><input type="checkbox" name="admin-categorias-checkbox" value="' + c + '" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-300" onchange="verificarCategoriaCidade()" /> ' + c.toUpperCase() + '</label>'; 
+            });
+            window.atualizarFiltroEditoriasAdmin();
+        }
 
+        function verificarCategoriaCidade() {
+            var cbs = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
+            var isCidades = Array.from(cbs).some(function(cb) { return normalizarTextoFiltro(cb.value) === 'cidades'; });
+            var containerCid = document.getElementById('container-cidade');
+            var inputCid = document.getElementById('admin-nome-cidade');
+            if (containerCid) {
+                if (isCidades) { containerCid.classList.remove('hidden'); if(inputCid) inputCid.required = true; } 
+                else { containerCid.classList.add('hidden'); if(inputCid) { inputCid.value = ''; inputCid.required = false; } }
+            }
+        }
+
+        function novaCategoria() {
+            var nome = prompt("Escreva o nome da nova editoria:"); if(!nome) return;
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) { 
+                    if(res && res.sucesso) { mostrarMensagem("Editoria adicionada!"); carregarDadosAdmin(); } 
+                }).adicionarCategoriaNoSheets({nome: nome});
+            }
+        }
+
+        function carregarListaEdicao() {
+            var tbody = document.getElementById('admin-tabela-noticias'); if(!tbody) return;
             var termoBusca = normalizarTextoFiltro(document.getElementById('filtro-busca-materia') ? document.getElementById('filtro-busca-materia').value : '');
             var editoriaFiltro = normalizarTextoFiltro(document.getElementById('filtro-editoria-materia') ? document.getElementById('filtro-editoria-materia').value : '');
 
@@ -658,863 +671,381 @@
                 if (!n) return false;
                 var editoriasStr = normalizarTextoFiltro(n.categoria || '');
                 var textoMateria = normalizarTextoFiltro([n.titulo, n.linhaFina, n.autor].join(' '));
-                
                 var matchEditoria = editoriaFiltro === '' || editoriasStr.indexOf(editoriaFiltro) !== -1;
                 var matchBusca = termoBusca === '' || textoMateria.indexOf(termoBusca) !== -1;
-                
                 return matchEditoria && matchBusca;
             });
 
             tbody.innerHTML = '';
-            
-            if (noticiasFiltradas.length === 0) { 
-                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-xs text-gray-500 font-bold bg-white">Nenhuma matéria encontrada.</td></tr>'; 
-                return; 
-            }
+            if (noticiasFiltradas.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-xs text-gray-500 font-bold bg-white">Nenhuma matéria encontrada.</td></tr>'; return; }
             
             noticiasFiltradas.forEach(function(n) {
                 var statusVal = n.status ? n.status.toLowerCase() : 'inativa'; 
-                var isAtivo = statusVal === 'ativa';
-                var isAgendada = statusVal === 'agendada';
+                var isAtivo = statusVal === 'ativa'; var isAgendada = statusVal === 'agendada';
                 var txtStatus = isAtivo ? 'ATIVO' : (isAgendada ? 'AGENDADO' : 'INATIVO');
                 var corStatus = isAtivo ? 'text-gray-600' : (isAgendada ? 'text-amber-500' : 'text-gray-400');
                 
-                var tr = document.createElement('tr');
-                tr.className = 'hover:bg-gray-50 border-b border-gray-100 transition-colors';
-                tr.innerHTML = `
-                    <td class="p-3 text-[10px] text-gray-500 tracking-wider">${n.dataHora || ''}</td>
-                    <td class="p-3"><span class="bg-gray-100 border border-gray-200 text-gray-700 px-2.5 py-1 rounded-sm text-[9px] uppercase font-bold tracking-widest">${n.categoria || 'Geral'}</span></td>
-                    <td class="p-3 font-serif font-bold text-jornal-dark text-sm truncate max-w-[250px]" title="${n.titulo}">${n.titulo || ''}</td>
-                    <td class="p-3 text-center text-xs font-black text-jornal-blue">👁️ ${n.views || 0}</td>
-                    <td class="p-3 text-center">
-                        <div class="flex justify-center items-center"><label class="relative inline-flex items-center cursor-pointer select-none">
-                        <input type="checkbox" class="sr-only peer" ${isAtivo ? 'checked' : ''} onchange="alterarStatusRapido('${n.id}', this)" />
-                        <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-emerald-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
-                        <span class="ml-2 text-[9px] font-bold ${corStatus} select-none uppercase tracking-widest inline-block w-14 text-left">${txtStatus}</span></label></div>
-                    </td>
-                    <td class="p-3 text-center flex gap-2 justify-center items-center">
-                        <button type="button" onclick="compartilharInstagram('${n.id}')" class="text-[9px] font-black text-white bg-gradient-to-tr from-fuchsia-600 to-pink-500 px-3 py-1.5 rounded-sm hover:opacity-90 shadow-sm transition-opacity tracking-widest uppercase">Post IG</button>
-                        <button type="button" onclick="editarNoticia('${n.id}')" class="text-[9px] font-bold text-jornal-blue border border-gray-300 px-3 py-1.5 rounded-sm hover:bg-gray-100 shadow-sm uppercase tracking-widest">Editar</button>
-                        <button type="button" onclick="apagarMateria('${n.id}')" class="text-[9px] font-bold text-red-500 border border-red-200 px-3 py-1.5 rounded-sm hover:bg-red-50 shadow-sm uppercase tracking-widest">Excluir</button>
-                    </td>`;
+                var tr = document.createElement('tr'); tr.className = 'hover:bg-gray-50 transition-colors';
+                tr.innerHTML = '<td class="p-4 text-[10px] text-gray-500 tracking-wider">' + (n.dataHora || '') + '</td>' +
+                    '<td class="p-4"><span class="bg-gray-100 border border-gray-200 text-gray-700 px-2.5 py-1 rounded-sm text-[9px] uppercase font-bold tracking-widest">' + (n.categoria || 'Geral') + '</span></td>' +
+                    '<td class="p-4 font-serif font-bold text-jornal-dark text-sm truncate max-w-[250px]" title="' + n.titulo + '">' + (n.titulo || '') + '</td>' +
+                    '<td class="p-4 text-center text-xs font-black text-jornal-blue">👁️ ' + (n.views || 0) + '</td>' +
+                    '<td class="p-4 text-center"><div class="flex justify-center items-center"><label class="relative inline-flex items-center cursor-pointer select-none">' +
+                    '<input type="checkbox" class="sr-only peer" ' + (isAtivo ? 'checked' : '') + ' onchange="alterarStatusRapido(\'' + n.id + '\', this)" />' +
+                    '<div class="w-9 h-5 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-emerald-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[\'\'] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>' +
+                    '<span class="ml-2 text-[9px] font-bold ' + corStatus + ' select-none uppercase tracking-widest inline-block w-14 text-left">' + txtStatus + '</span></label></div></td>' +
+                    '<td class="p-4 text-center flex gap-2 justify-center items-center">' +
+                    '<button type="button" onclick="compartilharInstagram(\'' + n.id + '\')" class="text-[9px] font-black text-white bg-gradient-to-tr from-fuchsia-600 to-pink-500 px-3 py-1.5 rounded-sm hover:opacity-90 shadow-sm uppercase">Post IG</button>' +
+                    '<button type="button" onclick="editarNoticia(\'' + n.id + '\')" class="text-[9px] font-bold text-jornal-blue border border-gray-300 px-3 py-1.5 rounded-sm hover:bg-gray-100 shadow-sm uppercase">Editar</button>' +
+                    '<button type="button" onclick="apagarMateria(\'' + n.id + '\')" class="text-[9px] font-bold text-red-500 border border-red-200 px-3 py-1.5 rounded-sm hover:bg-red-50 shadow-sm uppercase">Excluir</button>' +
+                    '</td>';
                 tbody.appendChild(tr);
             });
         }
 
-        // ====== FUNÇÕES DA TABELA DE ANÚNCIOS ====== //
-        function renderizarTabelaAnuncios() {
-            var tbody = document.getElementById('admin-tabela-anuncios'); 
-            if(!tbody) return;
-            tbody.innerHTML = '';
-            
-            if (propagandasGlobais.length === 0) { 
-                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-xs text-gray-500 font-bold bg-white">Nenhum anúncio criado.</td></tr>'; 
-                return; 
-            }
-            
-            propagandasGlobais.forEach(function(p) {
-                var isAtivo = String(p.status).toLowerCase() === 'ativa';
-                var txtStatus = isAtivo ? 'ATIVO' : 'INATIVO';
-                var corStatus = isAtivo ? 'text-gray-600' : 'text-gray-400';
-                
-                var tr = document.createElement('tr');
-                tr.className = 'hover:bg-gray-50 border-b border-gray-100 transition-colors';
-                tr.innerHTML = `
-                    <td class="p-3 font-bold text-jornal-dark text-xs">${p.empresa || 'Sem Nome'}</td>
-                    <td class="p-3"><span class="bg-blue-50 text-jornal-blue border border-blue-100 px-2 py-1 rounded-sm text-[9px] uppercase font-bold tracking-widest">${p.local || 'Geral'}</span></td>
-                    <td class="p-3 text-center text-xs font-black text-gray-500">👁️ ${p.views || 0}</td>
-                    <td class="p-3 text-center text-xs font-black text-emerald-600">🖱️ ${p.clicks || 0}</td>
-                    <td class="p-3 text-center">
-                        <div class="flex justify-center items-center"><label class="relative inline-flex items-center cursor-pointer select-none">
-                        <input type="checkbox" class="sr-only peer" ${isAtivo ? 'checked' : ''} onchange="alterarStatusAdRapido('${p.id}', this)" />
-                        <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-emerald-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
-                        <span class="ml-2 text-[9px] font-bold ${corStatus} select-none uppercase tracking-widest inline-block w-14 text-left">${txtStatus}</span></label></div>
-                    </td>
-                    <td class="p-3 text-center">
-                        <button type="button" onclick="apagarAnuncio('${p.id}')" class="text-[9px] font-bold text-red-500 border border-red-200 px-3 py-1.5 rounded-sm hover:bg-red-50 shadow-sm uppercase tracking-widest">Excluir Ad</button>
-                    </td>`;
-                tbody.appendChild(tr);
-            });
+        function alterarStatusRapido(id, checkbox) {
+            var isAtivo = checkbox.checked; var labelSpan = checkbox.nextElementSibling.nextElementSibling; 
+            if (labelSpan) { labelSpan.innerText = isAtivo ? 'ATIVO' : 'INATIVO'; labelSpan.className = 'ml-2 text-[9px] font-bold ' + (isAtivo ? 'text-gray-600' : 'text-gray-400') + ' select-none uppercase tracking-widest inline-block w-14 text-left'; }
+            window.google.script.run.withSuccessHandler(function(res) { mostrarMensagem('Visibilidade atualizada!'); carregarDadosAdmin(); }).alternarStatusNoticia(id);
         }
 
-        function alterarStatusAdRapido(id, checkbox) {
-            var isAtivo = checkbox.checked; 
-            var labelSpan = checkbox.nextElementSibling.nextElementSibling; 
-            if (labelSpan) {
-                labelSpan.innerText = isAtivo ? 'ATIVO' : 'INATIVO';
-                labelSpan.className = 'ml-2 text-[9px] font-bold ' + (isAtivo ? 'text-gray-600' : 'text-gray-400') + ' select-none uppercase tracking-widest inline-block w-14 text-left';
-            }
-            
-            window.google.script.run.withSuccessHandler(function(res) { 
-                mostrarMensagem('Anúncio atualizado.'); 
-                carregarDadosAdmin(); 
-            }).alternarStatusPropaganda(id);
+        function apagarMateria(id) {
+            if(!confirm("Atenção! Vai eliminar a notícia permanentemente.")) return;
+            window.google.script.run.withSuccessHandler(function(res) { carregarDadosAdmin(); mostrarMensagem('Matéria apagada.'); }).excluirNoticia(id);
         }
 
-        function apagarAnuncio(id) {
-            if(!confirm("Eliminar este anúncio permanentemente?")) return;
-            window.google.script.run.withSuccessHandler(function(res) { 
-                mostrarMensagem('Anúncio excluído.'); 
-                carregarDadosAdmin(); 
-            }).excluirPropaganda(id);
-        }
-
-        // ====== FUNÇÕES GERAIS DE ADMIN ====== //
-        function abrirModalLogin() { 
-            document.getElementById('modalLogin').style.display = 'flex'; 
-        }
-
-        function fecharModalLogin() { 
-            document.getElementById('modalLogin').style.display = 'none'; 
-        }
-
-        function mostrarMensagem(mensagem, tipo) {
-            if(tipo === undefined) tipo = 'sucesso'; 
-            var toast = document.getElementById('toast'); 
-            document.getElementById('toast-msg').innerText = mensagem;
-            
-            if(tipo === 'erro') {
-                toast.className = 'fixed top-5 right-5 px-6 py-4 font-bold shadow-xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-white border-red-600 text-red-600 rounded-sm';
-                document.getElementById('toast-icon').innerHTML = '⚠️';
-            } else {
-                toast.className = 'fixed top-5 right-5 px-6 py-4 font-bold shadow-xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-jornal-dark border-jornal-dark text-white rounded-sm';
-                document.getElementById('toast-icon').innerHTML = '✓';
-            }
-            
-            toast.classList.remove('hidden'); 
-            setTimeout(function() { toast.classList.add('hidden'); }, 4500);
-        }
-
-        function fazerLogin(e) {
-            e.preventDefault(); 
-            var u = document.getElementById('login-user').value; 
-            var p = document.getElementById('login-pass').value; 
-            var btn = document.getElementById('btn-fazer-login'); 
-            btn.innerHTML = "A VERIFICAR..."; btn.disabled = true;
-
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.withSuccessHandler(function(res) {
-                    var payload = res;
-                    if (res && res.result !== undefined) payload = typeof res.result === 'string' ? JSON.parse(res.result) : res.result;
-                    else if (typeof res === 'string') try { payload = JSON.parse(res); } catch(e) {}
-                    
-                    if (payload && payload.sucesso) { 
-                        try { localStorage.setItem('admin_logado', 'true'); } catch(err) {} 
-                        ativarModoLogado(); 
-                        fecharModalLogin(); 
-                    } else { 
-                        mostrarMensagem(payload ? payload.erro : "Resposta inválida.", 'erro'); 
-                    }
-                    btn.innerHTML = "ENTRAR NO PAINEL"; btn.disabled = false;
-                }).withFailureHandler(function(erro) {
-                    mostrarMensagem("Falha na rede: " + erro.message, 'erro'); 
-                    btn.innerHTML = "ENTRAR NO PAINEL"; btn.disabled = false;
-                }).verificarLogin(u, p);
-            }
-        }
-
-        function ativarModoLogado() {
-            document.getElementById('loading-principal').classList.add('hidden');
-            document.getElementById('view-admin').style.display = 'flex'; 
-            carregarDadosAdmin();
-        }
-
-        function encerrarSessao() {
-            try { localStorage.removeItem('admin_logado'); } catch(err) {}
-            document.getElementById('view-admin').style.display = 'none'; 
-            abrirModalLogin();
-            mostrarMensagem('Sessão encerrada com sucesso.');
-        }
-        
-        function alternarAbaAdmin(abaId) {
-            var contentIds = ['form-noticia-container', 'lista-noticias-container', 'form-logo-container', 'form-propaganda-container', 'form-social-container', 'form-placar-container', 'form-capa-container'];
-            contentIds.forEach(function(id) { var el = document.getElementById(id); if(el) el.classList.add('hidden'); });
-            
-            var tabIds = ['aba-noticia', 'aba-lista', 'aba-logo', 'aba-propaganda', 'aba-social', 'aba-placar', 'aba-capa'];
-            tabIds.forEach(function(id) { var el = document.getElementById(id); if(el) el.className = "py-3 md:py-2 px-4 md:px-6 font-bold text-xs md:text-sm bg-gray-200 text-gray-600 hover:bg-gray-300 uppercase tracking-wider whitespace-nowrap rounded-t-sm"; });
-            
-            var targetEl = document.getElementById(abaId); 
-            if(targetEl) targetEl.classList.remove('hidden');
-            
-            var botaoId = ""; var classAtiva = "bg-jornal-blue text-white";
-            
-            if (abaId === 'form-noticia-container') { botaoId = 'aba-noticia'; }
-            else if (abaId === 'lista-noticias-container') { botaoId = 'aba-lista'; }
-            else if (abaId === 'form-capa-container') { botaoId = 'aba-capa'; classAtiva = "bg-emerald-600 text-white"; preencherFormCapa(); }
-            else if (abaId === 'form-logo-container') { botaoId = 'aba-logo'; classAtiva = "bg-purple-100 text-purple-700"; }
-            else if (abaId === 'form-propaganda-container') { botaoId = 'aba-propaganda'; }
-            else if (abaId === 'form-social-container') { botaoId = 'aba-social'; }
-            else if (abaId === 'form-placar-container') { botaoId = 'aba-placar'; preencherFormPlacar(); }
-            
-            var btnEl = document.getElementById(botaoId); 
-            if(btnEl) btnEl.className = 'py-3 md:py-2 px-4 md:px-6 font-bold text-xs md:text-sm uppercase tracking-wider whitespace-nowrap rounded-t-sm ' + classAtiva;
-            
-            if (abaId === 'lista-noticias-container') carregarListaEdicao();
-        }
-
-        // ====== FUNÇÕES DA CAPA & REDES SOCIAIS ====== //
-        function preencherFormCapa() {
-            var container = document.getElementById('selects-capa-container'); 
-            if(!container) return;
-            var html = ''; var ordemAtual = [];
-            if(configuracoesGlobais['CategoriasCapa']) { try { ordemAtual = JSON.parse(configuracoesGlobais['CategoriasCapa']); } catch(e){} }
-            for(var i=1; i<=8; i++) {
-                var valorAtual = ordemAtual.length >= i ? ordemAtual[i-1] : '';
-                html += '<div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Posição ' + i + '</label>';
-                html += '<select id="capa-pos-' + i + '" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm font-bold uppercase rounded-sm focus:border-emerald-500 focus:outline-none"><option value="">-- NENHUMA --</option>';
-                listaCategoriasLocais.forEach(function(c) { html += '<option value="' + c + '"' + (c === valorAtual ? ' selected' : '') + '>' + c + '</option>'; });
-                html += '</select></div>';
-            }
-            container.innerHTML = html;
-        }
-
-        function salvarOrdemCapa(e) {
-            e.preventDefault(); 
-            var btn = document.getElementById('btn-salvar-capa'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
-            var selecionadas = [];
-            for(var i=1; i<=8; i++) { 
-                var val = document.getElementById('capa-pos-' + i).value; 
-                if(val) selecionadas.push(val); 
-            }
-            var jsonStr = JSON.stringify(selecionadas);
-            window.google.script.run.withSuccessHandler(function() {
-                mostrarMensagem("Ordem da capa atualizada!"); 
-                configuracoesGlobais['CategoriasCapa'] = jsonStr; 
-                btn.innerHTML = txt; btn.disabled = false; 
-            }).salvarConfiguracaoHTMLCustom('CategoriasCapa', jsonStr);
-        }
-
-        function salvarChaveIA() {
-            var val = document.getElementById('config-chave-ia').value.trim(); 
-            var btn = document.getElementById('btn-salvar-chave'); var txt = btn.innerText; btn.innerText = 'A GUARDAR...'; btn.disabled = true;
-            window.google.script.run.withSuccessHandler(function() {
-                mostrarMensagem('Chave da IA guardada com sucesso!'); 
-                configuracoesGlobais['ChaveIA'] = val; 
-                btn.innerText = txt; btn.disabled = false;
-            }).salvarConfiguracaoHTMLCustom('ChaveIA', val);
-        }
-
-        function salvarPlacarAoVivo(e) {
-            e.preventDefault(); 
-            var btn = document.getElementById('btn-salvar-placar'); btn.innerText = "A SALVAR..."; btn.disabled = true;
-            var checkboxes = document.querySelectorAll('input[name="liga-placar"]:checked'); 
-            var ligasSelecionadas = Array.from(checkboxes).map(function(cb) { return cb.value; });
-            window.google.script.run.withSuccessHandler(function(res) { 
-                mostrarMensagem("Placar atualizado!"); 
-                btn.innerText = "Salvar Ligas"; btn.disabled = false; 
-                configuracoesGlobais['LigasPlacar'] = JSON.stringify(ligasSelecionadas); 
-            }).salvarConfiguracaoHTMLCustom("LigasPlacar", JSON.stringify(ligasSelecionadas));
-        }
-
-        function preencherFormPlacar() {
-            var ligasAtivas = []; 
-            if (configuracoesGlobais['LigasPlacar']) { try { ligasAtivas = JSON.parse(configuracoesGlobais['LigasPlacar']); } catch(e){} }
-            document.querySelectorAll('input[name="liga-placar"]').forEach(function(cb) { cb.checked = ligasAtivas.indexOf(cb.value) !== -1; });
-        }
-
-        function salvarRedesSociais(e) { 
-            e.preventDefault(); 
-            var btn = document.getElementById('btn-salvar-sociais'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
-            window.google.script.run.salvarConfiguracaoHTMLCustom('soc-inst-url', document.getElementById('soc-inst-url').value);
-            window.google.script.run.salvarConfiguracaoHTMLCustom('soc-fb-url', document.getElementById('soc-fb-url').value);
-            window.google.script.run.salvarConfiguracaoHTMLCustom('soc-x-url', document.getElementById('soc-x-url').value);
-            window.google.script.run.withSuccessHandler(function() { 
-                mostrarMensagem("Redes sociais atualizadas!"); btn.innerHTML = txt; btn.disabled = false; carregarDadosAdmin(); 
-            }).salvarConfiguracaoHTMLCustom('soc-yt-url', document.getElementById('soc-yt-url').value);
-        }
-
-        // ====== IA & LOGO ====== //
-        function renderizarLogoPreview(classes, iconeUrl) {
-            var textClasses = "bg-clip-text text-transparent " + classes;
-            var html = '<div class="flex items-center gap-3">';
-            if (iconeUrl) html += '<div style="-webkit-mask-image: url(' + iconeUrl + '); mask-image: url(' + iconeUrl + '); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center;" class="w-10 h-10 shrink-0 ' + classes + '"></div>';
-            html += '<h1 class="text-3xl font-black tracking-tighter uppercase ' + textClasses + '">NOTÍCIAS AVULSAS</h1></div>';
-            var preview = document.getElementById('preview-logo-ia');
-            if (preview) preview.innerHTML = html;
-        }
-
-        function processarIconeLogo(input) {
-            if (!input.files || !input.files[0]) return;
-            var reader = new FileReader();
-            reader.onload = function(evt) {
-                window.iconeLogoAtual = evt.target.result;
-                document.getElementById('preview-icone-admin').src = window.iconeLogoAtual;
-                document.getElementById('preview-icone-admin').classList.remove('hidden');
-                document.getElementById('btn-remover-icone').classList.remove('hidden');
-                var classesAtuais = window.novaCorLogo || configuracoesGlobais['CorLogo'] || 'bg-gradient-to-r from-blue-800 to-sky-400';
-                renderizarLogoPreview(classesAtuais, window.iconeLogoAtual);
-                document.getElementById('preview-logo-wrapper').classList.remove('hidden');
+        function compartilharInstagram(idNoticia) {
+            var noticia = noticiasGlobais.find(function(n) { return String(n.id) === String(idNoticia); });
+            if (!noticia) { mostrarMensagem("Notícia não encontrada", "erro"); return; }
+            var canvas = document.getElementById('ig-canvas'); var ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height);
+            var img = new Image(); img.crossOrigin = "Anonymous";
+            img.src = noticia.urlImagem || 'https://placehold.co/1080x1080/0f172a/ffffff?text=NOT%C3%8DCIAS+AVULSAS';
+            img.onload = function() {
+                var scale = Math.max(canvas.width / img.width, canvas.height / img.height);
+                var x = (canvas.width / 2) - (img.width / 2) * scale; var y = (canvas.height / 2) - (img.height / 2) * scale;
+                ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+                var grd = ctx.createLinearGradient(0, 0, 0, 1080); grd.addColorStop(0.3, "transparent"); grd.addColorStop(1, "rgba(15, 23, 42, 0.98)");
+                ctx.fillStyle = grd; ctx.fillRect(0, 0, 1080, 1080);
+                ctx.fillStyle = "#E11D48"; ctx.font = "bold 35px sans-serif"; ctx.fillText((noticia.categoria || 'NOTÍCIA').toUpperCase(), 80, 720);
+                ctx.fillStyle = "white"; ctx.font = "bold 65px serif"; wrapText(ctx, noticia.titulo, 80, 800, 920, 75);
+                try {
+                    var dataUrl = canvas.toDataURL("image/png"); var link = document.createElement('a');
+                    link.download = 'post_instagram_' + noticia.id + '.png'; link.href = dataUrl; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                } catch(e) { mostrarMensagem("Aviso: CORS bloqueou download da imagem. Copiamos o texto.", "erro"); }
+                var textoIG = "📰 " + noticia.titulo + "\n\n" + (noticia.linhaFina ? noticia.linhaFina + "\n\n" : "") + "Leia a matéria completa no nosso portal!\nAcesse: https://noticiasavulsas.com.br/?noticia=" + noticia.id;
+                navigator.clipboard.writeText(textoIG).then(function() {
+                    mostrarMensagem("A Imagem foi baixada e o texto copiado! A abrir o Instagram..."); setTimeout(function() { window.open('https://instagram.com', '_blank'); }, 2000);
+                }).catch(function() {
+                    prompt("Copie o texto abaixo e cole no Instagram:", textoIG); setTimeout(function() { window.open('https://instagram.com', '_blank'); }, 2000);
+                });
             };
-            reader.readAsDataURL(input.files[0]);
+            img.onerror = function() { mostrarMensagem("Falha ao carregar a imagem externa para o desenho.", "erro"); };
         }
-
-        function removerIconeLogo() {
-            window.iconeLogoAtual = "";
-            document.getElementById('preview-icone-admin').src = "";
-            document.getElementById('preview-icone-admin').classList.add('hidden');
-            document.getElementById('btn-remover-icone').classList.add('hidden');
-            document.getElementById('upload-icone-logo').value = '';
-            var classesAtuais = window.novaCorLogo || configuracoesGlobais['CorLogo'] || 'bg-gradient-to-r from-blue-800 to-sky-400';
-            renderizarLogoPreview(classesAtuais, window.iconeLogoAtual);
-        }
-
-        function gerarLogoIA() {
-            var desc = document.getElementById('prompt-logo').value.trim(); 
-            if(!desc) { mostrarMensagem("Descreva como quer o logótipo.", "erro"); document.getElementById('prompt-logo').focus(); return; }
-            var btn = document.getElementById('btn-gerar-logo'); var txt = btn.innerText; btn.innerText = "A CRIAR..."; btn.disabled = true;
-            
-            var promptFinal = "Atue como um web designer especialista em Tailwind CSS. O utilizador quer definir as cores do logótipo. O pedido do utilizador é: '" + desc + "'. Devolva APENAS as classes de BACKGROUND do Tailwind CSS necessárias para criar esse gradiente ou cor. Exemplo: bg-gradient-to-r from-blue-800 to-sky-400. Não escreva mais nada, apenas as classes separadas por espaço. Não inclua código HTML nem aspas.";
-            
-            window.google.script.run.withSuccessHandler(function(res) {
-                var payload = res; 
-                if (payload && payload.result !== undefined) payload = typeof payload.result === 'string' ? JSON.parse(payload.result) : payload.result;
-                else if (typeof payload === 'string') try { payload = JSON.parse(payload); } catch(e) {} 
-                
-                if(payload && payload.sucesso && payload.texto) {
-                    var cleanClasses = payload.texto.replace(/(\`\`\`html|\`\`\`css|\`\`\`)/gi, '').trim().replace(/class=|"|'/g, '').trim(); 
-                    window.novaCorLogo = cleanClasses; 
-                    var iconeAtual = window.iconeLogoAtual !== undefined ? window.iconeLogoAtual : configuracoesGlobais['IconeLogoBase64'];
-                    renderizarLogoPreview(cleanClasses, iconeAtual);
-                    document.getElementById('preview-logo-wrapper').classList.remove('hidden'); 
-                    mostrarMensagem("Cor e efeito gerados com sucesso!");
-                } else { mostrarMensagem("Erro na IA: " + (payload ? payload.erro : "Falha ao gerar estilo"), "erro"); }
-                btn.innerText = txt; btn.disabled = false;
-            }).withFailureHandler(function(error) {
-                mostrarMensagem("Falha na comunicação com a IA.", "erro"); btn.innerText = txt; btn.disabled = false;
-            }).chamarGeminiBackend(promptFinal);
-        }
-
-        function aplicarNovaLogo() {
-            var btn = document.getElementById('btn-aplicar-logo'); var txt = btn.innerText; btn.innerText = "A GUARDAR..."; btn.disabled = true;
-            var expectedPromises = 0; var promisesCount = 0;
-            function checkFinish() {
-                promisesCount++;
-                if (promisesCount >= expectedPromises) { mostrarMensagem('Identidade visual atualizada no site!'); btn.innerText = txt; btn.disabled = false; }
+        function wrapText(context, text, x, y, maxWidth, lineHeight) {
+            var words = text.split(' '); var line = '';
+            for(var n = 0; n < words.length; n++) {
+              var testLine = line + words[n] + ' '; var metrics = context.measureText(testLine);
+              if (metrics.width > maxWidth && n > 0) { context.fillText(line, x, y); line = words[n] + ' '; y += lineHeight; }
+              else { line = testLine; }
             }
-            if (window.novaCorLogo) { expectedPromises++; configuracoesGlobais['CorLogo'] = window.novaCorLogo; window.google.script.run.withSuccessHandler(checkFinish).salvarConfiguracaoHTMLCustom('CorLogo', window.novaCorLogo); }
-            if (window.iconeLogoAtual !== undefined) { expectedPromises++; configuracoesGlobais['IconeLogoBase64'] = window.iconeLogoAtual; window.google.script.run.withSuccessHandler(checkFinish).salvarConfiguracaoHTMLCustom('IconeLogoBase64', window.iconeLogoAtual); }
-            if (expectedPromises === 0) { mostrarMensagem('Não há alterações para guardar.', 'erro'); btn.innerText = txt; btn.disabled = false; }
+            context.fillText(line, x, y);
         }
 
-        function gerarLinhaFinaIA() {
-            var t = document.getElementById('admin-titulo').value.trim(); 
-            if(!t) { mostrarMensagem("Preencha a Manchete primeiro.", "erro"); return; }
-            var btn = document.getElementById('btn-ia-linhafina'); var txt = btn.innerText; btn.innerText = "...";
-            window.google.script.run.withSuccessHandler(function(res) {
-                var payload = res; 
-                if (payload && payload.result !== undefined) payload = typeof payload.result === 'string' ? JSON.parse(payload.result) : payload.result;
-                else if (typeof payload === 'string') try { payload = JSON.parse(payload); } catch(e) {} 
-                if(payload && payload.sucesso && payload.texto) { document.getElementById('admin-linha-fina').value = payload.texto.trim(); mostrarMensagem("Linha fina gerada!"); } else { mostrarMensagem("Erro na IA.", "erro"); }
-                btn.innerText = txt;
-            }).chamarGeminiBackend('Escreva uma linha fina curta, atrativa e jornalística (apenas texto, sem aspas) para o título: "' + t + '"');
-        }
-
-        function gerarConteudoIA() {
-            var t = document.getElementById('admin-titulo').value.trim(); 
-            if(!t) { mostrarMensagem("Preencha a Manchete primeiro.", "erro"); return; }
-            var btn = document.getElementById('btn-ia-conteudo'); var txt = btn.innerText; btn.innerText = "A escrever...";
-            var lf = document.getElementById('admin-linha-fina').value.trim();
-            var promptStr = 'Atue como um jornalista. Escreva uma notícia completa em HTML (use apenas tags <p>, <h2>, <ul> e não use a tag <html> ou <body> nem formatação markdown). Manchete: "' + t + '". ' + (lf ? 'Linha Fina: "' + lf + '"' : '');
-            window.google.script.run.withSuccessHandler(function(res) {
-                var payload = res; 
-                if (payload && payload.result !== undefined) payload = typeof payload.result === 'string' ? JSON.parse(payload.result) : payload.result;
-                else if (typeof payload === 'string') try { payload = JSON.parse(payload); } catch(e) {} 
-                if(payload && payload.sucesso && payload.texto) { document.getElementById('admin-editor-rich').innerHTML = payload.texto.replace(/(\`\`\`html|\`\`\`)/gi, '').trim(); mostrarMensagem("Texto gerado!"); } else { mostrarMensagem("Erro na IA.", "erro"); }
-                btn.innerText = txt;
-            }).chamarGeminiBackend(promptStr);
-        }
-
-        // ====== SUGESTÕES DE MATÉRIAS RELACIONADAS ====== //
         function pesquisarRelacionadasAdmin() {
             var termo = normalizarTextoFiltro(document.getElementById('input-busca-relacionadas').value);
             var divResultados = document.getElementById('lista-busca-relacionadas');
             var idIgnorar = document.getElementById('admin-id-noticia').value;
-            
-            if (termo.length < 2) {
-                divResultados.classList.add('hidden');
-                return;
-            }
-
+            if (termo.length < 2) { divResultados.classList.add('hidden'); return; }
             var resultados = noticiasGlobais.filter(function(n) {
                 if (n.id === idIgnorar) return false;
-                if (relacionadasSelecionadas.indexOf(n.id) !== -1) return false; // Ignora se já estiver na lista
-                var texto = normalizarTextoFiltro(n.titulo + ' ' + (n.linhaFina || ''));
+                if (relacionadasSelecionadas.some(function(r){return r.id === n.id})) return false;
+                var texto = normalizarTextoFiltro(n.titulo + ' ' + (n.linhaFina || '') + ' ' + (n.categoria || ''));
                 return texto.indexOf(termo) !== -1;
-            }).slice(0, 5); // Mostra até 5 resultados
-
+            }).slice(0, 5);
             if (resultados.length === 0) {
                 divResultados.innerHTML = '<div class="p-3 text-xs text-gray-500 text-center font-bold">Nenhuma matéria encontrada.</div>';
             } else {
                 divResultados.innerHTML = '';
                 resultados.forEach(function(n) {
-                    var linha = document.createElement('div');
-                    linha.className = 'p-3 hover:bg-gray-50 cursor-pointer text-xs font-bold text-gray-800 transition-colors flex justify-between items-center gap-2';
-                    linha.innerHTML = '<span class="truncate">' + n.titulo + '</span><span class="bg-jornal-blue text-white px-2 py-0.5 rounded text-[8px] uppercase tracking-widest shrink-0">Add +</span>';
-                    linha.onclick = function() { adicionarRelacionadaAdmin(n.id, n.titulo); };
-                    divResultados.appendChild(linha);
+                    var linha = document.createElement('div'); linha.className = 'p-3 hover:bg-gray-50 cursor-pointer text-xs font-bold text-gray-800 flex justify-between items-center gap-2';
+                    linha.innerHTML = '<span class="truncate">' + n.titulo + '</span><span class="bg-jornal-blue text-white px-2 py-0.5 rounded text-[8px] uppercase shrink-0">Add +</span>';
+                    linha.onclick = function() { adicionarRelacionadaAdmin(n.id, n.titulo); }; divResultados.appendChild(linha);
                 });
             }
             divResultados.classList.remove('hidden');
         }
-
         function adicionarRelacionadaAdmin(id, titulo) {
-            if (relacionadasSelecionadas.length >= 3) {
-                mostrarMensagem('Pode selecionar no máximo 3 sugestões.', 'erro');
-                return;
-            }
-            if (relacionadasSelecionadas.indexOf(id) === -1) {
-                relacionadasSelecionadas.push({id: id, titulo: titulo});
-                atualizarDOMRelacionadasAdmin();
-            }
-            document.getElementById('input-busca-relacionadas').value = '';
-            document.getElementById('lista-busca-relacionadas').classList.add('hidden');
+            if (relacionadasSelecionadas.length >= 3) { mostrarMensagem('Pode selecionar no máximo 3 sugestões.', 'erro'); return; }
+            if (!relacionadasSelecionadas.some(function(r){return r.id === id})) { relacionadasSelecionadas.push({id: id, titulo: titulo}); atualizarDOMRelacionadasAdmin(); }
+            document.getElementById('input-busca-relacionadas').value = ''; document.getElementById('lista-busca-relacionadas').classList.add('hidden');
         }
-
-        function removerRelacionadaAdmin(id) {
-            relacionadasSelecionadas = relacionadasSelecionadas.filter(function(r) { return r.id !== id; });
-            atualizarDOMRelacionadasAdmin();
-        }
-
+        function removerRelacionadaAdmin(id) { relacionadasSelecionadas = relacionadasSelecionadas.filter(function(r) { return r.id !== id; }); atualizarDOMRelacionadasAdmin(); }
         function atualizarDOMRelacionadasAdmin() {
-            var container = document.getElementById('relacionadas-selecionadas');
-            var inputHidden = document.getElementById('admin-relacionadas-ids');
-            container.innerHTML = '';
-            
+            var container = document.getElementById('relacionadas-selecionadas'); var inputHidden = document.getElementById('admin-relacionadas-ids'); container.innerHTML = '';
             relacionadasSelecionadas.forEach(function(r) {
-                var item = document.createElement('div');
-                item.className = 'flex items-center justify-between bg-white border border-blue-200 p-2 rounded shadow-sm gap-2';
-                item.innerHTML = '<span class="text-xs font-bold text-gray-700 truncate line-clamp-1 flex-grow">📰 ' + r.titulo + '</span>' +
-                                 '<button type="button" onclick="removerRelacionadaAdmin(\'' + r.id + '\')" class="text-red-500 hover:text-white hover:bg-red-500 p-1 px-2 rounded font-bold text-[10px] uppercase transition-colors shrink-0">X Remover</button>';
+                var item = document.createElement('div'); item.className = 'flex items-center justify-between bg-white border border-blue-200 p-2 rounded shadow-sm gap-2';
+                item.innerHTML = '<span class="text-xs font-bold text-gray-700 truncate flex-grow">📰 ' + r.titulo + '</span><button type="button" onclick="removerRelacionadaAdmin(\'' + r.id + '\')" class="text-red-500 hover:text-white hover:bg-red-500 p-1 px-2 rounded font-bold text-[10px] uppercase shrink-0">Remover</button>';
                 container.appendChild(item);
             });
-
-            // Grava os IDs separados por vírgula no input hidden
             inputHidden.value = relacionadasSelecionadas.map(function(r) { return r.id; }).join(',');
         }
 
-        // ====== GERADOR DE POSTS INSTAGRAM COM CANVAS ====== //
-        function compartilharInstagram(idNoticia) {
-            var noticia = noticiasGlobais.find(function(n) { return String(n.id) === String(idNoticia); });
-            if (!noticia) {
-                mostrarMensagem("Notícia não encontrada", "erro");
-                return;
-            }
-
-            var canvas = document.getElementById('ig-canvas');
-            var ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            var img = new Image();
-            img.crossOrigin = "Anonymous"; // Crucial para permitir exportação do canvas com imagens externas
-            
-            // Background Tapa-Buracos seguro
-            var placeholder = 'https://placehold.co/1080x1080/0f172a/ffffff?text=NOT%C3%8DCIAS+AVULSAS';
-            img.src = noticia.urlImagem || placeholder;
-
-            img.onload = function() {
-                // Lógica de "Object Cover" no Canvas
-                var scale = Math.max(canvas.width / img.width, canvas.height / img.height);
-                var x = (canvas.width / 2) - (img.width / 2) * scale;
-                var y = (canvas.height / 2) - (img.height / 2) * scale;
-                ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-
-                // Criar o Gradiente de Fundo (Escuro em baixo para dar leitura ao texto)
-                var grd = ctx.createLinearGradient(0, 0, 0, 1080);
-                grd.addColorStop(0.3, "transparent");
-                grd.addColorStop(1, "rgba(15, 23, 42, 0.98)"); // A cor jornal-dark
-                ctx.fillStyle = grd;
-                ctx.fillRect(0, 0, 1080, 1080);
-
-                // Adicionar Textos
-                // 1. Tag da Editoria
-                ctx.fillStyle = "#E11D48"; // Cor jornal-red
-                ctx.font = "bold 35px sans-serif";
-                ctx.fillText((noticia.categoria || 'NOTÍCIA').toUpperCase(), 80, 720);
-
-                // 2. Manchete (Com quebra de linha inteligente)
-                ctx.fillStyle = "white";
-                ctx.font = "bold 65px serif";
-                wrapText(ctx, noticia.titulo, 80, 800, 920, 75);
-
-                // Exportar Canvas para PNG
-                try {
-                    var dataUrl = canvas.toDataURL("image/png");
-                    var link = document.createElement('a');
-                    link.download = 'post_instagram_' + noticia.id + '.png';
-                    link.href = dataUrl;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                } catch(e) {
-                    mostrarMensagem("Aviso: O navegador bloqueou o download automático da imagem (CORS). Copiámos apenas o texto.", "erro");
-                }
-
-                // Copiar Texto para o Clipboard
-                var textoIG = "📰 " + noticia.titulo + "\n\n" + (noticia.linhaFina ? noticia.linhaFina + "\n\n" : "") + "Leia a matéria completa no nosso portal!\nLink na Bio ou acesse: https://noticiasavulsas.com.br/noticia/" + noticia.id;
-                
-                navigator.clipboard.writeText(textoIG).then(function() {
-                    mostrarMensagem("A Imagem foi baixada e a Linha Fina copiada! A abrir o Instagram...");
-                    setTimeout(function() {
-                        window.open('https://instagram.com', '_blank');
-                    }, 2000);
-                }).catch(function() {
-                    prompt("O seu navegador bloqueou a cópia automática. Copie o texto abaixo e cole no Instagram:", textoIG);
-                    setTimeout(function() { window.open('https://instagram.com', '_blank'); }, 2000);
-                });
-            };
-
-            img.onerror = function() {
-                mostrarMensagem("Falha ao carregar a imagem externa para o desenho.", "erro");
-            };
-        }
-
-        // Função auxiliar para quebrar o texto no Canvas se for muito longo
-        function wrapText(context, text, x, y, maxWidth, lineHeight) {
-            var words = text.split(' ');
-            var line = '';
-            for(var n = 0; n < words.length; n++) {
-              var testLine = line + words[n] + ' ';
-              var metrics = context.measureText(testLine);
-              var testWidth = metrics.width;
-              if (testWidth > maxWidth && n > 0) {
-                context.fillText(line, x, y);
-                line = words[n] + ' ';
-                y += lineHeight;
-              }
-              else {
-                line = testLine;
-              }
-            }
-            context.fillText(line, x, y);
-        }
-
-        // ====== EDITOR E UPLOAD DE IMAGENS ====== //
-        function execCmd(command, arg) { 
-            if(arg === undefined) arg = null; 
-            document.execCommand(command, false, arg); 
-            document.getElementById('admin-editor-rich').focus(); 
-        }
-
-        function inserirLinkRichEditor() { var url = prompt("Insira a URL completa do hiperlink:"); if (url) execCmd('createLink', url); }
-        function inserirImagemRichEditor() { var input = document.getElementById('upload-imagem-conteudo'); if(input) input.click(); }
-        function inserirVideoRichEditor() { var url = prompt("Insira o link do YouTube, Instagram, TikTok ou Twitter (X):"); if (url) execCmd('insertHTML', url + '<br><br>'); }
-
-        function processarUploadImagemConteudo(input) {
-            if (!input.files || !input.files[0]) return; 
-            var file = input.files[0]; 
-            var legenda = prompt("Digite a legenda para a imagem (ou deixe em branco):") || "";
-            var creditos = prompt("Digite os créditos da foto (obrigatório se houver direitos autorais):") || "";
-            var reader = new FileReader();
-            
-            reader.onload = function(e) {
-                var img = new Image();
-                img.onload = function() {
-                    var canvas = document.createElement('canvas'); var ctx = canvas.getContext('2d'); var maxWidth = 800; var scale = 1;
-                    if (img.width > maxWidth) scale = maxWidth / img.width;
-                    canvas.width = img.width * scale; canvas.height = img.height * scale; 
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    var base64Resized = canvas.toDataURL('image/jpeg', 0.8); 
-                    
-                    var htmlImg = '<br><figure style="margin: 16px auto; text-align: center; max-width: 100%; display: block;"><img src="' + base64Resized + '" style="max-width: 100%; height: auto; border-radius: 8px; display: inline-block; margin: 0 auto; border: 1px solid #e2e8f0;" />';
-                    if (legenda || creditos) {
-                        var credTexto = creditos ? 'Foto: ' + creditos : ''; var sep = (legenda && creditos) ? ' - ' : '';
-                        htmlImg += '<figcaption style="font-size: 12px; color: #64748b; margin-top: 8px; font-style: italic; text-align: center;">' + legenda + sep + credTexto + '</figcaption>';
-                    }
-                    htmlImg += '</figure><br><p>&#8203;</p>';
-                    execCmd('insertHTML', htmlImg); input.value = '';
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
         var base64StringNoticia = ""; var mimeStringNoticia = ""; var nameStringNoticia = "";
-        
         function verificarUploadMedia(input) {
-            var containerMetadados = document.getElementById('admin-imagem-metadados'); 
-            var inputCreditos = document.getElementById('admin-creditos-imagem');
+            var containerMetadados = document.getElementById('admin-imagem-metadados'); var inputCreditos = document.getElementById('admin-creditos-imagem');
+            var nomeArq = document.getElementById('nome-arquivo-noticia');
             if (input && input.files && input.files[0]) { 
                 if (containerMetadados) containerMetadados.classList.remove('hidden'); 
                 if (inputCreditos) inputCreditos.required = true; 
+                if (nomeArq) nomeArq.innerText = input.files[0].name;
             } else { 
                 var prevSrc = document.getElementById('preview-imagem').src; 
-                if (!prevSrc || prevSrc === "" || prevSrc.indexOf('via.placeholder') !== -1 || prevSrc.indexOf('placehold.co') !== -1) { 
+                if (!prevSrc || prevSrc === "" || prevSrc.indexOf('via.placeholder') !== -1) { 
                     if (containerMetadados) containerMetadados.classList.add('hidden'); 
                     if (inputCreditos) inputCreditos.required = false; 
                 } 
+                if (nomeArq) nomeArq.innerText = 'Nenhum arquivo escolhido';
             }
         }
-
         var adminArquivoInput = document.getElementById('admin-arquivo-imagem');
         if(adminArquivoInput) {
             adminArquivoInput.addEventListener('change', function(e) {
-                var file = e.target.files[0]; 
-                if (!file) { base64StringNoticia = ""; return; }
+                var file = e.target.files[0]; if (!file) { base64StringNoticia = ""; return; }
                 if (file.size > 5 * 1024 * 1024) { alert('Ficheiro excede 5MB.'); this.value = ""; return; }
                 mimeStringNoticia = file.type; nameStringNoticia = file.name;
                 var reader = new FileReader();
                 reader.onload = function(evt) { 
-                    base64StringNoticia = evt.target.result.split(',')[1]; 
-                    document.getElementById('preview-imagem').src = evt.target.result; 
-                    document.getElementById('preview-imagem').classList.remove('hidden'); 
-                    verificarUploadMedia(e.target);
+                    base64StringNoticia = evt.target.result.split(',')[1]; document.getElementById('preview-imagem').src = evt.target.result; document.getElementById('preview-imagem').classList.remove('hidden'); verificarUploadMedia(e.target);
                 };
                 reader.readAsDataURL(file);
             });
         }
 
         function limparFormNoticia() {
-            document.getElementById('form-admin').reset(); 
-            document.getElementById('admin-id-noticia').value = ""; 
-            document.getElementById('preview-imagem').classList.add('hidden'); 
-            document.getElementById('preview-imagem').src = "";
-            document.getElementById('admin-carrossel').checked = false; 
-            document.getElementById('admin-editor-rich').innerHTML = ""; 
-            document.getElementById('admin-imagem-metadados').classList.add('hidden');
-            document.getElementById('admin-creditos-imagem').required = false; 
-            document.getElementById('admin-data-fim-evento').value = ""; 
-            base64StringNoticia = "";
+            document.getElementById('form-admin').reset(); document.getElementById('admin-id-noticia').value = ""; 
+            document.getElementById('preview-imagem').classList.add('hidden'); document.getElementById('preview-imagem').src = "";
+            document.getElementById('admin-carrossel').checked = false; document.getElementById('admin-editor-rich').innerHTML = ""; 
+            document.getElementById('admin-imagem-metadados').classList.add('hidden'); document.getElementById('admin-creditos-imagem').required = false; 
+            document.getElementById('nome-arquivo-noticia').innerText = 'Nenhum arquivo escolhido';
+            base64StringNoticia = ""; relacionadasSelecionadas = []; atualizarDOMRelacionadasAdmin();
             document.querySelectorAll('input[name="admin-categorias-checkbox"]').forEach(function(cb) { cb.checked = false; });
-            
-            var campoCidade = document.getElementById('admin-cidade');
-            if (campoCidade) campoCidade.value = '';
-            
-            document.getElementById('btn-salvar-noticia').innerHTML = "Publicar Matéria"; // Volta o botão ao normal
-            
-            // Limpa as relacionadas
-            relacionadasSelecionadas = [];
-            atualizarDOMRelacionadasAdmin();
-        }
-
-        function apagarMateria(id) {
-            if(!confirm("Atenção! Vai eliminar a notícia permanentemente.")) return;
-            window.google.script.run.withSuccessHandler(function(res) { 
-                carregarDadosAdmin(); 
-                mostrarMensagem('Matéria apagada.');
-            }).excluirNoticia(id);
-        }
-
-        function alterarStatusRapido(id, checkbox) {
-            var isAtivo = checkbox.checked; 
-            var labelSpan = checkbox.nextElementSibling.nextElementSibling; 
-            if (labelSpan) {
-                labelSpan.innerText = isAtivo ? 'ATIVO' : 'INATIVO';
-                labelSpan.className = 'ml-2 text-[9px] font-bold ' + (isAtivo ? 'text-gray-600' : 'text-gray-400') + ' select-none uppercase tracking-widest inline-block w-14 text-left';
-            }
-            window.google.script.run.withSuccessHandler(function(res) { 
-                mostrarMensagem('Visibilidade atualizada!'); 
-                carregarDadosAdmin(); 
-            }).alternarStatusNoticia(id);
+            verificarCategoriaCidade(); document.getElementById('btn-salvar-noticia').innerText = "PUBLICAR MATÉRIA";
         }
 
         function editarNoticia(id) {
-            var noticia = noticiasGlobais.find(function(n) { return String(n.id) === String(id); }); 
-            if(!noticia) return;
-            
+            var noticia = noticiasGlobais.find(function(n) { return String(n.id) === String(id); }); if(!noticia) return;
             limparFormNoticia();
-            document.getElementById('admin-id-noticia').value = noticia.id; 
-            document.getElementById('admin-titulo').value = noticia.titulo || '';
-            document.getElementById('admin-linha-fina').value = noticia.linhaFina || ""; 
-            document.getElementById('admin-editor-rich').innerHTML = noticia.conteudo || '';
+            document.getElementById('admin-id-noticia').value = noticia.id; document.getElementById('admin-titulo').value = noticia.titulo || '';
+            document.getElementById('admin-linha-fina').value = noticia.linhaFina || ""; document.getElementById('admin-editor-rich').innerHTML = noticia.conteudo || '';
             document.getElementById('admin-autor').value = noticia.autor !== "da redação" ? (noticia.autor || '') : "";
             document.getElementById('admin-carrossel').checked = (String(noticia.noCarrossel) === 'true'); 
-            
-            if (noticia.dataHora) { 
-                var parts = noticia.dataHora.split(/[\/\s:]/); 
-                if (parts.length >= 5) {
-                    document.getElementById('admin-agendamento').value = parts[2] + '-' + parts[1] + '-' + parts[0] + 'T' + parts[3] + ':' + parts[4]; 
-                }
-            }
-            if (noticia.dataFimEvento) {
-                try {
-                    var dtFim = new Date(noticia.dataFimEvento);
-                    if(!isNaN(dtFim.getTime())) {
-                        var diaF = String(dtFim.getDate()).padStart(2, '0');
-                        var mesF = String(dtFim.getMonth() + 1).padStart(2, '0');
-                        var anoF = dtFim.getFullYear();
-                        var horaF = String(dtFim.getHours()).padStart(2, '0');
-                        var minF = String(dtFim.getMinutes()).padStart(2, '0');
-                        document.getElementById('admin-data-fim-evento').value = anoF + '-' + mesF + '-' + diaF + 'T' + horaF + ':' + minF;
-                    }
-                } catch(e){}
-            }
-            
+            if (noticia.dataHora) { var parts = noticia.dataHora.split(/[\/\s:]/); if (parts.length >= 5) document.getElementById('admin-agendamento').value = parts[2] + '-' + parts[1] + '-' + parts[0] + 'T' + parts[3] + ':' + parts[4]; }
+            if (noticia.dataFimEvento) { try { var dtFim = new Date(noticia.dataFimEvento); if(!isNaN(dtFim.getTime())) { document.getElementById('admin-data-fim-evento').value = dtFim.getFullYear() + '-' + String(dtFim.getMonth() + 1).padStart(2, '0') + '-' + String(dtFim.getDate()).padStart(2, '0') + 'T' + String(dtFim.getHours()).padStart(2, '0') + ':' + String(dtFim.getMinutes()).padStart(2, '0'); } } catch(e){} }
             var categoriasNoticia = String(noticia.categoria).split(',').map(function(c) { return c.trim().toLowerCase(); });
-            document.querySelectorAll('input[name="admin-categorias-checkbox"]').forEach(function(cb) { 
-                cb.checked = categoriasNoticia.indexOf(cb.value.toLowerCase()) !== -1; 
-            });
-            
-            var campoCidade = document.getElementById('admin-cidade');
-            if (campoCidade) {
-                campoCidade.value = noticia.cidade || '';
-                // Se a cidade não estava na coluna certa e está misturada na categoria
-                if (!campoCidade.value && categoriasNoticia.indexOf('cidades') !== -1) {
-                    var categoriasLocaisLower = listaCategoriasLocais.map(function(c) { return c.toLowerCase(); });
-                    for (var i = 0; i < categoriasNoticia.length; i++) {
-                        if (categoriasLocaisLower.indexOf(categoriasNoticia[i]) === -1 && categoriasNoticia[i] !== 'cidades') {
-                            campoCidade.value = String(noticia.categoria).split(',')[i].trim();
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            document.getElementById('admin-legenda-imagem').value = noticia.legendaImagem || ''; 
-            document.getElementById('admin-creditos-imagem').value = noticia.creditosImagem || '';
-
-            var prevImg = document.getElementById('preview-imagem'); 
-            var containerMetadados = document.getElementById('admin-imagem-metadados');
-            
-            if (prevImg && noticia.urlImagem) {
-                prevImg.src = noticia.urlImagem; 
-                prevImg.classList.remove('hidden'); 
-                if (containerMetadados) containerMetadados.classList.remove('hidden'); 
-            }
-
-            // Restaurar as matérias relacionadas (Transformando os IDs salvos num array de Objetos)
+            document.querySelectorAll('input[name="admin-categorias-checkbox"]').forEach(function(cb) { cb.checked = categoriasNoticia.indexOf(cb.value.toLowerCase()) !== -1; });
+            verificarCategoriaCidade();
+            if (categoriasNoticia.indexOf('cidades') !== -1 && noticia.cidade) document.getElementById('admin-nome-cidade').value = noticia.cidade;
+            document.getElementById('admin-legenda-imagem').value = noticia.legendaImagem || ''; document.getElementById('admin-creditos-imagem').value = noticia.creditosImagem || '';
+            var prevImg = document.getElementById('preview-imagem'); var containerMetadados = document.getElementById('admin-imagem-metadados');
+            if (prevImg && noticia.urlImagem) { prevImg.src = noticia.urlImagem; prevImg.classList.remove('hidden'); if (containerMetadados) containerMetadados.classList.remove('hidden'); }
             if (noticia.noticiasRelacionadasIds) {
-                var idsSalvos = noticia.noticiasRelacionadasIds.split(',').filter(Boolean);
-                relacionadasSelecionadas = [];
-                idsSalvos.forEach(function(idSalvo) {
-                    var nRel = noticiasGlobais.find(function(nr) { return nr.id === idSalvo; });
-                    if(nRel) relacionadasSelecionadas.push({id: nRel.id, titulo: nRel.titulo});
-                });
+                var idsSalvos = noticia.noticiasRelacionadasIds.split(',').filter(Boolean); relacionadasSelecionadas = [];
+                idsSalvos.forEach(function(idSalvo) { var nRel = noticiasGlobais.find(function(nr) { return nr.id === idSalvo; }); if(nRel) relacionadasSelecionadas.push({id: nRel.id, titulo: nRel.titulo}); });
                 atualizarDOMRelacionadasAdmin();
             }
-
-            // MUDA O BOTÃO PARA "SALVAR"
-            document.getElementById('btn-salvar-noticia').innerHTML = "Salvar Alterações";
-            
-            alternarAbaAdmin('form-noticia-container'); 
-            window.scrollTo(0,0);
+            document.getElementById('btn-salvar-noticia').innerText = "SALVAR ALTERAÇÕES";
+            alternarAbaAdmin('form-noticia-container'); window.scrollTo(0,0);
         }
 
         function salvarNoticia(e) { 
             e.preventDefault(); 
             var editandoID = document.getElementById('admin-id-noticia').value;
             var noCarrossel = document.getElementById('admin-carrossel').checked;
-            var prevSrc = document.getElementById('preview-imagem').src;
-            var temImagemAnterior = prevSrc && (prevSrc.indexOf('http') !== -1 || prevSrc.indexOf('data:image') !== -1);
-            
             var cbs = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
             if (cbs.length === 0) { mostrarMensagem("Selecione ao menos 1 Editoria.", "erro"); return; }
-            
             var categoriasSelecionadasArray = Array.from(cbs).map(function(cb) { return cb.value; });
             var categoriasSelecionadas = categoriasSelecionadasArray.join(", ");
-            var possuiEditoriaCidades = categoriasSelecionadasArray.some(function(cbVal) { return normalizarTextoFiltro(cbVal) === 'cidades'; });
-            
-            var campoCidade = document.getElementById('admin-cidade');
-            var cidadeSelecionada = campoCidade ? campoCidade.value.trim() : '';
-            if (possuiEditoriaCidades && !cidadeSelecionada) {
-                mostrarMensagem("A Editoria 'Cidades' está ativa. Tem de informar o nome da cidade.", "erro");
-                if (campoCidade) campoCidade.focus();
-                return;
-            }
-
+            var possuiCidades = categoriasSelecionadasArray.some(function(cbVal) { return normalizarTextoFiltro(cbVal) === 'cidades'; });
+            var campoCid = document.getElementById('admin-nome-cidade'); var cidadeSelecionada = campoCid ? campoCid.value.trim() : '';
+            if (possuiCidades && !cidadeSelecionada) { mostrarMensagem("A Editoria 'Cidades' está ativa. Tem de informar o nome da cidade.", "erro"); if (campoCid) campoCid.focus(); return; }
             var creditos = document.getElementById('admin-creditos-imagem').value.trim();
-            if ((base64StringNoticia || temImagemAnterior) && !creditos) { 
-                mostrarMensagem("Atenção! Você tem uma foto de capa, logo os créditos são obrigatórios.", "erro"); 
-                document.getElementById('admin-creditos-imagem').focus(); 
-                return; 
-            }
+            if ((base64StringNoticia || document.getElementById('preview-imagem').src.indexOf('http') !== -1) && !creditos) { mostrarMensagem("Você tem uma foto de capa, os créditos são obrigatórios.", "erro"); document.getElementById('admin-creditos-imagem').focus(); return; }
 
-            var btn = document.getElementById('btn-salvar-noticia'); 
-            var txt = btn.innerHTML; btn.innerHTML = 'A guardar...'; btn.disabled = true;
-
+            var btn = document.getElementById('btn-salvar-noticia'); var txt = btn.innerHTML; btn.innerHTML = 'A GUARDAR...'; btn.disabled = true;
             var payload = {
-                id: editandoID, 
-                titulo: document.getElementById('admin-titulo').value, 
-                categoria: categoriasSelecionadas, 
-                cidade: possuiEditoriaCidades ? cidadeSelecionada : '',
-                linhaFina: document.getElementById('admin-linha-fina').value,
-                conteudo: document.getElementById('admin-editor-rich').innerHTML, 
-                autor: document.getElementById('admin-autor').value, 
-                dataAgendamento: document.getElementById('admin-agendamento').value, 
-                dataFimEvento: document.getElementById('admin-data-fim-evento').value, 
-                noCarrossel: noCarrossel, 
-                legendaImagem: document.getElementById('admin-legenda-imagem').value, 
-                creditosImagem: creditos,
-                noticiasRelacionadasIds: document.getElementById('admin-relacionadas-ids').value // Salva a lista de IDs
+                id: editandoID, titulo: document.getElementById('admin-titulo').value, categoria: categoriasSelecionadas, cidade: possuiCidades ? cidadeSelecionada : '',
+                linhaFina: document.getElementById('admin-linha-fina').value, conteudo: document.getElementById('admin-editor-rich').innerHTML, 
+                autor: document.getElementById('admin-autor').value, dataAgendamento: document.getElementById('admin-agendamento').value, 
+                dataFimEvento: document.getElementById('admin-data-fim-evento').value, noCarrossel: noCarrossel, 
+                legendaImagem: document.getElementById('admin-legenda-imagem').value, creditosImagem: creditos,
+                noticiasRelacionadasIds: document.getElementById('admin-relacionadas-ids').value
             };
-
-            if (base64StringNoticia) { 
-                payload.isUpload = true; payload.base64 = base64StringNoticia; payload.mimeType = mimeStringNoticia; payload.fileName = nameStringNoticia; 
-            } else { payload.isUpload = false; }
-            
+            payload.isUpload = !!base64StringNoticia; if(payload.isUpload){ payload.base64 = base64StringNoticia; payload.mimeType = mimeStringNoticia; payload.fileName = nameStringNoticia; }
             window.google.script.run.withSuccessHandler(function(res) {
-                var finalRes = res; 
-                if (res && res.result !== undefined) finalRes = typeof res.result === 'string' ? JSON.parse(res.result) : res.result;
-                else if (typeof res === 'string') try { finalRes = JSON.parse(res); } catch(e) {}
-                
-                if (finalRes && finalRes.sucesso) { 
-                    mostrarMensagem('Matéria Guardada com Sucesso!'); 
-                    limparFormNoticia(); 
-                    carregarDadosAdmin(); 
-                    setTimeout(function() { alternarAbaAdmin('lista-noticias-container'); }, 1500); 
-                } else { mostrarMensagem(finalRes ? finalRes.erro : "Erro ao guardar", 'erro'); }
+                var finalRes = res; if (res && res.result !== undefined) finalRes = typeof res.result === 'string' ? JSON.parse(res.result) : res.result; else if (typeof res === 'string') try { finalRes = JSON.parse(res); } catch(e) {}
+                if (finalRes && finalRes.sucesso) { mostrarMensagem('Matéria Guardada!'); limparFormNoticia(); carregarDadosAdmin(); setTimeout(function() { alternarAbaAdmin('lista-noticias-container'); }, 1500); } else { mostrarMensagem(finalRes ? finalRes.erro : "Erro", 'erro'); }
                 btn.innerHTML = txt; btn.disabled = false;
             }).salvarNoticiaNoSheets(payload);
         }
-        
-        var base64StringProp = ""; var mimeStringProp = ""; var nameStringProp = "";
-        
-        var propArquivoInput = document.getElementById('prop-arquivo');
-        if (propArquivoInput) { 
-            propArquivoInput.addEventListener('change', function(e) { 
-                var file = e.target.files[0]; if (!file) return; 
-                mimeStringProp = file.type; nameStringProp = file.name; 
-                var reader = new FileReader(); 
-                reader.onload = function(evt) { base64StringProp = evt.target.result.split(',')[1]; }; 
-                reader.readAsDataURL(file); 
-            }); 
+
+        function execCmd(command, arg) { if(arg === undefined) arg = null; document.execCommand(command, false, arg); document.getElementById('admin-editor-rich').focus(); }
+        function inserirLinkRichEditor() { var url = prompt("Insira a URL completa do hiperlink:"); if (url) execCmd('createLink', url); }
+        function inserirImagemRichEditor() { var input = document.getElementById('upload-imagem-conteudo'); if(input) input.click(); }
+        function processarUploadImagemConteudo(input) {
+            if (!input.files || !input.files[0]) return; var file = input.files[0]; 
+            var legenda = prompt("Legenda da imagem (ou deixe em branco):") || ""; var creditos = prompt("Créditos da foto (obrigatório se houver direitos):") || "";
+            var reader = new FileReader(); reader.onload = function(e) {
+                var img = new Image(); img.onload = function() {
+                    var canvas = document.createElement('canvas'); var ctx = canvas.getContext('2d'); var scale = img.width > 800 ? 800 / img.width : 1;
+                    canvas.width = img.width * scale; canvas.height = img.height * scale; ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    var htmlImg = '<br><figure style="margin: 16px auto; text-align: center; max-width: 100%; display: block;"><img src="' + canvas.toDataURL('image/jpeg', 0.8) + '" style="max-width: 100%; height: auto; border-radius: 8px; display: inline-block; margin: 0 auto; border: 1px solid #e2e8f0;" />';
+                    if (legenda || creditos) htmlImg += '<figcaption style="font-size: 12px; color: #64748b; margin-top: 8px; font-style: italic; text-align: center;">' + legenda + ((legenda&&creditos)?' - ':'') + (creditos?'Foto: '+creditos:'') + '</figcaption>';
+                    htmlImg += '</figure><br><p>&#8203;</p>'; execCmd('insertHTML', htmlImg); input.value = '';
+                }; img.src = e.target.result;
+            }; reader.readAsDataURL(file);
         }
-        
+        function inserirVideoRichEditor() { var url = prompt("Insira o link do YouTube, Instagram, TikTok ou Twitter (X):"); if (url) execCmd('insertHTML', url + '<br><br>'); }
+
+        function gerarLinhaFinaIA() {
+            var t = document.getElementById('admin-titulo').value.trim(); if(!t) { mostrarMensagem("Preencha a Manchete primeiro.", "erro"); return; }
+            var btn = document.getElementById('btn-ia-linhafina'); var txt = btn.innerText; btn.innerText = "...";
+            window.google.script.run.withSuccessHandler(function(res) {
+                var p = res; if (p && p.result !== undefined) p = typeof p.result === 'string' ? JSON.parse(p.result) : p.result; else if (typeof p === 'string') try { p = JSON.parse(p); } catch(e) {}
+                if(p && p.sucesso && p.texto) { document.getElementById('admin-linha-fina').value = p.texto.trim(); mostrarMensagem("Gerado!"); } else { mostrarMensagem("Erro na IA", "erro"); }
+                btn.innerText = txt;
+            }).chamarGeminiBackend('Escreva uma linha fina curta, atrativa e jornalística para o título: "' + t + '"');
+        }
+        function gerarConteudoIA() {
+            var t = document.getElementById('admin-titulo').value.trim(); if(!t) { mostrarMensagem("Preencha a Manchete primeiro.", "erro"); return; }
+            var btn = document.getElementById('btn-ia-conteudo'); var txt = btn.innerText; btn.innerText = "A escrever...";
+            var lf = document.getElementById('admin-linha-fina').value.trim();
+            window.google.script.run.withSuccessHandler(function(res) {
+                var p = res; if (p && p.result !== undefined) p = typeof p.result === 'string' ? JSON.parse(p.result) : p.result; else if (typeof p === 'string') try { p = JSON.parse(p); } catch(e) {}
+                if(p && p.sucesso && p.texto) { document.getElementById('admin-editor-rich').innerHTML = p.texto.replace(/(\`\`\`html|\`\`\`)/gi, '').trim(); mostrarMensagem("Gerado!"); } else { mostrarMensagem("Erro na IA", "erro"); }
+                btn.innerText = txt;
+            }).chamarGeminiBackend('Escreva uma notícia completa em HTML (use apenas tags <p>, <h2>, <ul> e não use a tag <html> ou <body>). Manchete: "' + t + '". ' + (lf ? 'Linha Fina: "' + lf + '"' : ''));
+        }
+
+        var base64StringProp = ""; var mimeStringProp = ""; var nameStringProp = "";
+        function mudarAbaAd(aba) {
+            document.getElementById('prop-tipo-local').value = aba;
+            var btnEntre = document.getElementById('btn-aba-ad-entre'); var btnSidebar = document.getElementById('btn-aba-ad-sidebar'); var btnTopo = document.getElementById('btn-aba-ad-topo');
+            var selectPos = document.getElementById('prop-posicao');
+            btnEntre.className = "py-2 px-4 border-b-2 border-transparent font-bold text-sm text-gray-500 hover:text-jornal-dark transition-colors";
+            btnSidebar.className = "py-2 px-4 border-b-2 border-transparent font-bold text-sm text-gray-500 hover:text-jornal-dark transition-colors";
+            btnTopo.className = "py-2 px-4 border-b-2 border-transparent font-bold text-sm text-gray-500 hover:text-jornal-dark transition-colors";
+            selectPos.innerHTML = '';
+            if (aba === 'entre') {
+                btnEntre.className = "py-2 px-4 border-b-2 border-jornal-dark font-bold text-sm text-jornal-dark transition-colors";
+                for(var i=1; i<=8; i++) selectPos.innerHTML += '<option value="Entre Editorias ' + i + '">' + i + ' - Entre Editorias</option>';
+            } else if (aba === 'sidebar') {
+                btnSidebar.className = "py-2 px-4 border-b-2 border-jornal-dark font-bold text-sm text-jornal-dark transition-colors";
+                selectPos.innerHTML += '<option value="Lateral 1">1 - Topo da Sidebar</option><option value="Lateral 2">2 - Meio da Sidebar</option><option value="Lateral 3">3 - Fim da Sidebar</option>';
+            } else {
+                btnTopo.className = "py-2 px-4 border-b-2 border-jornal-dark font-bold text-sm text-jornal-dark transition-colors";
+                selectPos.innerHTML += '<option value="Topo">1 - Topo do Site</option>';
+            }
+        }
+
+        function atualizarNomeArquivoAd(input) {
+            var nome = input.files && input.files[0] ? input.files[0].name : 'Nenhum arquivo escolhido';
+            document.getElementById('nome-arquivo-ad').innerText = nome;
+            if (input.files && input.files[0]) {
+                var file = input.files[0]; mimeStringProp = file.type; nameStringProp = file.name;
+                var reader = new FileReader(); reader.onload = function(evt) { base64StringProp = evt.target.result.split(',')[1]; }; reader.readAsDataURL(file);
+            } else { base64StringProp = ""; mimeStringProp = ""; nameStringProp = ""; }
+        }
+
         function salvarPropaganda(e) { 
             e.preventDefault(); 
             var btn = document.getElementById('btn-salvar-propaganda'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
-            
             var payload = { 
                 empresa: document.getElementById('prop-empresa').value + '|||' + document.getElementById('prop-tempo').value, 
-                local: document.getElementById('prop-local').value, 
-                linkDestino: document.getElementById('prop-link').value 
+                local: document.getElementById('prop-posicao').value, 
+                linkDestino: document.getElementById('prop-link').value,
+                status: document.getElementById('prop-status').value
             };
-            
-            if (base64StringProp) { 
-                payload.isUpload = true; payload.base64 = base64StringProp; payload.mimeType = mimeStringProp; payload.fileName = nameStringProp; payload.urlArquivo = ''; 
-            } else { 
-                payload.isUpload = false; payload.urlArquivo = document.getElementById('prop-imagem').value; payload.tipo = 'link'; 
-            }
+            if (base64StringProp) { payload.isUpload = true; payload.base64 = base64StringProp; payload.mimeType = mimeStringProp; payload.fileName = nameStringProp; payload.urlArquivo = ''; } 
+            else { payload.isUpload = false; payload.urlArquivo = document.getElementById('prop-imagem').value; payload.tipo = 'link'; }
             
             window.google.script.run.withSuccessHandler(function(res) { 
-                mostrarMensagem('Anúncio ativado no sistema!'); 
-                document.getElementById('form-propaganda').reset(); 
-                base64StringProp = ""; btn.innerHTML = txt; btn.disabled = false; 
-                carregarDadosAdmin(); 
+                mostrarMensagem('Anúncio salvo no sistema!'); document.getElementById('form-propaganda').reset(); base64StringProp = ""; 
+                document.getElementById('nome-arquivo-ad').innerText = "Nenhum arquivo escolhido";
+                btn.innerHTML = txt; btn.disabled = false; carregarDadosAdmin(); 
             }).salvarPropagandaNoSheets(payload);
         }
-        
-        function salvarRedesSociais(e) { 
-            e.preventDefault(); 
-            var btn = document.getElementById('btn-salvar-sociais'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
-            window.google.script.run.salvarConfiguracaoHTMLCustom('soc-inst-url', document.getElementById('soc-inst-url').value);
-            window.google.script.run.salvarConfiguracaoHTMLCustom('soc-fb-url', document.getElementById('soc-fb-url').value);
-            window.google.script.run.salvarConfiguracaoHTMLCustom('soc-x-url', document.getElementById('soc-x-url').value);
-            window.google.script.run.withSuccessHandler(function() { 
-                mostrarMensagem("Redes sociais atualizadas no rodapé!"); 
-                btn.innerHTML = txt; btn.disabled = false; carregarDadosAdmin(); 
-            }).salvarConfiguracaoHTMLCustom('soc-yt-url', document.getElementById('soc-yt-url').value);
+
+        function renderizarTabelaAnuncios() {
+            var tbody = document.getElementById('admin-tabela-anuncios'); if(!tbody) return;
+            tbody.innerHTML = '';
+            if (propagandasGlobais.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-xs text-gray-500 font-bold bg-white">Nenhum anúncio criado.</td></tr>'; return; }
+            propagandasGlobais.forEach(function(p) {
+                var isAtivo = String(p.status).toLowerCase() === 'ativa';
+                var txtStatus = isAtivo ? 'ATIVO' : 'INATIVO'; var corStatus = isAtivo ? 'text-gray-600' : 'text-gray-400';
+                var tr = document.createElement('tr'); tr.className = 'hover:bg-gray-50 border-b border-gray-100 transition-colors';
+                tr.innerHTML = '<td class="p-4 font-bold text-gray-700 text-[10px] uppercase">' + (p.local || 'Geral') + '</td>' +
+                    '<td class="p-4 font-bold text-jornal-dark text-xs truncate max-w-[200px]" title="' + p.empresa + '">' + (p.empresa || 'Sem Nome') + '</td>' +
+                    '<td class="p-4 text-center text-xs font-black text-gray-500">👁️ ' + (p.views || 0) + '</td>' +
+                    '<td class="p-4 text-center text-xs font-black text-emerald-600">🖱️ ' + (p.clicks || 0) + '</td>' +
+                    '<td class="p-4 text-center"><div class="flex justify-center items-center"><label class="relative inline-flex items-center cursor-pointer select-none">' +
+                    '<input type="checkbox" class="sr-only peer" ' + (isAtivo ? 'checked' : '') + ' onchange="alterarStatusAdRapido(\'' + p.id + '\', this)" />' +
+                    '<div class="w-9 h-5 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-emerald-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[\'\'] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>' +
+                    '<span class="ml-2 text-[9px] font-bold ' + corStatus + ' select-none uppercase tracking-widest inline-block w-14 text-left">' + txtStatus + '</span></label></div></td>' +
+                    '<td class="p-4 text-center"><button type="button" onclick="apagarAnuncio(\'' + p.id + '\')" class="text-[9px] font-bold text-red-500 border border-red-200 px-3 py-1.5 rounded-sm hover:bg-red-50 shadow-sm uppercase tracking-widest">Excluir Ad</button></td>';
+                tbody.appendChild(tr);
+            });
         }
 
-        function salvarPlacarAoVivo(e) {
-            e.preventDefault(); 
-            var btn = document.getElementById('btn-salvar-placar'); btn.innerText = "A SALVAR..."; btn.disabled = true;
-            var checkboxes = document.querySelectorAll('input[name="liga-placar"]:checked'); 
-            var ligasSelecionadas = Array.from(checkboxes).map(function(cb) { return cb.value; });
-            window.google.script.run.withSuccessHandler(function(res) { 
-                mostrarMensagem("Filtros do Placar atualizados!"); 
-                btn.innerText = "Salvar Ligas"; btn.disabled = false; 
-                configuracoesGlobais['LigasPlacar'] = JSON.stringify(ligasSelecionadas); 
-            }).salvarConfiguracaoHTMLCustom("LigasPlacar", JSON.stringify(ligasSelecionadas));
+        function alterarStatusAdRapido(id, checkbox) {
+            var isAtivo = checkbox.checked; var labelSpan = checkbox.nextElementSibling.nextElementSibling; 
+            if (labelSpan) { labelSpan.innerText = isAtivo ? 'ATIVO' : 'INATIVO'; labelSpan.className = 'ml-2 text-[9px] font-bold ' + (isAtivo ? 'text-gray-600' : 'text-gray-400') + ' select-none uppercase tracking-widest inline-block w-14 text-left'; }
+            window.google.script.run.withSuccessHandler(function(res) { mostrarMensagem('Anúncio atualizado.'); carregarDadosAdmin(); }).alternarStatusPropaganda(id);
+        }
+
+        function apagarAnuncio(id) {
+            if(!confirm("Eliminar este anúncio permanentemente?")) return;
+            window.google.script.run.withSuccessHandler(function(res) { mostrarMensagem('Anúncio excluído.'); carregarDadosAdmin(); }).excluirPropagandaNoSheets(id);
+        }
+
+        function processarIconeLogo(input) {
+            if (!input.files || !input.files[0]) return; var reader = new FileReader();
+            reader.onload = function(evt) {
+                window.iconeLogoAtual = evt.target.result; document.getElementById('preview-icone-admin').src = window.iconeLogoAtual; document.getElementById('preview-icone-admin').classList.remove('hidden'); document.getElementById('btn-remover-icone').classList.remove('hidden');
+                renderizarLogoPreview(window.novaCorLogo || configuracoesGlobais['CorLogo'] || 'bg-gradient-to-r from-blue-800 to-sky-400', window.iconeLogoAtual);
+                document.getElementById('preview-logo-wrapper').classList.remove('hidden');
+            }; reader.readAsDataURL(input.files[0]);
+        }
+        function removerIconeLogo() {
+            window.iconeLogoAtual = ""; document.getElementById('preview-icone-admin').src = ""; document.getElementById('preview-icone-admin').classList.add('hidden'); document.getElementById('btn-remover-icone').classList.add('hidden'); document.getElementById('upload-icone-logo').value = '';
+            renderizarLogoPreview(window.novaCorLogo || configuracoesGlobais['CorLogo'] || 'bg-gradient-to-r from-blue-800 to-sky-400', window.iconeLogoAtual);
+        }
+        function gerarLogoIA() {
+            var desc = document.getElementById('prompt-logo').value.trim(); if(!desc) { mostrarMensagem("Descreva como quer o logótipo.", "erro"); document.getElementById('prompt-logo').focus(); return; }
+            var btn = document.getElementById('btn-gerar-logo'); var txt = btn.innerText; btn.innerText = "A CRIAR..."; btn.disabled = true;
+            var promptFinal = "Atue como um web designer especialista em Tailwind CSS. O utilizador quer definir as cores do logótipo. O pedido do utilizador é: '" + desc + "'. Devolva APENAS as classes de BACKGROUND do Tailwind CSS necessárias para criar esse gradiente ou cor. Exemplo: bg-gradient-to-r from-blue-800 to-sky-400. Não escreva mais nada, apenas as classes separadas por espaço. Não inclua código HTML nem aspas.";
+            window.google.script.run.withSuccessHandler(function(res) {
+                var p = res; if (p && p.result !== undefined) p = typeof p.result === 'string' ? JSON.parse(p.result) : p.result; else if (typeof p === 'string') try { p = JSON.parse(p); } catch(e) {} 
+                if(p && p.sucesso && p.texto) {
+                    var cleanClasses = p.texto.replace(/(\`\`\`html|\`\`\`css|\`\`\`)/gi, '').trim().replace(/class=|"|'/g, '').trim(); 
+                    window.novaCorLogo = cleanClasses; renderizarLogoPreview(cleanClasses, window.iconeLogoAtual !== undefined ? window.iconeLogoAtual : configuracoesGlobais['IconeLogoBase64']);
+                    document.getElementById('preview-logo-wrapper').classList.remove('hidden'); mostrarMensagem("Estilo gerado com sucesso!");
+                } else { mostrarMensagem("Erro na IA", "erro"); }
+                btn.innerText = txt; btn.disabled = false;
+            }).chamarGeminiBackend(promptFinal);
+        }
+        function renderizarLogoPreview(classes, iconeUrl) {
+            var textClasses = "bg-clip-text text-transparent " + classes; var html = '<div class="flex items-center gap-3">';
+            if (iconeUrl) html += '<div style="-webkit-mask-image: url(' + iconeUrl + '); mask-image: url(' + iconeUrl + '); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center;" class="w-10 h-10 shrink-0 ' + classes + '"></div>';
+            html += '<h1 class="text-3xl font-black tracking-tighter uppercase ' + textClasses + '">NOTÍCIAS AVULSAS</h1></div>';
+            var preview = document.getElementById('preview-logo-ia'); if (preview) preview.innerHTML = html;
+        }
+        function aplicarNovaLogo() {
+            var btn = document.getElementById('btn-aplicar-logo'); var txt = btn.innerText; btn.innerText = "A GUARDAR..."; btn.disabled = true;
+            var expectedPromises = 0; var promisesCount = 0;
+            function checkFinish() { promisesCount++; if (promisesCount >= expectedPromises) { mostrarMensagem('Identidade visual atualizada no site!'); btn.innerText = txt; btn.disabled = false; } }
+            if (window.novaCorLogo) { expectedPromises++; configuracoesGlobais['CorLogo'] = window.novaCorLogo; window.google.script.run.withSuccessHandler(checkFinish).salvarConfiguracaoHTMLCustom('CorLogo', window.novaCorLogo); }
+            if (window.iconeLogoAtual !== undefined) { expectedPromises++; configuracoesGlobais['IconeLogoBase64'] = window.iconeLogoAtual; window.google.script.run.withSuccessHandler(checkFinish).salvarConfiguracaoHTMLCustom('IconeLogoBase64', window.iconeLogoAtual); }
+            if (expectedPromises === 0) { mostrarMensagem('Não há alterações para guardar.', 'erro'); btn.innerText = txt; btn.disabled = false; }
         }
     </script>
 </body>
