@@ -5,133 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notícias Avulsas - Portal de Informação</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
-    
-    <!-- Redes Sociais Embeds -->
     <script async src="//www.instagram.com/embed.js"></script>
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
     
-    <script id="gas-params" type="application/json">
-        <?!= typeof urlParams !== 'undefined' ? urlParams : '{}' ?>
-    </script>
-    
     <script>
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwnhjvRj2zG0TL9FnKDmw43j0umJDPFdHuEBHCg8QXBBmGeuSQlux-Y9QSB-g5JSYLr/exec";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzQJn5HGM76bFMyCa8fAiSmzzk0uUuZ-dLE2CNakU5DHBd1IBNq6HkQN4OXjtfd8lDD/exec";
         
-        window.google = {
-            script: {
-                run: {
-                    withSuccessHandler: function(cb) {
-                        this._onSuccess = cb;
-                        return this;
-                    },
-                    withFailureHandler: function(cb) {
-                        this._onFailure = cb;
-                        return this;
-                    }
-                }
-            }
-        };
+        window.google = { script: { run: {
+            withSuccessHandler: function(cb) { this._onSuccess = cb; return this; },
+            withFailureHandler: function(cb) { this._onFailure = cb; return this; }
+        }}};
 
-        const apiFunctions = [
-            'getHomeData', 
-            'incrementarView', 
-            'salvarComentarioNoSheets', 
-            'inscreverNewsletter', 
-            'curtirNoticiaNoSheets'
-        ];
+        const apiFunctions = ['getHomeData', 'incrementarView', 'salvarComentarioNoSheets', 'curtirNoticiaNoSheets', 'incrementarMetricAd'];
 
         apiFunctions.forEach(function(funcName) {
             window.google.script.run[funcName] = function() {
                 var argsArray = Array.prototype.slice.call(arguments);
-                var successCb = this._onSuccess;
-                var failureCb = this._onFailure;
-                
-                this._onSuccess = null;
-                this._onFailure = null;
+                var successCb = this._onSuccess; var failureCb = this._onFailure;
+                this._onSuccess = null; this._onFailure = null;
                 
                 fetch(GAS_API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: funcName, args: argsArray })
-                })
-                .then(function(res) { 
-                    return res.json(); 
-                })
-                .then(function(result) {
+                }).then(function(res) { return res.json(); }).then(function(result) {
                     if (successCb) {
                         var finalPayload = result;
-                        if (result && result.result !== undefined) {
-                            finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
-                        } else if (typeof result === 'string') {
-                            try { finalPayload = JSON.parse(result); } catch(e) {}
-                        }
+                        if (result && result.result !== undefined) finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
                         successCb(finalPayload);
                     }
-                })
-                .catch(function(err) {
-                    if (failureCb) {
-                        failureCb(err);
-                    } else {
-                        console.error("API Error (" + funcName + "):", err);
-                    }
-                });
+                }).catch(function(err) { if (failureCb) failureCb(err); });
             };
         });
 
-        window.onerror = function(message, source, lineno, colno, error) {
+        window.onerror = function(message, source, lineno) {
             console.error("Erro Global JS:", message, "na linha", lineno);
-            setTimeout(function() {
-                var debugBox = document.getElementById('debug-error-box');
-                if (debugBox) {
-                    debugBox.innerHTML = "Erro de JavaScript detetado: " + message + " (Linha " + lineno + ")";
-                    debugBox.classList.remove('hidden');
-                }
-            }, 500);
         };
 
-        var paramIniciais = {};
-        try {
-            var elParams = document.getElementById('gas-params');
-            if (elParams) {
-                var rawText = elParams.textContent.trim();
-                if (rawText && !rawText.startsWith('<' + '?') && !rawText.startsWith('<' + '!')) {
-                    paramIniciais = JSON.parse(rawText);
-                }
-            }
-        } catch(e) { 
-            console.warn("Erro ao processar parâmetros:", e); 
-        }
-
         var configureTailwind = function() {
-            if (typeof tailwind === 'undefined') { 
-                setTimeout(configureTailwind, 10); 
-                return; 
-            }
-            tailwind.config = {
-                theme: {
-                    extend: {
-                        fontFamily: { 
-                            sans: ['Inter', 'sans-serif'], 
-                            serif: ['Merriweather', 'serif'] 
-                        },
-                        colors: {
-                            jornal: { 
-                                blue: '#0F172A', 
-                                red: '#E11D48',
-                                gray: '#F8FAFC', 
-                                dark: '#020617'
-                            }
-                        }
-                    }
-                }
-            };
+            if (typeof tailwind === 'undefined') { setTimeout(configureTailwind, 10); return; }
+            tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] }, colors: { jornal: { blue: '#0F172A', red: '#E11D48', gray: '#F8FAFC', dark: '#020617' } } } } };
         };
         configureTailwind();
     </script>
@@ -142,12 +58,9 @@
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-        .spinner { border: 2px solid rgba(255,255,255,.3); border-left-color: #fff; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
-        @keyframes spin { to { transform: rotate(360deg); } }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #999; }
         .heart-beat { animation: heartbeat 0.3s ease-in-out; }
         @keyframes heartbeat { 0% { transform: scale(1); } 50% { transform: scale(1.3); color: #E11D48; } 100% { transform: scale(1); } }
         @keyframes marquee { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
@@ -163,7 +76,6 @@
         .rich-editor blockquote { border-left: 4px solid #E11D48; background: #f8fafc; padding: 12px 16px; color: #475569; font-style: italic; margin: 16px 0; border-radius: 0 8px 8px 0; }
         .rich-editor ul { list-style-type: disc; padding-left: 24px; margin-bottom: 12px; }
         .rich-editor ol { list-style-type: decimal; padding-left: 24px; margin-bottom: 12px; }
-        .instagram-media { background: #FFF; border: 0; border-radius: 3px; box-shadow: 0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px auto; max-width: 540px; min-width: 326px; padding: 0; width: 99.375%; width: calc(100% - 2px); }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col relative selection:bg-jornal-red selection:text-white">
@@ -181,8 +93,14 @@
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
+    <!-- PÁGINA DE CARREGAMENTO (Impede imagem branca) -->
+    <div id="loading-noticias" class="fixed inset-0 bg-white z-[999999] flex flex-col items-center justify-center">
+        <div class="w-10 h-10 border-4 border-gray-200 border-t-jornal-red rounded-full animate-spin mb-4"></div>
+        <p class="text-xs font-bold uppercase tracking-widest text-gray-500 animate-pulse">A carregar informações do servidor...</p>
+    </div>
+
     <!-- VIEW PORTAL PRINCIPAL -->
-    <div id="view-portal" class="flex-grow flex flex-col relative min-w-0">
+    <div id="view-portal" class="flex-grow flex flex-col relative min-w-0 hidden">
         
         <div class="bg-jornal-dark text-white text-[10px] uppercase font-bold tracking-widest py-1.5 px-4 hidden md:block w-full z-40 relative min-w-0">
             <div class="max-w-[1200px] mx-auto flex justify-between items-center min-w-0">
@@ -243,13 +161,7 @@
         <main class="max-w-[1200px] mx-auto pt-6 md:pt-8 pb-16 px-4 flex-grow w-full min-w-0">
             <div id="ads-topo-container" class="w-full mb-8 hidden grid gap-4 grid-cols-1 md:grid-cols-2"></div>
 
-            <div id="loading-noticias" class="flex flex-col items-center justify-center py-20">
-                <div class="w-10 h-10 border-4 border-gray-200 border-t-jornal-blue rounded-full animate-spin mb-4"></div>
-                <p class="text-xs font-bold uppercase tracking-widest text-gray-500 animate-pulse">A carregar informações do servidor...</p>
-                <div id="debug-error-box" class="hidden mt-4 text-xs text-red-500 font-mono text-left p-4 bg-red-50 border border-red-200 rounded max-w-xl break-words w-full shadow-sm"></div>
-            </div>
-
-            <div id="master-feed-wrapper" class="flex flex-col lg:flex-row gap-8 items-start hidden min-w-0">
+            <div id="master-feed-wrapper" class="flex flex-col lg:flex-row gap-8 items-start min-w-0">
                 
                 <div class="lg:w-[72%] w-full flex flex-col gap-6 min-w-0">
                     <div id="home-feed-container" class="w-full min-w-0">
@@ -274,6 +186,7 @@
                         </div>
                     </div>
 
+                    <!-- PÁGINA DA MATÉRIA COMPLETA -->
                     <div id="noticia-completa-container" class="hidden bg-white border border-gray-200 p-5 md:p-10 shadow-sm min-w-0 rounded-sm">
                         <button onclick="voltarCapa()" class="mb-6 text-jornal-red font-bold text-xs uppercase tracking-widest hover:underline flex items-center gap-1">← Voltar à Capa</button>
                         <span id="nc-categoria" class="text-jornal-red text-xs font-black uppercase tracking-widest mb-3 block cursor-pointer hover:underline" onclick="filtrarCategoria(this.innerText)"></span>
@@ -312,6 +225,7 @@
 
                         <div id="nc-conteudo" class="text-gray-800 text-base md:text-lg leading-relaxed font-serif whitespace-pre-line mb-8 rich-editor break-words"></div>
                         
+                        <!-- Notícias Relacionadas (Até 3) -->
                         <div id="nc-relacionadas-container" class="mt-8 pt-8 border-t border-gray-200 hidden">
                             <h3 class="text-lg font-black font-sans uppercase tracking-tighter text-jornal-dark mb-6 border-l-4 border-jornal-blue pl-2">Leia Também</h3>
                             <div id="grid-relacionadas" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
@@ -341,7 +255,10 @@
                     </div>
                 </div>
                 
+                <!-- BARRA LATERAL COM A NOVA ORDEM SOLICITADA -->
                 <aside class="lg:w-[28%] w-full shrink-0 min-w-0">
+                    
+                    <!-- 1. EM FOCO -->
                     <div id="sidebar-editorias-especiais" class="hidden mb-8 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
                         <div class="border-b-4 border-jornal-blue pb-2 mb-4">
                             <h2 class="text-xs font-black uppercase tracking-widest text-jornal-blue">Em Foco</h2>
@@ -349,6 +266,7 @@
                         <div id="lista-editorias-especiais" class="flex flex-col gap-2"></div>
                     </div>
 
+                    <!-- 2. OPINIÃO -->
                     <div id="sidebar-opinioes" class="hidden mb-8 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
                         <div class="border-b-4 border-jornal-red pb-2 mb-4">
                             <h2 class="text-xs font-black uppercase tracking-widest text-jornal-red">Opinião</h2>
@@ -356,6 +274,7 @@
                         <div id="conteudo-opinioes" class="flex flex-col gap-4"></div>
                     </div>
 
+                    <!-- 3. PLACAR AO VIVO (SÓ DE HOJE E COM ESCUDOS) -->
                     <div class="mb-8 bg-white border border-gray-200 p-4 shadow-sm rounded-sm">
                         <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-2">
                             <h2 class="text-[10px] font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
@@ -367,6 +286,7 @@
                         </div>
                     </div>
 
+                    <!-- 4. CLIMA LOCAL (NOVA API) -->
                     <div class="mb-8 bg-white border border-gray-200 p-5 shadow-sm rounded-sm cursor-pointer hover:opacity-95 transition-opacity" onclick="abrirModalClima()">
                         <div class="border-b-4 border-sky-400 pb-2 mb-4 flex justify-between items-center">
                             <h2 class="text-xs font-black uppercase tracking-widest text-sky-500">Clima Local</h2>
@@ -382,6 +302,7 @@
                         </div>
                     </div>
 
+                    <!-- 5. TOP 10 MAIS LIDAS (ÚLTIMOS 10 DIAS) -->
                     <div class="mb-8 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
                         <div class="border-b-4 border-jornal-blue pb-2 mb-4">
                             <h2 class="text-xs font-black uppercase tracking-widest text-jornal-blue">Top 10 Mais Lidas</h2>
@@ -389,6 +310,7 @@
                         <ul id="lista-mais-lidas" class="space-y-3 divide-y divide-gray-100 min-w-0"></ul>
                     </div>
 
+                    <!-- 6. PUBLICIDADE LATERAL -->
                     <div class="border-t-4 border-jornal-red w-full pt-4 mb-6">
                         <h2 class="text-sm font-black uppercase tracking-widest text-jornal-red">Publicidade</h2>
                     </div>
@@ -477,6 +399,7 @@
             return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
         }
 
+        // SPA Navegação Nativa
         window.addEventListener('popstate', function(e) {
             var p = new URLSearchParams(window.location.search);
             if(p.get('noticia')) {
@@ -494,21 +417,26 @@
             }
         });
 
-        function atualizarURL(c, v, isPush) {
+        function atualizarURL(paramName, paramValue, isPush) {
             try { 
                 var url = new URL(window.location.href); 
+                var newPath = url.pathname.replace(/index_simples\.html/gi, '');
+                if (newPath === '') newPath = '/';
+                
                 url.searchParams.delete('categoria');
                 url.searchParams.delete('noticia');
                 url.searchParams.delete('pesquisa');
 
-                if (v && v !== 'Todas') {
-                    url.searchParams.set(c, v); 
+                if (paramValue && paramValue !== 'Todas') {
+                    url.searchParams.set(paramName, paramValue); 
                 }
 
+                var finalUrl = newPath + url.search;
+
                 if (isPush) {
-                    window.history.pushState({path: url.href}, '', url.href); 
+                    window.history.pushState({path: finalUrl}, '', finalUrl); 
                 } else {
-                    window.history.replaceState({path: url.href}, '', url.href); 
+                    window.history.replaceState({path: finalUrl}, '', finalUrl); 
                 }
             } catch(e) {}
         }
@@ -523,13 +451,14 @@
         });
 
         function carregarNoticias(forcarUpdate) {
-            document.getElementById('master-feed-wrapper').classList.add('hidden'); 
+            document.getElementById('view-portal').classList.add('hidden');
             document.getElementById('loading-noticias').classList.remove('hidden');
             
             window.google.script.run.withSuccessHandler(function(res) {
                 document.getElementById('loading-noticias').classList.add('hidden');
+                document.getElementById('view-portal').classList.remove('hidden');
+                
                 if (res && res.sucesso) { 
-                    document.getElementById('master-feed-wrapper').classList.remove('hidden'); 
                     processarDadosHome(res); 
                     if (!forcarUpdate) {
                         var p = new URLSearchParams(window.location.search);
@@ -565,6 +494,8 @@
             var dbg = document.getElementById('debug-error-box'); 
             dbg.innerHTML = m; 
             dbg.classList.remove('hidden'); 
+            document.getElementById('loading-noticias').classList.add('hidden');
+            document.getElementById('view-portal').classList.remove('hidden');
         }
 
         function isNoticiaPublicada(n) {
@@ -598,11 +529,6 @@
             var ticker = document.getElementById('ticker-noticias');
             if (ticker) {
                 ticker.className = "text-white text-[10px] font-bold h-8 overflow-hidden flex items-center sticky top-0 z-50 w-full shadow-sm min-w-0 transition-colors duration-500 " + classes;
-            }
-
-            var tickerLabel = document.getElementById('ticker-label');
-            if(tickerLabel) {
-                 tickerLabel.className = "px-4 h-full uppercase tracking-widest whitespace-nowrap shrink-0 border-r border-white/20 relative z-10 flex items-center gap-1 bg-black/20";
             }
 
             var headerHtml = '';
@@ -822,6 +748,7 @@
                 comentariosGlobais = d.comentarios;
             }
 
+            var anunciosFiltro = [];
             if (d.propagandas) {
                 var aT = []; 
                 var aL = [];
@@ -831,10 +758,13 @@
                     p.tempo = parseInt(pts[1]) || 5; 
                     if (p.local === 'Topo') {
                         aT.push(p); 
-                    } else {
+                    } else if (p.local.indexOf('Lateral') !== -1) {
                         aL.push(p); 
+                    } else if (p.local.indexOf('Entre Editorias') !== -1) {
+                        anunciosFiltro.push(p);
                     }
                 });
+                window.anunciosMeioFeed = anunciosFiltro;
                 iniciarCarrosselAnuncios('ads-topo-container', aT); 
                 iniciarCarrosselAnuncios('grid-propagandas-lateral', aL);
             }
@@ -845,6 +775,27 @@
             renderizarClimaEFinanceiro(); 
             renderizarPlacarAoVivo(); 
             renderizarAgendaSidebar();
+        }
+
+        function registarCliqueAd(idProp) {
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.incrementarMetricAd(idProp, 'click');
+            }
+        }
+
+        function criarElementoAd(p) {
+            var e = p.tipo ? p.tipo.toLowerCase() : ''; 
+            var u = p.urlArquivo ? String(p.urlArquivo) : ''; 
+            var isV = e.indexOf('video') !== -1 || u.endsWith('.mp4');
+            var mH = isV ? 
+                '<video src="' + u + '" autoplay loop muted playsinline class="w-full h-auto min-h-[100px] object-contain bg-gray-100 border border-gray-200"></video>' : 
+                '<img loading="lazy" src="' + u + '" alt="Anúncio" class="w-full h-auto min-h-[100px] object-contain bg-gray-100 border border-gray-200" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />';
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.incrementarMetricAd(p.id, 'view');
+            }
+            
+            return '<a href="' + p.linkDestino + '" target="_blank" onclick="registarCliqueAd(\'' + p.id + '\')" class="block w-full relative group hover:opacity-95 transition-opacity"><div class="absolute top-2 right-2 bg-white/90 text-[8px] uppercase font-black px-1.5 py-0.5 z-10 text-jornal-dark border border-gray-200">Publicidade</div>' + mH + '</a>';
         }
 
         function iniciarCarrosselAnuncios(cId, an) {
@@ -893,7 +844,8 @@
             var h = '<article onclick="abrirNoticia(\'' + d.id + '\', true)" class="group cursor-pointer flex flex-col mb-4 bg-gray-50 p-4 border border-gray-100 rounded-sm hover:shadow-md transition-shadow">' +
                 '<div class="flex items-center gap-3 mb-3"><div class="w-10 h-10 rounded-full bg-jornal-blue flex items-center justify-center text-white font-black text-xs shrink-0 shadow-inner">' + lt + '</div>' +
                 '<div class="flex flex-col min-w-0"><span class="text-[10px] font-black uppercase tracking-widest text-jornal-red">Opinião</span><span class="text-xs font-bold text-gray-700 truncate w-full">' + (d.autor || 'Editorial') + '</span></div></div>' +
-                '<div class="w-full aspect-video mb-3 overflow-hidden rounded-sm bg-gray-200 shrink-0 relative"><img src="' + (d.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />' +
+                '<div class="w-full aspect-video mb-3 overflow-hidden rounded-sm bg-gray-200 shrink-0 relative">' +
+                '<img src="' + (d.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-900 group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />' +
                 (d.creditosImagem ? '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded-tl">Foto: ' + d.creditosImagem + '</div>' : '') + '</div>' +
                 '<h3 class="font-serif font-black text-sm md:text-base leading-snug text-jornal-dark group-hover:text-jornal-blue line-clamp-3 mb-2">' + d.titulo + '</h3>' +
                 '<p class="text-xs text-gray-500 line-clamp-2 mb-3 italic">' + (d.linhaFina || removerHTML(d.conteudo)) + '</p>' +
@@ -904,24 +856,13 @@
                 for(var i=1; i<Math.min(op.length, 4); i++) { 
                     h += '<article onclick="abrirNoticia(\'' + op[i].id + '\', true)" class="group cursor-pointer border-t border-gray-100 pt-3 flex gap-3 items-center hover:bg-gray-50 p-2 -mx-2 rounded transition-colors">' +
                         '<div class="w-12 h-12 rounded bg-gray-200 shrink-0 overflow-hidden relative">' +
-                        '<img src="' + (op[i].urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
+                        '<img src="' + (op[i].urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-900 group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
                         '<div class="flex-grow min-w-0 flex flex-col justify-center"><h4 class="font-bold text-xs text-gray-800 leading-tight group-hover:text-jornal-red line-clamp-2 mb-1">' + op[i].titulo + '</h4>' +
                         '<span class="text-[9px] font-bold text-gray-400 tracking-widest uppercase">' + (op[i].dataHora ? op[i].dataHora.split(' ')[0] : '') + '</span></div></article>'; 
                 }
                 h += '</div>';
             }
             cIn.innerHTML = h;
-        }
-
-        function criarElementoAd(p) {
-            var e = p.tipo ? p.tipo.toLowerCase() : ''; 
-            var u = p.urlArquivo ? String(p.urlArquivo) : ''; 
-            var isV = e.indexOf('video') !== -1 || u.endsWith('.mp4');
-            var mH = isV ? 
-                '<video src="' + u + '" autoplay loop muted playsinline class="w-full h-auto min-h-[100px] object-contain bg-gray-100 border border-gray-200"></video>' : 
-                '<img loading="lazy" src="' + u + '" alt="Anúncio" class="w-full h-auto min-h-[100px] object-contain bg-gray-100 border border-gray-200" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />';
-            
-            return '<a href="' + p.linkDestino + '" target="_blank" class="block w-full relative group hover:opacity-95 transition-opacity"><div class="absolute top-2 right-2 bg-white/90 text-[8px] uppercase font-black px-1.5 py-0.5 z-10 text-jornal-dark border border-gray-200">Publicidade</div>' + mH + '</a>';
         }
 
         function filtrarPorCidadeLocal() {
@@ -1048,7 +989,7 @@
         function htmlCard(n) {
             var c = '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 p-0 flex flex-col h-full hover:shadow-md transition-shadow rounded-sm w-full overflow-hidden min-w-0">' +
                 '<div class="relative w-full aspect-video bg-gray-100 border-b border-gray-200 shrink-0 overflow-hidden">' +
-                '<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />' +
+                '<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain bg-gray-900 group-hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />' +
                 '</div>';
             
             if (n.creditosImagem) {
@@ -1070,7 +1011,7 @@
         function htmlHero(n) {
             var c = '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 flex flex-col md:flex-row h-full overflow-hidden hover:shadow-md transition-shadow rounded-sm w-full">' +
                 '<div class="md:w-3/5 w-full bg-gray-100 min-h-[300px] shrink-0 overflow-hidden relative">' +
-                '<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700 min-h-[300px]" />';
+                '<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="absolute inset-0 w-full h-full object-contain bg-gray-900 group-hover:scale-105 transition duration-700 min-h-[300px]" />';
             
             if (n.creditosImagem) {
                 c += '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 rounded-tl">Foto: ' + n.creditosImagem + '</div>';
@@ -1114,7 +1055,7 @@
 
             var htmlFinal = ''; 
 
-            categoriasBlocos.forEach(function(cat) {
+            categoriasBlocos.forEach(function(cat, idx) {
                 if(!cat || cat.trim() === '') return;
                 var limite = 4;
                 
@@ -1132,11 +1073,15 @@
                     
                     nCat.forEach(function(n) {
                         htmlFinal += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col h-full border border-gray-100 shadow-sm bg-white rounded-sm overflow-hidden min-w-0 hover:shadow-md transition-shadow">' +
-                            '<div class="relative w-full aspect-video bg-gray-200 shrink-0 overflow-hidden"><img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
+                            '<div class="relative w-full aspect-video bg-gray-200 shrink-0 overflow-hidden"><img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain bg-gray-900 transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
                             '<div class="p-4 flex flex-col flex-grow min-w-0 bg-white relative z-10"><h4 class="font-serif font-bold text-sm leading-snug text-jornal-dark group-hover:text-jornal-red line-clamp-3 mb-2">' + n.titulo + '</h4>' +
                             '<span class="text-[9px] font-bold text-gray-400 mt-auto tracking-widest uppercase">' + (n.dataHora ? n.dataHora.replace(' ', ' às ') : '') + '</span></div></article>';
                     });
                     htmlFinal += '</div></div>';
+                    
+                    if(window.anunciosMeioFeed && window.anunciosMeioFeed[idx]) {
+                        htmlFinal += '<div class="w-full mb-12">' + criarElementoAd(window.anunciosMeioFeed[idx]) + '</div>';
+                    }
                 }
             });
             container.innerHTML = htmlFinal;
@@ -1168,7 +1113,7 @@
                 var credHtml = n.creditosImagem ? '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 z-20">Foto: ' + n.creditosImagem + '</div>' : '';
                 
                 var slideHtml = '<div class="absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out cursor-pointer group carrossel-slide" style="opacity: 0; z-index: 0;" onclick="abrirNoticia(\'' + n.id + '\', true)">';
-                slideHtml += '<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover bg-gray-900 opacity-90" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'"/>';
+                slideHtml += '<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-900 opacity-90" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'"/>';
                 slideHtml += credHtml;
                 slideHtml += '<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>';
                 slideHtml += '<div class="absolute bottom-0 left-0 p-6 md:p-12 w-full text-white min-w-0 z-10">';
@@ -1218,6 +1163,468 @@
                     indics[i].className = 'w-3 h-3 rounded-full carrossel-indicador ' + (i === slideIndex ? 'bg-jornal-red' : 'bg-white/50'); 
                 }
             }
+        }
+
+        function renderizarClimaEFinanceiro() {
+            var tick = document.getElementById('ticker-content'); 
+            var usd = '--'; 
+            var eur = '--'; 
+            var btc = '--'; 
+            var clima = '--'; 
+            var iconeClima = '☀️'; 
+            var descClima = 'A Atualizar...';
+            
+            fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL')
+            .then(function(res) { 
+                return res.json(); 
+            })
+            .then(function(dadosC) {
+                if(dadosC.USDBRL) { 
+                    usd = parseFloat(dadosC.USDBRL.ask).toFixed(2); 
+                    eur = parseFloat(dadosC.EURBRL.ask).toFixed(2); 
+                    btc = parseFloat(dadosC.BTCBRL.ask).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); 
+                }
+                atualizarDOM();
+            }).catch(function(e){ 
+                console.warn(e); 
+                atualizarDOM(); 
+            });
+
+            // UTILIZA A NOVA API DO METEO
+            fetch('https://api.open-meteo.com/v1/forecast?latitude=-15.601&longitude=-56.0974&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=America%2FSao_Paulo')
+            .then(function(res) { 
+                return res.json(); 
+            })
+            .then(function(dadosClima) {
+                dadosClimaGlobal = dadosClima;
+                if(dadosClima.current) {
+                    clima = Math.round(dadosClima.current.temperature_2m); 
+                    var wCode = dadosClima.current.weather_code;
+                    
+                    if (wCode <= 3) { iconeClima = '☀️'; descClima = 'Céu Limpo'; } 
+                    else if (wCode <= 48) { iconeClima = '⛅'; descClima = 'Nublado'; } 
+                    else if (wCode <= 67) { iconeClima = '🌧️'; descClima = 'Chuva'; } 
+                    else if (wCode <= 99) { iconeClima = '⛈️'; descClima = 'Tempestade'; }
+                    
+                    var elTemp = document.getElementById('temp-clima'); 
+                    var elIcone = document.getElementById('icone-clima'); 
+                    var elBgIcone = document.getElementById('bg-icone-clima'); 
+                    var elDesc = document.getElementById('desc-clima');
+                    
+                    if (elTemp) elTemp.innerText = clima + '°C'; 
+                    if (elIcone) elIcone.innerText = iconeClima; 
+                    if (elBgIcone) elBgIcone.innerText = iconeClima; 
+                    if (elDesc) elDesc.innerText = descClima;
+                    
+                    var mChuva = document.getElementById('modal-clima-chuva'); 
+                    var mUmid = document.getElementById('modal-clima-umidade'); 
+                    var mVento = document.getElementById('modal-clima-vento'); 
+                    var mDesc = document.getElementById('modal-clima-desc'); 
+                    var mTemp = document.getElementById('modal-clima-temp'); 
+                    var mIcone = document.getElementById('modal-clima-icone');
+                    
+                    if(mDesc) mDesc.innerText = descClima; 
+                    if(mTemp) mTemp.innerText = clima; 
+                    if(mIcone) mIcone.innerText = iconeClima;
+                }
+                atualizarDOM();
+            }).catch(function(e){ 
+                console.warn(e); 
+                atualizarDOM(); 
+            });
+
+            function atualizarDOM() {
+                var stringTicker = '<span class="text-amber-300 font-extrabold mr-2">💵 DÓLAR:</span> R$ ' + usd + ' | <span class="text-blue-300 font-extrabold mr-2">💶 EURO:</span> R$ ' + eur + ' | <span class="text-orange-400 font-extrabold mr-2">₿ BITCOIN:</span> R$ ' + btc + ' | <span class="text-sky-300 font-extrabold mr-2">☀️ CUIABÁ:</span> ' + clima + '°C | ';
+                var recentes = noticiasGlobais.slice(0, 5); 
+                recentes.forEach(function(n) { 
+                    stringTicker += '<span class="mx-3 hover:text-red-200 cursor-pointer text-white underline" onclick="abrirNoticia(\'' + n.id + '\', true)">' + String(n.titulo).toUpperCase() + '</span> &bull; '; 
+                });
+                if(tick) {
+                    tick.innerHTML = stringTicker;
+                }
+            }
+            atualizarDOM();
+        }
+
+        function renderizarMaisLidas() {
+            var lista = document.getElementById('lista-mais-lidas'); 
+            if (!lista) return;
+            
+            var publicadas = noticiasGlobais.filter(isNoticiaPublicada);
+            
+            var dezDiasAtras = new Date();
+            dezDiasAtras.setDate(dezDiasAtras.getDate() - 10);
+            
+            var recentes = publicadas.filter(function(n) {
+                var pts = n.dataHora.split(/[\/\s:]/);
+                var dt = new Date(pts[2], pts[1]-1, pts[0], pts[3]||0, pts[4]||0);
+                return dt >= dezDiasAtras;
+            });
+            
+            var top10 = recentes.sort(function(a, b) { 
+                return b.views - a.views; 
+            }).slice(0, 10);
+            
+            var htmlFinal = '';
+            top10.forEach(function(n, idx) {
+                htmlFinal += '<li class="flex gap-3 items-center group cursor-pointer py-3" onclick="abrirNoticia(\'' + n.id + '\', true)">' +
+                    '<div class="w-8 h-8 rounded-full bg-jornal-blue text-white flex items-center justify-center font-black text-xs shrink-0">' + (idx+1) + '</div>' +
+                    '<div class="flex-grow w-full overflow-hidden min-w-0"><h4 class="text-xs font-bold text-jornal-dark leading-tight group-hover:text-jornal-blue line-clamp-2 break-words">' + n.titulo + '</h4></div></li>';
+            });
+            lista.innerHTML = htmlFinal;
+        }
+
+        function traduzirTermoPlacar(texto) {
+            if(!texto) return '';
+            var dicionario = { 
+                'Scheduled': 'Agendado', 
+                'Final': 'Encerrado', 
+                'Halftime': 'Intervalo', 
+                'Postponed': 'Adiado', 
+                'Canceled': 'Cancelado', 
+                'Delayed': 'Atrasado', 
+                'Brazil': 'Brasil', 
+                'England': 'Inglaterra', 
+                'Italy': 'Itália', 
+                'Netherlands': 'Holanda', 
+                'Portugal': 'Portugal', 
+                'Spain': 'Espanha', 
+                'Germany': 'Alemanha', 
+                'France': 'França', 
+                'Argentina': 'Argentina', 
+                'FIFA World Cup': 'Copa do Mundo FIFA', 
+                'UEFA Champions League': 'Liga dos Campeões', 
+                'CONMEBOL Libertadores': 'Taça Libertadores' 
+            };
+            if (dicionario[texto]) {
+                return dicionario[texto];
+            }
+            return String(texto).replace('1st Half', '1º Tempo').replace('2nd Half', '2º Tempo').replace('Half', 'Intervalo').replace('FT', 'Fim');
+        }
+
+        function renderizarPlacarAoVivo() {
+            var placar = document.getElementById('widget-placar'); 
+            if(!placar) return;
+            
+            var ligasAtivas = ['soccer/bra.1']; 
+            if (configuracoesGlobais['LigasPlacar']) { 
+                try { 
+                    ligasAtivas = JSON.parse(configuracoesGlobais['LigasPlacar']); 
+                } catch(e){} 
+            }
+            
+            var formatOptions = { timeZone: 'America/Cuiaba', year: 'numeric', month: '2-digit', day: '2-digit' };
+            var formatter = new Intl.DateTimeFormat('pt-BR', formatOptions);
+            var partesHoje = formatter.format(new Date()).split('/');
+            var dataHojeLocalStr = partesHoje[2] + '-' + partesHoje[1] + '-' + partesHoje[0];
+            
+            placar.innerHTML = '<div class="text-center text-xs text-gray-400 py-4">A procurar jogos...</div>';
+            var htmlFinal = ''; 
+            var fetchesConcluidos = 0;
+
+            if(ligasAtivas.length === 0) { 
+                placar.innerHTML = '<div class="text-center text-xs text-gray-400 py-4">Nenhum campeonato ativo.</div>'; 
+                return; 
+            }
+
+            ligasAtivas.forEach(function(liga) {
+                fetch('https://site.api.espn.com/apis/site/v2/sports/' + liga + '/scoreboard?lang=pt&region=br')
+                .then(function(res) { 
+                    return res.ok ? res.json() : null; 
+                })
+                .then(function(data) {
+                    if (data && data.events && data.events.length > 0) {
+                        var nomeCompeticao = traduzirTermoPlacar(data.leagues && data.leagues[0] ? data.leagues[0].name : 'Competição');
+                        var matchesHtml = '';
+                        var exibidos = 0;
+                        
+                        data.events.forEach(function(jogo) {
+                            if (!jogo.date) return;
+                            
+                            var partesJogo = formatter.format(new Date(jogo.date)).split('/');
+                            var dataJogoLocalStr = partesJogo[2] + '-' + partesJogo[1] + '-' + partesJogo[0];
+                            
+                            if (dataJogoLocalStr !== dataHojeLocalStr) {
+                                return;
+                            }
+                            if (exibidos >= 4) {
+                                return;
+                            }
+                            
+                            var matchInfo = jogo.competitions[0];
+                            var casa = matchInfo.competitors.find(function(c) { return c.homeAway === 'home'; }) || matchInfo.competitors[0];
+                            var fora = matchInfo.competitors.find(function(c) { return c.homeAway === 'away'; }) || matchInfo.competitors[1];
+                            
+                            var logoCasa = (casa.team.logos && casa.team.logos[0]) ? casa.team.logos[0].href : (casa.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽');
+                            var logoFora = (fora.team.logos && fora.team.logos[0]) ? fora.team.logos[0].href : (fora.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽');
+                            
+                            var isAoVivo = jogo.status.type.state === 'in'; 
+                            var isEncerrado = jogo.status.type.state === 'post'; 
+                            var isAgendado = jogo.status.type.state === 'pre';
+                            
+                            var corEstado = 'text-gray-400'; 
+                            var bordaEstado = 'border-gray-200'; 
+                            var bgPlacar = 'bg-jornal-dark text-white';
+
+                            if (isAoVivo) { 
+                                corEstado = 'text-red-600 animate-pulse'; 
+                                bordaEstado = 'border-red-200 bg-red-50/10'; 
+                                bgPlacar = 'bg-jornal-red text-white'; 
+                            } else if (isAgendado) { 
+                                corEstado = 'text-emerald-600'; 
+                            }
+                            
+                            var infoEstadoTexto = traduzirTermoPlacar(jogo.status.type.shortDetail);
+                            if (isAoVivo) { 
+                                infoEstadoTexto = 'AO VIVO'; 
+                            } else if (isAgendado) { 
+                                var dtJogo = new Date(jogo.date);
+                                var horas = String(dtJogo.getHours()).padStart(2, '0'); 
+                                var minutos = String(dtJogo.getMinutes()).padStart(2, '0'); 
+                                infoEstadoTexto = horas + ':' + minutos; 
+                            } else if (isEncerrado) { 
+                                infoEstadoTexto = 'ENCERRADO'; 
+                            }
+                            
+                            matchesHtml += '<div class="bg-white border ' + bordaEstado + ' rounded-lg p-3 mb-3 shadow-sm hover:shadow-md transition-shadow">' +
+                                '<div class="flex items-center justify-between w-full">' +
+                                '<div class="flex items-center justify-start gap-2 w-[35%] min-w-0">' +
+                                '<img src="' + logoCasa + '" class="w-5 h-5 sm:w-6 sm:h-6 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'">' +
+                                '<span class="font-bold text-gray-800 text-[10px] sm:text-[11px] text-left truncate w-full" title="' + traduzirTermoPlacar(casa.team.name) + '">' + traduzirTermoPlacar(casa.team.name) + '</span>' +
+                                '</div>' +
+                                '<div class="flex flex-col items-center justify-center w-[25%] shrink-0">' +
+                                '<span class="' + bgPlacar + ' font-black text-xs px-2 sm:px-3 py-1 rounded-md tracking-widest mb-1 shadow-inner">' + (casa.score || '0') + ' - ' + (fora.score || '0') + '</span>' +
+                                '<span class="text-[8px] uppercase tracking-wider font-bold ' + corEstado + ' text-center whitespace-nowrap">' + infoEstadoTexto + '</span>' +
+                                '</div>' +
+                                '<div class="flex items-center justify-end gap-2 w-[35%] min-w-0">' +
+                                '<span class="font-bold text-gray-800 text-[10px] sm:text-[11px] text-right truncate w-full" title="' + traduzirTermoPlacar(fora.team.name) + '">' + traduzirTermoPlacar(fora.team.name) + '</span>' +
+                                '<img src="' + logoFora + '" class="w-5 h-5 sm:w-6 sm:h-6 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'">' +
+                                '</div>' +
+                                '</div></div>';
+                            
+                            exibidos++;
+                        });
+
+                        if (matchesHtml) {
+                            htmlFinal += '<h5 class="text-[10px] uppercase font-black tracking-widest text-slate-400 mt-4 mb-3 border-b border-gray-100 pb-1">' + nomeCompeticao + '</h5>' + matchesHtml;
+                        }
+                    }
+                })
+                .catch(function(e) { 
+                    console.warn(e); 
+                })
+                .finally(function() {
+                    fetchesConcluidos++;
+                    if(fetchesConcluidos === ligasAtivas.length) {
+                        placar.innerHTML = htmlFinal || '<div class="text-center text-xs text-gray-400 py-4">Sem jogos no momento.</div>';
+                    }
+                });
+            });
+        }
+
+        function abrirNoticia(idNoticia, updateUrl) {
+            if (updateUrl === undefined) {
+                updateUrl = true;
+            }
+            
+            var noticia = noticiasGlobais.find(function(n) { 
+                return String(n.id) === String(idNoticia); 
+            }); 
+            if(!noticia) return;
+            
+            noticiaAbertaId = noticia.id; 
+            
+            if (updateUrl) {
+                atualizarURL('noticia', idNoticia, true);
+            }
+            
+            document.getElementById('home-feed-container').classList.add('hidden'); 
+            document.getElementById('noticia-completa-container').classList.remove('hidden');
+            
+            document.getElementById('nc-categoria').innerText = limparTextoNavegacao(noticia.categoria || 'Geral'); 
+            document.getElementById('nc-titulo').innerText = noticia.titulo;
+            document.getElementById('nc-autor').innerText = "Por: " + noticia.autor; 
+            document.getElementById('nc-data').innerText = noticia.dataHora ? "Publicado em " + noticia.dataHora.replace(' ', ' às ') : '';
+            
+            var conteudoFormatado = converterVideoUrlsParaPlayers(noticia.conteudo || '');
+            document.getElementById('nc-conteudo').innerHTML = conteudoFormatado || '<p class="text-gray-400 italic">Sem conteúdo disponível para esta matéria.</p>';
+            
+            if(conteudoFormatado.indexOf('instagram-media') !== -1) {
+                setTimeout(function(){ 
+                    if(window.instgrm) {
+                        window.instgrm.Embeds.process(); 
+                    }
+                }, 500);
+            }
+            if(conteudoFormatado.indexOf('twitter-tweet') !== -1) {
+                setTimeout(function(){ 
+                    if(window.twttr) {
+                        window.twttr.widgets.load(); 
+                    }
+                }, 500);
+            }
+            
+            var ncImg = document.getElementById('nc-imagem');
+            if(noticia.urlImagem && noticia.urlImagem.trim() !== '') { 
+                ncImg.src = noticia.urlImagem; 
+                document.getElementById('nc-imagem-container').classList.remove('hidden'); 
+            } else { 
+                document.getElementById('nc-imagem-container').classList.add('hidden'); 
+            }
+            
+            var ncCreditos = document.getElementById('nc-creditos');
+            if(noticia.creditosImagem) {
+                ncCreditos.innerText = 'Foto: ' + noticia.creditosImagem;
+            } else {
+                ncCreditos.innerText = '';
+            }
+
+            var ncLegenda = document.getElementById('nc-legenda');
+            if(noticia.legendaImagem) {
+                ncLegenda.innerText = noticia.legendaImagem;
+            } else {
+                ncLegenda.innerText = '';
+            }
+
+            // Renderizar Relacionadas
+            var relIds = (noticia.relacionadas || '').split(',').map(function(s){return s.trim()}).filter(Boolean);
+            var containerRel = document.getElementById('nc-relacionadas-container');
+            var gridRel = document.getElementById('grid-relacionadas');
+            gridRel.innerHTML = '';
+            
+            if(relIds.length > 0) {
+                relIds.forEach(function(idRel) {
+                    var nRel = noticiasGlobais.find(function(x) { return String(x.id) === String(idRel); });
+                    if(nRel && isNoticiaPublicada(nRel)) {
+                        gridRel.innerHTML += '<article onclick="abrirNoticia(\'' + nRel.id + '\', true)" class="group cursor-pointer flex flex-col h-full border border-gray-100 shadow-sm bg-gray-50 rounded-sm overflow-hidden min-w-0 hover:shadow-md transition-shadow">' +
+                            '<div class="relative w-full aspect-video bg-gray-200 shrink-0 overflow-hidden"><img src="' + (nRel.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain bg-gray-900 transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" /></div>' +
+                            '<div class="p-4 flex flex-col flex-grow min-w-0"><h4 class="font-serif font-bold text-xs leading-snug text-jornal-dark group-hover:text-jornal-red line-clamp-3 mb-2">' + nRel.titulo + '</h4>' +
+                            '<span class="text-[9px] font-bold text-gray-400 mt-auto tracking-widest uppercase">' + (nRel.dataHora ? nRel.dataHora.replace(' ', ' às ') : '') + '</span></div></article>';
+                    }
+                });
+                if(gridRel.innerHTML !== '') {
+                    containerRel.classList.remove('hidden');
+                } else {
+                    containerRel.classList.add('hidden');
+                }
+            } else {
+                containerRel.classList.add('hidden');
+            }
+            
+            var coms = comentariosGlobais.filter(function(c) { 
+                return c && String(c.idNoticia) === String(idNoticia); 
+            });
+            var divComs = document.getElementById('lista-comentarios'); 
+            
+            if (divComs) {
+                divComs.innerHTML = '';
+                if(coms.length === 0) {
+                    divComs.innerHTML = '<p class="text-sm text-gray-400 italic">Seja o primeiro a comentar.</p>'; 
+                } else { 
+                    coms.forEach(function(c) { 
+                        if(c) {
+                            divComs.innerHTML += '<div class="bg-white p-4 border border-gray-200 rounded-sm">' +
+                                '<div class="flex items-center gap-2 mb-2">' +
+                                '<span class="font-bold text-sm text-jornal-dark">' + c.nome + '</span>' +
+                                '<span class="text-[10px] text-gray-400 uppercase">' + c.data + '</span>' +
+                                '</div>' +
+                                '<p class="text-sm text-gray-700">' + c.texto + '</p></div>'; 
+                        }
+                    }); 
+                }
+            }
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.incrementarView(noticiaAbertaId);
+            }
+            
+            window.scrollTo(0,0);
+        }
+
+        function fecharNoticiaUI() { 
+            noticiaAbertaId = null; 
+            document.getElementById('noticia-completa-container').classList.add('hidden'); 
+            document.getElementById('home-feed-container').classList.remove('hidden'); 
+            window.scrollTo(0,0); 
+        }
+        
+        function fecharNoticia() { 
+            atualizarURL('noticia', null, false); 
+            fecharNoticiaUI(); 
+        }
+
+        function voltarCapa() { 
+            fecharNoticia(); 
+            filtrarCategoria('Todas', true); 
+            document.getElementById('input-pesquisa').value = ''; 
+        }
+
+        function obterUrlPublicaNoticia() {
+            var url = new URL(window.location.href);
+            url.search = '';
+            var newPath = url.pathname.replace(/index_simples\.html/gi, '');
+            if (newPath === '') newPath = '/';
+            url.pathname = newPath;
+            if (noticiaAbertaId) {
+                url.searchParams.set('noticia', noticiaAbertaId);
+            }
+            return url.toString();
+        }
+
+        function shareLink(rede) {
+            var noticia = noticiasGlobais.find(function(n) {
+                return n && String(n.id) === String(noticiaAbertaId);
+            });
+            if (!noticia) {
+                mostrarMensagem('Não foi possível identificar a matéria para compartilhar.', 'erro');
+                return;
+            }
+
+            var url = obterUrlPublicaNoticia();
+            var texto = noticia.titulo + (noticia.linhaFina ? ' — ' + noticia.linhaFina : '') + '\n\n' + url;
+            var destino = '';
+
+            if (rede === 'whatsapp') {
+                destino = 'https://wa.me/?text=' + encodeURIComponent(texto);
+            } else if (rede === 'x') {
+                destino = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(noticia.titulo) + '&url=' + encodeURIComponent(url);
+            }
+
+            if (!destino) return;
+            var janela = window.open(destino, '_blank', 'noopener,noreferrer');
+            if (!janela) {
+                window.location.href = destino;
+            }
+        }
+
+        function abrirModalLogin() { 
+            document.getElementById('modalLogin').classList.remove('hidden'); 
+            document.getElementById('modalLogin').classList.add('flex'); 
+        }
+
+        function fecharModalLogin() { 
+            document.getElementById('modalLogin').classList.add('hidden'); 
+        }
+
+        function mostrarMensagem(mensagem, tipo) {
+            if(tipo === undefined) {
+                tipo = 'sucesso'; 
+            }
+            var toast = document.getElementById('toast'); 
+            document.getElementById('toast-msg').innerText = mensagem;
+            
+            if(tipo === 'erro') {
+                toast.className = 'fixed top-5 right-5 px-6 py-4 font-bold shadow-xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-white border-red-600 text-red-600 rounded-sm';
+                document.getElementById('toast-icon').innerHTML = '⚠️';
+            } else {
+                toast.className = 'fixed top-5 right-5 px-6 py-4 font-bold shadow-xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-jornal-dark border-jornal-dark text-white rounded-sm';
+                document.getElementById('toast-icon').innerHTML = '✓';
+            }
+            
+            toast.classList.remove('hidden'); 
+            setTimeout(function() { 
+                toast.classList.add('hidden'); 
+            }, 4500);
         }
     </script>
 </body>
