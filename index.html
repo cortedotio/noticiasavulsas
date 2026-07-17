@@ -718,22 +718,41 @@
                                     filtrarCategoria(window.categoriaAtual, false); 
                                 } 
                             }
-                            
-                            // Remove a tela de loading de forma suave
-                            document.getElementById('global-loader').classList.add('opacity-0');
-                            setTimeout(function(){ 
-                                document.getElementById('global-loader').classList.add('hidden'); 
-                                document.getElementById('site-content').classList.remove('hidden');
-                                setTimeout(function(){ 
-                                    document.getElementById('site-content').classList.remove('opacity-0'); 
-                                }, 50);
-                            }, 700);
                         }
                     } catch(e) { 
-                        console.error("Falha no JS:", e); 
+                        console.error("Falha no processamento JS:", e); 
+                        // Exibe um aviso se houver falha mas permite continuar
+                        var toast = document.getElementById('toast');
+                        var toastMsg = document.getElementById('toast-msg');
+                        if(toast && toastMsg) {
+                            toastMsg.innerText = "Algumas informações não puderam ser carregadas.";
+                            toast.classList.remove('hidden');
+                        }
+                    } finally {
+                        // O BLOCO FINALLY: Garante que a tela destranca 100% das vezes
+                        document.getElementById('global-loader').classList.add('opacity-0');
+                        setTimeout(function(){ 
+                            document.getElementById('global-loader').classList.add('hidden'); 
+                            document.getElementById('site-content').classList.remove('hidden');
+                            setTimeout(function(){ 
+                                document.getElementById('site-content').classList.remove('opacity-0'); 
+                            }, 50);
+                        }, 700);
                     }
                 }).withFailureHandler(function(err) { 
                     console.error("Falha de Servidor:", err); 
+                    // Destranca a tela e mostra o erro
+                    document.getElementById('global-loader').classList.add('hidden'); 
+                    document.getElementById('site-content').classList.remove('hidden', 'opacity-0');
+                    var toast = document.getElementById('toast');
+                    var toastMsg = document.getElementById('toast-msg');
+                    if (toast && toastMsg) {
+                        toastMsg.innerText = "Erro de ligação ao servidor. Verifique o link da API.";
+                        toast.className = 'fixed top-5 right-5 px-6 py-4 font-bold shadow-xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-white border-red-600 text-red-600 rounded-sm';
+                        document.getElementById('toast-icon').innerHTML = '⚠️';
+                        toast.classList.remove('hidden');
+                        setTimeout(function() { toast.classList.add('hidden'); }, 6000);
+                    }
                 }).getHomeData();
             }
         }
