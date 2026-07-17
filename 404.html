@@ -4,25 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notícias Avulsas - Portal de Informação</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     <script async src="//www.instagram.com/embed.js"></script>
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
-    <script id="gas-params" type="application/json"><?!= typeof urlParams !== 'undefined' ? urlParams : '{}' ?></script>
+    
+    <script id="gas-params" type="application/json">
+        <?!= typeof urlParams !== 'undefined' ? urlParams : '{}' ?>
+    </script>
     
     <script>
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyohP8tecAgfMIz7TjH8OGM42hSEOUR2DjBlNNjQ-oq_z49qJDVkEs_7GCjvFShuRCB/exec";
-        window.google = { script: { run: { withSuccessHandler: function(cb) { this._onSuccess = cb; return this; }, withFailureHandler: function(cb) { this._onFailure = cb; return this; } } } };
+        
+        window.google = {
+            script: {
+                run: {
+                    withSuccessHandler: function(cb) { this._onSuccess = cb; return this; },
+                    withFailureHandler: function(cb) { this._onFailure = cb; return this; }
+                }
+            }
+        };
 
-        const apiFunctions = ['getHomeData', 'incrementarView', 'salvarComentarioNoSheets', 'curtirNoticiaNoSheets', 'incrementarMetricAd'];
+        const apiFunctions = ['getHomeData', 'incrementarView', 'salvarComentarioNoSheets', 'curtirNoticiaNoSheets', 'incrementarCompartilhamento'];
+
         apiFunctions.forEach(function(funcName) {
             window.google.script.run[funcName] = function() {
                 var argsArray = Array.prototype.slice.call(arguments);
                 var successCb = this._onSuccess; var failureCb = this._onFailure;
                 this._onSuccess = null; this._onFailure = null;
-                fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: funcName, args: argsArray }) })
+                
+                fetch(GAS_API_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: funcName, args: argsArray })
+                })
                 .then(function(res) { return res.json(); })
                 .then(function(result) {
                     if (successCb) {
@@ -38,12 +55,17 @@
 
         window.onerror = function(message, source, lineno) {
             console.error("Erro Global JS:", message, "na linha", lineno);
-            setTimeout(function() { var dbg = document.getElementById('debug-error-box'); if (dbg) { dbg.innerHTML = "Erro Detetado: " + message + " (Linha " + lineno + ")"; dbg.classList.remove('hidden'); } }, 500);
+            setTimeout(function() {
+                var debugBox = document.getElementById('debug-error-box');
+                if (debugBox) { debugBox.innerHTML = "Erro de JavaScript detetado: " + message + " (Linha " + lineno + ")"; debugBox.classList.remove('hidden'); }
+            }, 500);
         };
 
         var configureTailwind = function() {
             if (typeof tailwind === 'undefined') { setTimeout(configureTailwind, 10); return; }
-            tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] }, colors: { jornal: { blue: '#0F172A', red: '#E11D48', gray: '#F8FAFC', dark: '#020617' } } } } };
+            tailwind.config = {
+                theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] }, colors: { jornal: { blue: '#0F172A', red: '#E11D48', gray: '#F8FAFC', dark: '#020617' } } } }
+            };
         };
         configureTailwind();
     </script>
@@ -53,6 +75,9 @@
         .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+        .spinner { border: 2px solid rgba(255,255,255,.3); border-left-color: #fff; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
@@ -69,12 +94,11 @@
         .rich-editor h1 { font-size: 1.5em; font-weight: 900; margin: 16px 0 8px 0; }
         .rich-editor h2 { font-size: 1.25em; font-weight: 800; margin: 12px 0 8px 0; }
         .rich-editor blockquote { border-left: 4px solid #E11D48; background: #f8fafc; padding: 12px 16px; color: #475569; font-style: italic; margin: 16px 0; border-radius: 0 8px 8px 0; }
-        .rich-editor ul, .rich-editor ol { padding-left: 24px; margin-bottom: 12px; }
+        .rich-editor ul { list-style-type: disc; padding-left: 24px; margin-bottom: 12px; }
+        .rich-editor ol { list-style-type: decimal; padding-left: 24px; margin-bottom: 12px; }
         .instagram-media { background: #FFF; border: 0; border-radius: 3px; box-shadow: 0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px auto; max-width: 540px; min-width: 326px; padding: 0; width: 99.375%; width: calc(100% - 2px); }
     </style>
 </head>
-
-<!-- Body limpo: Removido o opacity-0 para evitar ecrãs em branco se a internet falhar -->
 <body class="antialiased min-h-screen flex flex-col relative selection:bg-jornal-red selection:text-white">
 
     <div id="toast" class="hidden fixed top-5 right-5 px-6 py-4 font-bold shadow-xl transition-all duration-300 z-[99999] flex items-center gap-3 border rounded-sm">
@@ -112,7 +136,9 @@
                 
                 <form onsubmit="pesquisarSite(event)" class="relative hidden md:flex items-center mx-auto flex-grow max-w-sm">
                     <input type="text" id="input-pesquisa" placeholder="Pesquisar notícias..." class="w-full px-5 py-2.5 bg-gray-100 border border-gray-200 rounded-full text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-jornal-blue pr-12 transition-all" />
-                    <button type="submit" class="absolute right-3 p-2 text-gray-400 hover:text-jornal-red transition-colors flex items-center justify-center">🔍</button>
+                    <button type="submit" class="absolute right-3 p-2 text-gray-400 hover:text-jornal-red transition-colors flex items-center justify-center">
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M10 2a8 8 0 015.293 14.121l5.414 5.414a1 1 0 01-1.414 1.414l-5.414-5.414A8 8 0 1110 2zm0 2a6 6 0 100 12 6 6 0 000-12z"/></svg>
+                    </button>
                 </form>
 
                 <div class="hidden lg:flex flex-col items-end shrink-0">
@@ -120,7 +146,7 @@
                     <button onclick="carregarNoticias(true)" class="text-sm font-bold text-jornal-blue hover:text-jornal-red transition-colors flex items-center gap-1 mt-1">↻ Atualizar Edição</button>
                 </div>
                 <div class="flex items-center gap-3 lg:hidden shrink-0">
-                    <button onclick="focarPesquisaMobile()" class="p-2 text-gray-600 bg-gray-100 rounded-full">🔍</button>
+                    <button onclick="focarPesquisaMobile()" class="p-2 text-gray-600 bg-gray-100 rounded-full"><svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M10 2a8 8 0 015.293 14.121l5.414 5.414a1 1 0 01-1.414 1.414l-5.414-5.414A8 8 0 1110 2zm0 2a6 6 0 100 12 6 6 0 000-12z"/></svg></button>
                 </div>
             </div>
             <form id="form-pesquisa-mobile" onsubmit="pesquisarSite(event)" class="hidden w-full px-4 pb-4 bg-white border-b border-gray-100 lg:hidden">
@@ -143,7 +169,8 @@
             <div id="ads-topo-container" class="w-full mb-8 hidden grid gap-4 grid-cols-1 md:grid-cols-2"></div>
 
             <div id="loading-noticias" class="flex flex-col items-center justify-center py-20">
-                <p class="text-sm font-bold uppercase tracking-widest text-gray-400 animate-pulse">A carregar...</p>
+                <div class="w-10 h-10 border-4 border-gray-200 border-t-jornal-blue rounded-full animate-spin mb-4"></div>
+                <p class="text-xs font-bold uppercase tracking-widest text-gray-500 animate-pulse">A carregar informações do servidor...</p>
                 <div id="debug-error-box" class="hidden mt-4 text-xs text-red-500 font-mono text-left p-4 bg-red-50 border border-red-200 rounded max-w-xl break-words w-full shadow-sm"></div>
             </div>
 
@@ -185,7 +212,10 @@
                             </div>
                             
                             <button id="btn-curtir" onclick="curtirNoticiaAtual()" class="flex justify-center items-center gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-4 py-2.5 rounded-full transition-colors group shrink-0 w-full sm:w-auto">
-                                <span>❤️</span> <span id="nc-likes" class="text-sm font-bold text-gray-600">0</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" id="icone-coracao" class="h-5 w-5 text-gray-400 group-hover:text-jornal-red transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                                <span id="nc-likes" class="text-sm font-bold text-gray-600">0</span>
                             </button>
                         </div>
 
@@ -296,7 +326,7 @@
             </div>
         </main>
 
-        <footer class="mt-auto bg-jornal-dark text-white pt-12 pb-8 border-t-8 border-jornal-blue min-w-0">
+        <footer id="main-footer" class="hidden mt-auto bg-jornal-dark text-white pt-12 pb-8 border-t-8 border-jornal-blue min-w-0">
             <div class="max-w-[1200px] mx-auto px-4 flex flex-col items-center justify-center text-center min-w-0">
                 <div id="footer-branding" class="mb-2 min-w-0">
                     <h1 class="text-3xl font-black tracking-tighter uppercase text-slate-100">Notícias<span class="text-rose-600">Avulsas</span></h1>
@@ -410,29 +440,42 @@
 
         function carregarNoticias(forcarUpdate) {
             document.getElementById('master-feed-wrapper').classList.add('hidden'); 
-        function fecharModalClima() { 
-            document.getElementById('modalClima').classList.add('hidden'); 
-            document.getElementById('modalClima').classList.remove('flex'); 
-        }
+            document.getElementById('loading-noticias').classList.remove('hidden');
+            document.getElementById('debug-error-box').classList.add('hidden');
+            
+            var tId = setTimeout(function() {
+                var loader = document.getElementById('loading-noticias');
+                if (loader && !loader.classList.contains('hidden')) {
+                    mostrarErro("Tempo excedido. Google Apps Script falhou a responder.");
+                }
+            }, 15000);
 
-        function abrirModalClima() {
-            var m = document.getElementById('modalClima'); m.classList.remove('hidden'); m.classList.add('flex');
-            if(!dadosClimaGlobal || !dadosClimaGlobal.daily) return;
-            var dP = document.getElementById('modal-clima-previsao'); var h = ''; var dS = ['dom.', 'seg.', 'ter.', 'qua.', 'qui.', 'sex.', 'sáb.'];
-            for(var i=0; i<Math.min(7, dadosClimaGlobal.daily.time.length); i++) {
-                var dtStr = dadosClimaGlobal.daily.time[i]; var dt = new Date(dtStr + 'T12:00:00Z'); var nD = dS[dt.getDay()];
-                var tMax = Math.round(dadosClimaGlobal.daily.temperature_2m_max[i]); var tMin = Math.round(dadosClimaGlobal.daily.temperature_2m_min[i]);
-                var wC = dadosClimaGlobal.daily.weather_code[i]; var ico = '☀️';
-                if (wC <= 3) ico = '☀️'; else if (wC <= 48) ico = '⛅'; else if (wC <= 67) ico = '🌧️'; else if (wC <= 99) ico = '⛈️';
-                var bg = i===0 ? 'bg-gray-100 rounded-lg shadow-inner' : 'hover:bg-gray-50 rounded-lg transition-colors'; var tD = i===0 ? 'Hoje' : nD;
-                h += '<div class="flex flex-col items-center justify-center p-3 min-w-[70px] ' + bg + '"><span class="text-sm text-gray-700 font-bold mb-2">' + tD + '</span><span class="text-3xl mb-3 drop-shadow-sm">' + ico + '</span><div class="flex gap-2 text-xs font-bold"><span class="text-gray-800">' + tMax + '&deg;</span><span class="text-gray-400">' + tMin + '&deg;</span></div></div>';
-            }
-            dP.innerHTML = h;
-        }
+            window.google.script.run.withSuccessHandler(function(res) {
+                clearTimeout(tId);
+                document.getElementById('loading-noticias').classList.add('hidden');
+                
+                var d = typeof res === 'string' ? JSON.parse(res) : res;
+                if (d && d.sucesso) { 
+                    document.getElementById('master-feed-wrapper').classList.remove('hidden'); 
+                    document.getElementById('main-footer').classList.remove('hidden');
+                    processarDadosHome(d); 
+                    
+                    if (!forcarUpdate) {
+                        var p = new URLSearchParams(window.location.search);
+                        if(p.get('noticia')) { abrirNoticia(p.get('noticia'), false); } 
+                        else if(p.get('categoria')) { filtrarCategoria(p.get('categoria'), false); } 
+                        else if(p.get('pesquisa')) { document.getElementById('input-pesquisa').value = p.get('pesquisa'); pesquisarSite(new Event('submit')); } 
+                        else { filtrarCategoria('Todas', false); }
+                    } else { 
+                        if (noticiaAbertaId) { abrirNoticia(noticiaAbertaId, false); } 
+                        else if(window.categoriaAtual === 'Pesquisa') { pesquisarSite(new Event('submit')); } 
+                        else { filtrarCategoria(window.categoriaAtual, false); } 
+                    }
                 } else {
-                    mostrarErro(res ? res.erro : "Resposta inválida.");
+                    mostrarErro(d ? d.erro : "Resposta inválida.");
                 }
             }).withFailureHandler(function(err) {
+                clearTimeout(tId);
                 document.getElementById('loading-noticias').classList.add('hidden'); 
                 mostrarErro("Falha de Servidor: " + err.message);
             }).getHomeData();
@@ -468,14 +511,14 @@
             var textClasses = "bg-clip-text text-transparent " + classes;
             
             var ticker = document.getElementById('ticker-noticias');
-            if (ticker) ticker.className = "text-white text-[10px] font-bold h-8 overflow-hidden flex items-center sticky top-0 z-50 w-full shadow-sm min-w-0 transition-colors duration-500 " + classes;
+            if (ticker) ticker.className = "text-white text-[10px] font-bold h-8 overflow-hidden flex items-center border-b border-black/10 sticky top-0 z-50 w-full shadow-sm min-w-0 transition-colors duration-500 " + classes;
 
             var tickerLabel = document.getElementById('ticker-label');
             if(tickerLabel) tickerLabel.className = "px-4 h-full uppercase tracking-widest whitespace-nowrap shrink-0 border-r border-white/20 relative z-10 flex items-center gap-1 bg-black/20";
 
             var headerHtml = '';
             if (icone) headerHtml += '<div style="-webkit-mask-image: url(' + icone + '); mask-image: url(' + icone + '); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center;" class="w-10 h-10 md:w-12 md:h-12 shrink-0 ' + classes + '"></div>';
-            headerHtml += '<h1 class="text-4xl md:text-5xl font-black tracking-tighter cursor-pointer uppercase ' + textClasses + '" onclick="voltarCapa();">NOTÍCIAS AVULSAS</h1>';
+            headerHtml += '<h1 class="text-4xl md:text-5xl font-black tracking-tighter cursor-pointer text-slate-900 uppercase ' + textClasses + '" onclick="voltarCapa();">NOTÍCIAS AVULSAS</h1>';
             
             var headerBranding = document.getElementById('header-branding');
             if (headerBranding) headerBranding.innerHTML = headerHtml;
@@ -559,6 +602,18 @@
                 iniciarCarrosselAnuncios('ad-lateral-1', window.adsSeparados['Lateral 1'] || []);
                 iniciarCarrosselAnuncios('ad-lateral-2', window.adsSeparados['Lateral 2'] || []);
                 iniciarCarrosselAnuncios('ad-lateral-3', window.adsSeparados['Lateral 3'] || []);
+                
+                var containerLat = document.getElementById('grid-propagandas-lateral');
+                if (containerLat) {
+                    var hLat = '';
+                    if (window.adsSeparados['Lateral 1']) hLat += '<div id="ad-lateral-1" class="w-full"></div>';
+                    if (window.adsSeparados['Lateral 2']) hLat += '<div id="ad-lateral-2" class="w-full"></div>';
+                    if (window.adsSeparados['Lateral 3']) hLat += '<div id="ad-lateral-3" class="w-full"></div>';
+                    containerLat.innerHTML = hLat;
+                    iniciarCarrosselAnuncios('ad-lateral-1', window.adsSeparados['Lateral 1'] || []);
+                    iniciarCarrosselAnuncios('ad-lateral-2', window.adsSeparados['Lateral 2'] || []);
+                    iniciarCarrosselAnuncios('ad-lateral-3', window.adsSeparados['Lateral 3'] || []);
+                }
             }
             
             atualizarIdentidadeVisual();
@@ -581,7 +636,6 @@
             var urlSegura = p.urlArquivo ? String(p.urlArquivo) : '';
             var isVideo = ext.indexOf('video') !== -1 || urlSegura.endsWith('.mp4');
             var mH = isVideo ? '<video src="' + urlSegura + '" autoplay loop muted playsinline class="w-full h-auto min-h-[100px] max-h-[300px] object-cover bg-gray-100"></video>' : '<img loading="lazy" src="' + urlSegura + '" alt="Anúncio" class="w-full h-auto min-h-[100px] max-h-[300px] object-cover bg-gray-100" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />';
-            // Log impression natively (fire and forget)
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) window.google.script.run.incrementarMetricAd(p.id, 'view');
             return '<a href="' + p.linkDestino + '" target="_blank" onclick="registrarClickAd(\'' + p.id + '\')" class="block w-full relative group hover:opacity-95 transition-opacity border border-gray-200 overflow-hidden rounded-sm bg-white"><div class="absolute top-2 right-2 bg-white/90 text-[8px] uppercase font-black px-1.5 py-0.5 z-10 text-jornal-dark border border-gray-200">Publicidade</div>' + mH + '</a>';
         }
@@ -621,7 +675,7 @@
             var lista = document.getElementById('lista-mais-lidas'); 
             if (!lista) return;
             
-            var limiteMs = new Date().getTime() - (10 * 24 * 60 * 60 * 1000); // 10 dias
+            var limiteMs = new Date().getTime() - (10 * 24 * 60 * 60 * 1000); 
             var recentes = noticiasGlobais.filter(function(n) {
                 if (!isNoticiaPublicada(n) || !n.dataHora) return false;
                 var pts = n.dataHora.split(/[\/\s:]/);
@@ -819,7 +873,6 @@
             }
         }
 
-        // Funções adicionais otimizadas
         function pesquisarSite(e) {
             if(e) e.preventDefault();
             var termo = (document.getElementById('input-pesquisa').value || document.getElementById('input-pesquisa-mobile').value).toLowerCase().trim();
@@ -1182,7 +1235,7 @@
 
             var igRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[a-zA-Z0-9_-]+)(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
             strT = strT.replace(igRegex, function(match, url) { 
-                return '<blockquote class="instagram-media" data-instgrm-permalink="' + url + '/?utm_source=ig_embed" data-instgrm-version="14" style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px auto; max-width:540px; min-width:326px; padding:0; width:99.375%; width:calc(100% - 2px);"></blockquote>'; 
+                return '<blockquote class="instagram-media" data-instgrm-permalink="' + url + '/?utm_source=ig_embed" data-instgrm-version="14" style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px auto; max-width:540px; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);"></blockquote>'; 
             });
 
             var tkRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?tiktok\.com\/@[a-zA-Z0-9_.-]+\/video\/([0-9]+))(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
