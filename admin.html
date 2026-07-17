@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Admin - Notícias Avulsas</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
@@ -18,7 +15,7 @@
     </script>
     
     <script>
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxnl2EBI4pKrvTfeyNiQvo_GrwF1DUFcQl-zS2eP8DvbYpN3OcXZNJCXH7bMP1pZXbe/exec";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwnhjvRj2zG0TL9FnKDmw43j0umJDPFdHuEBHCg8QXBBmGeuSQlux-Y9QSB-g5JSYLr/exec";
         
         window.google = {
             script: {
@@ -38,31 +35,43 @@
         apiFunctions.forEach(function(funcName) {
             window.google.script.run[funcName] = function() {
                 var argsArray = Array.prototype.slice.call(arguments);
-                var successCb = this._onSuccess; var failureCb = this._onFailure;
+                var successCb = this._onSuccess;
+                var failureCb = this._onFailure;
+                
                 this._onSuccess = null; this._onFailure = null;
                 
                 fetch(GAS_API_URL, {
-                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: funcName, args: argsArray })
                 })
                 .then(function(res) { return res.json(); })
                 .then(function(result) {
                     if (successCb) {
                         var finalPayload = result;
-                        if (result && result.result !== undefined) finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
-                        else if (typeof result === 'string') { try { finalPayload = JSON.parse(result); } catch(e) {} }
+                        if (result && result.result !== undefined) {
+                            finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
+                        } else if (typeof result === 'string') {
+                            try { finalPayload = JSON.parse(result); } catch(e) {}
+                        }
                         successCb(finalPayload);
                     }
                 })
-                .catch(function(err) { if (failureCb) failureCb(err); else console.error("API Error:", err); });
+                .catch(function(err) {
+                    if (failureCb) failureCb(err);
+                    else console.error("API Error (" + funcName + "):", err);
+                });
             };
         });
 
-        window.onerror = function(message, source, lineno) {
+        window.onerror = function(message, source, lineno, colno, error) {
             console.error("Erro Global JS:", message, "na linha", lineno);
             setTimeout(function() {
                 var debugBox = document.getElementById('debug-error-box');
-                if (debugBox) { debugBox.innerHTML = "Erro de JavaScript detetado: " + message + " (Linha " + lineno + ")"; debugBox.classList.remove('hidden'); }
+                if (debugBox) {
+                    debugBox.innerHTML = "Erro de JavaScript detetado: " + message + " (Linha " + lineno + ")";
+                    debugBox.classList.remove('hidden');
+                }
             }, 500);
         };
 
@@ -80,6 +89,7 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #999; }
         .rich-editor img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px auto; border: 1px solid #e2e8f0; display: block; }
         .rich-editor iframe, .rich-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; background: #000; }
         .rich-editor a { color: #2563eb; text-decoration: underline; font-weight: 500; }
@@ -92,6 +102,10 @@
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col relative selection:bg-jornal-red selection:text-white">
+
+    <svg width="0" height="0" class="hidden">
+        <symbol id="icon-upload" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
+    </svg>
 
     <div id="toast" class="hidden fixed top-5 right-5 px-6 py-4 font-bold shadow-xl transition-all duration-300 z-[99999] flex items-center gap-3 border rounded-sm">
         <span id="toast-icon" class="text-xl"></span>
@@ -152,7 +166,7 @@
                     
                     <div class="flex flex-col items-start md:items-end bg-purple-50 p-3 rounded border border-purple-100 min-w-[200px]">
                         <label class="text-[10px] font-bold uppercase tracking-widest text-purple-700 mb-2 cursor-pointer hover:text-purple-900 flex items-center gap-2">
-                            <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> Fazer Upload de Ícone (Logo)
+                            <svg class="w-4 h-4 fill-current"><use href="#icon-upload"></use></svg> Fazer Upload de Ícone (Logo)
                             <input type="file" id="upload-icone-logo" accept="image/png, image/svg+xml" class="hidden" onchange="processarIconeLogo(this)">
                         </label>
                         <div class="flex items-center gap-3">
@@ -204,6 +218,7 @@
                             <div id="admin-categoria-checklist" class="p-3 bg-gray-50 border border-gray-300 rounded-sm max-h-32 overflow-y-auto custom-scrollbar flex flex-col gap-1.5"></div>
                             <button type="button" onclick="novaCategoria()" class="text-[10px] font-bold text-jornal-red hover:opacity-80 mt-1.5 flex items-center gap-1 mb-2">+ Nova Editoria</button>
                             
+                            <!-- CAIXA DA CIDADE -->
                             <div id="container-cidade" class="hidden bg-blue-50 border border-blue-200 p-2 rounded-sm mt-2">
                                 <label class="text-[9px] font-bold uppercase tracking-widest text-blue-800 mb-1 block">Qual Cidade?</label>
                                 <input type="text" id="admin-nome-cidade" class="w-full px-3 py-2 bg-white border border-blue-300 focus:outline-none focus:border-blue-500 text-xs font-medium text-gray-700 rounded-sm" placeholder="Ex: Cuiabá" />
@@ -321,6 +336,7 @@
             <div id="lista-noticias-container" class="hidden bg-white p-6 shadow-sm border border-gray-200 rounded-sm">
                 <h2 class="font-sans text-xl font-black mb-6 text-jornal-dark uppercase border-l-4 border-jornal-red pl-3">Editar Publicações</h2>
                 
+                <!-- Barra de Pesquisa e Filtro -->
                 <div class="flex flex-col md:flex-row gap-4 mb-6 bg-gray-50 p-4 rounded-sm border border-gray-200">
                     <input type="text" id="filtro-busca-materia" placeholder="Pesquisar por manchete..." class="px-4 py-2 border border-gray-300 rounded text-sm flex-grow focus:outline-none focus:border-jornal-blue shadow-sm" onkeyup="carregarListaEdicao()">
                     <select id="filtro-editoria-materia" class="px-4 py-2 border border-gray-300 rounded text-sm w-full md:w-64 focus:outline-none focus:border-jornal-blue shadow-sm" onchange="carregarListaEdicao()">
@@ -335,7 +351,6 @@
                                 <th class="p-3">Data</th>
                                 <th class="p-3">Editorias</th>
                                 <th class="p-3">Manchete</th>
-                                <th class="p-3 text-center">Visões</th>
                                 <th class="p-3 text-center">Visibilidade Rápida</th>
                                 <th class="p-3 text-center">Ações</th>
                             </tr>
@@ -983,6 +998,39 @@
             return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
         }
         
+        function converterVideoUrlsParaPlayers(t) { 
+            if (!t) return ""; 
+            var strT = String(t);
+            
+            var ytCleanRegex = /(?:<a\b[^>]*href="[^"]*?(?:youtube\.com|youtu\.be)[^"]*?"[^>]*>)(.*?)(?:<\/a>)/gi;
+            strT = strT.replace(ytCleanRegex, '$1');
+            
+            var ytRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[&?][a-zA-Z0-9_=-]+)*/gi;
+            strT = strT.replace(ytRegex, function(match, id) { 
+                return '<div class="aspect-video w-full my-4 shadow-md rounded overflow-hidden bg-black"><iframe class="w-full h-full" src="https://www.youtube-nocookie.com/embed/' + id + '" title="Vídeo incorporado" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>'; 
+            });
+
+            strT = strT.replace(/(?:&amp;|&)(?:feature|source_ve_path|si|pp)=[^\s<]+/gi, '');
+
+            var igRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[a-zA-Z0-9_-]+)(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
+            strT = strT.replace(igRegex, function(match, url) { 
+                return '<blockquote class="instagram-media" data-instgrm-permalink="' + url + '/?utm_source=ig_embed" data-instgrm-version="14" style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px auto; max-width:540px; min-width:326px; padding:0; width:99.375%; width:calc(100% - 2px);"></blockquote>'; 
+            });
+
+            var tkRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?tiktok\.com\/@[a-zA-Z0-9_.-]+\/video\/([0-9]+))(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
+            strT = strT.replace(tkRegex, function(match, fullUrl, id) { 
+                return '<blockquote class="tiktok-embed" cite="' + fullUrl + '" data-video-id="' + id + '" style="max-width: 605px;min-width: 325px;" > <section> <a target="_blank" title="Video no TikTok" href="' + fullUrl + '">Assistir no TikTok</a> </section> </blockquote> <script async src="https://www.tiktok.com/embed.js"><\/scr' + 'ipt>'; 
+            });
+
+            var twRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?(?:twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/status\/[0-9]+)(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
+            strT = strT.replace(twRegex, function(match, url) { 
+                var cleanUrl = url.replace('x.com', 'twitter.com'); 
+                return '<div class="my-4 overflow-hidden rounded"><blockquote class="twitter-tweet" data-dnt="true"><a href="' + cleanUrl + '"></a></blockquote></div>'; 
+            });
+
+            return strT;
+        } 
+        
         function salvarNoticia(e) { 
             e.preventDefault(); 
             var editandoID = document.getElementById('admin-id-noticia').value;
@@ -1224,7 +1272,18 @@
             });
             var campoCidade = document.getElementById('admin-nome-cidade');
             if (campoCidade) campoCidade.value = '';
-            verificarCategoriaCidade();
+            atualizarCampoCidadeAdmin();
+        }
+
+        function atualizarCampoCidadeAdmin() {
+            var selecionadas = Array.from(document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked'));
+            var mostrar = selecionadas.some(function(cb) { return normalizarTextoFiltro(cb.value) === 'cidades'; });
+            var container = document.getElementById('container-cidade');
+            var input = document.getElementById('admin-nome-cidade');
+            if (container) container.classList.toggle('hidden', !mostrar);
+            if (input) {
+                if (!mostrar) input.value = '';
+            }
         }
 
         function atualizarDropdownEditoriasFiltro() {
@@ -1262,28 +1321,12 @@
             checklistAdmin.innerHTML = '';
             listaCategoriasLocais.forEach(function(c) { 
                 checklistAdmin.innerHTML += '<label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">' +
-                    '<input type="checkbox" name="admin-categorias-checkbox" value="' + c + '" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-300" onchange="verificarCategoriaCidade()" />' + 
+                    '<input type="checkbox" name="admin-categorias-checkbox" value="' + c + '" onchange="atualizarCampoCidadeAdmin()" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-300" />' + 
                     c.toUpperCase() + 
                 '</label>'; 
             });
             
             atualizarDropdownEditoriasFiltro();
-        }
-
-        function verificarCategoriaCidade() {
-            var cbs = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
-            var isCidades = Array.from(cbs).some(function(cb) { 
-                return cb.value.toLowerCase() === 'cidades'; 
-            });
-            var containerCid = document.getElementById('container-cidade');
-            if (containerCid) {
-                if (isCidades) {
-                    containerCid.classList.remove('hidden');
-                } else {
-                    containerCid.classList.add('hidden');
-                    document.getElementById('admin-nome-cidade').value = '';
-                }
-            }
         }
 
         function novaCategoria() {
@@ -1428,7 +1471,7 @@
             
             if (noticiasFiltradas.length === 0) { 
                 var mensagem = noticiasGlobais.length === 0 ? 'Nenhuma matéria publicada.' : 'Nenhuma matéria encontrada com os filtros informados.';
-                tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-xs text-gray-500">' + mensagem + '</td></tr>'; 
+                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-xs text-gray-500">' + mensagem + '</td></tr>'; 
                 return; 
             }
             
@@ -1553,27 +1596,11 @@
                 cb.checked = categoriasNoticia.indexOf(cb.value.toLowerCase()) !== -1; 
             });
             
-            verificarCategoriaCidade();
-            var isCidades = categoriasNoticia.indexOf('cidades') !== -1;
-            if (isCidades) {
-                var cidadeStr = "";
-                var categoriasLocaisLower = listaCategoriasLocais.map(function(c) { return c.toLowerCase(); });
-                for (var i = 0; i < categoriasNoticia.length; i++) {
-                    if (categoriasLocaisLower.indexOf(categoriasNoticia[i]) === -1 && categoriasNoticia[i] !== 'cidades') {
-                        cidadeStr = String(noticia.categoria).split(',')[i].trim();
-                        break;
-                    }
-                }
-                var campoCidade = document.getElementById('admin-nome-cidade');
-                if (campoCidade) {
-                    campoCidade.value = cidadeStr;
-                }
-            } else {
-                var campoCidade = document.getElementById('admin-nome-cidade');
-                if (campoCidade) {
-                    campoCidade.value = '';
-                }
+            var campoCidade = document.getElementById('admin-nome-cidade');
+            if (campoCidade) {
+                campoCidade.value = noticia.cidade || '';
             }
+            atualizarCampoCidadeAdmin();
             
             document.getElementById('admin-legenda-imagem').value = noticia.legendaImagem || ''; 
             document.getElementById('admin-creditos-imagem').value = noticia.creditosImagem || '';
@@ -1613,7 +1640,6 @@
                     btn.innerText = "Salvar Ligas"; 
                     btn.disabled = false; 
                     configuracoesGlobais['LigasPlacar'] = JSON.stringify(ligasSelecionadas); 
-                    renderizarPlacarAoVivo();
                 }).salvarConfiguracaoHTMLCustom("LigasPlacar", JSON.stringify(ligasSelecionadas));
             }
         }
