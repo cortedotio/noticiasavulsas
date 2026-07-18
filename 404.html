@@ -20,39 +20,53 @@
         // ================================================================
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxImVzWV54yGspJ0BpcDFXwAL_FKFs3jxtjptIfRAfjWda38axlr1Mau92yl1k9X_jj/exec";
         
-        if (typeof google === 'undefined' || typeof google.script === 'undefined') {
-            window.google = {
-                script: {
-                    run: {
-                        withSuccessHandler: function(cb) { this._onSuccess = cb; return this; },
-                        withFailureHandler: function(cb) { this._onFailure = cb; return this; }
-                    }
+        window.google = {
+            script: {
+                run: {
+                    withSuccessHandler: function(cb) { this._onSuccess = cb; return this; },
+                    withFailureHandler: function(cb) { this._onFailure = cb; return this; }
                 }
+            }
+        };
+
+        const apiFunctions = [
+            'getHomeData', 'verificarLogin', 'salvarConfiguracaoHTMLCustom', 
+            'salvarNoticiaNoSheets', 'alternarStatusNoticia', 'excluirNoticia', 
+            'curtirNoticiaNoSheets', 'incrementarView', 'salvarComentarioNoSheets', 
+            'salvarPropagandaNoSheets', 'adicionarCategoriaNoSheets', 'chamarGeminiBackend'
+        ];
+
+        apiFunctions.forEach(function(funcName) {
+            window.google.script.run[funcName] = function() {
+                var argsArray = Array.prototype.slice.call(arguments);
+                var successCb = this._onSuccess; 
+                var failureCb = this._onFailure;
+                this._onSuccess = null; 
+                this._onFailure = null;
+                
+                fetch(GAS_API_URL, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: funcName, args: argsArray }) 
+                })
+                .then(function(res) { return res.json(); })
+                .then(function(result) {
+                    if (successCb) {
+                        var finalPayload = result;
+                        if (result && result.result !== undefined) {
+                            finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
+                        } else if (typeof result === 'string') {
+                            try { finalPayload = JSON.parse(result); } catch(e) {}
+                        }
+                        successCb(finalPayload);
+                    }
+                })
+                .catch(function(err) { 
+                    if (failureCb) failureCb(err); 
+                    else console.error("API Error:", err); 
+                });
             };
-            const apiFunctions = [
-                'getHomeData', 'verificarLogin', 'salvarConfiguracaoHTMLCustom', 
-                'salvarNoticiaNoSheets', 'alternarStatusNoticia', 'excluirNoticia', 
-                'curtirNoticiaNoSheets', 'incrementarView', 'salvarComentarioNoSheets', 
-                'salvarPropagandaNoSheets', 'adicionarCategoriaNoSheets', 'chamarGeminiBackend'
-            ];
-            apiFunctions.forEach(function(funcName) {
-                window.google.script.run[funcName] = function() {
-                    var argsArray = Array.prototype.slice.call(arguments);
-                    var successCb = this._onSuccess; 
-                    var failureCb = this._onFailure;
-                    this._onSuccess = null; 
-                    this._onFailure = null;
-                    
-                    fetch(GAS_API_URL, { 
-                        method: 'POST', 
-                        body: JSON.stringify({ action: funcName, args: argsArray }) 
-                    })
-                    .then(function(res) { return res.json(); })
-                    .then(function(result) { if (successCb) successCb(result); })
-                    .catch(function(err) { if (failureCb) failureCb(err); else console.error("API Error:", err); });
-                };
-            });
-        }
+        });
 
         // Tratamento robusto para exibir erros na tela caso o JS falhe
         window.onerror = function(message, source, lineno, colno, error) {
@@ -636,7 +650,7 @@
                 if (loaderGlobal && !loaderGlobal.classList.contains('hidden')) {
                     loaderGlobal.classList.add('opacity-0');
                     setTimeout(function() { loaderGlobal.classList.add('hidden'); }, 500);
-                    mostrarErro("Ligação lenta detetada. A abrir portal no modo offline/seguro...");
+                    mostrarErro("Ligação lenta detetada. O servidor demorou a responder.");
                     setTimeout(function() { document.getElementById('debug-error-box').classList.add('hidden'); }, 5000);
                 }
             }, 10000);
@@ -679,12 +693,22 @@
                     } catch(e) { mostrarErro("Falha no JS: " + e.message); }
                 }).withFailureHandler(function(err) {
                     clearTimeout(loaderTimeout);
+                    var loaderGlobal = document.getElementById('loading-global-portal');
+                    if (loaderGlobal) {
+                        loaderGlobal.classList.add('opacity-0');
+                        setTimeout(function() { loaderGlobal.classList.add('hidden'); }, 500);
+                    }
                     document.getElementById('loading-noticias').classList.add('hidden'); 
                     document.getElementById('master-feed-wrapper').classList.remove('hidden');
                     mostrarErro("Falha de Servidor: " + err.message);
                 }).getHomeData();
             } else {
                 clearTimeout(loaderTimeout);
+                var loaderGlobal = document.getElementById('loading-global-portal');
+                if (loaderGlobal) {
+                    loaderGlobal.classList.add('opacity-0');
+                    setTimeout(function() { loaderGlobal.classList.add('hidden'); }, 500);
+                }
                 mostrarErro("Servidor Google indisponível.");
             }
         }
