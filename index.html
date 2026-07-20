@@ -10,100 +10,93 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
+    <!-- Scripts Oficiais para as Redes Sociais Embutidas -->
     <script async src="//www.instagram.com/embed.js"></script>
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
     
     <script>
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxADNeMakuS8YIo2HxlIaU90uUbC9AJCG1IUdbTld9ZBjSfGAWDDekSlqosSJm7FeM2/exec";
-        
-        window.google = {
-            script: {
-                run: {
-                    withSuccessHandler: function(cb) { 
-                        this._onSuccess = cb; 
-                        return this; 
-                    },
-                    withFailureHandler: function(cb) { 
-                        this._onFailure = cb; 
-                        return this; 
+        // Deteta se está no GitHub ou Google
+        if (typeof google === 'undefined' || typeof google.script === 'undefined') {
+            const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxADNeMakuS8YIo2HxlIaU90uUbC9AJCG1IUdbTld9ZBjSfGAWDDekSlqosSJm7FeM2/exec";
+            window.google = {
+                script: {
+                    run: {
+                        withSuccessHandler: function(cb) { 
+                            this._onSuccess = cb; 
+                            return this; 
+                        },
+                        withFailureHandler: function(cb) { 
+                            this._onFailure = cb; 
+                            return this; 
+                        }
                     }
                 }
-            }
-        };
-
-        const apiFunctions = [
-            'getHomeData', 'curtirNoticiaNoSheets', 'incrementarView', 'salvarComentarioNoSheets'
-        ];
-
-        apiFunctions.forEach(function(funcName) {
-            window.google.script.run[funcName] = function() {
-                var argsArray = Array.prototype.slice.call(arguments);
-                var successCb = this._onSuccess; 
-                var failureCb = this._onFailure;
-                this._onSuccess = null; 
-                this._onFailure = null;
-                
-                fetch(GAS_API_URL, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: funcName, args: argsArray }) 
-                })
-                .then(function(res) { 
-                    return res.json(); 
-                })
-                .then(function(result) {
-                    if (successCb) {
-                        var finalPayload = result;
-                        if (result && result.result !== undefined) {
-                            finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
-                        } else if (typeof result === 'string') {
-                            try { finalPayload = JSON.parse(result); } catch(e) {}
-                        }
-                        successCb(finalPayload);
-                    }
-                })
-                .catch(function(err) { 
-                    if (failureCb) {
-                        failureCb(err); 
-                    } else {
-                        console.error("API Error:", err); 
-                    }
-                });
             };
-        });
+            const apiFunctions = [
+                'getHomeData', 
+                'verificarLogin', 
+                'curtirNoticiaNoSheets', 
+                'incrementarView', 
+                'salvarComentarioNoSheets'
+            ];
+            apiFunctions.forEach(function(funcName) {
+                window.google.script.run[funcName] = function() {
+                    var argsArray = Array.prototype.slice.call(arguments);
+                    var successCb = this._onSuccess; 
+                    var failureCb = this._onFailure;
+                    this._onSuccess = null; 
+                    this._onFailure = null;
+                    
+                    fetch(GAS_API_URL, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: funcName, args: argsArray }) 
+                    })
+                    .then(function(res) { return res.json(); })
+                    .then(function(result) { 
+                        if (successCb) successCb(result); 
+                    })
+                    .catch(function(err) { 
+                        if (failureCb) failureCb(err); 
+                        else console.error("API Error:", err); 
+                    });
+                };
+            });
+        }
+
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.error("Erro Global JS:", message, "na linha", lineno);
+        };
 
         var configureTailwind = function() {
             if (typeof tailwind === 'undefined') { 
                 setTimeout(configureTailwind, 10); 
                 return; 
             }
-            tailwind.config = { 
-                theme: { 
-                    extend: { 
+            tailwind.config = {
+                theme: {
+                    extend: {
                         fontFamily: { 
                             sans: ['Inter', 'sans-serif'], 
                             serif: ['Merriweather', 'serif'] 
-                        }, 
-                        colors: { 
+                        },
+                        colors: {
                             jornal: { 
                                 blue: '#0F172A', 
                                 red: '#E11D48', 
                                 gray: '#F8FAFC', 
                                 dark: '#020617' 
-                            } 
-                        } 
-                    } 
-                } 
+                            }
+                        }
+                    }
+                }
             };
         };
         configureTailwind();
     </script>
     
     <style>
-        body { 
-            background-color: #f1f2f5; 
-            color: #111111; 
-        }
+        body { background-color: #f1f2f5; color: #111111; }
         .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
@@ -128,13 +121,13 @@
         .animate-marquee-slow { animation: marquee 150s linear infinite; }
         .animate-marquee-slow:hover { animation-play-state: paused; }
         
-        /* Formatação Global do Rich Text */
         .rich-editor img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px auto; border: 1px solid #e2e8f0; display: block; }
         .rich-editor iframe, .rich-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; background: #000; }
         .rich-editor a { color: #2563eb; text-decoration: underline; font-weight: 500; }
         .rich-editor h1, .rich-editor h2, .rich-editor h3 { font-family: 'Inter', sans-serif; color: #020617; font-weight: 900; }
         .rich-editor h1 { font-size: 1.8em; margin: 24px 0 12px 0; }
         .rich-editor h2 { font-size: 1.5em; margin: 20px 0 10px 0; }
+        .rich-editor h3 { font-size: 1.25em; margin: 16px 0 8px 0; }
         .rich-editor blockquote { border-left: 4px solid #E11D48; background: #f8fafc; padding: 16px 20px; color: #475569; font-style: italic; margin: 20px 0; border-radius: 0 8px 8px 0; font-size: 1.1em; }
         .rich-editor ul { list-style-type: disc; padding-left: 24px; margin-bottom: 16px; }
         .rich-editor ol { list-style-type: decimal; padding-left: 24px; margin-bottom: 16px; }
@@ -149,11 +142,11 @@
         </h1>
         <div class="w-10 h-10 border-4 border-slate-300 border-t-rose-600 rounded-full animate-spin mb-4"></div>
         <p class="text-[10px] font-black uppercase tracking-widest text-slate-500 animate-pulse">A CARREGAR JORNAL...</p>
-        <div id="debug-error-box" class="hidden mt-4 text-[10px] font-black uppercase tracking-widest text-red-500 text-center p-4 bg-red-50 border border-red-200 rounded max-w-lg w-full shadow-sm"></div>
     </div>
 
     <div id="view-portal" class="flex-grow flex flex-col relative min-w-0 hidden">
         
+        <!-- Ticker de Últimas e Informações Financeiras -->
         <div id="ticker-noticias" class="bg-jornal-red text-white text-[10px] font-bold h-8 overflow-hidden flex items-center sticky top-0 z-50 w-full shadow-sm min-w-0 transition-colors duration-500">
             <div id="ticker-label-aovivo" class="px-4 h-full uppercase tracking-widest whitespace-nowrap shrink-0 border-r border-white/30 mr-2 relative z-10 flex items-center gap-1 backdrop-blur-sm bg-black/20">
                 <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span> AO VIVO
@@ -443,6 +436,7 @@
         </div>
     </div>
 
+    <!-- Modal do Expediente -->
     <div id="modalExpediente" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/80 backdrop-blur-sm" onclick="fecharModalExpediente()"></div>
         <div class="bg-white w-full max-w-2xl rounded-sm shadow-2xl relative z-10 overflow-hidden font-sans border-t-4 border-jornal-blue max-h-[90vh] flex flex-col">
@@ -451,7 +445,6 @@
                 <button onclick="fecharModalExpediente()" class="text-gray-400 hover:text-red-500 font-black text-2xl leading-none">&times;</button>
             </div>
             <div class="p-8 overflow-y-auto custom-scrollbar rich-editor text-base text-gray-800" id="conteudo-expediente">
-                <!-- Conteúdo gerado pelo Admin entrará aqui -->
                 <p class="text-gray-500 italic text-center font-medium">Expediente não configurado.</p>
             </div>
         </div>
@@ -495,7 +488,6 @@
         var agendaCarousels = [];
         window.agendaTimers = {};
 
-        // Início e Timeout Failsafe
         document.addEventListener("DOMContentLoaded", function() {
             setTimeout(removerLoaderGlobal, 5000); 
             carregarNoticias(false);
@@ -594,27 +586,16 @@
                                     filtrarCategoria(window.categoriaAtual, false); 
                                 }
                             }
-                        } else { 
-                            mostrarErro(d ? d.erro : "Resposta inválida da Base de Dados."); 
                         }
                     } catch(e) { 
-                        mostrarErro("Falha no JS Local: " + e.message); 
+                        console.error("Falha no JS Local: " + e.message); 
                     }
                 }).withFailureHandler(function(err) {
                     removerLoaderGlobal();
-                    mostrarErro("Falha de Servidor: " + err.message);
+                    console.error("Falha de Servidor: " + err.message);
                 }).getHomeData();
             } else {
                 removerLoaderGlobal();
-                mostrarErro("Servidor Google indisponível.");
-            }
-        }
-
-        function mostrarErro(m) {
-            var dbg = document.getElementById('debug-error-box'); 
-            if(dbg) { 
-                dbg.innerHTML = m; 
-                dbg.classList.remove('hidden'); 
             }
         }
 
@@ -642,7 +623,6 @@
                 footerBranding.innerHTML = configuracoesGlobais['LogoHTML'];
             }
             
-            // Renderizar Expediente se existir
             if (configuracoesGlobais['ExpedienteHTML']) {
                 var expContainer = document.getElementById('conteudo-expediente');
                 if(expContainer) expContainer.innerHTML = configuracoesGlobais['ExpedienteHTML'];
