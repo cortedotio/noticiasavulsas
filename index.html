@@ -10,18 +10,27 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
+    <!-- Scripts Oficiais para Redes Sociais Embutidas -->
     <script async src="//www.instagram.com/embed.js"></script>
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
     
     <script>
+        // ================================================================
         // LINK DA SUA NOVA API (ATUALIZADO)
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwLumbJ81CmPiYSbA4QzUJ1XMSV7qaXozHNGgpK-plefKgPxZEWZa_zckgzkfp8fVE/exec";
+        // ================================================================
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwfHemFVBhbk90p9ByT5CLx7F3n2anArXUnwNE1U5t84jsRNtJo1xXY9oWXwFQS7UZD/exec";
         
         window.google = {
             script: {
                 run: {
-                    withSuccessHandler: function(cb) { this._onSuccess = cb; return this; },
-                    withFailureHandler: function(cb) { this._onFailure = cb; return this; }
+                    withSuccessHandler: function(cb) { 
+                        this._onSuccess = cb; 
+                        return this; 
+                    },
+                    withFailureHandler: function(cb) { 
+                        this._onFailure = cb; 
+                        return this; 
+                    }
                 }
             }
         };
@@ -38,12 +47,15 @@
                 this._onSuccess = null; 
                 this._onFailure = null;
                 
+                // Pedido à API via Fetch
                 fetch(GAS_API_URL, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: funcName, args: argsArray }) 
                 })
-                .then(function(res) { return res.json(); })
+                .then(function(res) { 
+                    return res.json(); 
+                })
                 .then(function(result) {
                     if (successCb) {
                         var finalPayload = result;
@@ -56,15 +68,21 @@
                     }
                 })
                 .catch(function(err) { 
-                    if (failureCb) failureCb(err); 
-                    else console.error("API Error:", err); 
+                    if (failureCb) {
+                        failureCb(err); 
+                    } else {
+                        console.error("API Error:", err); 
+                    }
                 });
             };
         });
 
         // Configuração Customizada do Tailwind CSS
         var configureTailwind = function() {
-            if (typeof tailwind === 'undefined') { setTimeout(configureTailwind, 10); return; }
+            if (typeof tailwind === 'undefined') { 
+                setTimeout(configureTailwind, 10); 
+                return; 
+            }
             tailwind.config = { 
                 theme: { 
                     extend: { 
@@ -88,29 +106,71 @@
     </script>
     
     <style>
-        body { background-color: #f1f2f5; color: #111111; }
+        body { 
+            background-color: #f1f2f5; 
+            color: #111111; 
+        }
         .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+        
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
         .heart-beat { animation: heartbeat 0.3s ease-in-out; }
-        @keyframes heartbeat { 0% { transform: scale(1); } 50% { transform: scale(1.3); color: #E11D48; } 100% { transform: scale(1); } }
-        @keyframes marquee { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+        @keyframes heartbeat { 
+            0% { transform: scale(1); } 
+            50% { transform: scale(1.3); color: #E11D48; } 
+            100% { transform: scale(1); } 
+        }
+        
+        @keyframes marquee { 
+            0% { transform: translateX(100vw); } 
+            100% { transform: translateX(-100%); } 
+        }
         .animate-marquee-slow { animation: marquee 150s linear infinite; }
         .animate-marquee-slow:hover { animation-play-state: paused; }
         
-        /* Formatação de Notícias e Blocos de Texto */
-        .rich-editor img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px auto; border: 1px solid #e2e8f0; display: block; }
-        .rich-editor iframe, .rich-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; background: #000; }
-        .rich-editor a { color: #2563eb; text-decoration: underline; font-weight: 500; }
-        .rich-editor h1, .rich-editor h2, .rich-editor h3 { font-family: 'Inter', sans-serif; color: #020617; font-weight: 900; }
+        /* Formatação de Notícias e Blocos de Texto (Editor Rich Text) */
+        .rich-editor img { 
+            max-width: 100%; 
+            height: auto; 
+            border-radius: 8px; 
+            margin: 16px auto; 
+            border: 1px solid #e2e8f0; 
+            display: block; 
+        }
+        .rich-editor iframe, .rich-editor video { 
+            max-width: 100%; 
+            border-radius: 8px; 
+            margin: 8px 0; 
+            background: #000; 
+        }
+        .rich-editor a { 
+            color: #2563eb; 
+            text-decoration: underline; 
+            font-weight: 500; 
+        }
+        .rich-editor h1, .rich-editor h2, .rich-editor h3 { 
+            font-family: 'Inter', sans-serif; 
+            color: #020617; 
+            font-weight: 900; 
+        }
         .rich-editor h1 { font-size: 1.8em; margin: 24px 0 12px 0; }
         .rich-editor h2 { font-size: 1.5em; margin: 20px 0 10px 0; }
-        .rich-editor blockquote { border-left: 4px solid #E11D48; background: #f8fafc; padding: 16px 20px; color: #475569; font-style: italic; margin: 20px 0; border-radius: 0 8px 8px 0; font-size: 1.1em; }
+        .rich-editor blockquote { 
+            border-left: 4px solid #E11D48; 
+            background: #f8fafc; 
+            padding: 16px 20px; 
+            color: #475569; 
+            font-style: italic; 
+            margin: 20px 0; 
+            border-radius: 0 8px 8px 0; 
+            font-size: 1.1em; 
+        }
         .rich-editor ul { list-style-type: disc; padding-left: 24px; margin-bottom: 16px; }
         .rich-editor ol { list-style-type: decimal; padding-left: 24px; margin-bottom: 16px; }
         .rich-editor p { margin-bottom: 16px; }
@@ -186,6 +246,7 @@
 
             <div id="master-feed-wrapper" class="flex flex-col lg:flex-row gap-8 items-start min-w-0">
                 
+                <!-- Coluna Principal Esquerda -->
                 <div class="lg:w-[72%] w-full flex flex-col gap-6 min-w-0">
                     
                     <div id="filtro-cidades-container" class="w-full mb-6 hidden bg-gray-50 p-5 border border-gray-200 rounded-sm shadow-sm">
@@ -315,12 +376,11 @@
 
                     <div id="sidebar-opinioes" class="hidden mb-10 bg-white border border-gray-200 p-6 shadow-sm rounded-sm">
                         <div class="border-b-4 border-jornal-red pb-3 mb-6">
-                            <h2 class="text-xs font-black uppercase tracking-widest text-jornal-red">Opinião</h2>
+                            <h2 class="text-xs font-black uppercase tracking-widest text-jornal-red">OPINIÃO</h2>
                         </div>
                         <div id="conteudo-opinioes" class="flex flex-col gap-5"></div>
                     </div>
 
-                    <!-- Placar e Clima Seguros -->
                     <div class="mb-10 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
                         <div class="flex items-center justify-between mb-5 border-b border-gray-100 pb-3">
                             <h2 class="text-[11px] font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
@@ -373,7 +433,6 @@
         </footer>
     </div>
 
-    <!-- Modal do Clima Completo -->
     <div id="modalClima" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/80 backdrop-blur-sm" onclick="fecharModalClima()"></div>
         <div class="bg-white w-full max-w-lg rounded-sm shadow-2xl relative z-10 overflow-hidden font-sans border-t-4 border-sky-500">
@@ -449,6 +508,7 @@
         var carrosselAdsTimers = {};
         var dadosClimaGlobal = null;
         var agendaCarousels = [];
+        window.agendaTimers = {};
 
         document.addEventListener("DOMContentLoaded", function() {
             setTimeout(removerLoaderGlobal, 5000); 
@@ -714,7 +774,8 @@
                 var carouselId = 'agenda-sidebar-carousel';
                 window.agendaCarousels.push({id: carouselId, index: 0, length: agenda.length});
                 
-                var htmlAg = '<div class="relative overflow-hidden w-full bg-gray-100 rounded-sm group aspect-[4/3] shadow-inner" id="' + carouselId + '">\n';
+                var htmlAg = '';
+                htmlAg += '<div class="relative overflow-hidden w-full bg-gray-100 rounded-sm group aspect-[4/3] shadow-inner" id="' + carouselId + '">\n';
                 htmlAg += '    <div class="flex transition-transform duration-500 ease-in-out h-full" id="' + carouselId + '-inner" style="transform: translateX(0%);">\n';
                 
                 agenda.forEach(function(n) {
@@ -740,11 +801,19 @@
                 htmlAg += '    </div>\n';
                 
                 if (agenda.length > 1) {
-                    htmlAg += '    <button onclick="moverCarrosselAgenda(\'' + carouselId + '\', -1, ' + agenda.length + ')" class="absolute left-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">&#10094;</button>\n';
-                    htmlAg += '    <button onclick="moverCarrosselAgenda(\'' + carouselId + '\', 1, ' + agenda.length + ')" class="absolute right-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full p-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">&#10095;</button>\n';
+                    htmlAg += '    <button onclick="moverCarrosselAgenda(\'' + carouselId + '\', -1, ' + agenda.length + ')" class="absolute left-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full w-8 h-8 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">&#10094;</button>\n';
+                    htmlAg += '    <button onclick="moverCarrosselAgenda(\'' + carouselId + '\', 1, ' + agenda.length + ')" class="absolute right-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full w-8 h-8 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">&#10095;</button>\n';
                 }
                 htmlAg += '</div>\n';
                 contAg.innerHTML = htmlAg;
+
+                // Configurar Auto-rotação do Carrossel da Agenda
+                if(!window.agendaTimers) window.agendaTimers = {};
+                if(window.agendaTimers[carouselId]) clearInterval(window.agendaTimers[carouselId]);
+                window.agendaTimers[carouselId] = setInterval(function() {
+                    moverCarrosselAgenda(carouselId, 1, agenda.length);
+                }, 4000);
+
             } else if(blocoAg) { 
                 blocoAg.classList.add('hidden'); 
             }
@@ -756,7 +825,8 @@
                 blocoCa.classList.remove('hidden');
                 var n = carreiras[0];
                 
-                var htmlCa = '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col bg-white border border-gray-100 shadow-sm rounded-sm overflow-hidden hover:shadow-md transition-shadow">\n';
+                var htmlCa = '';
+                htmlCa += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col bg-white border border-gray-100 shadow-sm rounded-sm overflow-hidden hover:shadow-md transition-shadow">\n';
                 htmlCa += '    <div class="w-full aspect-video bg-gray-200 overflow-hidden relative">\n';
                 htmlCa += '        <img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src=\'' + IMG_FALLBACK + '\'" />\n';
                 htmlCa += '    </div>\n';
@@ -777,7 +847,8 @@
                 blocoVa.classList.remove('hidden');
                 var v = variedades[0];
                 
-                var htmlVa = '<article onclick="abrirNoticia(\'' + v.id + '\', true)" class="group cursor-pointer flex flex-col bg-white border border-gray-100 shadow-sm rounded-sm overflow-hidden hover:shadow-md transition-shadow">\n';
+                var htmlVa = '';
+                htmlVa += '<article onclick="abrirNoticia(\'' + v.id + '\', true)" class="group cursor-pointer flex flex-col bg-white border border-gray-100 shadow-sm rounded-sm overflow-hidden hover:shadow-md transition-shadow">\n';
                 htmlVa += '    <div class="w-full aspect-video bg-gray-200 overflow-hidden relative">\n';
                 htmlVa += '        <img src="' + (v.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src=\'' + IMG_FALLBACK + '\'" />\n';
                 htmlVa += '    </div>\n';
@@ -841,7 +912,8 @@
                 mediaHtml = '<img loading="lazy" src="' + urlSegura + '" alt="Anúncio" class="w-full h-auto min-h-[100px] object-cover bg-gray-100 border border-gray-200" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
             }
             
-            var html = '<a href="' + prop.linkDestino + '" target="_blank" class="block w-full relative group hover:opacity-95 transition-opacity">\n';
+            var html = '';
+            html += '<a href="' + prop.linkDestino + '" target="_blank" class="block w-full relative group hover:opacity-95 transition-opacity">\n';
             html += '    <div class="absolute top-2 right-2 bg-white/90 text-[8px] uppercase font-black px-1.5 py-0.5 z-10 text-jornal-dark border border-gray-200 shadow-sm">Publicidade</div>\n';
             html += '    ' + mediaHtml;
             html += '</a>\n';
@@ -866,11 +938,12 @@
             var d = op[0];
             var letraAutor = d.autor ? d.autor.charAt(0).toUpperCase() : 'O';
             
-            var html = '<article onclick="abrirNoticia(\'' + d.id + '\', true)" class="group cursor-pointer flex flex-col mb-4 bg-gray-50 p-5 border border-gray-100 rounded-sm hover:shadow-md transition-shadow">\n';
+            var html = '';
+            html += '<article onclick="abrirNoticia(\'' + d.id + '\', true)" class="group cursor-pointer flex flex-col mb-4 bg-gray-50 p-5 border border-gray-100 rounded-sm hover:shadow-md transition-shadow">\n';
             html += '    <div class="flex items-center gap-3 mb-4">\n';
             html += '        <div class="w-10 h-10 rounded-full bg-jornal-dark flex items-center justify-center text-white font-black text-sm shrink-0 shadow-inner">' + letraAutor + '</div>\n';
             html += '        <div class="flex flex-col min-w-0">\n';
-            html += '            <span class="text-[10px] font-black uppercase tracking-widest text-jornal-red">Opinião</span>\n';
+            html += '            <span class="text-[10px] font-black uppercase tracking-widest text-jornal-red">OPINIÃO</span>\n';
             html += '            <span class="text-xs font-bold text-gray-700 truncate w-full">' + (d.autor || 'Editorial') + '</span>\n';
             html += '        </div>\n';
             html += '    </div>\n';
@@ -1688,18 +1761,7 @@
                     relGrid.innerHTML = '';
                     
                     objRel.forEach(function(nr) {
-                        var hR = '';
-                        hR += '<article onclick="abrirNoticia(\'' + nr.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow rounded-sm overflow-hidden flex flex-col h-full">\n';
-                        hR += '    <div class="w-full aspect-video bg-gray-200 relative shrink-0">\n';
-                        hR += '        <img src="' + (nr.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src=\'' + IMG_FALLBACK + '\'"/>\n';
-                        hR += '    </div>\n';
-                        hR += '    <div class="p-4 flex flex-col flex-grow">\n';
-                        hR += '        <h4 class="font-serif font-bold text-sm text-jornal-dark leading-snug group-hover:text-indigo-600 line-clamp-3 mb-2">' + nr.titulo + '</h4>\n';
-                        hR += '        <span class="text-[9px] font-black uppercase tracking-widest text-gray-400 mt-auto">' + (nr.categoria || 'Geral') + '</span>\n';
-                        hR += '    </div>\n';
-                        hR += '</article>\n';
-                        
-                        relGrid.innerHTML += hR;
+                        relGrid.innerHTML += htmlCard(nr);
                     });
                 } else { 
                     relContainer.classList.add('hidden'); 
@@ -1854,7 +1916,9 @@
             
             window.open(link, '_blank', 'width=600,height=400');
         }
+        
+        function abrirModalLogin() { document.getElementById('modalLogin').classList.remove('hidden'); document.getElementById('modalLogin').classList.add('flex'); }
+        function fecharModalLogin() { document.getElementById('modalLogin').classList.add('hidden'); }
     </script>
 </body>
 </html>
-```
