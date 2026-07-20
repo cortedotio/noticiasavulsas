@@ -444,8 +444,9 @@
                             <tr>
                                 <th class="p-4">Data</th>
                                 <th class="p-4">Manchete</th>
-                                <th class="p-4">Autor / Assinatura</th>
-                                <th class="p-4">Usuário</th>
+                                <th class="p-4 text-center">Autor</th>
+                                <th class="p-4 text-center">Usuário</th>
+                                <th class="p-4 text-center">Visibilidade</th>
                                 <th class="p-4 text-center">Visões</th>
                                 <th class="p-4 text-center">Ações</th>
                             </tr>
@@ -1542,6 +1543,7 @@
                 var isAtivo = n.status.toLowerCase() === 'ativa'; 
                 var isAgendada = n.status.toLowerCase() === 'agendada';
                 var corStat = isAtivo ? 'text-gray-700' : (isAgendada ? 'text-amber-600' : 'text-gray-400');
+                var txtStat = isAtivo ? 'ATIVO' : (isAgendada ? 'AGENDADO' : 'INATIVO');
                 
                 htmlTrs += '<tr class="hover:bg-gray-50 border-b border-gray-100">\n';
                 htmlTrs += '    <td class="p-4 text-xs font-medium text-gray-500">';
@@ -1555,13 +1557,20 @@
                 htmlTrs += '</span>';
                 htmlTrs += '</td>\n';
                 
-                htmlTrs += '    <td class="p-4 text-xs text-gray-700 font-bold">';
+                htmlTrs += '    <td class="p-4 text-center text-xs text-gray-700 font-bold">';
                 htmlTrs += (n.autor || 'Redação');
                 htmlTrs += '</td>\n';
                 
-                htmlTrs += '    <td class="p-4 text-xs text-blue-600 font-bold">';
+                htmlTrs += '    <td class="p-4 text-center text-xs text-blue-600 font-bold">';
                 htmlTrs += (n.usuarioPublicador || 'Desconhecido');
                 htmlTrs += '</td>\n';
+                
+                htmlTrs += '    <td class="p-4 text-center">\n';
+                htmlTrs += '        <div class="flex justify-center items-center"><label class="relative inline-flex items-center cursor-pointer select-none">\n';
+                htmlTrs += '        <input type="checkbox" class="sr-only peer" ' + (isAtivo ? 'checked' : '') + ' onchange="alterarStatusRapido(\'' + n.id + '\', this)" />\n';
+                htmlTrs += '        <div class="w-10 h-5 bg-gray-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[\'\'] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>\n';
+                htmlTrs += '        <span class="ml-2 text-[10px] font-black ' + corStat + ' select-none uppercase tracking-widest inline-block w-16 text-left">' + txtStat + '</span></label></div>\n';
+                htmlTrs += '    </td>\n';
                 
                 htmlTrs += '    <td class="p-4 text-center text-xs font-black text-jornal-blue">';
                 htmlTrs += '👁️ ' + (n.views || 0);
@@ -1569,11 +1578,7 @@
                 
                 htmlTrs += '    <td class="p-4 text-center flex gap-2 justify-center">\n';
                 htmlTrs += '        <button type="button" onclick="editarNoticia(\'' + n.id + '\')" class="text-[10px] font-black uppercase tracking-widest text-jornal-blue border border-jornal-blue/30 px-3 py-1.5 rounded-sm hover:bg-jornal-blue hover:text-white transition-colors">Editar</button>\n';
-                
-                if(localStorage.getItem('admin_role') === 'admin') {
-                    htmlTrs += '        <button type="button" onclick="apagarMateria(\'' + n.id + '\')" class="text-[10px] font-black uppercase tracking-widest text-red-600 border border-red-200 px-3 py-1.5 rounded-sm hover:bg-red-50 transition-colors">Excluir</button>\n';
-                }
-                
+                htmlTrs += '        <button type="button" onclick="apagarMateria(\'' + n.id + '\')" class="text-[10px] font-black uppercase tracking-widest text-red-600 border border-red-200 px-3 py-1.5 rounded-sm hover:bg-red-50 transition-colors">Excluir</button>\n';
                 htmlTrs += '    </td>\n';
                 htmlTrs += '</tr>\n';
             });
@@ -1582,6 +1587,7 @@
         }
 
         function apagarMateria(id) {
+        function apagarMateria(id) {
             abrirModalConfirmacao("Excluir Matéria", "Atenção! Vai eliminar a notícia permanentemente. Continuar?", function() {
                 if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
                     window.google.script.run.withSuccessHandler(function(res){ 
@@ -1589,6 +1595,24 @@
                     }).excluirNoticia(id); 
                 }
             });
+        }
+
+        function alterarStatusRapido(id, checkbox) {
+            var isAtivo = checkbox.checked; 
+            var labelSpan = checkbox.nextElementSibling.nextElementSibling; 
+            if (labelSpan) {
+                labelSpan.innerText = isAtivo ? 'ATIVO' : 'INATIVO';
+                labelSpan.className = 'ml-2 text-[10px] font-black ' + (isAtivo ? 'text-gray-700' : 'text-gray-400') + ' select-none uppercase tracking-widest inline-block w-16 text-left';
+            }
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) { 
+                    if(res && res.sucesso) { 
+                        mostrarMensagem('Visibilidade atualizada para: ' + res.novoStatus); 
+                        carregarNoticiasAdmin(); 
+                    } 
+                }).alternarStatusNoticia(id);
+            }
         }
 
         function editarNoticia(id) {
