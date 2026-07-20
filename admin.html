@@ -165,6 +165,12 @@
             margin: 12px 0 8px 0; 
             font-family: 'Inter', sans-serif; 
         }
+        .rich-editor h3 { 
+            font-size: 1.1em; 
+            font-weight: 800; 
+            margin: 12px 0 8px 0; 
+            font-family: 'Inter', sans-serif; 
+        }
         .rich-editor blockquote { 
             border-left: 4px solid #E11D48; 
             background: #f8fafc; 
@@ -188,13 +194,12 @@
 </head>
 <body class="antialiased min-h-screen flex flex-col relative selection:bg-jornal-red selection:text-white">
 
-    <!-- Toast -->
     <div id="toast" class="hidden fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border rounded-sm">
         <span id="toast-icon" class="text-xl"></span>
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
-    <!-- Modal de Confirmação Customizado (Substitui confirm) -->
+    <!-- Modal de Confirmação Customizado -->
     <div id="modalConfirmacao" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/80 backdrop-blur-sm"></div>
         <div class="bg-white w-full max-w-sm p-6 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
@@ -207,7 +212,7 @@
         </div>
     </div>
 
-    <!-- Modal de Prompt Customizado (Substitui prompt) -->
+    <!-- Modal de Prompt Customizado -->
     <div id="modalPrompt" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/80 backdrop-blur-sm"></div>
         <div class="bg-white w-full max-w-md p-6 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-blue">
@@ -261,7 +266,6 @@
         </header>
 
         <main class="max-w-[1200px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
-            <!-- Abas do Painel -->
             <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar" id="nav-abas-admin">
                 <button type="button" onclick="alternarAbaAdmin('form-noticia-container')" id="aba-noticia" class="py-3 px-5 font-black text-[11px] bg-jornal-blue text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">PUBLICAR</button>
                 <button type="button" onclick="alternarAbaAdmin('lista-noticias-container')" id="aba-lista" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">GERIR MATÉRIAS</button>
@@ -442,13 +446,14 @@
                     <table class="w-full text-left text-sm whitespace-nowrap">
                         <thead class="bg-gray-100 border-b border-gray-300 text-[10px] uppercase tracking-widest text-gray-500">
                             <tr>
-                                <th class="p-4">Data</th>
-                                <th class="p-4">Manchete</th>
-                                <th class="p-4 text-center">Autor</th>
-                                <th class="p-4 text-center">Usuário</th>
-                                <th class="p-4 text-center">Visibilidade</th>
-                                <th class="p-4 text-center">Visões</th>
-                                <th class="p-4 text-center">Ações</th>
+                                <th class="p-3">Data</th>
+                                <th class="p-3">Editorias</th>
+                                <th class="p-3">Manchete</th>
+                                <th class="p-3 text-center">Autor</th>
+                                <th class="p-3 text-center">Usuário</th>
+                                <th class="p-3 text-center">Visibilidade</th>
+                                <th class="p-3 text-center">Visões</th>
+                                <th class="p-3 text-center">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="admin-tabela-noticias" class="divide-y divide-gray-200"></tbody>
@@ -904,7 +909,7 @@
                 var loader = document.getElementById('loading-global');
                 if (loader && !loader.classList.contains('hidden')) {
                     loader.classList.add('hidden');
-                    mostrarMensagem("Aviso: Lentidão na rede. A forçar entrada...", 'erro');
+                    mostrarMensagem("Aviso: Lentidão na rede ou erro interno. A forçar entrada...", 'erro');
                 }
             }, 10000);
 
@@ -1543,7 +1548,7 @@
             if (filtradas.length === 0) { 
                 var htmlEmpty = '';
                 htmlEmpty += '<tr>\n';
-                htmlEmpty += '    <td colspan="6" class="p-8 text-center text-xs text-gray-500 font-bold">\n';
+                htmlEmpty += '    <td colspan="8" class="p-8 text-center text-xs text-gray-500 font-bold">\n';
                 htmlEmpty += '        Nenhuma matéria encontrada.\n';
                 htmlEmpty += '    </td>\n';
                 htmlEmpty += '</tr>\n';
@@ -1560,37 +1565,37 @@
                 var txtStat = isAtivo ? 'ATIVO' : (isAgendada ? 'AGENDADO' : 'INATIVO');
                 
                 htmlTrs += '<tr class="hover:bg-gray-50 border-b border-gray-100">\n';
-                htmlTrs += '    <td class="p-4 text-xs font-medium text-gray-500">';
+                htmlTrs += '    <td class="p-3 text-xs font-medium text-gray-500">';
                 htmlTrs += (n.dataHora || '');
                 htmlTrs += '</td>\n';
                 
-                htmlTrs += '    <td class="p-4 font-bold text-sm text-jornal-dark truncate max-w-[200px]" title="' + n.titulo + '">';
+                htmlTrs += '    <td class="p-3 font-bold text-sm text-jornal-dark truncate max-w-[200px]" title="' + n.titulo + '">';
                 htmlTrs += (n.titulo || '') + '<br>';
                 htmlTrs += '<span class="bg-gray-200 text-gray-800 px-1 py-0.5 rounded-sm text-[8px] uppercase font-black">';
                 htmlTrs += (n.categoria || 'Geral');
                 htmlTrs += '</span>';
                 htmlTrs += '</td>\n';
                 
-                htmlTrs += '    <td class="p-4 text-center text-xs text-gray-700 font-bold">';
+                htmlTrs += '    <td class="p-3 text-center text-xs font-medium text-gray-700">';
                 htmlTrs += (n.autor || 'Redação');
                 htmlTrs += '</td>\n';
                 
-                htmlTrs += '    <td class="p-4 text-center text-xs text-blue-600 font-bold">';
+                htmlTrs += '    <td class="p-3 text-center text-xs font-bold text-blue-600">';
                 htmlTrs += (n.usuarioPublicador || 'Desconhecido');
                 htmlTrs += '</td>\n';
                 
-                htmlTrs += '    <td class="p-4 text-center">\n';
+                htmlTrs += '    <td class="p-3 text-center">\n';
                 htmlTrs += '        <div class="flex justify-center items-center"><label class="relative inline-flex items-center cursor-pointer select-none">\n';
                 htmlTrs += '        <input type="checkbox" class="sr-only peer" ' + (isAtivo ? 'checked' : '') + ' onchange="alterarStatusRapido(\'' + n.id + '\', this)" />\n';
                 htmlTrs += '        <div class="w-10 h-5 bg-gray-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[\'\'] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>\n';
                 htmlTrs += '        <span class="ml-2 text-[10px] font-black ' + corStat + ' select-none uppercase tracking-widest inline-block w-16 text-left">' + txtStat + '</span></label></div>\n';
                 htmlTrs += '    </td>\n';
                 
-                htmlTrs += '    <td class="p-4 text-center text-xs font-black text-jornal-blue">';
+                htmlTrs += '    <td class="p-3 text-center text-xs font-black text-jornal-blue">';
                 htmlTrs += '👁️ ' + (n.views || 0);
                 htmlTrs += '</td>\n';
                 
-                htmlTrs += '    <td class="p-4 text-center flex gap-2 justify-center">\n';
+                htmlTrs += '    <td class="p-3 text-center flex gap-2 justify-center">\n';
                 htmlTrs += '        <button type="button" onclick="editarNoticia(\'' + n.id + '\')" class="text-[10px] font-black uppercase tracking-widest text-jornal-blue border border-jornal-blue/30 px-3 py-1.5 rounded-sm hover:bg-jornal-blue hover:text-white transition-colors">Editar</button>\n';
                 htmlTrs += '        <button type="button" onclick="apagarMateria(\'' + n.id + '\')" class="text-[10px] font-black uppercase tracking-widest text-red-600 border border-red-200 px-3 py-1.5 rounded-sm hover:bg-red-50 transition-colors">Excluir</button>\n';
                 htmlTrs += '    </td>\n';
@@ -1600,7 +1605,6 @@
             tbody.innerHTML = htmlTrs;
         }
 
-        function apagarMateria(id) {
         function apagarMateria(id) {
             abrirModalConfirmacao("Excluir Matéria", "Atenção! Vai eliminar a notícia permanentemente. Continuar?", function() {
                 if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
