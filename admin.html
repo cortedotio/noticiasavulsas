@@ -11,8 +11,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
     <script>
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxADNeMakuS8YIo2HxlIaU90uUbC9AJCG1IUdbTld9ZBjSfGAWDDekSlqosSJm7FeM2/exec";
+        // LINK ATUALIZADO COM O ÚLTIMO BACKEND GERADO
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzZ3tg6RONdf9KODrdz25LYGjEGF6m1DTdM9_NUBnVrm6WGGp6k8rapdg-wDu049Tee/exec";
         
+        // Ponte de comunicação com o Backend (Google Apps Script)
         window.google = {
             script: {
                 run: {
@@ -81,6 +83,7 @@
             };
         });
 
+        // Configuração de cores e fontes do Tailwind
         var configureTailwind = function() {
             if (typeof tailwind === 'undefined') { 
                 setTimeout(configureTailwind, 10); 
@@ -141,6 +144,8 @@
             margin: 16px auto; 
             border: 1px solid #e2e8f0; 
             display: block; 
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
         }
         .rich-editor iframe, .rich-editor video { 
             max-width: 100%; 
@@ -194,6 +199,7 @@
 </head>
 <body class="antialiased min-h-screen flex flex-col relative selection:bg-jornal-red selection:text-white">
 
+    <!-- Notificações Toast -->
     <div id="toast" class="hidden fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border rounded-sm">
         <span id="toast-icon" class="text-xl"></span>
         <span id="toast-msg" class="text-sm"></span>
@@ -226,6 +232,7 @@
         </div>
     </div>
 
+    <!-- Loading Global -->
     <div id="loading-global" class="fixed inset-0 z-[99998] bg-jornal-dark flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="w-12 h-12 border-4 border-gray-700 border-t-jornal-red rounded-full animate-spin mb-4"></div>
         <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Sistema...</p>
@@ -247,6 +254,7 @@
         </div>
     </div>
 
+    <!-- ESTRUTURA PRINCIPAL DO ADMIN -->
     <div id="view-admin" class="hidden min-h-screen flex flex-col bg-gray-100 text-slate-800">
         
         <header class="bg-[#0b0f19] text-white border-b border-gray-800 sticky top-0 z-40 shadow-sm">
@@ -266,11 +274,12 @@
         </header>
 
         <main class="max-w-[1200px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
+            <!-- Abas de Navegação -->
             <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar" id="nav-abas-admin">
                 <button type="button" onclick="alternarAbaAdmin('form-noticia-container')" id="aba-noticia" class="py-3 px-5 font-black text-[11px] bg-jornal-blue text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">PUBLICAR</button>
                 <button type="button" onclick="alternarAbaAdmin('lista-noticias-container')" id="aba-lista" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">GERIR MATÉRIAS</button>
                 
-                <!-- Abas exclusivas para ADMIN -->
+                <!-- Abas exclusivas para ADMIN total -->
                 <button type="button" onclick="alternarAbaAdmin('form-capa-container')" id="aba-capa" class="aba-restrita py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">LAYOUT CAPA</button>
                 <button type="button" onclick="alternarAbaAdmin('form-logo-container')" id="aba-logo" class="aba-restrita py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-purple-800 hover:bg-purple-200 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">IA & DESIGN</button>
                 <button type="button" onclick="alternarAbaAdmin('form-propaganda-container')" id="aba-propaganda" class="aba-restrita py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">ANÚNCIOS</button>
@@ -280,6 +289,7 @@
                 <button type="button" onclick="alternarAbaAdmin('form-expediente-container')" id="aba-expediente" class="aba-restrita py-3 px-5 font-bold text-[11px] bg-gray-200 text-blue-600 hover:text-blue-800 hover:bg-blue-100 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">EXPEDIENTE</button>
             </div>
 
+            <!-- 1. PUBLICAR (NOVA NOTÍCIA) -->
             <div id="form-noticia-container" class="bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-jornal-red pl-3 mb-8">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">REDIGIR MATÉRIA</h2>
@@ -292,7 +302,12 @@
                         <div class="lg:w-2/3 flex flex-col gap-6">
                             <div>
                                 <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Manchete</label>
-                                <input type="text" id="admin-titulo" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue font-serif font-bold text-lg text-jornal-dark rounded-sm" required />
+                                <input type="text" id="admin-titulo" oninput="atualizarPreviewURL()" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue font-serif font-bold text-lg text-jornal-dark rounded-sm" required />
+                                
+                                <!-- PRÉ-VISUALIZAÇÃO DE LINK NOVO -->
+                                <p id="preview-url-materia" class="text-[10px] text-blue-600 mt-2 font-mono font-bold bg-blue-50 p-2 rounded border border-blue-100 shadow-inner break-all">
+                                    Link: noticiasavulsas.com.br/geral/sua-manchete-aqui/id
+                                </p>
                             </div>
                             <div>
                                 <div class="flex justify-between items-end mb-2">
@@ -326,6 +341,7 @@
                         <input type="text" id="admin-autor" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm" placeholder="Ex: João Silva (Vazio = 'da redação')" />
                     </div>
 
+                    <!-- EDITOR RICH TEXT AVANÇADO -->
                     <div>
                         <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Conteúdo (Rich Text Avançado)</label>
                         <input type="file" id="upload-imagem-conteudo" accept="image/*" class="hidden" onchange="processarUploadImagemConteudo(this)" />
@@ -335,12 +351,14 @@
                             <button type="button" onclick="execCmdNoticia('italic')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm transition-colors">I</button>
                             <button type="button" onclick="execCmdNoticia('underline')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs underline rounded shadow-sm transition-colors">U</button>
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
+                            
                             <div class="relative flex items-center">
                                 <span class="text-xs font-bold mr-2 text-gray-600 hidden sm:block">TT</span>
                                 <select onchange="execCmdNoticia('fontSize', this.value); this.selectedIndex=1;" class="px-2 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer">
                                     <option value="1">Pequeno</option><option value="3" selected>Normal</option><option value="5">Grande</option><option value="7">Enorme</option>
                                 </select>
                             </div>
+                            
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
                             <button type="button" onclick="execCmdNoticia('justifyLeft')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Esq</button>
                             <button type="button" onclick="execCmdNoticia('justifyCenter')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Cen</button>
@@ -349,8 +367,17 @@
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
                             
                             <button type="button" onclick="abrirPromptCustom('Inserir Link URL Completo:', function(v){ execCmdNoticia('createLink', v); })" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-blue-600 rounded font-semibold shadow-sm" title="Inserir Link">🔗</button>
+                            
                             <button type="button" onclick="inserirImagemRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-emerald-600 rounded font-semibold shadow-sm" title="Upload Imagem">🖼️</button>
-                            <button type="button" onclick="abrirPromptCustom('Insira o link do YouTube, Twitter ou Instagram:', function(v){ execCmdNoticia('insertHTML', v + '<br><br>'); })" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-purple-600 rounded font-semibold shadow-sm" title="Vídeo">📹</button>
+                            
+                            <!-- NOVOS BOTÕES DE REDIMENSIONAMENTO DE IMAGEM -->
+                            <span class="text-[9px] font-bold text-gray-500 ml-2 mr-1 uppercase tracking-widest">Tam:</span>
+                            <button type="button" onclick="redimensionarImagemRich(25)" class="px-1.5 py-1 text-[10px] bg-white border border-gray-300 rounded shadow-sm hover:bg-gray-100" title="25% da tela">25%</button>
+                            <button type="button" onclick="redimensionarImagemRich(50)" class="px-1.5 py-1 text-[10px] bg-white border border-gray-300 rounded shadow-sm hover:bg-gray-100" title="Metade da tela">50%</button>
+                            <button type="button" onclick="redimensionarImagemRich(75)" class="px-1.5 py-1 text-[10px] bg-white border border-gray-300 rounded shadow-sm hover:bg-gray-100" title="75% da tela">75%</button>
+                            <button type="button" onclick="redimensionarImagemRich(100)" class="px-1.5 py-1 text-[10px] bg-white border border-gray-300 rounded shadow-sm hover:bg-gray-100" title="Tamanho inteiro">100%</button>
+
+                            <button type="button" onclick="abrirPromptCustom('Insira o link do YouTube, Twitter ou Instagram:', function(v){ execCmdNoticia('insertHTML', v + '<br><br>'); })" class="px-2 py-1.5 ml-2 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-purple-600 rounded font-semibold shadow-sm" title="Vídeo">📹</button>
                             
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
                             <button type="button" onclick="execCmdNoticia('formatBlock', 'H2')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm">H2</button>
@@ -360,6 +387,7 @@
                             <button type="button" id="btn-ia-conteudo" onclick="gerarConteudoIA()" class="ml-auto px-4 py-1.5 bg-purple-100 hover:bg-purple-200 border border-purple-300 text-xs text-purple-800 font-bold tracking-wide rounded shadow-sm transition-colors flex items-center justify-center">✨ Escrever com IA</button>
                         </div>
                         <div id="admin-editor-rich" contenteditable="true" class="w-full px-6 py-6 bg-white border border-gray-300 rounded-b-sm min-h-[350px] max-h-[600px] overflow-y-auto focus:outline-none focus:border-jornal-blue text-base leading-relaxed font-serif custom-scrollbar rich-editor"></div>
+                        <p class="text-[9px] text-gray-500 mt-2">Dica: Para alterar o tamanho de uma foto, clique nela (ganhará uma borda vermelha) e depois use os botões 25%, 50%, 75% ou 100% no menu acima.</p>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-gray-50 border border-gray-200 rounded-sm">
@@ -426,6 +454,7 @@
                 </form>
             </div>
 
+            <!-- 2. GERIR MATÉRIAS -->
             <div id="lista-noticias-container" class="hidden bg-white p-6 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-jornal-red pl-3 mb-6">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">EDITAR PUBLICAÇÕES</h2>
@@ -449,10 +478,10 @@
                                 <th class="p-3">Data</th>
                                 <th class="p-3">Editorias</th>
                                 <th class="p-3">Manchete</th>
-                                <th class="p-3 text-center">Autor</th>
+                                <th class="p-3 text-center">Autor / Assinatura</th>
                                 <th class="p-3 text-center">Usuário</th>
-                                <th class="p-3 text-center">Visibilidade</th>
                                 <th class="p-3 text-center">Visões</th>
+                                <th class="p-3 text-center">Visibilidade</th>
                                 <th class="p-3 text-center">Ações</th>
                             </tr>
                         </thead>
@@ -461,6 +490,7 @@
                 </div>
             </div>
 
+            <!-- 3. LAYOUT CAPA -->
             <div id="form-capa-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm aba-restrita-view">
                 <div class="border-l-4 border-emerald-600 pl-3 mb-6">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">ORGANIZAR CAPA</h2>
@@ -474,6 +504,7 @@
                 </form>
             </div>
 
+            <!-- 4. IA & DESIGN -->
             <div id="form-logo-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm border-l-[6px] border-l-purple-600 aba-restrita-view">
                 <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-8 gap-4">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">INTELIGÊNCIA ARTIFICIAL & DESIGN</h2>
@@ -515,6 +546,7 @@
                 </div>
             </div>
 
+            <!-- 5. ANÚNCIOS -->
             <div id="form-propaganda-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm aba-restrita-view">
                 <div class="border-l-4 border-jornal-red pl-3 mb-6">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">GERENCIAMENTO DE ANÚNCIOS</h2>
@@ -595,6 +627,7 @@
                 </div>
             </div>
 
+            <!-- 6. REDES SOCIAIS -->
             <div id="form-social-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm aba-restrita-view">
                 <div class="border-l-4 border-jornal-red pl-3 mb-6">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">GESTÃO DE REDES SOCIAIS</h2>
@@ -622,6 +655,7 @@
                 </form>
             </div>
 
+            <!-- 7. PLACAR -->
             <div id="form-placar-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm aba-restrita-view">
                 <div class="border-l-4 border-jornal-red pl-3 mb-6">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">PLACAR AO VIVO</h2>
@@ -651,6 +685,7 @@
                 </form>
             </div>
 
+            <!-- 8. EQUIPE -->
             <div id="form-equipe-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-amber-500 aba-restrita-view">
                 <div class="border-l-4 border-amber-500 pl-3 mb-6">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">GESTÃO DE EQUIPA</h2>
@@ -687,7 +722,7 @@
                         <thead class="bg-gray-100 border-b border-gray-300 text-[10px] uppercase tracking-widest text-gray-500">
                             <tr>
                                 <th class="p-3">Utilizador</th>
-                                <th class="p-3">Nível de Acesso</th>
+                                <th class="p-3 text-center">Nível de Acesso</th>
                                 <th class="p-3 text-center">Ações</th>
                             </tr>
                         </thead>
@@ -696,6 +731,7 @@
                 </div>
             </div>
 
+            <!-- 9. EXPEDIENTE -->
             <div id="form-expediente-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-blue-500 aba-restrita-view">
                 <div class="border-l-4 border-blue-500 pl-3 mb-6">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">EDITAR EXPEDIENTE</h2>
@@ -728,6 +764,7 @@
         </main>
     </div>
 
+    <!-- JAVASCRIPT GERAL DO ADMIN -->
     <script>
         var IMG_FALLBACK = 'https://placehold.co/600x400/e2e8f0/475569?text=Sem+Foto';
         var ICON_HEART = '<svg class="w-4 h-4 fill-current inline animate-pulse" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
@@ -754,11 +791,14 @@
             if(tipo === undefined) tipo = 'sucesso';
             var toast = document.getElementById('toast');
             document.getElementById('toast-msg').innerText = mensagem;
+            
             toast.className = tipo === 'erro' 
                 ? 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-white border-red-600 text-red-600 rounded-sm' 
                 : 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-jornal-dark border-jornal-dark text-white rounded-sm';
+            
             document.getElementById('toast-icon').innerHTML = tipo === 'erro' ? '⚠️' : '✓';
             toast.classList.remove('hidden');
+            
             setTimeout(function() { 
                 toast.classList.add('hidden'); 
             }, 4500);
@@ -821,6 +861,28 @@
                 });
             }
 
+            // Lógica de Seleção de Imagem no Rich Text
+            var richEditor = document.getElementById('admin-editor-rich');
+            if(richEditor) {
+                richEditor.addEventListener('click', function(e) {
+                    if(e.target.tagName === 'IMG') {
+                        var imgs = this.querySelectorAll('img');
+                        imgs.forEach(function(i) { 
+                            i.classList.remove('ring-4', 'ring-jornal-red'); 
+                            i.removeAttribute('data-selected'); 
+                        });
+                        e.target.classList.add('ring-4', 'ring-jornal-red');
+                        e.target.setAttribute('data-selected', 'true');
+                    } else {
+                        var imgs = this.querySelectorAll('img');
+                        imgs.forEach(function(i) { 
+                            i.classList.remove('ring-4', 'ring-jornal-red'); 
+                            i.removeAttribute('data-selected'); 
+                        });
+                    }
+                });
+            }
+
             if (localStorage.getItem('admin_logado') === 'true') {
                 document.getElementById('modalLogin').classList.add('hidden');
                 document.getElementById('view-admin').classList.remove('hidden');
@@ -834,11 +896,51 @@
             mudarAbaAnuncio('editorias');
         });
 
+        function redimensionarImagemRich(percent) {
+            var editor = document.getElementById('admin-editor-rich');
+            var img = editor.querySelector('img[data-selected="true"]');
+            if(img) {
+                img.style.width = percent + '%';
+                img.style.maxWidth = '100%';
+                img.style.height = 'auto';
+            } else {
+                mostrarMensagem("Clique numa foto dentro do texto primeiro para a redimensionar.", "erro");
+            }
+        }
+
+        // FUNÇÃO PARA ATUALIZAR PREVIEW DA URL EM TEMPO REAL
+        function normalizarTextoUrl(text) {
+            return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+                .replace(/\s+/g, '-')
+                .replace(/[^\w\-]+/g, '')
+                .replace(/\-\-+/g, '-')
+                .replace(/^-+/, '')
+                .replace(/-+$/, '');
+        }
+
+        function atualizarPreviewURL() {
+            var titulo = document.getElementById('admin-titulo').value;
+            var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
+            var cat = 'geral';
+            
+            if(checkboxes.length > 0) {
+                cat = normalizarTextoUrl(checkboxes[0].value);
+            }
+            
+            var slug = normalizarTextoUrl(titulo) || 'sua-manchete-aqui';
+            var pUrl = document.getElementById('preview-url-materia');
+            
+            if(pUrl) {
+                pUrl.innerText = 'Link: noticiasavulsas.com.br/' + cat + '/' + slug + '/id';
+            }
+        }
+
         function fazerLogin(e) {
             e.preventDefault();
             var u = document.getElementById('login-user').value;
             var p = document.getElementById('login-pass').value;
             var btn = document.getElementById('btn-fazer-login');
+            
             btn.innerHTML = "A VERIFICAR..."; 
             btn.disabled = true;
 
@@ -851,6 +953,7 @@
                         
                         document.getElementById('modalLogin').classList.add('hidden');
                         document.getElementById('view-admin').classList.remove('hidden');
+                        
                         aplicarRegrasPermissao();
                         carregarNoticiasAdmin();
                     } else {
@@ -880,14 +983,10 @@
             var viewsRestritas = document.querySelectorAll('.aba-restrita-view');
 
             if (role === 'analitico') {
-                abasRestritas.forEach(function(el) { 
-                    el.style.display = 'none'; 
-                });
+                abasRestritas.forEach(function(el) { el.style.display = 'none'; });
                 alternarAbaAdmin('form-noticia-container'); 
             } else {
-                abasRestritas.forEach(function(el) { 
-                    el.style.display = 'inline-block'; 
-                });
+                abasRestritas.forEach(function(el) { el.style.display = 'inline-block'; });
             }
         }
 
@@ -909,7 +1008,7 @@
                 var loader = document.getElementById('loading-global');
                 if (loader && !loader.classList.contains('hidden')) {
                     loader.classList.add('hidden');
-                    mostrarMensagem("Aviso: Lentidão na rede ou erro interno. A forçar entrada...", 'erro');
+                    mostrarMensagem("Aviso: Falha de conexão. Desbloqueando...", 'erro');
                 }
             }, 10000);
 
@@ -917,6 +1016,7 @@
                 window.google.script.run.withSuccessHandler(function(res) {
                     clearTimeout(tId);
                     document.getElementById('loading-global').classList.add('hidden');
+                    
                     if (res && res.sucesso) {
                         noticiasGlobais = res.noticias || [];
                         configuracoesGlobais = res.config || {};
@@ -990,12 +1090,8 @@
                     }
                     el.className = el.className.replace(/bg-\S+ text-white/g, '').trim();
                     el.classList.add('bg-gray-200', 'text-gray-500', 'hover:text-gray-800', 'hover:bg-gray-300');
-                    if(id === 'aba-equipe') {
-                        el.classList.add('text-amber-600');
-                    }
-                    if(id === 'aba-expediente') {
-                        el.classList.add('text-blue-600');
-                    }
+                    if(id === 'aba-equipe') { el.classList.add('text-amber-600'); }
+                    if(id === 'aba-expediente') { el.classList.add('text-blue-600'); }
                 }
             });
             
@@ -1034,9 +1130,7 @@
             } else if (abaId === 'form-equipe-container') { 
                 botaoId = 'aba-equipe'; 
                 classAtiva = "bg-amber-500 text-white"; 
-                if(localStorage.getItem('admin_role')==='admin') {
-                    listarEquipa(); 
-                }
+                if(localStorage.getItem('admin_role')==='admin') { listarEquipa(); }
             } else if (abaId === 'form-expediente-container') { 
                 botaoId = 'aba-expediente'; 
                 classAtiva = "bg-blue-600 text-white"; 
@@ -1050,17 +1144,13 @@
         }
 
         function execCmdNoticia(command, arg) { 
-            if(arg === undefined) {
-                arg = null; 
-            }
+            if(arg === undefined) { arg = null; }
             document.execCommand(command, false, arg); 
             document.getElementById('admin-editor-rich').focus(); 
         }
 
         function execCmdExp(command, arg) { 
-            if(arg === undefined) {
-                arg = null; 
-            }
+            if(arg === undefined) { arg = null; }
             document.execCommand(command, false, arg); 
             document.getElementById('admin-editor-expediente').focus(); 
         }
@@ -1212,7 +1302,7 @@
             listaCategoriasLocais.forEach(function(c) {
                 var h = '';
                 h += '<label class="flex items-center gap-3 cursor-pointer text-xs font-bold text-slate-700 p-2 hover:bg-gray-100 rounded transition-colors">\n';
-                h += '    <input type="checkbox" name="admin-categorias-checkbox" value="' + c + '" onchange="atualizarCampoCidadeAdmin()" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-400" />\n';
+                h += '    <input type="checkbox" name="admin-categorias-checkbox" value="' + c + '" onchange="atualizarCampoCidadeAdmin(); atualizarPreviewURL();" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-400" />\n';
                 h += '    ' + c.toUpperCase() + '\n';
                 h += '</label>\n';
                 checklistAdmin.innerHTML += h;
@@ -1396,6 +1486,7 @@
             });
             
             atualizarCampoCidadeAdmin(); 
+            atualizarPreviewURL();
             
             window.relacionadasSelecionadas = []; 
             atualizarUIListaRelacionadas();
@@ -1436,6 +1527,14 @@
             var txt = btn.innerHTML; 
             btn.innerHTML = 'A PUBLICAR...'; 
             btn.disabled = true;
+
+            // Limpa o ring vermelho das imagens antes de salvar o HTML
+            var editorHtmlElement = document.getElementById('admin-editor-rich');
+            var imgsNoEditor = editorHtmlElement.querySelectorAll('img');
+            imgsNoEditor.forEach(function(img) {
+                img.classList.remove('ring-4', 'ring-jornal-red');
+                img.removeAttribute('data-selected');
+            });
             
             var payload = {
                 id: editandoID, 
@@ -1443,7 +1542,7 @@
                 categoria: categoriasSelecionadas, 
                 cidade: cidadeSelecionada,
                 linhaFina: document.getElementById('admin-linha-fina').value, 
-                conteudo: document.getElementById('admin-editor-rich').innerHTML,
+                conteudo: editorHtmlElement.innerHTML,
                 autor: document.getElementById('admin-autor').value, 
                 dataAgendamento: document.getElementById('admin-agendamento').value,
                 dataFimEvento: document.getElementById('admin-data-fim-evento').value, 
@@ -1471,9 +1570,9 @@
                         carregarNoticiasAdmin(); 
                         setTimeout(function() { 
                             alternarAbaAdmin('lista-noticias-container'); 
-                        }, 1500); 
+                        }, 1000); 
                     } else { 
-                        mostrarMensagem("Erro ao guardar", 'erro'); 
+                        mostrarMensagem("Erro ao guardar: " + res.erro, 'erro'); 
                     }
                     btn.innerHTML = txt; 
                     btn.disabled = false;
@@ -1565,37 +1664,38 @@
                 var txtStat = isAtivo ? 'ATIVO' : (isAgendada ? 'AGENDADO' : 'INATIVO');
                 
                 htmlTrs += '<tr class="hover:bg-gray-50 border-b border-gray-100">\n';
-                htmlTrs += '    <td class="p-3 text-xs font-medium text-gray-500">';
+                htmlTrs += '    <td class="p-4 text-xs font-medium text-gray-500">';
                 htmlTrs += (n.dataHora || '');
                 htmlTrs += '</td>\n';
                 
-                htmlTrs += '    <td class="p-3 font-bold text-sm text-jornal-dark truncate max-w-[200px]" title="' + n.titulo + '">';
-                htmlTrs += (n.titulo || '') + '<br>';
-                htmlTrs += '<span class="bg-gray-200 text-gray-800 px-1 py-0.5 rounded-sm text-[8px] uppercase font-black">';
+                htmlTrs += '    <td class="p-4"><span class="bg-gray-200 text-gray-800 px-2 py-1 rounded-sm text-[9px] uppercase font-black tracking-widest">';
                 htmlTrs += (n.categoria || 'Geral');
-                htmlTrs += '</span>';
+                htmlTrs += '</span></td>\n';
+
+                htmlTrs += '    <td class="p-4 font-bold text-sm text-jornal-dark truncate max-w-[200px]" title="' + n.titulo + '">';
+                htmlTrs += (n.titulo || '');
                 htmlTrs += '</td>\n';
                 
-                htmlTrs += '    <td class="p-3 text-center text-xs font-medium text-gray-700">';
+                htmlTrs += '    <td class="p-4 text-center text-xs font-medium text-gray-700">';
                 htmlTrs += (n.autor || 'Redação');
                 htmlTrs += '</td>\n';
                 
-                htmlTrs += '    <td class="p-3 text-center text-xs font-bold text-blue-600">';
+                htmlTrs += '    <td class="p-4 text-center text-xs font-bold text-blue-600">';
                 htmlTrs += (n.usuarioPublicador || 'Desconhecido');
                 htmlTrs += '</td>\n';
+
+                htmlTrs += '    <td class="p-4 text-center text-xs font-black text-jornal-blue">';
+                htmlTrs += '👁️ ' + (n.views || 0);
+                htmlTrs += '</td>\n';
                 
-                htmlTrs += '    <td class="p-3 text-center">\n';
+                htmlTrs += '    <td class="p-4 text-center">\n';
                 htmlTrs += '        <div class="flex justify-center items-center"><label class="relative inline-flex items-center cursor-pointer select-none">\n';
                 htmlTrs += '        <input type="checkbox" class="sr-only peer" ' + (isAtivo ? 'checked' : '') + ' onchange="alterarStatusRapido(\'' + n.id + '\', this)" />\n';
                 htmlTrs += '        <div class="w-10 h-5 bg-gray-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[\'\'] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>\n';
                 htmlTrs += '        <span class="ml-2 text-[10px] font-black ' + corStat + ' select-none uppercase tracking-widest inline-block w-16 text-left">' + txtStat + '</span></label></div>\n';
                 htmlTrs += '    </td>\n';
                 
-                htmlTrs += '    <td class="p-3 text-center text-xs font-black text-jornal-blue">';
-                htmlTrs += '👁️ ' + (n.views || 0);
-                htmlTrs += '</td>\n';
-                
-                htmlTrs += '    <td class="p-3 text-center flex gap-2 justify-center">\n';
+                htmlTrs += '    <td class="p-4 text-center flex gap-2 justify-center">\n';
                 htmlTrs += '        <button type="button" onclick="editarNoticia(\'' + n.id + '\')" class="text-[10px] font-black uppercase tracking-widest text-jornal-blue border border-jornal-blue/30 px-3 py-1.5 rounded-sm hover:bg-jornal-blue hover:text-white transition-colors">Editar</button>\n';
                 htmlTrs += '        <button type="button" onclick="apagarMateria(\'' + n.id + '\')" class="text-[10px] font-black uppercase tracking-widest text-red-600 border border-red-200 px-3 py-1.5 rounded-sm hover:bg-red-50 transition-colors">Excluir</button>\n';
                 htmlTrs += '    </td>\n';
@@ -1664,7 +1764,12 @@
                 try { 
                     var dtFim = new Date(noticia.dataFimEvento); 
                     if(!isNaN(dtFim.getTime())) { 
-                        document.getElementById('admin-data-fim-evento').value = dtFim.toISOString().slice(0,16); 
+                        var diaF = String(dtFim.getDate()).padStart(2, '0');
+                        var mesF = String(dtFim.getMonth() + 1).padStart(2, '0');
+                        var anoF = dtFim.getFullYear();
+                        var horaF = String(dtFim.getHours()).padStart(2, '0');
+                        var minF = String(dtFim.getMinutes()).padStart(2, '0');
+                        document.getElementById('admin-data-fim-evento').value = anoF + '-' + mesF + '-' + diaF + 'T' + horaF + ':' + minF;
                     } 
                 } catch(e){} 
             }
@@ -1687,6 +1792,7 @@
             }
             
             atualizarCampoCidadeAdmin();
+            atualizarPreviewURL();
             
             document.getElementById('admin-legenda-imagem').value = noticia.legendaImagem || '';
             document.getElementById('admin-creditos-imagem').value = noticia.creditosImagem || '';
@@ -2057,7 +2163,7 @@
                             var html = '';
                             html += '<tr class="border-b border-gray-100 hover:bg-gray-50">\n';
                             html += '    <td class="p-3 text-sm font-bold text-gray-800">' + u.usuario + '</td>\n';
-                            html += '    <td class="p-3">\n';
+                            html += '    <td class="p-3 text-center">\n';
                             html += '        <span class="px-2 py-1 text-[10px] font-black uppercase tracking-widest rounded-sm ' + classBadge + '">' + textoBadge + '</span>\n';
                             html += '    </td>\n';
                             html += '    <td class="p-3 text-center flex gap-2 justify-center">\n';
