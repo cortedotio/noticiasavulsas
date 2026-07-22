@@ -5,18 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notícias Avulsas - Portal de Informação</title>
     
-    <!-- Meta tags dinâmicas para o WhatsApp e Redes Sociais -->
-    <meta property="og:title" content="Notícias Avulsas - Portal de Informação">
-    <meta property="og:description" content="Jornalismo sério, ético e independente.">
-    <meta property="og:image" content="">
-    <meta property="og:url" content="">
-    <meta property="og:type" content="article">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
+    <!-- Scripts Oficiais para as Redes Sociais Embutidas -->
     <script async src="//www.instagram.com/embed.js"></script>
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
     
@@ -31,7 +25,7 @@
                     }
                 }
             };
-            const apiFunctions = ['getHomeData', 'curtirNoticiaNoSheets', 'incrementarView', 'salvarComentarioNoSheets'];
+            const apiFunctions = ['getHomeData', 'verificarLogin', 'salvarConfiguracaoHTMLCustom', 'salvarNoticiaNoSheets', 'alternarStatusNoticia', 'excluirNoticia', 'curtirNoticiaNoSheets', 'incrementarView', 'salvarComentarioNoSheets', 'salvarPropagandaNoSheets', 'inscreverNewsletter', 'adicionarCategoriaNoSheets', 'chamarGeminiBackend', 'chamarGeminiImagemBackend'];
             apiFunctions.forEach(function(funcName) {
                 window.google.script.run[funcName] = function() {
                     var argsArray = Array.prototype.slice.call(arguments);
@@ -58,12 +52,7 @@
         var configureTailwind = function() {
             if (typeof tailwind === 'undefined') { setTimeout(configureTailwind, 10); return; }
             tailwind.config = {
-                theme: { 
-                    extend: { 
-                        fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] }, 
-                        colors: { jornal: { blue: '#0F172A', red: '#E11D48', gray: '#F8FAFC', dark: '#020617' } } 
-                    } 
-                }
+                theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] }, colors: { jornal: { blue: '#0F172A', red: '#E11D48', gray: '#F8FAFC', dark: '#020617' } } } }
             };
         };
         configureTailwind();
@@ -75,12 +64,12 @@
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-        
+        .spinner { border: 2px solid rgba(255,255,255,.3); border-left-color: #fff; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #999; }
-        
         .heart-beat { animation: heartbeat 0.3s ease-in-out; }
         @keyframes heartbeat { 0% { transform: scale(1); } 50% { transform: scale(1.3); color: #E11D48; } 100% { transform: scale(1); } }
         @keyframes marquee { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
@@ -93,27 +82,37 @@
         .rich-editor h1, .rich-editor h2, .rich-editor h3 { font-family: 'Inter', sans-serif; color: #020617; }
         .rich-editor h1 { font-size: 1.5em; font-weight: 900; margin: 16px 0 8px 0; }
         .rich-editor h2 { font-size: 1.25em; font-weight: 800; margin: 12px 0 8px 0; }
-        .rich-editor blockquote { border-left: 4px solid #E11D48; background: #f8fafc; padding: 16px 20px; color: #475569; font-style: italic; margin: 16px 0; border-radius: 0 8px 8px 0; font-size: 1.1em;}
+        .rich-editor blockquote { border-left: 4px solid #E11D48; background: #f8fafc; padding: 12px 16px; color: #475569; font-style: italic; margin: 16px 0; border-radius: 0 8px 8px 0; }
         .rich-editor ul { list-style-type: disc; padding-left: 24px; margin-bottom: 12px; }
         .rich-editor ol { list-style-type: decimal; padding-left: 24px; margin-bottom: 12px; }
-        .rich-editor p { margin-bottom: 16px; }
         
         .instagram-media { background: #FFF; border: 0; border-radius: 3px; box-shadow: 0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px auto; max-width: 540px; min-width: 326px; padding: 0; width: 99.375%; width: calc(100% - 2px); }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col relative selection:bg-jornal-red selection:text-white">
 
-    <!-- Notificações -->
     <div id="toast" class="hidden fixed top-5 right-5 px-6 py-4 font-bold shadow-xl transition-all duration-300 z-[99999] flex items-center gap-3 border rounded-sm">
         <span id="toast-icon" class="text-xl"></span>
         <span id="toast-msg" class="text-sm"></span>
+    </div>
+
+    <!-- TELA DE CARREGAMENTO BRANCA E LIMPA -->
+    <div id="loading-noticias" class="fixed inset-0 z-[100000] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
+        <div id="loading-logo-container" class="mb-6">
+             <h1 class="text-4xl md:text-5xl font-black tracking-tighter uppercase text-slate-900">
+                Notícias<span class="text-rose-600">Avulsas</span>
+             </h1>
+        </div>
+        <div class="w-10 h-10 border-4 border-gray-100 border-t-jornal-red rounded-full animate-spin mb-4"></div>
+        <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 animate-pulse">A carregar jornal...</p>
+        <div id="debug-error-box" class="hidden mt-4 text-xs text-red-500 font-mono text-center p-4 bg-red-50 border border-red-200 rounded max-w-xl break-words w-full shadow-sm"></div>
     </div>
 
     <!-- VIEW PORTAL PRINCIPAL -->
     <div id="view-portal" class="flex-grow flex flex-col relative min-w-0">
         
         <div id="ticker-noticias" class="bg-jornal-red text-white text-[10px] font-bold h-8 overflow-hidden flex items-center border-b border-red-800 sticky top-0 z-50 w-full shadow-sm min-w-0 transition-colors duration-500">
-            <div id="ticker-label-aovivo" class="px-4 h-full uppercase tracking-widest whitespace-nowrap shrink-0 border-r border-red-400 mr-2 bg-jornal-red relative z-10 flex items-center gap-1 backdrop-blur-sm">
+            <div class="px-4 h-full uppercase tracking-widest whitespace-nowrap shrink-0 border-r border-red-400 mr-2 bg-jornal-red relative z-10 flex items-center gap-1 backdrop-blur-sm">
                 <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span> Ao Vivo
             </div>
             <div class="overflow-hidden relative w-full flex-grow min-w-0">
@@ -156,7 +155,7 @@
             </form>
         </header>
 
-        <nav class="border-y border-gray-200 border-b-4 border-b-jornal-blue sticky top-8 z-40 bg-white/95 backdrop-blur-sm w-full shadow-sm min-w-0" id="nav-categorias-publicas">
+        <nav class="border-y border-gray-200 border-b-4 border-b-jornal-blue sticky top-0 md:top-8 z-40 bg-white/95 backdrop-blur-sm w-full shadow-sm min-w-0" id="nav-categorias-publicas">
             <div id="nav-container-inner" class="max-w-[1200px] mx-auto px-4 flex items-center overflow-x-auto whitespace-nowrap text-[11px] md:text-sm font-black uppercase tracking-widest text-jornal-dark py-3 md:py-4 custom-scrollbar min-w-0">
                 <div id="links-categorias" class="flex items-center gap-6 md:gap-8 min-w-0"></div>
             </div>
@@ -164,12 +163,6 @@
 
         <main class="max-w-[1200px] mx-auto pt-6 md:pt-8 pb-16 px-4 flex-grow w-full min-w-0">
             <div id="ads-topo-container" class="w-full mb-8 hidden grid gap-4 grid-cols-1 md:grid-cols-2"></div>
-
-            <div id="loading-noticias" class="flex flex-col items-center justify-center py-20">
-                <div class="w-10 h-10 border-4 border-gray-200 border-t-jornal-blue rounded-full animate-spin mb-4"></div>
-                <p class="text-xs font-bold uppercase tracking-widest text-gray-500 animate-pulse">A carregar jornal...</p>
-                <div id="debug-error-box" class="hidden mt-4 text-xs text-red-500 font-mono text-left p-4 bg-red-50 border border-red-200 rounded max-w-xl break-words w-full shadow-sm"></div>
-            </div>
 
             <div id="master-feed-wrapper" class="flex flex-col lg:flex-row gap-8 items-start hidden min-w-0">
                 
@@ -186,10 +179,10 @@
                     </div>
 
                     <div id="home-feed-container" class="w-full min-w-0">
-                        <div id="carrossel-destaques" class="w-full mb-8 relative hidden overflow-hidden bg-gray-900 aspect-video shrink-0 rounded-sm shadow-md">
+                        <div id="carrossel-destaques" class="w-full mb-8 relative hidden overflow-hidden bg-gray-100 aspect-video shrink-0 rounded-sm shadow-md">
                             <div id="carrossel-inner" class="w-full h-full relative"></div>
-                            <button onclick="moverCarrossel(-1)" class="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/50 text-white rounded-full p-3 z-20 backdrop-blur-sm transition-all shadow-lg">❮</button>
-                            <button onclick="moverCarrossel(1)" class="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/50 text-white rounded-full p-3 z-20 backdrop-blur-sm transition-all shadow-lg">❯</button>
+                            <button onclick="moverCarrossel(-1)" class="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/50 text-white rounded-full p-3 z-20 backdrop-blur-sm transition-all shadow-lg">❮</button>
+                            <button onclick="moverCarrossel(1)" class="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/50 text-white rounded-full p-3 z-20 backdrop-blur-sm transition-all shadow-lg">❯</button>
                             <div id="carrossel-indicadores" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3 z-20"></div>
                         </div>
 
@@ -214,7 +207,6 @@
                         <span id="nc-categoria" class="text-jornal-red text-[11px] font-black uppercase tracking-widest mb-4 block cursor-pointer hover:underline" onclick="filtrarCategoria(this.innerText)"></span>
                         <h1 id="nc-titulo" class="font-serif text-3xl md:text-5xl font-black mb-5 leading-tight text-jornal-dark break-words tracking-tight"></h1>
                         
-                        <!-- LINHA FINA (AGORA VISÍVEL) -->
                         <h2 id="nc-linha-fina" class="font-sans text-base md:text-xl text-gray-500 mb-8 leading-relaxed font-medium hidden break-words italic"></h2>
                         
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-5 mb-8 gap-4">
@@ -231,7 +223,6 @@
                             </button>
                         </div>
 
-                        <!-- Botões de Partilha (WhatsApp Corrigido) -->
                         <div class="flex flex-wrap items-center gap-2 md:gap-4 mb-8">
                             <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Partilhar:</span>
                             <button onclick="shareLink('whatsapp')" class="p-2.5 bg-[#25D366] text-white rounded hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center" title="Compartilhar no WhatsApp">
@@ -242,8 +233,9 @@
                             </button>
                         </div>
 
+                        <!-- IMAGEM DA MATÉRIA (CONTAIN) -->
                         <div id="nc-imagem-container" class="mb-10 bg-gray-50 border border-gray-200 rounded-sm overflow-hidden shadow-sm">
-                            <img id="nc-imagem" loading="lazy" src="" class="w-full h-auto max-h-[600px] object-contain bg-gray-900 shrink-0" onerror="this.onerror=null; this.src='https://placehold.co/800x400/e2e8f0/475569?text=Imagem+Indisponível'" />
+                            <img id="nc-imagem" loading="lazy" src="" class="w-full h-auto max-h-[600px] object-contain shrink-0" onerror="this.onerror=null; this.src='https://placehold.co/800x400/e2e8f0/475569?text=Imagem+Indisponível'" />
                             <div id="nc-imagem-meta" class="p-3 text-[11px] text-gray-500 italic flex justify-between bg-white border-t border-gray-200 min-w-0">
                                 <span id="nc-legenda" class="break-words min-w-0 pr-3 font-medium"></span>
                                 <span id="nc-creditos" class="font-black shrink-0 text-gray-700"></span>
@@ -252,7 +244,6 @@
 
                         <div id="nc-conteudo" class="text-slate-800 text-lg md:text-xl leading-relaxed font-serif whitespace-pre-line mb-12 rich-editor break-words"></div>
                         
-                        <!-- RELACIONADAS PADRONIZADO IGUAL AOS CARDS DE NOTÍCIAS -->
                         <div id="nc-relacionadas-container" class="hidden border-t-4 border-indigo-600 pt-8 mt-12 mb-8 bg-indigo-50/30 p-6 rounded-sm">
                             <h3 class="text-sm font-black font-sans uppercase tracking-widest text-indigo-900 mb-6 flex items-center gap-2">LEIA TAMBÉM</h3>
                             <div id="nc-relacionadas-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
@@ -264,7 +255,6 @@
                             </button>
                         </div>
 
-                        <!-- Comentários -->
                         <div class="border-t-4 border-jornal-dark pt-8 mt-4">
                             <h3 class="text-lg font-black font-sans uppercase tracking-tighter text-jornal-dark mb-6">Comentários</h3>
                             <form id="form-comentario" onsubmit="enviarComentario(event)" class="mb-10 bg-gray-50 p-6 md:p-8 border border-gray-200 rounded-sm shadow-inner">
@@ -306,7 +296,6 @@
                         </div>
                     </div>
 
-                    <!-- OPINIÃO Renomeado -->
                     <div id="sidebar-opinioes" class="hidden mb-10 bg-white border border-gray-200 p-6 shadow-sm rounded-sm">
                         <div class="border-b-4 border-jornal-red pb-3 mb-6">
                             <h2 class="text-xs font-black uppercase tracking-widest text-jornal-red">OPINIÃO</h2>
@@ -451,7 +440,6 @@
             return true;
         }
 
-        // NOVO: Função para normalizar texto para formar um URL bonito
         function normalizarTextoUrl(text) {
             if (!text) return 'geral';
             return String(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
@@ -462,14 +450,12 @@
                 .replace(/-+$/, '');
         }
 
-        // NOVO: Função que muda a URL real no topo do navegador (History API)
         function atualizarURL(tipo, valor, noticiaObj) {
             try {
-                if (window.location.protocol === 'file:') return; // Evita erro se abrir localmente
+                if (window.location.protocol === 'file:') return;
                 var baseUrl = window.location.origin;
                 var pathnameOriginal = window.location.pathname;
                 
-                // Manter o subdiretório se existir (ex: GitHub Pages project)
                 var pathNovo = '/';
                 if(pathnameOriginal.indexOf('/noticias') !== -1) {
                     baseUrl += '/noticias';
@@ -485,7 +471,6 @@
                     pathNovo = '/busca/' + encodeURIComponent(valor);
                 }
                 
-                // Atualiza o link lá em cima sem recarregar a página
                 window.history.pushState({ path: baseUrl + pathNovo }, '', baseUrl + pathNovo);
             } catch(e) {
                 console.warn("Navegação de URL local bloqueada por segurança.");
@@ -506,7 +491,14 @@
         window.agendaTimers = {};
 
         document.addEventListener("DOMContentLoaded", function() {
-            setTimeout(removerLoaderGlobal, 5000); 
+            setTimeout(function() {
+                var loaderGlobal = document.getElementById('loading-noticias');
+                if (loaderGlobal && !loaderGlobal.classList.contains('hidden')) {
+                    loaderGlobal.classList.add('hidden');
+                    var wrap = document.getElementById('master-feed-wrapper');
+                    if(wrap) wrap.classList.remove('hidden');
+                }
+            }, 5000); 
             carregarNoticias(false);
             
             window.addEventListener('scroll', function() {
@@ -526,16 +518,12 @@
         function removerLoaderGlobal() {
             var loaderGlobal = document.getElementById('loading-noticias');
             if (loaderGlobal && !loaderGlobal.classList.contains('hidden')) {
-                loaderGlobal.classList.add('opacity-0');
-                setTimeout(function() { 
-                    loaderGlobal.classList.add('hidden'); 
-                }, 500);
+                loaderGlobal.classList.add('hidden'); 
             }
             var wrap = document.getElementById('master-feed-wrapper');
             if(wrap) wrap.classList.remove('hidden');
         }
 
-        // NOVO: Lê o URL bonito se alguém o partilhar ou enviar pelo WhatsApp
         function tratarRotasIniciais(forcarUpdate) {
             var pathname = window.location.pathname;
             var p = new URLSearchParams(window.location.search);
@@ -544,7 +532,6 @@
             if (p.get('noticia')) {
                 abrirNoticia(p.get('noticia'), false);
             } else if (pathParts.length >= 3) {
-                // Link formato: /esportes/titulo-da-materia/id
                 var possibleId = pathParts[pathParts.length - 1];
                 abrirNoticia(possibleId, false);
             } else if (pathParts.length === 2 && pathParts[0] === 'editoria') {
@@ -621,10 +608,12 @@
             if (d.config) configuracoesGlobais = d.config;
             var headerBranding = document.getElementById('header-branding');
             var footerBranding = document.getElementById('footer-branding');
+            var loadingLogo = document.getElementById('loading-logo-container');
             
             if (configuracoesGlobais['LogoHTML']) {
                 headerBranding.innerHTML = configuracoesGlobais['LogoHTML'];
                 footerBranding.innerHTML = configuracoesGlobais['LogoHTML'];
+                if(loadingLogo) loadingLogo.innerHTML = configuracoesGlobais['LogoHTML'];
             }
             
             if (configuracoesGlobais['ExpedienteHTML']) {
@@ -769,7 +758,7 @@
                 
                 agenda.forEach(function(n) {
                     htmlAg += '        <div class="w-full shrink-0 flex-none relative h-full cursor-pointer" onclick="abrirNoticia(\'' + n.id + '\', true)">\n';
-                    htmlAg += '            <img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute inset-0 w-full h-full object-cover bg-gray-900" onerror="this.src=\'' + IMG_FALLBACK + '\'" />\n';
+                    htmlAg += '            <img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute inset-0 w-full h-full object-contain bg-gray-100" onerror="this.src=\'' + IMG_FALLBACK + '\'" />\n';
                     htmlAg += '            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>\n';
                     htmlAg += '            <div class="absolute bottom-0 left-0 p-4 w-full text-white min-w-0 z-10">\n';
                     
@@ -796,7 +785,6 @@
                 htmlAg += '</div>\n';
                 contAg.innerHTML = htmlAg;
 
-                // ROTAÇÃO AUTOMÁTICA DA AGENDA (4 segundos)
                 if(!window.agendaTimers) window.agendaTimers = {};
                 if(window.agendaTimers[carouselId]) clearInterval(window.agendaTimers[carouselId]);
                 window.agendaTimers[carouselId] = setInterval(function() {
@@ -816,8 +804,8 @@
                 
                 var htmlCa = '';
                 htmlCa += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col bg-white border border-gray-100 shadow-sm rounded-sm overflow-hidden hover:shadow-md transition-shadow">\n';
-                htmlCa += '    <div class="w-full aspect-video bg-gray-200 overflow-hidden relative">\n';
-                htmlCa += '        <img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src=\'' + IMG_FALLBACK + '\'" />\n';
+                htmlCa += '    <div class="w-full aspect-video bg-gray-100 overflow-hidden relative">\n';
+                htmlCa += '        <img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.src=\'' + IMG_FALLBACK + '\'" />\n';
                 htmlCa += '    </div>\n';
                 htmlCa += '    <div class="p-3">\n';
                 htmlCa += '        <h4 class="font-serif font-black text-sm text-jornal-dark leading-tight group-hover:text-jornal-blue line-clamp-3 mb-1">' + n.titulo + '</h4>\n';
@@ -838,8 +826,8 @@
                 
                 var htmlVa = '';
                 htmlVa += '<article onclick="abrirNoticia(\'' + v.id + '\', true)" class="group cursor-pointer flex flex-col bg-white border border-gray-100 shadow-sm rounded-sm overflow-hidden hover:shadow-md transition-shadow">\n';
-                htmlVa += '    <div class="w-full aspect-video bg-gray-200 overflow-hidden relative">\n';
-                htmlVa += '        <img src="' + (v.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src=\'' + IMG_FALLBACK + '\'" />\n';
+                htmlVa += '    <div class="w-full aspect-video bg-gray-100 overflow-hidden relative">\n';
+                htmlVa += '        <img src="' + (v.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.src=\'' + IMG_FALLBACK + '\'" />\n';
                 htmlVa += '    </div>\n';
                 htmlVa += '    <div class="p-3">\n';
                 htmlVa += '        <h4 class="font-serif font-black text-sm text-jornal-dark leading-tight group-hover:text-jornal-blue line-clamp-3 mb-1">' + v.titulo + '</h4>\n';
@@ -936,8 +924,8 @@
             html += '            <span class="text-xs font-bold text-gray-700 truncate w-full">' + (d.autor || 'Editorial') + '</span>\n';
             html += '        </div>\n';
             html += '    </div>\n';
-            html += '    <div class="w-full aspect-video mb-4 overflow-hidden rounded-sm bg-gray-200 shrink-0 relative">\n';
-            html += '        <img src="' + (d.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
+            html += '    <div class="w-full aspect-video mb-4 overflow-hidden rounded-sm bg-gray-100 shrink-0 relative">\n';
+            html += '        <img src="' + (d.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
             if (d.creditosImagem) {
                 html += '        <div class="absolute bottom-0 right-0 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded-tl">Foto: ' + d.creditosImagem + '</div>\n';
             }
@@ -951,8 +939,8 @@
                 html += '<div class="flex flex-col gap-3 mt-2">\n';
                 for(var i=1; i<Math.min(op.length, 4); i++) {
                     html += '    <article onclick="abrirNoticia(\'' + op[i].id + '\', true)" class="group cursor-pointer border-t border-gray-100 pt-3 flex gap-4 items-center hover:bg-gray-50 p-2 -mx-2 rounded transition-colors">\n';
-                    html += '        <div class="w-14 h-14 rounded bg-gray-200 shrink-0 overflow-hidden relative">\n';
-                    html += '            <img src="' + (op[i].urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
+                    html += '        <div class="w-14 h-14 rounded bg-gray-100 shrink-0 overflow-hidden relative">\n';
+                    html += '            <img src="' + (op[i].urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
                     html += '        </div>\n';
                     html += '        <div class="flex-grow min-w-0 flex flex-col justify-center">\n';
                     html += '            <h4 class="font-bold text-xs text-gray-800 leading-tight group-hover:text-jornal-red line-clamp-2 mb-1.5">' + op[i].titulo + '</h4>\n';
@@ -1028,7 +1016,6 @@
             fecharNoticiaUI();
         }
 
-        // CIDADES PERFEITAS: Pesquisa cidade e coloca a primeira como Hero
         function aplicarFiltroCidade() {
             var inputFiltro = document.getElementById('input-cidade-filtro');
             if(!inputFiltro) return;
@@ -1202,7 +1189,7 @@
             var cHTML = '';
             cHTML += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 p-0 flex flex-col h-full hover:shadow-md transition-shadow rounded-sm w-full overflow-hidden min-w-0">\n';
             cHTML += '    <div class="relative w-full aspect-video bg-gray-100 border-b border-gray-200 shrink-0 overflow-hidden">\n';
-            cHTML += '        <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
+            cHTML += '        <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain group-hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
             cHTML += '    </div>\n';
             
             if (n.creditosImagem) {
@@ -1248,7 +1235,7 @@
             var cHTML = '';
             cHTML += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 flex flex-col md:flex-row h-full overflow-hidden hover:shadow-md transition-shadow rounded-sm w-full">\n';
             cHTML += '    <div class="md:w-[55%] w-full bg-gray-100 min-h-[350px] shrink-0 overflow-hidden relative">\n';
-            cHTML += '        <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700 min-h-[350px]" />\n';
+            cHTML += '        <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition duration-700 min-h-[350px]" />\n';
             
             if (n.creditosImagem) {
                 cHTML += '        <div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 rounded-tl">\n';
@@ -1335,8 +1322,8 @@
                     
                     nCat.forEach(function(n) {
                         htmlFinal += '        <article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col h-full border border-gray-100 shadow-sm bg-white rounded-sm overflow-hidden min-w-0 hover:shadow-md transition-shadow">\n';
-                        htmlFinal += '            <div class="relative w-full aspect-video bg-gray-200 shrink-0 overflow-hidden">\n';
-                        htmlFinal += '                <img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover bg-gray-900 transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
+                        htmlFinal += '            <div class="relative w-full aspect-video bg-gray-100 shrink-0 overflow-hidden">\n';
+                        htmlFinal += '                <img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
                         htmlFinal += '            </div>\n';
                         htmlFinal += '            <div class="p-4 flex flex-col flex-grow min-w-0 bg-white relative z-10">\n';
                         htmlFinal += '                <h4 class="font-serif font-black text-sm leading-snug text-jornal-dark group-hover:text-jornal-red line-clamp-3 mb-3">' + n.titulo + '</h4>\n';
@@ -1370,7 +1357,7 @@
                 
                 var h = '';
                 h += '<div class="absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out cursor-pointer group carrossel-slide" style="opacity: 0; z-index: 0;" onclick="abrirNoticia(\'' + n.id + '\', true)">\n';
-                h += '    <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover bg-gray-900 opacity-90" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'"/>\n';
+                h += '    <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-100 opacity-90" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'"/>\n';
                 h += '    ' + credHtml + '\n';
                 h += '    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>\n';
                 h += '    <div class="absolute bottom-0 left-0 p-8 md:p-14 w-full text-white min-w-0 z-10">\n';
@@ -1633,7 +1620,6 @@
             }
         }
 
-        // NOVO: Adiciona Meta Tags OG ao HEAD dinamicamente (Ajuda leitores como Facebook e Telegram)
         function atualizarMetaTags(noticia) {
             document.title = noticia.titulo + " - Notícias Avulsas";
             
@@ -1681,7 +1667,6 @@
             
             noticiaAbertaId = noticia.id; 
             
-            // ATUALIZAR ROTA NO NAVEGADOR
             if (updateUrl) atualizarURL('noticia', null, noticia);
             
             document.getElementById('home-feed-container').classList.add('hidden'); 
@@ -1692,7 +1677,6 @@
             document.getElementById('nc-categoria').innerText = noticia.categoria; 
             document.getElementById('nc-titulo').innerText = noticia.titulo;
             
-            // NOVO: Exibir Linha Fina
             var ncLinhaFina = document.getElementById('nc-linha-fina');
             if (noticia.linhaFina && noticia.linhaFina.trim() !== '') {
                 ncLinhaFina.innerText = noticia.linhaFina;
@@ -1911,7 +1895,6 @@
             }
         }
 
-        // NOVO: Link de partilha formatado para ficar bonito no WhatsApp
         function shareLink(plataforma) {
             if(!noticiaAbertaId) return; 
             
