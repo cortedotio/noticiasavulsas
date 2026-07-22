@@ -15,6 +15,9 @@
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
     
     <script>
+        // ================================================================
+        // CONEXÃO INTELIGENTE (Deteta se está no Google ou GitHub)
+        // ================================================================
         if (typeof google === 'undefined' || typeof google.script === 'undefined') {
             const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzZ3tg6RONdf9KODrdz25LYGjEGF6m1DTdM9_NUBnVrm6WGGp6k8rapdg-wDu049Tee/exec";
             window.google = {
@@ -38,12 +41,13 @@
             });
         }
 
+        // Tratamento de Erros Visuais
         window.onerror = function(message, source, lineno, colno, error) {
             console.error("Erro Global JS:", message, "na linha", lineno);
             setTimeout(function() {
                 var debugBox = document.getElementById('debug-error-box');
                 if (debugBox) {
-                    debugBox.innerHTML = "Erro de JavaScript detetado: " + message + " (Linha " + lineno + ")";
+                    debugBox.innerHTML = "Aviso: " + message + " (Linha " + lineno + ")";
                     debugBox.classList.remove('hidden');
                 }
             }, 500);
@@ -64,8 +68,6 @@
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-        .spinner { border: 2px solid rgba(255,255,255,.3); border-left-color: #fff; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
-        @keyframes spin { to { transform: rotate(360deg); } }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
@@ -96,7 +98,7 @@
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
-    <!-- TELA DE CARREGAMENTO BRANCA E LIMPA COM O GRADIENTE -->
+    <!-- TELA DE CARREGAMENTO BRANCA E LIMPA -->
     <div id="loading-noticias" class="fixed inset-0 z-[100000] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
         <div id="loading-logo-container" class="mb-6">
              <h1 id="loading-logo-text" class="text-4xl md:text-5xl font-black tracking-tighter uppercase bg-gradient-to-r from-blue-500 to-emerald-400 bg-clip-text text-transparent">
@@ -155,7 +157,7 @@
             </form>
         </header>
 
-        <!-- MENU DE NAVEGAÇÃO COM O LOGÓTIPO STICKY CORRIGIDO -->
+        <!-- MENU DE NAVEGAÇÃO -->
         <nav class="border-y border-gray-200 border-b-4 border-b-jornal-blue sticky top-0 md:top-8 z-40 bg-white/95 backdrop-blur-sm w-full shadow-sm min-w-0" id="nav-categorias-publicas">
             <div id="nav-container-inner" class="max-w-[1200px] mx-auto px-4 flex items-center overflow-x-auto whitespace-nowrap text-[11px] md:text-sm font-black uppercase tracking-widest text-jornal-dark py-3 md:py-4 custom-scrollbar min-w-0">
                 
@@ -214,6 +216,7 @@
                         <span id="nc-categoria" class="text-jornal-red text-[11px] font-black uppercase tracking-widest mb-4 block cursor-pointer hover:underline" onclick="filtrarCategoria(this.innerText)"></span>
                         <h1 id="nc-titulo" class="font-serif text-3xl md:text-5xl font-black mb-5 leading-tight text-jornal-dark break-words tracking-tight"></h1>
                         
+                        <!-- Linha Fina Melhorada (Abaixo do Título) -->
                         <h2 id="nc-linha-fina" class="font-sans text-base md:text-xl text-gray-500 mb-8 leading-relaxed font-medium hidden break-words italic"></h2>
                         
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-5 mb-8 gap-4">
@@ -240,7 +243,7 @@
                             </button>
                         </div>
 
-                        <!-- IMAGEM DA MATÉRIA -->
+                        <!-- IMAGEM DA MATÉRIA (Object-contain para não cortar) -->
                         <div id="nc-imagem-container" class="mb-10 bg-gray-50 border border-gray-200 rounded-sm overflow-hidden shadow-sm">
                             <img id="nc-imagem" loading="lazy" src="" class="w-full h-auto max-h-[600px] object-contain shrink-0" onerror="this.onerror=null; this.src='https://placehold.co/800x400/e2e8f0/475569?text=Imagem+Indisponível'" />
                             <div id="nc-imagem-meta" class="p-3 text-[11px] text-gray-500 italic flex justify-between bg-white border-t border-gray-200 min-w-0">
@@ -282,6 +285,18 @@
                 
                 <aside class="lg:w-[28%] w-full shrink-0 min-w-0">
                     
+                    <!-- Bloco de Placar Ao Vivo -->
+                    <div class="mb-10 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
+                        <div class="flex items-center justify-between mb-5 border-b border-gray-100 pb-3">
+                            <h2 class="text-[11px] font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Placar Ao Vivo
+                            </h2>
+                        </div>
+                        <div id="widget-placar" class="space-y-4 min-w-0">
+                            <div class="text-center text-xs font-bold text-gray-500">A carregar resultados...</div>
+                        </div>
+                    </div>
+
                     <div id="sidebar-editorias-especiais" class="hidden mb-10 bg-white border border-gray-200 p-6 shadow-sm rounded-sm">
                         <div class="border-b-4 border-jornal-dark pb-3 mb-6">
                             <h2 class="text-xs font-black uppercase tracking-widest text-jornal-dark">Em Foco</h2>
@@ -310,17 +325,7 @@
                         <div id="conteudo-opinioes" class="flex flex-col gap-5"></div>
                     </div>
 
-                    <div class="mb-10 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
-                        <div class="flex items-center justify-between mb-5 border-b border-gray-100 pb-3">
-                            <h2 class="text-[11px] font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Placar Ao Vivo
-                            </h2>
-                        </div>
-                        <div id="widget-placar" class="space-y-4 min-w-0">
-                            <div class="text-center text-xs font-bold text-gray-500">A carregar resultados...</div>
-                        </div>
-                    </div>
-
+                    <!-- WIDGET CLIMA CLICÁVEL -->
                     <div class="mb-10 bg-white border border-gray-200 p-6 shadow-sm rounded-sm cursor-pointer hover:opacity-95 transition-opacity" onclick="abrirModalClima()">
                         <div class="border-b-4 border-sky-400 pb-3 mb-5 flex justify-between items-center">
                             <h2 class="text-xs font-black uppercase tracking-widest text-sky-500">Clima Local</h2>
@@ -336,11 +341,14 @@
                         </div>
                     </div>
 
+                    <!-- WIDGET TOP 10 -->
                     <div class="mb-10 bg-white border border-gray-200 p-6 shadow-sm rounded-sm">
                         <div class="border-b-4 border-jornal-blue pb-3 mb-5">
                             <h2 class="text-xs font-black uppercase tracking-widest text-jornal-blue">Top 10 Mais Lidas</h2>
                         </div>
-                        <ul id="lista-mais-lidas" class="space-y-4 divide-y divide-gray-100 min-w-0"></ul>
+                        <ul id="lista-mais-lidas" class="space-y-4 divide-y divide-gray-100 min-w-0">
+                            <!-- JS fills this safely -->
+                        </ul>
                     </div>
 
                     <div class="border-t-4 border-jornal-red w-full pt-5 mb-6">
@@ -435,7 +443,9 @@
             } catch(e) { return url; }
         }
 
+        // SEGURANÇA: Verificação exata da data de publicação para não esconder matérias antigas
         function isNoticiaPublicada(n) {
+            if (!n || !n.status) return false;
             if (String(n.status).toLowerCase() !== 'ativa') return false;
             if (n.dataHora) {
                 var pts = n.dataHora.split(/[\/\s:]/);
@@ -480,7 +490,7 @@
                 
                 window.history.pushState({ path: baseUrl + pathNovo }, '', baseUrl + pathNovo);
             } catch(e) {
-                console.warn("Navegação de URL local bloqueada por segurança.");
+                console.warn("Navegação local bloqueada.");
             }
         }
 
@@ -494,10 +504,11 @@
         var carrosselTimer = null;
         var carrosselAdsTimers = {};
         var dadosClimaGlobal = null;
-        var agendaCarousels = [];
+        window.agendaCarousels = [];
         window.agendaTimers = {};
 
         document.addEventListener("DOMContentLoaded", function() {
+            // Failsafe rigoroso do Loading
             setTimeout(function() {
                 var loaderGlobal = document.getElementById('loading-noticias');
                 if (loaderGlobal && !loaderGlobal.classList.contains('hidden')) {
@@ -505,7 +516,7 @@
                     var wrap = document.getElementById('master-feed-wrapper');
                     if(wrap) wrap.classList.remove('hidden');
                 }
-            }, 5000); 
+            }, 10000); 
             carregarNoticias(false);
             
             window.addEventListener('scroll', function() {
@@ -688,15 +699,17 @@
                             navLinks.innerHTML += '<a href="javascript:void(0)" onclick="filtrarCategoria(\'' + c + '\', true)" class="hover:text-jornal-red transition-colors border-b-2 border-transparent hover:border-jornal-red whitespace-nowrap px-1 py-1">' + c + '</a>'; 
                         }
                     });
-                    if(!esconderBlocoFoco) {
-                        document.getElementById('sidebar-editorias-especiais').classList.remove('hidden');
+                    var sblocoFoco = document.getElementById('sidebar-editorias-especiais');
+                    if(sblocoFoco) {
+                        if(!esconderBlocoFoco) sblocoFoco.classList.remove('hidden');
+                        else sblocoFoco.classList.add('hidden');
                     }
                 }
             }
 
             if (d.noticias && Array.isArray(d.noticias)) {
                 noticiasGlobais = d.noticias.map(function(n) { 
-                    n.urlImagem = formatarUrlImagem(n.urlImagem); 
+                    if(n) n.urlImagem = formatarUrlImagem(n.urlImagem); 
                     return n; 
                 });
             }
@@ -708,6 +721,7 @@
                 var adsTopo = []; 
                 var adsLateral = [];
                 d.propagandas.forEach(function(p) {
+                    if(!p) return;
                     var partes = String(p.empresa || '').split('|||');
                     p.empresaReal = partes[0]; 
                     p.tempo = parseInt(partes[1]) || 5;
@@ -717,22 +731,26 @@
                         adsLateral.push(p); 
                     }
                 });
-                iniciarCarrosselAnuncios('ads-topo-container', adsTopo);
-                iniciarCarrosselAnuncios('grid-propagandas-lateral', adsLateral);
+                try { iniciarCarrosselAnuncios('ads-topo-container', adsTopo); } catch(e){}
+                try { iniciarCarrosselAnuncios('grid-propagandas-lateral', adsLateral); } catch(e){}
             }
             
-            renderizarOpinioes(); 
-            renderizarEmFocoSidebar(); 
-            renderizarMaisLidas(); 
-            renderizarClimaEFinanceiro(); 
-            renderizarPlacarAoVivo();
+            // BLINDAGEM MÁXIMA DE COMPONENTES: Impede Efeito Dominó!
+            try { renderizarOpinioes(); } catch(e) { console.error("Erro Opinioes:", e); }
+            try { renderizarAgendaSidebar(); } catch(e) { console.error("Erro Agenda:", e); }
+            try { renderizarMaisLidas(); } catch(e) { console.error("Erro Mais Lidas:", e); }
+            try { renderizarClimaEFinanceiro(); } catch(e) { console.error("Erro Clima:", e); }
+            try { renderizarPlacarAoVivo(); } catch(e) { console.error("Erro Placar:", e); }
         }
 
-        function renderizarEmFocoSidebar() {
-            var agora = new Date();
-            var publicadas = noticiasGlobais.filter(isNoticiaPublicada);
+        function renderizarAgendaSidebar() {
+            var sidebar = document.getElementById('sidebar-editorias-especiais');
+            var container = document.getElementById('lista-editorias-especiais');
+            if(!sidebar || !container) return;
             
-            var agenda = publicadas.filter(function(n) { 
+            var agora = new Date();
+            var agenda = noticiasGlobais.filter(function(n) { 
+                if(!isNoticiaPublicada(n)) return false;
                 var isAg = String(n.categoria).toLowerCase().indexOf('agenda') !== -1;
                 if(isAg && n.dataFimEvento && n.dataFimEvento.trim() !== '') {
                     try { 
@@ -749,7 +767,9 @@
             if (agenda.length > 0 && blocoAg && contAg) {
                 blocoAg.classList.remove('hidden');
                 var carouselId = 'agenda-sidebar-carousel';
-                window.agendaCarousels.push({id: carouselId, index: 0, length: agenda.length});
+                
+                var oldCarousel = window.agendaCarousels.find(function(c){ return c.id === carouselId; });
+                if(!oldCarousel) window.agendaCarousels.push({id: carouselId, index: 0, length: agenda.length});
                 
                 var htmlAg = '';
                 htmlAg += '<div class="relative overflow-hidden w-full bg-gray-100 rounded-sm group aspect-[4/3] shadow-inner" id="' + carouselId + '">\n';
@@ -794,13 +814,13 @@
                 blocoAg.classList.add('hidden'); 
             }
 
-            var carreiras = publicadas.filter(function(n) { return String(n.categoria).toLowerCase().indexOf('carreira') !== -1; });
+            // CARREIRAS
+            var carreiras = noticiasGlobais.filter(function(n) { return isNoticiaPublicada(n) && String(n.categoria).toLowerCase().indexOf('carreira') !== -1; });
             var blocoCa = document.getElementById('bloco-carreiras');
             var contCa = document.getElementById('conteudo-carreiras');
             if(carreiras.length > 0 && blocoCa && contCa) {
                 blocoCa.classList.remove('hidden');
                 var n = carreiras[0];
-                
                 var htmlCa = '';
                 htmlCa += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col bg-white border border-gray-100 shadow-sm rounded-sm overflow-hidden hover:shadow-md transition-shadow">\n';
                 htmlCa += '    <div class="w-full aspect-video bg-gray-100 overflow-hidden relative">\n';
@@ -810,19 +830,18 @@
                 htmlCa += '        <h4 class="font-serif font-black text-sm text-jornal-dark leading-tight group-hover:text-jornal-blue line-clamp-3 mb-1">' + n.titulo + '</h4>\n';
                 htmlCa += '    </div>\n';
                 htmlCa += '</article>\n';
-                
                 contCa.innerHTML = htmlCa;
             } else if(blocoCa) { 
                 blocoCa.classList.add('hidden'); 
             }
 
-            var variedades = publicadas.filter(function(n) { return String(n.categoria).toLowerCase().indexOf('variedade') !== -1; });
+            // VARIEDADES
+            var variedades = noticiasGlobais.filter(function(n) { return isNoticiaPublicada(n) && String(n.categoria).toLowerCase().indexOf('variedade') !== -1; });
             var blocoVa = document.getElementById('bloco-variedades');
             var contVa = document.getElementById('conteudo-variedades');
             if(variedades.length > 0 && blocoVa && contVa) {
                 blocoVa.classList.remove('hidden');
                 var v = variedades[0];
-                
                 var htmlVa = '';
                 htmlVa += '<article onclick="abrirNoticia(\'' + v.id + '\', true)" class="group cursor-pointer flex flex-col bg-white border border-gray-100 shadow-sm rounded-sm overflow-hidden hover:shadow-md transition-shadow">\n';
                 htmlVa += '    <div class="w-full aspect-video bg-gray-100 overflow-hidden relative">\n';
@@ -832,7 +851,6 @@
                 htmlVa += '        <h4 class="font-serif font-black text-sm text-jornal-dark leading-tight group-hover:text-jornal-blue line-clamp-3 mb-1">' + v.titulo + '</h4>\n';
                 htmlVa += '    </div>\n';
                 htmlVa += '</article>\n';
-                
                 contVa.innerHTML = htmlVa;
             } else if(blocoVa) { 
                 blocoVa.classList.add('hidden'); 
@@ -904,8 +922,8 @@
                 return isNoticiaPublicada(n) && String(n.categoria).toLowerCase().indexOf('opini') !== -1; 
             });
             
-            if (op.length === 0 && c) { 
-                c.classList.add('hidden'); 
+            if (op.length === 0) { 
+                if(c) c.classList.add('hidden'); 
                 return; 
             }
             if(c) c.classList.remove('hidden');
@@ -951,6 +969,229 @@
             }
             c_in.innerHTML = html;
         }
+
+        // ===============================================
+        // MÓDULOS DE RENDERIZAÇÃO BLINDADOS (Top 10, Clima, Placar)
+        // ===============================================
+
+        function renderizarMaisLidas() {
+            var lista = document.getElementById('lista-mais-lidas'); 
+            if (!lista) return;
+            
+            // Garantir que trabalhamos apenas com matérias válidas publicadas
+            var publicadas = noticiasGlobais.filter(function(n){ return isNoticiaPublicada(n); });
+            
+            // Ordenar de forma decrescente pelo número de Views
+            publicadas.sort(function(a, b) {
+                var vA = parseInt(a.views) || 0;
+                var vB = parseInt(b.views) || 0;
+                return vB - vA;
+            });
+            
+            var top10 = publicadas.slice(0, 10);
+            var htmlFinal = '';
+            
+            if(top10.length === 0) {
+                lista.innerHTML = '<li class="text-xs text-gray-400 py-3 font-bold uppercase tracking-widest">Nenhuma matéria publicada.</li>';
+                return;
+            }
+            
+            top10.forEach(function(n, idx) {
+                if(!n) return;
+                htmlFinal += '<li class="flex gap-3 items-center group cursor-pointer py-3" onclick="abrirNoticia(\'' + n.id + '\', true)">\n';
+                htmlFinal += '    <div class="w-8 h-8 rounded-full bg-jornal-blue text-white flex items-center justify-center font-black text-xs shrink-0">' + (idx+1) + '</div>\n';
+                htmlFinal += '    <div class="flex-grow w-full overflow-hidden min-w-0"><h4 class="text-xs font-bold text-jornal-dark leading-tight group-hover:text-jornal-blue line-clamp-2 break-words">' + (n.titulo || 'Sem Título') + '</h4></div>\n';
+                htmlFinal += '</li>\n';
+            });
+            lista.innerHTML = htmlFinal;
+        }
+
+        function renderizarClimaEFinanceiro() {
+            var tick = document.getElementById('ticker-content'); 
+            var usd = '--'; var eur = '--'; var btc = '--'; 
+            var clima = '--'; var iconeClima = '☀️'; var descClima = 'A Atualizar...';
+            
+            function atualizarDOM() {
+                var stringTicker = '';
+                stringTicker += '<span class="text-amber-300 font-extrabold mr-2">💵 DÓLAR:</span> R$ ' + usd + ' | ';
+                stringTicker += '<span class="text-blue-300 font-extrabold mr-2">💶 EURO:</span> R$ ' + eur + ' | ';
+                stringTicker += '<span class="text-orange-400 font-extrabold mr-2">₿ BITCOIN:</span> R$ ' + btc + ' | ';
+                stringTicker += '<span class="text-sky-300 font-extrabold mr-2">☀️ CUIABÁ:</span> ' + clima + '°C | ';
+                
+                var recentes = noticiasGlobais.filter(function(n){ return isNoticiaPublicada(n); }).slice(0, 5); 
+                recentes.forEach(function(n) { 
+                    if(n) stringTicker += '<span class="mx-3 hover:text-red-200 cursor-pointer text-white underline" onclick="abrirNoticia(\'' + n.id + '\', true)">' + (n.titulo || '') + '</span> &bull; '; 
+                });
+                
+                if(tick) tick.innerHTML = stringTicker.toUpperCase();
+            }
+
+            try {
+                fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL')
+                .then(function(res) { return res.json(); })
+                .then(function(dadosC) {
+                    if(dadosC.USDBRL) { 
+                        usd = parseFloat(dadosC.USDBRL.ask).toFixed(2); 
+                        eur = parseFloat(dadosC.EURBRL.ask).toFixed(2); 
+                        btc = parseFloat(dadosC.BTCBRL.ask).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); 
+                    }
+                    atualizarDOM();
+                }).catch(function(e){ atualizarDOM(); });
+            } catch(e) { atualizarDOM(); }
+
+            try {
+                fetch('https://api.open-meteo.com/v1/forecast?latitude=-15.5961&longitude=-56.0967&current_weather=true&hourly=relativehumidity_2m,precipitation_probability,windspeed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=America/Cuiaba')
+                .then(function(res) { return res.json(); })
+                .then(function(dadosClima) {
+                    dadosClimaGlobal = dadosClima;
+                    if(dadosClima.current_weather) {
+                        clima = Math.round(dadosClima.current_weather.temperature); 
+                        var wCode = dadosClima.current_weather.weathercode;
+                        if (wCode <= 3) { iconeClima = '☀️'; descClima = 'Céu Limpo'; } else if (wCode <= 48) { iconeClima = '⛅'; descClima = 'Nublado'; } else if (wCode <= 67) { iconeClima = '🌧️'; descClima = 'Chuva'; } else if (wCode <= 99) { iconeClima = '⛈️'; descClima = 'Tempestade'; }
+                        
+                        var elTemp = document.getElementById('temp-clima'); 
+                        var elIcone = document.getElementById('icone-clima'); 
+                        var elBgIcone = document.getElementById('bg-icone-clima'); 
+                        var elDesc = document.getElementById('desc-clima');
+                        
+                        if (elTemp) elTemp.innerText = clima + '°C'; 
+                        if (elIcone) elIcone.innerText = iconeClima; 
+                        if (elBgIcone) elBgIcone.innerText = iconeClima; 
+                        if (elDesc) elDesc.innerText = descClima;
+                        
+                        var mChuva = document.getElementById('modal-clima-chuva'); 
+                        var mUmid = document.getElementById('modal-clima-umidade'); 
+                        var mVento = document.getElementById('modal-clima-vento'); 
+                        var mDesc = document.getElementById('modal-clima-desc'); 
+                        var mTemp = document.getElementById('modal-clima-temp'); 
+                        var mIcone = document.getElementById('modal-clima-icone');
+                        
+                        if(mDesc) mDesc.innerText = descClima; 
+                        if(mTemp) mTemp.innerText = clima; 
+                        if(mIcone) mIcone.innerText = iconeClima;
+                        
+                        if(dadosClima.hourly && dadosClima.hourly.precipitation_probability) {
+                            if(mChuva) mChuva.innerText = dadosClima.hourly.precipitation_probability[0] + '%';
+                            if(mUmid) mUmid.innerText = dadosClima.hourly.relativehumidity_2m[0] + '%';
+                            if(mVento) mVento.innerText = Math.round(dadosClima.hourly.windspeed_10m[0]) + ' km/h';
+                        }
+                    }
+                    atualizarDOM();
+                }).catch(function(e){ console.warn("Aviso Clima:", e); atualizarDOM(); });
+            } catch(e) { atualizarDOM(); }
+        }
+
+        function renderizarPlacarAoVivo() {
+            var placar = document.getElementById('widget-placar'); 
+            if(!placar) return;
+            
+            var ligasAtivas = ['soccer/bra.1']; 
+            if (configuracoesGlobais['LigasPlacar']) { 
+                try { ligasAtivas = JSON.parse(configuracoesGlobais['LigasPlacar']); } catch(e){} 
+            }
+            
+            placar.innerHTML = '<div class="text-center text-xs text-gray-400 py-4 font-bold uppercase tracking-widest">A procurar jogos...</div>';
+            var htmlFinal = ''; 
+            var fetchesConcluidos = 0;
+
+            if(ligasAtivas.length === 0) { 
+                placar.innerHTML = '<div class="text-center text-xs text-gray-400 py-4 font-bold uppercase tracking-widest">Nenhum campeonato ativo.</div>'; 
+                return; 
+            }
+
+            ligasAtivas.forEach(function(liga) {
+                fetch('https://site.api.espn.com/apis/site/v2/sports/' + liga + '/scoreboard?lang=pt&region=br')
+                .then(function(res) { return res.ok ? res.json() : null; })
+                .then(function(data) {
+                    if (data && data.events && data.events.length > 0) {
+                        var nomeCompeticao = traduzirTermoPlacar(data.leagues && data.leagues[0] ? data.leagues[0].name : 'Competição');
+                        var matchesHtml = ''; 
+                        var exibidos = 0;
+                        
+                        // Remoção do filtro estrito de "hoje" para garantir que o widget nunca fica vazio.
+                        // O sistema passa a mostrar as 4 partidas mais relevantes devolvidas pela ESPN (Prioriza as Live ou as da ronda atual).
+                        data.events.forEach(function(jogo) {
+                            if (!jogo.date) return;
+                            if (exibidos >= 4) return;
+                            
+                            var matchInfo = jogo.competitions[0];
+                            var casa = matchInfo.competitors.find(function(c) { return c.homeAway === 'home'; }) || matchInfo.competitors[0];
+                            var fora = matchInfo.competitors.find(function(c) { return c.homeAway === 'away'; }) || matchInfo.competitors[1];
+                            
+                            var logoCasa = casa.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽'; 
+                            var logoFora = fora.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽';
+                            var isAoVivo = jogo.status.type.state === 'in'; 
+                            var isEncerrado = jogo.status.type.state === 'post'; 
+                            var isAgendado = jogo.status.type.state === 'pre';
+                            
+                            var corEstado = 'text-gray-400'; 
+                            var bordaEstado = 'border-gray-200'; 
+                            var bgPlacar = 'bg-jornal-dark text-white';
+
+                            if (isAoVivo) { 
+                                corEstado = 'text-red-600 animate-pulse'; 
+                                bordaEstado = 'border-red-200 bg-red-50/10'; 
+                                bgPlacar = 'bg-jornal-red text-white'; 
+                            } 
+                            else if (isAgendado) { 
+                                corEstado = 'text-emerald-600'; 
+                            }
+                            
+                            var infoEstadoTexto = traduzirTermoPlacar(jogo.status.type.shortDetail);
+                            if (isAoVivo) { 
+                                infoEstadoTexto = 'AO VIVO'; 
+                            } 
+                            else if (isAgendado) { 
+                                var dtJ = new Date(jogo.date);
+                                var dia = String(dtJ.getDate()).padStart(2, '0');
+                                var mes = String(dtJ.getMonth() + 1).padStart(2, '0');
+                                var hrs = String(dtJ.getHours()).padStart(2, '0');
+                                var mns = String(dtJ.getMinutes()).padStart(2, '0');
+                                infoEstadoTexto = dia + '/' + mes + ' ÀS ' + hrs + ':' + mns;
+                            } 
+                            else if (isEncerrado) { 
+                                infoEstadoTexto = 'ENCERRADO'; 
+                            }
+                            
+                            var h = '<div class="bg-white border ' + bordaEstado + ' rounded-sm p-4 mb-3 shadow-sm hover:shadow-md transition-shadow">\n';
+                            h += '    <div class="flex items-center justify-between w-full">\n';
+                            h += '        <div class="flex items-center justify-start gap-2 w-[35%] min-w-0">\n';
+                            h += '            <img src="' + logoCasa + '" class="w-6 h-6 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'">\n';
+                            h += '            <span class="font-bold text-gray-800 text-[11px] text-left truncate w-full" title="' + traduzirTermoPlacar(casa.team.name) + '">' + traduzirTermoPlacar(casa.team.name) + '</span>\n';
+                            h += '        </div>\n';
+                            h += '        <div class="flex flex-col items-center justify-center w-[25%] shrink-0">\n';
+                            h += '            <span class="' + bgPlacar + ' font-black text-sm px-3 py-1 rounded-sm tracking-widest mb-1.5 shadow-inner">' + (casa.score || '0') + ' - ' + (fora.score || '0') + '</span>\n';
+                            h += '            <span class="text-[9px] uppercase tracking-widest font-black ' + corEstado + ' text-center whitespace-nowrap">' + infoEstadoTexto + '</span>\n';
+                            h += '        </div>\n';
+                            h += '        <div class="flex items-center justify-end gap-2 w-[35%] min-w-0">\n';
+                            h += '            <span class="font-bold text-gray-800 text-[11px] text-right truncate w-full" title="' + traduzirTermoPlacar(fora.team.name) + '">' + traduzirTermoPlacar(fora.team.name) + '</span>\n';
+                            h += '            <img src="' + logoFora + '" class="w-6 h-6 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'">\n';
+                            h += '        </div>\n';
+                            h += '    </div>\n';
+                            h += '</div>\n';
+                            
+                            matchesHtml += h; 
+                            exibidos++;
+                        });
+
+                        if (matchesHtml) { 
+                            htmlFinal += '<h5 class="text-[10px] uppercase font-black tracking-widest text-gray-400 mt-5 mb-3 border-b border-gray-100 pb-2">' + nomeCompeticao + '</h5>\n' + matchesHtml; 
+                        }
+                    }
+                })
+                .catch(function(e){ console.warn("Aviso Placar:", e); })
+                .finally(function() {
+                    fetchesConcluidos++;
+                    if(fetchesConcluidos === ligasAtivas.length) {
+                        placar.innerHTML = htmlFinal || '<div class="text-center text-xs text-gray-400 py-4 font-bold uppercase tracking-widest">Sem jogos no momento.</div>';
+                    }
+                });
+            });
+        }
+
+        // ===============================================
+        // FIM MÓDULOS DE RENDERIZAÇÃO BLINDADOS
+        // ===============================================
 
         function pesquisarSite(e) {
             if(e) e.preventDefault();
@@ -1116,7 +1357,6 @@
             if(cat === 'Todas') {
                 grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6";
                 
-                // MANTÉM UMA CÓPIA INTACTA DE TODAS AS MATÉRIAS ATIVAS PARA AS EDITORIAS DA CAPA
                 var f_todas_editorias = f.slice();
 
                 var c_itens = f.filter(function(n) { return String(n.noCarrossel) === 'true'; }).slice(0, 5);
@@ -1126,13 +1366,11 @@
                     if(carrosselContainer) carrosselContainer.classList.remove('hidden'); 
                     dest.classList.add('hidden');
                     
-                    // Remove do bloco "Últimas Notícias" para não repetir logo a seguir ao carrossel
                     f = f.filter(function(n) { return String(n.noCarrossel) !== 'true'; }); 
                 } else { 
                     if(carrosselContainer) carrosselContainer.classList.add('hidden'); 
                 }
                 
-                // USA A CÓPIA INTACTA PARA QUE AS EDITORIAS DA CAPA TENHAM AS MATÉRIAS MAIS RECENTES, MESMO QUE ESTEJAM NO CARROSSEL
                 montarGrelhaEditorias(f_todas_editorias);
                 if(gridEditorias) gridEditorias.classList.remove('hidden');
                 
@@ -1411,218 +1649,6 @@
                 if(indics[i]) { 
                     indics[i].className = 'w-3 h-3 rounded-full carrossel-indicador transition-colors ' + (i === slideIndex ? 'bg-jornal-red' : 'bg-white/50'); 
                 }
-            }
-        }
-
-        function renderizarClimaEFinanceiro() {
-            var tick = document.getElementById('ticker-content'); 
-            var usd = '--'; var eur = '--'; var btc = '--'; 
-            var clima = '--'; var iconeClima = '☀️'; var descClima = 'A Atualizar...';
-            
-            try {
-                fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL')
-                .then(function(res) { return res.json(); })
-                .then(function(dadosC) {
-                    if(dadosC.USDBRL) { 
-                        usd = parseFloat(dadosC.USDBRL.ask).toFixed(2); 
-                        eur = parseFloat(dadosC.EURBRL.ask).toFixed(2); 
-                        btc = parseFloat(dadosC.BTCBRL.ask).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); 
-                    }
-                    atualizarDOM();
-                }).catch(function(e){ atualizarDOM(); });
-            } catch(e) { atualizarDOM(); }
-
-            try {
-                fetch('https://api.open-meteo.com/v1/forecast?latitude=-15.5961&longitude=-56.0967&current_weather=true&hourly=relativehumidity_2m,precipitation_probability,windspeed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=America/Cuiaba')
-                .then(function(res) { return res.json(); })
-                .then(function(dadosClima) {
-                    dadosClimaGlobal = dadosClima;
-                    if(dadosClima.current_weather) {
-                        clima = Math.round(dadosClima.current_weather.temperature); 
-                        var wCode = dadosClima.current_weather.weathercode;
-                        if (wCode <= 3) { iconeClima = '☀️'; descClima = 'Céu Limpo'; } else if (wCode <= 48) { iconeClima = '⛅'; descClima = 'Nublado'; } else if (wCode <= 67) { iconeClima = '🌧️'; descClima = 'Chuva'; } else if (wCode <= 99) { iconeClima = '⛈️'; descClima = 'Tempestade'; }
-                        
-                        var elTemp = document.getElementById('temp-clima'); 
-                        var elIcone = document.getElementById('icone-clima'); 
-                        var elBgIcone = document.getElementById('bg-icone-clima'); 
-                        var elDesc = document.getElementById('desc-clima');
-                        
-                        if (elTemp) elTemp.innerText = clima + '°C'; 
-                        if (elIcone) elIcone.innerText = iconeClima; 
-                        if (elBgIcone) elBgIcone.innerText = iconeClima; 
-                        if (elDesc) elDesc.innerText = descClima;
-                        
-                        var mChuva = document.getElementById('modal-clima-chuva'); 
-                        var mUmid = document.getElementById('modal-clima-umidade'); 
-                        var mVento = document.getElementById('modal-clima-vento'); 
-                        var mDesc = document.getElementById('modal-clima-desc'); 
-                        var mTemp = document.getElementById('modal-clima-temp'); 
-                        var mIcone = document.getElementById('modal-clima-icone');
-                        
-                        if(mDesc) mDesc.innerText = descClima; 
-                        if(mTemp) mTemp.innerText = clima; 
-                        if(mIcone) mIcone.innerText = iconeClima;
-                        
-                        if(dadosClima.hourly && dadosClima.hourly.precipitation_probability) {
-                            if(mChuva) mChuva.innerText = dadosClima.hourly.precipitation_probability[0] + '%';
-                            if(mUmid) mUmid.innerText = dadosClima.hourly.relativehumidity_2m[0] + '%';
-                            if(mVento) mVento.innerText = Math.round(dadosClima.hourly.windspeed_10m[0]) + ' km/h';
-                        }
-                    }
-                    atualizarDOM();
-                }).catch(function(e){ atualizarDOM(); });
-            } catch(e) { atualizarDOM(); }
-
-            function atualizarDOM() {
-                var stringTicker = '';
-                stringTicker += '<span class="text-amber-300 font-extrabold mr-2">💵 DÓLAR:</span> R$ ' + usd + ' | ';
-                stringTicker += '<span class="text-blue-300 font-extrabold mr-2">💶 EURO:</span> R$ ' + eur + ' | ';
-                stringTicker += '<span class="text-orange-400 font-extrabold mr-2">₿ BITCOIN:</span> R$ ' + btc + ' | ';
-                stringTicker += '<span class="text-sky-300 font-extrabold mr-2">☀️ CUIABÁ:</span> ' + clima + '°C | ';
-                
-                var recentes = noticiasGlobais.filter(isNoticiaPublicada).slice(0, 5); 
-                recentes.forEach(function(n) { 
-                    stringTicker += '<span class="mx-3 hover:text-red-200 cursor-pointer text-white underline" onclick="abrirNoticia(\'' + n.id + '\', true)">' + n.titulo + '</span> &bull; '; 
-                });
-                
-                if(tick) tick.innerHTML = stringTicker.toUpperCase();
-            }
-            atualizarDOM();
-        }
-
-        function traduzirTermoPlacar(texto) {
-            if(!texto) return '';
-            var dicionario = { 
-                'Scheduled': 'Agendado', 'Final': 'Encerrado', 'Halftime': 'Intervalo', 'Postponed': 'Adiado', 
-                'Canceled': 'Cancelado', 'Delayed': 'Atrasado', 'Brazil': 'Brasil', 'England': 'Inglaterra', 
-                'Italy': 'Itália', 'Netherlands': 'Holanda', 'Portugal': 'Portugal', 'Spain': 'Espanha', 
-                'Germany': 'Alemanha', 'France': 'França', 'Argentina': 'Argentina', 'FIFA World Cup': 'Copa do Mundo FIFA', 
-                'UEFA Champions League': 'Liga dos Campeões', 'CONMEBOL Libertadores': 'Taça Libertadores' 
-            };
-            if (dicionario[texto]) return dicionario[texto];
-            return String(texto).replace('1st Half', '1º Tempo').replace('2nd Half', '2º Tempo').replace('Half', 'Intervalo').replace('FT', 'Fim');
-        }
-
-        function obterDataCuiabaISO() {
-            var agora = new Date();
-            var offsetCuiaba = -4; 
-            var utc = agora.getTime() + (agora.getTimezoneOffset() * 60000);
-            var dateCuiaba = new Date(utc + (3600000 * offsetCuiaba));
-            return dateCuiaba.getFullYear() + '-' + String(dateCuiaba.getMonth() + 1).padStart(2, '0') + '-' + String(dateCuiaba.getDate()).padStart(2, '0');
-        }
-
-        function renderizarPlacarAoVivo() {
-            var placar = document.getElementById('widget-placar'); 
-            if(!placar) return;
-            
-            try {
-                var ligasAtivas = ['soccer/bra.1']; 
-                if (configuracoesGlobais['LigasPlacar']) { 
-                    try { ligasAtivas = JSON.parse(configuracoesGlobais['LigasPlacar']); } catch(e){} 
-                }
-                
-                var dataHojeLocalStr = obterDataCuiabaISO();
-                placar.innerHTML = '<div class="text-center text-xs text-gray-400 py-4 font-bold uppercase tracking-widest">A procurar jogos...</div>';
-                
-                var htmlFinal = ''; 
-                var fetchesConcluidos = 0;
-
-                if(ligasAtivas.length === 0) { 
-                    placar.innerHTML = '<div class="text-center text-xs text-gray-400 py-4 font-bold uppercase tracking-widest">Nenhum campeonato ativo.</div>'; 
-                    return; 
-                }
-
-                ligasAtivas.forEach(function(liga) {
-                    fetch('https://site.api.espn.com/apis/site/v2/sports/' + liga + '/scoreboard?lang=pt&region=br')
-                    .then(function(res) { return res.ok ? res.json() : null; })
-                    .then(function(data) {
-                        if (data && data.events && data.events.length > 0) {
-                            var nomeCompeticao = traduzirTermoPlacar(data.leagues && data.leagues[0] ? data.leagues[0].name : 'Competição');
-                            var matchesHtml = ''; 
-                            var exibidos = 0;
-                            
-                            data.events.forEach(function(jogo) {
-                                if (!jogo.date) return;
-                                var dtJogoUtc = new Date(jogo.date);
-                                var utcTs = dtJogoUtc.getTime() + (dtJogoUtc.getTimezoneOffset() * 60000);
-                                var dtJogoCuiaba = new Date(utcTs + (3600000 * -4));
-                                var dataJogoLocal = dtJogoCuiaba.getFullYear() + '-' + String(dtJogoCuiaba.getMonth() + 1).padStart(2, '0') + '-' + String(dtJogoCuiaba.getDate()).padStart(2, '0');
-                                
-                                if (dataJogoLocal !== dataHojeLocalStr) return;
-                                if (exibidos >= 4) return;
-                                
-                                var matchInfo = jogo.competitions[0];
-                                var casa = matchInfo.competitors.find(function(c) { return c.homeAway === 'home'; }) || matchInfo.competitors[0];
-                                var fora = matchInfo.competitors.find(function(c) { return c.homeAway === 'away'; }) || matchInfo.competitors[1];
-                                
-                                var logoCasa = casa.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽'; 
-                                var logoFora = fora.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽';
-                                var isAoVivo = jogo.status.type.state === 'in'; 
-                                var isEncerrado = jogo.status.type.state === 'post'; 
-                                var isAgendado = jogo.status.type.state === 'pre';
-                                
-                                var corEstado = 'text-gray-400'; 
-                                var bordaEstado = 'border-gray-200'; 
-                                var bgPlacar = 'bg-jornal-dark text-white';
-
-                                if (isAoVivo) { 
-                                    corEstado = 'text-red-600 animate-pulse'; 
-                                    bordaEstado = 'border-red-200 bg-red-50/10'; 
-                                    bgPlacar = 'bg-jornal-red text-white'; 
-                                } 
-                                else if (isAgendado) { 
-                                    corEstado = 'text-emerald-600'; 
-                                }
-                                
-                                var infoEstadoTexto = traduzirTermoPlacar(jogo.status.type.shortDetail);
-                                if (isAoVivo) { 
-                                    infoEstadoTexto = 'AO VIVO'; 
-                                } 
-                                else if (isAgendado) { 
-                                    var horas = String(dtJogoCuiaba.getHours()).padStart(2, '0'); 
-                                    var minutos = String(dtJogoCuiaba.getMinutes()).padStart(2, '0'); 
-                                    infoEstadoTexto = horas + ':' + minutos; 
-                                } 
-                                else if (isEncerrado) { 
-                                    infoEstadoTexto = 'ENCERRADO'; 
-                                }
-                                
-                                var h = '<div class="bg-white border ' + bordaEstado + ' rounded-sm p-4 mb-3 shadow-sm hover:shadow-md transition-shadow">\n';
-                                h += '    <div class="flex items-center justify-between w-full">\n';
-                                h += '        <div class="flex items-center justify-start gap-2 w-[35%] min-w-0">\n';
-                                h += '            <img src="' + logoCasa + '" class="w-6 h-6 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'">\n';
-                                h += '            <span class="font-bold text-gray-800 text-[11px] text-left truncate w-full" title="' + traduzirTermoPlacar(casa.team.name) + '">' + traduzirTermoPlacar(casa.team.name) + '</span>\n';
-                                h += '        </div>\n';
-                                h += '        <div class="flex flex-col items-center justify-center w-[25%] shrink-0">\n';
-                                h += '            <span class="' + bgPlacar + ' font-black text-sm px-3 py-1 rounded-sm tracking-widest mb-1.5 shadow-inner">' + (casa.score || '0') + ' - ' + (fora.score || '0') + '</span>\n';
-                                h += '            <span class="text-[9px] uppercase tracking-widest font-black ' + corEstado + ' text-center whitespace-nowrap">' + infoEstadoTexto + '</span>\n';
-                                h += '        </div>\n';
-                                h += '        <div class="flex items-center justify-end gap-2 w-[35%] min-w-0">\n';
-                                h += '            <span class="font-bold text-gray-800 text-[11px] text-right truncate w-full" title="' + traduzirTermoPlacar(fora.team.name) + '">' + traduzirTermoPlacar(fora.team.name) + '</span>\n';
-                                h += '            <img src="' + logoFora + '" class="w-6 h-6 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'">\n';
-                                h += '        </div>\n';
-                                h += '    </div>\n';
-                                h += '</div>\n';
-                                
-                                matchesHtml += h; 
-                                exibidos++;
-                            });
-
-                            if (matchesHtml) { 
-                                htmlFinal += '<h5 class="text-[10px] uppercase font-black tracking-widest text-gray-400 mt-5 mb-3 border-b border-gray-100 pb-2">' + nomeCompeticao + '</h5>\n' + matchesHtml; 
-                            }
-                        }
-                    })
-                    .catch(function(e){ console.warn(e); })
-                    .finally(function() {
-                        fetchesConcluidos++;
-                        if(fetchesConcluidos === ligasAtivas.length) {
-                            placar.innerHTML = htmlFinal || '<div class="text-center text-xs text-gray-400 py-4 font-bold uppercase tracking-widest">Sem jogos no momento.</div>';
-                        }
-                    });
-                });
-            } catch(e) {
-                placar.innerHTML = '<div class="text-center text-xs text-red-400 py-4 font-bold uppercase tracking-widest">Erro ao carregar o placar.</div>';
             }
         }
 
