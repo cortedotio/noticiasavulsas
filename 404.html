@@ -285,18 +285,7 @@
                 
                 <aside class="lg:w-[28%] w-full shrink-0 min-w-0">
                     
-                    <!-- Bloco de Placar Ao Vivo -->
-                    <div class="mb-10 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
-                        <div class="flex items-center justify-between mb-5 border-b border-gray-100 pb-3">
-                            <h2 class="text-[11px] font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Placar Ao Vivo
-                            </h2>
-                        </div>
-                        <div id="widget-placar" class="space-y-4 min-w-0">
-                            <div class="text-center text-xs font-bold text-gray-500">A carregar resultados...</div>
-                        </div>
-                    </div>
-
+                    <!-- EM FOCO (Agenda, Carreiras, Variedades) -->
                     <div id="sidebar-editorias-especiais" class="hidden mb-10 bg-white border border-gray-200 p-6 shadow-sm rounded-sm">
                         <div class="border-b-4 border-jornal-dark pb-3 mb-6">
                             <h2 class="text-xs font-black uppercase tracking-widest text-jornal-dark">Em Foco</h2>
@@ -318,11 +307,24 @@
                         </div>
                     </div>
 
+                    <!-- OPINIÃO -->
                     <div id="sidebar-opinioes" class="hidden mb-10 bg-white border border-gray-200 p-6 shadow-sm rounded-sm">
                         <div class="border-b-4 border-jornal-red pb-3 mb-6">
                             <h2 class="text-xs font-black uppercase tracking-widest text-jornal-red">OPINIÃO</h2>
                         </div>
                         <div id="conteudo-opinioes" class="flex flex-col gap-5"></div>
+                    </div>
+
+                    <!-- PLACAR AO VIVO -->
+                    <div class="mb-10 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
+                        <div class="flex items-center justify-between mb-5 border-b border-gray-100 pb-3">
+                            <h2 class="text-[11px] font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Placar Ao Vivo
+                            </h2>
+                        </div>
+                        <div id="widget-placar" class="space-y-4 min-w-0">
+                            <div class="text-center text-xs font-bold text-gray-500">A carregar resultados...</div>
+                        </div>
                     </div>
 
                     <!-- WIDGET CLIMA CLICÁVEL -->
@@ -347,7 +349,6 @@
                             <h2 class="text-xs font-black uppercase tracking-widest text-jornal-blue">Top 10 Mais Lidas</h2>
                         </div>
                         <ul id="lista-mais-lidas" class="space-y-4 divide-y divide-gray-100 min-w-0">
-                            <!-- JS fills this safely -->
                         </ul>
                     </div>
 
@@ -443,7 +444,6 @@
             } catch(e) { return url; }
         }
 
-        // SEGURANÇA: Verificação exata da data de publicação para não esconder matérias antigas
         function isNoticiaPublicada(n) {
             if (!n || !n.status) return false;
             if (String(n.status).toLowerCase() !== 'ativa') return false;
@@ -508,7 +508,6 @@
         window.agendaTimers = {};
 
         document.addEventListener("DOMContentLoaded", function() {
-            // Failsafe rigoroso do Loading
             setTimeout(function() {
                 var loaderGlobal = document.getElementById('loading-noticias');
                 if (loaderGlobal && !loaderGlobal.classList.contains('hidden')) {
@@ -745,8 +744,7 @@
 
         function renderizarAgendaSidebar() {
             var sidebar = document.getElementById('sidebar-editorias-especiais');
-            var container = document.getElementById('lista-editorias-especiais');
-            if(!sidebar || !container) return;
+            if(!sidebar) return;
             
             var agora = new Date();
             var agenda = noticiasGlobais.filter(function(n) { 
@@ -1087,17 +1085,15 @@
             
             var ligasAtivas = ['soccer/bra.1']; 
             if (configuracoesGlobais['LigasPlacar']) { 
-                try { ligasAtivas = JSON.parse(configuracoesGlobais['LigasPlacar']); } catch(e){} 
+                try { 
+                    var prs = JSON.parse(configuracoesGlobais['LigasPlacar']);
+                    if(prs && prs.length > 0) ligasAtivas = prs; 
+                } catch(e){} 
             }
             
             placar.innerHTML = '<div class="text-center text-xs text-gray-400 py-4 font-bold uppercase tracking-widest">A procurar jogos...</div>';
             var htmlFinal = ''; 
             var fetchesConcluidos = 0;
-
-            if(ligasAtivas.length === 0) { 
-                placar.innerHTML = '<div class="text-center text-xs text-gray-400 py-4 font-bold uppercase tracking-widest">Nenhum campeonato ativo.</div>'; 
-                return; 
-            }
 
             ligasAtivas.forEach(function(liga) {
                 fetch('https://site.api.espn.com/apis/site/v2/sports/' + liga + '/scoreboard?lang=pt&region=br')
@@ -1108,8 +1104,6 @@
                         var matchesHtml = ''; 
                         var exibidos = 0;
                         
-                        // Remoção do filtro estrito de "hoje" para garantir que o widget nunca fica vazio.
-                        // O sistema passa a mostrar as 4 partidas mais relevantes devolvidas pela ESPN (Prioriza as Live ou as da ronda atual).
                         data.events.forEach(function(jogo) {
                             if (!jogo.date) return;
                             if (exibidos >= 4) return;
@@ -1183,7 +1177,7 @@
                 .finally(function() {
                     fetchesConcluidos++;
                     if(fetchesConcluidos === ligasAtivas.length) {
-                        placar.innerHTML = htmlFinal || '<div class="text-center text-xs text-gray-400 py-4 font-bold uppercase tracking-widest">Sem jogos no momento.</div>';
+                        placar.innerHTML = htmlFinal || '<div class="text-center text-xs text-gray-400 py-4 font-bold uppercase tracking-widest">Sem jogos na ronda atual.</div>';
                     }
                 });
             });
