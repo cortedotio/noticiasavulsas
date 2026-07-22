@@ -232,10 +232,15 @@
         </div>
     </div>
 
-    <!-- Loading Global -->
-    <div id="loading-global" class="fixed inset-0 z-[99998] bg-jornal-dark flex flex-col items-center justify-center transition-opacity duration-500">
-        <div class="w-12 h-12 border-4 border-gray-700 border-t-jornal-red rounded-full animate-spin mb-4"></div>
-        <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Sistema...</p>
+    <!-- Loading Global (ATUALIZADO PARA FUNDO BRANCO E LOGO) -->
+    <div id="loading-global" class="fixed inset-0 z-[99998] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
+        <div id="loading-logo-container-admin" class="mb-6 flex flex-wrap items-center justify-center gap-3">
+             <h1 class="text-4xl md:text-5xl font-black tracking-tighter uppercase text-slate-900">
+                Notícias<span class="text-rose-600">Avulsas</span>
+             </h1>
+        </div>
+        <div class="w-10 h-10 border-4 border-gray-100 border-t-jornal-red rounded-full animate-spin mb-4"></div>
+        <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 animate-pulse">Acessar Sistema...</p>
     </div>
 
     <!-- Modal de Login -->
@@ -396,7 +401,8 @@
                             <div class="relative">
                                 <input type="file" id="admin-arquivo-imagem" accept="image/*" class="w-full text-sm file:mr-3 file:py-2 file:px-4 file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-wider file:bg-jornal-dark file:text-white hover:file:opacity-90 cursor-pointer rounded-sm bg-white border border-gray-300" onchange="verificarUploadMedia(this)" />
                             </div>
-                            <img id="preview-imagem" loading="lazy" src="" class="mt-4 w-full h-40 object-contain bg-gray-900 rounded-sm hidden shadow-inner" />
+                            <!-- PREVIEW COM OBJECT CONTAIN CORRIGIDO -->
+                            <img id="preview-imagem" loading="lazy" src="" class="mt-4 w-full h-40 object-contain bg-gray-100 border border-gray-200 rounded-sm hidden shadow-inner" />
                         </div>
                         
                         <div class="flex flex-col gap-6">
@@ -530,8 +536,8 @@
                 
                 <div class="space-y-4 bg-white p-6 border border-purple-100 rounded-sm shadow-sm">
                     <div>
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">DESCRIÇÃO (PROMPT PARA A IA DEFINIR A COR DO LOGOTIPO)</label>
-                        <input type="text" id="prompt-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm rounded-sm shadow-sm" placeholder="Ex: o nome em cor de rosa, ou verde e azul escuro..." />
+                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">DESCRIÇÃO (PROMPT PARA A IA DEFINIR O GRADIENTE DO TEXTO)</label>
+                        <input type="text" id="prompt-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm rounded-sm shadow-sm" placeholder="Ex: um gradiente do azul escuro para o verde..." />
                     </div>
                     <button type="button" id="btn-gerar-logo" onclick="gerarLogoIA()" class="bg-[#a855f7] text-white px-6 py-3 font-black hover:bg-[#9333ea] transition-colors uppercase text-[11px] tracking-widest rounded-sm flex items-center justify-center gap-2 shadow-md w-full md:w-auto">✨ GERAR ESTILO COM IA</button>
                     
@@ -787,6 +793,33 @@
         var promptCallbackAtual = null;
         var confirmCallbackAtual = null;
 
+        function normalizarTextoUrl(text) {
+            if (!text) return 'geral';
+            return String(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+                .replace(/\s+/g, '-')
+                .replace(/[^\w\-]+/g, '')
+                .replace(/\-\-+/g, '-')
+                .replace(/^-+/, '')
+                .replace(/-+$/, '');
+        }
+
+        function atualizarPreviewURL() {
+            var titulo = document.getElementById('admin-titulo').value;
+            var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
+            var cat = 'geral';
+            
+            if(checkboxes.length > 0) {
+                cat = normalizarTextoUrl(checkboxes[0].value);
+            }
+            
+            var slug = normalizarTextoUrl(titulo) || 'sua-manchete-aqui';
+            var pUrl = document.getElementById('preview-url-materia');
+            
+            if(pUrl) {
+                pUrl.innerText = 'Link: noticiasavulsas.com.br/' + cat + '/' + slug + '/id';
+            }
+        }
+
         function mostrarMensagem(mensagem, tipo) {
             if(tipo === undefined) tipo = 'sucesso';
             var toast = document.getElementById('toast');
@@ -861,7 +894,6 @@
                 });
             }
 
-            // Lógica de Seleção de Imagem no Rich Text
             var richEditor = document.getElementById('admin-editor-rich');
             if(richEditor) {
                 richEditor.addEventListener('click', function(e) {
@@ -905,33 +937,6 @@
                 img.style.height = 'auto';
             } else {
                 mostrarMensagem("Clique numa foto dentro do texto primeiro para a redimensionar.", "erro");
-            }
-        }
-
-        // FUNÇÃO PARA ATUALIZAR PREVIEW DA URL EM TEMPO REAL
-        function normalizarTextoUrl(text) {
-            return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-                .replace(/\s+/g, '-')
-                .replace(/[^\w\-]+/g, '')
-                .replace(/\-\-+/g, '-')
-                .replace(/^-+/, '')
-                .replace(/-+$/, '');
-        }
-
-        function atualizarPreviewURL() {
-            var titulo = document.getElementById('admin-titulo').value;
-            var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
-            var cat = 'geral';
-            
-            if(checkboxes.length > 0) {
-                cat = normalizarTextoUrl(checkboxes[0].value);
-            }
-            
-            var slug = normalizarTextoUrl(titulo) || 'sua-manchete-aqui';
-            var pUrl = document.getElementById('preview-url-materia');
-            
-            if(pUrl) {
-                pUrl.innerText = 'Link: noticiasavulsas.com.br/' + cat + '/' + slug + '/id';
             }
         }
 
@@ -1260,7 +1265,7 @@
             btn.innerText = "A CRIAR..."; 
             btn.disabled = true;
             
-            var promptFinal = "Devolva APENAS as classes CSS do Tailwind necessárias para criar essa cor de texto baseada nesta instrução: '" + desc + "'. Exemplo de formato: bg-gradient-to-r from-pink-500 to-rose-500 bg-clip-text text-transparent. Não escreva mais nada.";
+            var promptFinal = "Devolva APENAS as classes CSS do Tailwind necessárias para criar um texto com essa cor ou gradiente: '" + desc + "'. Exemplo de formato: 'bg-gradient-to-r from-blue-500 to-green-500 bg-clip-text text-transparent'. NUNCA use cores de fundo sólidas atrás do texto (ex: não use bg-blue-500 se não for com bg-clip-text). Não escreva mais nada.";
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
@@ -1272,11 +1277,11 @@
                         var textClasses = cleanClasses.indexOf('bg-clip-text') === -1 ? "bg-clip-text text-transparent " + cleanClasses : cleanClasses;
                         
                         var html = '';
-                        html += '<div class="flex items-center gap-3">\n';
+                        html += '<div class="flex flex-wrap items-center gap-3 min-w-0">\n';
                         if (iconeAtual) {
                             html += '    <div style="-webkit-mask-image: url(' + iconeAtual + '); mask-image: url(' + iconeAtual + '); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center;" class="w-10 h-10 shrink-0 ' + cleanClasses + '"></div>\n';
                         }
-                        html += '    <h1 class="text-3xl font-black tracking-tighter uppercase ' + textClasses + '">NOTÍCIAS AVULSAS</h1>\n';
+                        html += '    <h1 class="text-4xl md:text-5xl font-black tracking-tighter uppercase ' + textClasses + '">NOTÍCIAS AVULSAS</h1>\n';
                         html += '</div>\n';
                         
                         document.getElementById('preview-logo-ia').innerHTML = html;
@@ -1528,7 +1533,6 @@
             btn.innerHTML = 'A PUBLICAR...'; 
             btn.disabled = true;
 
-            // Limpa o ring vermelho das imagens antes de salvar o HTML
             var editorHtmlElement = document.getElementById('admin-editor-rich');
             var imgsNoEditor = editorHtmlElement.querySelectorAll('img');
             imgsNoEditor.forEach(function(img) {
@@ -1572,8 +1576,12 @@
                             alternarAbaAdmin('lista-noticias-container'); 
                         }, 1000); 
                     } else { 
-                        mostrarMensagem("Erro ao guardar: " + res.erro, 'erro'); 
+                        mostrarMensagem("Erro ao guardar: " + (res ? res.erro : "Desconhecido"), 'erro'); 
                     }
+                    btn.innerHTML = txt; 
+                    btn.disabled = false;
+                }).withFailureHandler(function(err) {
+                    mostrarMensagem("Falha na rede: " + err.message, "erro");
                     btn.innerHTML = txt; 
                     btn.disabled = false;
                 }).salvarNoticiaNoSheets(payload);
@@ -2067,6 +2075,12 @@
                     previewIcone.classList.remove('hidden'); 
                 } 
             }
+            if (configuracoesGlobais['LogoHTML']) {
+                var elLoading = document.getElementById('loading-logo-container-admin');
+                if (elLoading) {
+                    elLoading.innerHTML = configuracoesGlobais['LogoHTML'];
+                }
+            }
             if (configuracoesGlobais['ExpedienteHTML']) {
                 var edExp = document.getElementById('admin-editor-expediente');
                 if(edExp) {
@@ -2132,6 +2146,10 @@
                 window.google.script.run.withSuccessHandler(function(res) { 
                     mostrarMensagem('Identidade visual atualizada!'); 
                     configuracoesGlobais['LogoHTML'] = window.novaLogoHtml; 
+                    
+                    var elLoading = document.getElementById('loading-logo-container-admin');
+                    if (elLoading) elLoading.innerHTML = window.novaLogoHtml;
+                    
                     btn.innerText = txt; 
                     btn.disabled = false; 
                 }).salvarConfiguracaoHTMLCustom('LogoHTML', window.novaLogoHtml);
