@@ -749,9 +749,6 @@
             try { renderizarPlacarAoVivo(); } catch(e) { console.error("Erro Placar:", e); }
         }
 
-        // ==========================================
-        // AGENDA COM EXTRATOR DE DATAS ROBUSTO
-        // ==========================================
         function renderizarAgendaSidebar() {
             var sidebar = document.getElementById('sidebar-editorias-especiais');
             if(!sidebar) return;
@@ -789,20 +786,25 @@
                     htmlAg += '            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>\n';
                     htmlAg += '            <div class="absolute bottom-0 left-0 p-4 w-full text-white min-w-0 z-10">\n';
                     
-                    // --- MÁGICA DA DATA DEFINITIVA AQUI ---
+                    // --- MÁGICA DA DATA BLINDADA AQUI ---
                     var txtBadge = "Agenda"; 
-                    var dataStr = (n.dataFimEvento && String(n.dataFimEvento).trim() !== '') ? String(n.dataFimEvento).trim() : (n.dataHora ? String(n.dataHora).trim() : "");
+                    var dataReferencia = (n.dataFimEvento && String(n.dataFimEvento).trim() !== '') ? String(n.dataFimEvento).trim() : (n.dataHora ? String(n.dataHora).trim() : "");
                     
-                    if (dataStr.length > 0) {
-                        var matchTracoISO = dataStr.match(/(\d{4})-(\d{2})-(\d{2})/); // Tenta formato 2026-09-15
-                        var matchBarra = dataStr.match(/(\d{1,2})[\/\-](\d{1,2})/); // Tenta formato 15/09 ou 15-09
+                    if (dataReferencia !== '') {
+                        var dObj = new Date(dataReferencia);
+                        var matchBarra = dataReferencia.match(/(\d{1,2})[\/\-](\d{1,2})/);
+                        var matchTracoISO = dataReferencia.match(/(\d{4})-(\d{2})-(\d{2})/);
 
-                        if (matchTracoISO) {
-                            txtBadge = "Até " + matchTracoISO[3] + "/" + matchTracoISO[2]; // Pega Dia e Mês
+                        if (!isNaN(dObj.getTime()) && dataReferencia.match(/[a-zA-Z]{3} [a-zA-Z]{3} \d{1,2}/)) {
+                            var dia = String(dObj.getDate()).padStart(2, '0');
+                            var mes = String(dObj.getMonth() + 1).padStart(2, '0');
+                            txtBadge = "Até " + dia + "/" + mes;
+                        } else if (matchTracoISO) {
+                            txtBadge = "Até " + matchTracoISO[3] + "/" + matchTracoISO[2];
                         } else if (matchBarra) {
-                            txtBadge = "Até " + matchBarra[1].padStart(2, '0') + "/" + matchBarra[2].padStart(2, '0'); // Pega Dia e Mês
+                            txtBadge = "Até " + matchBarra[1] + "/" + matchBarra[2];
                         } else {
-                            txtBadge = "Até " + dataStr.substring(0, 5).trim(); // Fallback seguro
+                            txtBadge = "Até " + dataReferencia.substring(0, 5).trim();
                         }
                     }
                     
@@ -1085,7 +1087,6 @@
                         if (elBgIcone) elBgIcone.innerText = iconeClima;
                         if (elDesc) elDesc.innerText = descClima;
 
-                        // Povoa modal básico do HTML (para o popup)
                         var mChuva = document.getElementById('modal-clima-chuva');
                         var mUmid = document.getElementById('modal-clima-umidade');
                         var mVento = document.getElementById('modal-clima-vento');
@@ -1214,8 +1215,6 @@
                         data.events.forEach(function(jogo) {
                             if (!jogo.date) return;
 
-                            // Como pediu, a trava de data rigorosa foi removida.
-                            // Ele mostra simplesmente os próximos/últimos jogos da rodada atual até o limite de 4.
                             if (exibidos >= 4) return;
                             
                             var matchInfo = jogo.competitions[0];
@@ -1279,7 +1278,7 @@
                         });
 
                         if (matchesHtml === '') {
-                            matchesHtml = '<div class="w-full text-center py-4 bg-white text-gray-400 text-[10px] font-bold uppercase tracking-widest border border-gray-100 rounded-sm mb-3 shadow-sm">SEM JOGOS HOJE</div>';
+                            matchesHtml = '<div class="w-full text-center py-4 bg-white text-gray-400 text-[10px] font-bold uppercase tracking-widest border border-gray-100 rounded-sm mb-3 shadow-sm">Sem jogos hoje</div>';
                         }
                         
                         htmlFinal += '<h5 class="text-[10px] uppercase font-black tracking-widest text-gray-400 mt-5 mb-3 border-b border-gray-100 pb-2">' + nomeCompeticao + '</h5>\n' + matchesHtml; 
