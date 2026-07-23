@@ -1034,48 +1034,123 @@
                 }).catch(function(e){ atualizarDOM(); });
             } catch(e) { atualizarDOM(); }
 
-            try {
-                fetch('https://api.open-meteo.com/v1/forecast?latitude=-15.5961&longitude=-56.0967&current_weather=true&hourly=relativehumidity_2m,precipitation_probability,windspeed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=America/Cuiaba')
-                .then(function(res) { return res.json(); })
-                .then(function(dadosClima) {
-                    dadosClimaGlobal = dadosClima;
-                    if(dadosClima.current_weather) {
-                        clima = Math.round(dadosClima.current_weather.temperature); 
-                        var wCode = dadosClima.current_weather.weathercode;
-                        if (wCode <= 3) { iconeClima = '☀️'; descClima = 'Céu Limpo'; } else if (wCode <= 48) { iconeClima = '⛅'; descClima = 'Nublado'; } else if (wCode <= 67) { iconeClima = '🌧️'; descClima = 'Chuva'; } else if (wCode <= 99) { iconeClima = '⛈️'; descClima = 'Tempestade'; }
-                        
-                        var elTemp = document.getElementById('temp-clima'); 
-                        var elIcone = document.getElementById('icone-clima'); 
-                        var elBgIcone = document.getElementById('bg-icone-clima'); 
-                        var elDesc = document.getElementById('desc-clima');
-                        
-                        if (elTemp) elTemp.innerText = clima + '°C'; 
-                        if (elIcone) elIcone.innerText = iconeClima; 
-                        if (elBgIcone) elBgIcone.innerText = iconeClima; 
-                        if (elDesc) elDesc.innerText = descClima;
-                        
-                        var mChuva = document.getElementById('modal-clima-chuva'); 
-                        var mUmid = document.getElementById('modal-clima-umidade'); 
-                        var mVento = document.getElementById('modal-clima-vento'); 
-                        var mDesc = document.getElementById('modal-clima-desc'); 
-                        var mTemp = document.getElementById('modal-clima-temp'); 
-                        var mIcone = document.getElementById('modal-clima-icone');
-                        
-                        if(mDesc) mDesc.innerText = descClima; 
-                        if(mTemp) mTemp.innerText = clima; 
-                        if(mIcone) mIcone.innerText = iconeClima;
-                        
-                        if(dadosClima.hourly && dadosClima.hourly.precipitation_probability) {
-                            if(mChuva) mChuva.innerText = dadosClima.hourly.precipitation_probability[0] + '%';
-                            if(mUmid) mUmid.innerText = dadosClima.hourly.relativehumidity_2m[0] + '%';
-                            if(mVento) mVento.innerText = Math.round(dadosClima.hourly.windspeed_10m[0]) + ' km/h';
-                        }
-                    }
-                    atualizarDOM();
-                }).catch(function(e){ console.warn("Aviso Clima:", e); atualizarDOM(); });
-            } catch(e) { atualizarDOM(); }
-        }
+            // Função auxiliar para os ícones
+    function obterIconeClima(wCode) {
+        if (wCode <= 3) return '☀️';
+        if (wCode <= 48) return '⛅';
+        if (wCode <= 67) return '🌧️';
+        if (wCode <= 77) return '❄️';
+        return '⛈️';
+    }
 
+    try {
+        // Nova URL que puxa 7 dias e as 24 horas de cada dia
+        fetch('https://api.open-meteo.com/v1/forecast?latitude=-15.5961&longitude=-56.0967&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&hourly=temperature_2m,weathercode&timezone=auto')
+        .then(function(res) { return res.json(); })
+        .then(function(dadosClima) {
+            window.dadosClimaGlobal = dadosClima;
+            
+            if(dadosClima.current_weather) {
+                var clima = Math.round(dadosClima.current_weather.temperature);
+                var wCode = dadosClima.current_weather.weathercode;
+                var iconeClima = obterIconeClima(wCode);
+                var descClima = wCode <= 3 ? 'Céu Limpo' : wCode <= 48 ? 'Nublado' : wCode <= 67 ? 'Chuva' : 'Tempestade';
+
+                var elTemp = document.getElementById('temp-clima');
+                var elIcone = document.getElementById('icone-clima');
+                var elBgIcone = document.getElementById('bg-icone-clima');
+                var elDesc = document.getElementById('desc-clima');
+
+                if (elTemp) elTemp.innerText = clima + ' °C';
+                if (elIcone) elIcone.innerText = iconeClima;
+                if (elBgIcone) elBgIcone.innerText = iconeClima;
+                if (elDesc) elDesc.innerText = descClima;
+
+                // --- INÍCIO DA MÁGICA: MODAL CLIMA HORÁRIO ---
+                var areaClima = document.getElementById('temp-clima').parentElement; 
+                if (areaClima) {
+                    areaClima.style.cursor = 'pointer';
+                    areaClima.title = 'Clique para ver a previsão detalhada';
+                    
+                    areaClima.onclick = function() {
+                        var modalExistente = document.getElementById('modal-clima-7dias');
+                        if (modalExistente) modalExistente.remove();
+
+                        var modal = document.createElement('div');
+                        modal.id = 'modal-clima-7dias';
+                        modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;display:flex;justify-content:center;align-items:center;color:#fff;font-family:sans-serif;';
+                        
+                        var conteudo = document.createElement('div');
+                        conteudo.style.cssText = 'background:#1f2937;border-radius:12px;width:90%;max-width:650px;padding:25px;box-shadow:0 10px 25px rgba(0,0,0,0.5);';
+                        
+                        var btnFechar = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;"><h2 style="margin:0;font-size:1.4rem;font-weight:bold;">Previsão - Cuiabá</h2><button id="fechar-clima" style="background:none;border:none;color:#9ca3af;font-size:2rem;cursor:pointer;line-height:1;">&times;</button></div>';
+                        
+                        var diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                        var diasHtml = '<div style="display:flex;overflow-x:auto;gap:12px;padding-bottom:15px;scrollbar-width:thin;" id="dias-clima-container">';
+                        
+                        for (let i = 0; i < 7; i++) {
+                            var dataDia = new Date(dadosClima.daily.time[i] + 'T00:00:00'); 
+                            var nomeDia = i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : diasSemana[dataDia.getDay()];
+                            var icone = obterIconeClima(dadosClima.daily.weathercode[i]);
+                            var max = Math.round(dadosClima.daily.temperature_2m_max[i]);
+                            var min = Math.round(dadosClima.daily.temperature_2m_min[i]);
+                            
+                            diasHtml += `<div class="btn-dia-clima" data-dia="${i}" style="background:#374151;border:2px solid ${i===0?'#ef4444':'transparent'};border-radius:10px;padding:12px;text-align:center;cursor:pointer;min-width:80px;transition:0.2s;">
+                                <div style="font-weight:bold;margin-bottom:8px;font-size:0.9rem;">${nomeDia}</div>
+                                <div style="font-size:1.8rem;margin-bottom:8px;">${icone}</div>
+                                <div style="font-size:0.85rem;font-weight:bold;"><span style="color:#f87171">${max}°</span> <span style="color:#9ca3af;margin-left:5px;">${min}°</span></div>
+                            </div>`;
+                        }
+                        diasHtml += '</div>';
+                        
+                        var horasHtml = '<div style="margin-top:20px;background:#111827;border-radius:10px;padding:15px;"><h3 style="margin:0 0 15px 0;font-size:1rem;color:#d1d5db;">Previsão por Hora</h3><div id="horas-clima-container" style="display:flex;overflow-x:auto;gap:15px;padding-bottom:10px;scrollbar-width:thin;"></div></div>';
+                        
+                        conteudo.innerHTML = btnFechar + diasHtml + horasHtml;
+                        modal.appendChild(conteudo);
+                        document.body.appendChild(modal);
+                        
+                        document.getElementById('fechar-clima').onclick = function() { modal.remove(); };
+                        
+                        var botoesDia = modal.querySelectorAll('.btn-dia-clima');
+                        botoesDia.forEach(function(btn) {
+                            btn.onclick = function() {
+                                botoesDia.forEach(b => b.style.borderColor = 'transparent');
+                                this.style.borderColor = '#ef4444';
+                                renderizarHoras(this.getAttribute('data-dia'));
+                            };
+                        });
+                        
+                        function renderizarHoras(diaIndex) {
+                            var containerHoras = document.getElementById('horas-clima-container');
+                            containerHoras.innerHTML = '';
+                            var startIndex = diaIndex * 24;
+                            
+                            for (let j = startIndex; j < startIndex + 24; j++) {
+                                var horaFull = dadosClima.hourly.time[j];
+                                var horaLimpa = horaFull.substring(11, 16); 
+                                var temp = Math.round(dadosClima.hourly.temperature_2m[j]);
+                                var iconH = obterIconeClima(dadosClima.hourly.weathercode[j]);
+                                
+                                containerHoras.innerHTML += `<div style="text-align:center;min-width:55px;">
+                                    <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:8px;">${horaLimpa}</div>
+                                    <div style="font-size:1.4rem;margin-bottom:8px;">${iconH}</div>
+                                    <div style="font-weight:bold;font-size:1rem;">${temp}°</div>
+                                </div>`;
+                            }
+                        }
+                        
+                        renderizarHoras(0);
+                    };
+                }
+            }
+            if (typeof atualizarDOM === 'function') atualizarDOM();
+        }).catch(function(e){ 
+            console.warn("Aviso Clima:", e); 
+            if (typeof atualizarDOM === 'function') atualizarDOM(); 
+        });
+    } catch(e) { 
+        if (typeof atualizarDOM === 'function') atualizarDOM(); 
+    }
         function renderizarPlacarAoVivo() {
             var placar = document.getElementById('widget-placar'); 
             if(!placar) return;
