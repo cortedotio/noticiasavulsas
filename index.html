@@ -61,7 +61,6 @@
             });
         }
 
-        // TRATAMENTO DE ERROS E CONFIGURAÇÕES VISUAIS
         window.onerror = function(message, source, lineno, colno, error) {
             console.error("Erro Global JS:", message, "na linha", lineno);
             setTimeout(function() {
@@ -84,9 +83,13 @@
             }
         } catch(e) { console.warn("Erro ao processar parâmetros:", e); }
 
+        var tailwindAttempts = 0;
         var configureTailwind = function() {
             if (typeof tailwind === 'undefined') { 
-                setTimeout(configureTailwind, 10); 
+                tailwindAttempts++;
+                if (tailwindAttempts < 500) {
+                    setTimeout(configureTailwind, 10); 
+                }
                 return; 
             }
             tailwind.config = {
@@ -308,7 +311,6 @@
                         </div>
                     </div>
 
-                    <!-- PÁGINA DA NOTÍCIA COMPLETA -->
                     <div id="noticia-completa-container" class="hidden bg-white border border-gray-200 p-5 md:p-10 shadow-sm min-w-0 rounded-sm">
                         <button onclick="voltarCapa()" class="mb-6 text-jornal-red font-black text-[10px] uppercase tracking-widest hover:underline flex items-center gap-1 border border-jornal-red/20 px-3 py-1.5 rounded-sm bg-red-50/50">← Voltar à Capa</button>
                         
@@ -370,7 +372,6 @@
                             </button>
                         </div>
 
-                        <!-- Secção de Comentários -->
                         <div class="border-t-4 border-gray-100 pt-8 mt-4">
                             <h3 class="text-lg font-black font-sans uppercase tracking-tighter text-jornal-dark mb-6">Comentários</h3>
                             <form id="form-comentario" onsubmit="enviarComentario(event)" class="mb-10 bg-gray-50 p-5 md:p-6 border border-gray-200 rounded-sm shadow-sm">
@@ -649,6 +650,16 @@
             carregarNoticias(false);
         });
 
+        function esconderLoadingGlobal() {
+            var lg = document.getElementById('loading-global');
+            if (lg && !lg.classList.contains('hidden')) {
+                lg.style.opacity = '0';
+                setTimeout(function() { 
+                    lg.classList.add('hidden'); 
+                }, 500);
+            }
+        }
+
         function carregarNoticias(forcarUpdate) {
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 document.getElementById('master-feed-wrapper').classList.add('hidden');
@@ -660,11 +671,13 @@
                     if (loader && !loader.classList.contains('hidden')) {
                         mostrarErro("Tempo excedido. Google Apps Script falhou a responder.");
                     }
+                    esconderLoadingGlobal();
                 }, 15000);
 
                 window.google.script.run.withSuccessHandler(function(res) {
                     clearTimeout(tId);
                     document.getElementById('loading-noticias').classList.add('hidden');
+                    esconderLoadingGlobal();
                     
                     try {
                         var d = typeof res === 'string' ? JSON.parse(res) : res;
@@ -702,9 +715,11 @@
                 }).withFailureHandler(function(err) {
                     clearTimeout(tId);
                     document.getElementById('loading-noticias').classList.add('hidden'); 
+                    esconderLoadingGlobal();
                     mostrarErro("Falha de Servidor: " + err.message);
                 }).getHomeData();
             } else {
+                esconderLoadingGlobal();
                 mostrarErro("A ligação ao servidor Google não foi estabelecida.");
             }
         }
@@ -1592,6 +1607,8 @@
                             if(!jogo.date) return false;
                             var dtJogo = new Date(jogo.date);
                             var jogoStr = dtJogo.getFullYear() + '-' + String(dtJogo.getMonth() + 1).padStart(2, '0') + '-' + String(dtJogo.getDate()).padStart(2, '0');
+                            
+                            // Restrição ESTRITA solicitada pelo utilizador: Apenas se for hoje OU se estiver ao vivo agora!
                             return (jogo.status.type.state === 'in' || jogoStr === hojeStr);
                         });
                         
