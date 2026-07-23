@@ -787,30 +787,26 @@
                     htmlAg += '            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>\n';
                     htmlAg += '            <div class="absolute bottom-0 left-0 p-4 w-full text-white min-w-0 z-10">\n';
                     
-                    if (n.dataFimEvento && String(n.dataFimEvento).trim() !== '') {
-                        var dtText = String(n.dataFimEvento).trim();
-                        var diaFim = '', mesFim = '';
+                    // --- MÁGICA DA DATA ROBUSTA AQUI ---
+                    var txtBadge = "Agenda";
+                    // Se a data do evento estiver vazia, ele rouba a data normal da notícia
+                    var dataReferencia = (n.dataFimEvento && String(n.dataFimEvento).trim() !== '') 
+                                         ? String(n.dataFimEvento).trim() 
+                                         : (n.dataHora ? String(n.dataHora).trim() : '');
+                    
+                    if (dataReferencia !== '') {
+                        var matchBarra = dataReferencia.match(/(\d{1,2})\/(\d{1,2})/); // Procura 15/09
+                        var matchTraco = dataReferencia.match(/(\d{4})-(\d{2})-(\d{2})/); // Procura 2026-09-15
                         
-                        // Se a data vier com traço (ex: 2026-08-25)
-                        if (dtText.includes('-')) {
-                            var pts = dtText.split('T')[0].split('-');
-                            if(pts.length >= 3) { diaFim = pts[2]; mesFim = pts[1]; }
-                        } 
-                        // Se a data vier com barra (ex: 25/08/2026)
-                        else if (dtText.includes('/')) {
-                            var pts = dtText.split(' ')[0].split('/');
-                            if(pts.length >= 2) { diaFim = pts[0]; mesFim = pts[1]; }
+                        if (matchBarra) {
+                            txtBadge = "Até " + matchBarra[1].padStart(2, '0') + "/" + matchBarra[2].padStart(2, '0');
+                        } else if (matchTraco) {
+                            txtBadge = "Até " + matchTraco[3] + "/" + matchTraco[2];
                         }
-
-                        // Aplica no ecrã o que conseguiu ler
-                        if (diaFim !== '' && mesFim !== '') {
-                            htmlAg += '                <span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Até ' + diaFim + '/' + mesFim + '</span>\n';
-                        } else {
-                            htmlAg += '                <span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Agenda</span>\n';
-                        }
-                    } else { 
-                        htmlAg += '                <span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Agenda</span>\n'; 
                     }
+                    
+                    htmlAg += '                <span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">' + txtBadge + '</span>\n';
+                    // ------------------------------------
                     
                     htmlAg += '                <h4 class="font-serif text-sm font-bold mb-1 leading-tight break-words line-clamp-3 text-white">' + n.titulo + '</h4>\n';
                     htmlAg += '            </div>\n';
@@ -878,7 +874,6 @@
                 blocoVa.classList.add('hidden'); 
             }
         }
-
         function moverCarrosselAgenda(id, direcao, tamanho) {
             var c = window.agendaCarousels.find(function(x) { return x.id === id; });
             if(!c) return;
