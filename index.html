@@ -606,14 +606,25 @@
 
         function abrirModalExpediente() {
             var m = document.getElementById('modalExpediente');
-            m.classList.remove('hidden');
-            m.classList.add('flex');
+            if(m){ m.classList.remove('hidden'); m.classList.add('flex'); }
         }
 
         function fecharModalExpediente() {
             var m = document.getElementById('modalExpediente');
-            m.classList.add('hidden');
-            m.classList.remove('flex');
+            if(m){ m.classList.add('hidden'); m.classList.remove('flex'); }
+        }
+
+        // ==========================================
+        // NOVAS FUNÇÕES DO MODAL DE CLIMA 
+        // ==========================================
+        function abrirModalClima() {
+            var m = document.getElementById('modalClima');
+            if(m){ m.classList.remove('hidden'); m.classList.add('flex'); }
+        }
+
+        function fecharModalClima() {
+            var m = document.getElementById('modalClima');
+            if(m){ m.classList.add('hidden'); m.classList.remove('flex'); }
         }
 
         function processarDadosHome(d) {
@@ -1001,6 +1012,14 @@
             lista.innerHTML = htmlFinal;
         }
 
+        function obterIconeClima(wCode) {
+            if (wCode <= 3) return '☀️';
+            if (wCode <= 48) return '⛅';
+            if (wCode <= 67) return '🌧️';
+            if (wCode <= 77) return '❄️';
+            return '⛈️';
+        }
+
         function renderizarClimaEFinanceiro() {
             var tick = document.getElementById('ticker-content'); 
             var usd = '--'; var eur = '--'; var btc = '--'; 
@@ -1035,14 +1054,15 @@
             } catch(e) { atualizarDOM(); }
 
             try {
-                fetch('https://api.open-meteo.com/v1/forecast?latitude=-15.5961&longitude=-56.0967&current_weather=true&hourly=relativehumidity_2m,precipitation_probability,windspeed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=America/Cuiaba')
+                fetch('https://api.open-meteo.com/v1/forecast?latitude=-15.5961&longitude=-56.0967&current_weather=true&hourly=temperature_2m,relativehumidity_2m,precipitation_probability,windspeed_10m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=America/Cuiaba')
                 .then(function(res) { return res.json(); })
                 .then(function(dadosClima) {
                     dadosClimaGlobal = dadosClima;
                     if(dadosClima.current_weather) {
                         clima = Math.round(dadosClima.current_weather.temperature); 
                         var wCode = dadosClima.current_weather.weathercode;
-                        if (wCode <= 3) { iconeClima = '☀️'; descClima = 'Céu Limpo'; } else if (wCode <= 48) { iconeClima = '⛅'; descClima = 'Nublado'; } else if (wCode <= 67) { iconeClima = '🌧️'; descClima = 'Chuva'; } else if (wCode <= 99) { iconeClima = '⛈️'; descClima = 'Tempestade'; }
+                        iconeClima = obterIconeClima(wCode);
+                        if (wCode <= 3) { descClima = 'Céu Limpo'; } else if (wCode <= 48) { descClima = 'Nublado'; } else if (wCode <= 67) { descClima = 'Chuva'; } else if (wCode <= 99) { descClima = 'Tempestade'; }
                         
                         var elTemp = document.getElementById('temp-clima'); 
                         var elIcone = document.getElementById('icone-clima'); 
@@ -1069,6 +1089,67 @@
                             if(mChuva) mChuva.innerText = dadosClima.hourly.precipitation_probability[0] + '%';
                             if(mUmid) mUmid.innerText = dadosClima.hourly.relativehumidity_2m[0] + '%';
                             if(mVento) mVento.innerText = Math.round(dadosClima.hourly.windspeed_10m[0]) + ' km/h';
+                        }
+
+                        // --- MODAL PREVISÃO 7 DIAS E HORÁRIA ---
+                        var mPrevisao = document.getElementById('modal-clima-previsao');
+                        if (mPrevisao && dadosClima.daily) {
+                            var diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                            var htmlDias = '<div class="flex gap-3 overflow-x-auto custom-scrollbar w-full pb-2">';
+                            
+                            for (let i = 0; i < 7; i++) {
+                                var dataDia = new Date(dadosClima.daily.time[i] + 'T00:00:00'); 
+                                var nomeDia = i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : diasSemana[dataDia.getDay()];
+                                var iconeD = obterIconeClima(dadosClima.daily.weathercode[i]);
+                                var maxD = Math.round(dadosClima.daily.temperature_2m_max[i]);
+                                var minD = Math.round(dadosClima.daily.temperature_2m_min[i]);
+                                
+                                htmlDias += `<div class="btn-dia-clima shrink-0 cursor-pointer border-2 ${i===0 ? 'border-sky-400 bg-sky-50' : 'border-transparent bg-gray-50 hover:bg-gray-100'} p-3 rounded-sm text-center min-w-[70px] transition-all" data-dia="${i}">
+                                    <div class="text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">${nomeDia}</div>
+                                    <div class="text-2xl mb-2">${iconeD}</div>
+                                    <div class="text-[10px] font-bold"><span class="text-rose-500">${maxD}°</span> <span class="text-gray-400">${minD}°</span></div>
+                                </div>`;
+                            }
+                            htmlDias += '</div>';
+                            
+                            var htmlHoras = '<div class="w-full mt-6 text-left"><h4 class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3">Previsão por Hora</h4><div id="horas-clima-container" class="flex gap-4 overflow-x-auto custom-scrollbar pb-2"></div></div>';
+                            
+                            mPrevisao.innerHTML = '<div class="flex flex-col w-full">' + htmlDias + htmlHoras + '</div>';
+                            
+                            var botoesDia = mPrevisao.querySelectorAll('.btn-dia-clima');
+                            botoesDia.forEach(function(btn) {
+                                btn.onclick = function() {
+                                    botoesDia.forEach(b => {
+                                        b.classList.remove('border-sky-400', 'bg-sky-50');
+                                        b.classList.add('border-transparent', 'bg-gray-50');
+                                    });
+                                    this.classList.remove('border-transparent', 'bg-gray-50');
+                                    this.classList.add('border-sky-400', 'bg-sky-50');
+                                    renderizarHoras(this.getAttribute('data-dia'));
+                                };
+                            });
+                            
+                            function renderizarHoras(diaIndex) {
+                                var containerHoras = document.getElementById('horas-clima-container');
+                                if(!containerHoras) return;
+                                containerHoras.innerHTML = '';
+                                var startIndex = diaIndex * 24;
+                                
+                                for (let j = startIndex; j < startIndex + 24; j++) {
+                                    var horaFull = dadosClima.hourly.time[j];
+                                    var horaLimpa = horaFull.substring(11, 16); 
+                                    var tempH = Math.round(dadosClima.hourly.temperature_2m[j]);
+                                    var iconH = obterIconeClima(dadosClima.hourly.weathercode[j]);
+                                    
+                                    containerHoras.innerHTML += `<div class="shrink-0 text-center flex flex-col items-center p-2 border border-gray-100 rounded-sm bg-white min-w-[60px]">
+                                        <div class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">${horaLimpa}</div>
+                                        <div class="text-xl mb-1">${iconH}</div>
+                                        <div class="text-xs font-black text-gray-700">${tempH}°</div>
+                                    </div>`;
+                                }
+                            }
+                            
+                            renderizarHoras(0);
                         }
                     }
                     atualizarDOM();
@@ -1103,6 +1184,14 @@
                         
                         data.events.forEach(function(jogo) {
                             if (!jogo.date) return;
+
+                            // NOVO: BLOQUEIO RIGOROSO DE DATA
+                            var hoje = new Date();
+                            var dataHojeLocalStr = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
+                            var dtJogo = new Date(jogo.date);
+                            var dataJogoLocal = dtJogo.getFullYear() + '-' + String(dtJogo.getMonth() + 1).padStart(2, '0') + '-' + String(dtJogo.getDate()).padStart(2, '0');
+                            
+                            if (dataJogoLocal !== dataHojeLocalStr) return;
                             if (exibidos >= 4) return;
                             
                             var matchInfo = jogo.competitions[0];
@@ -1165,8 +1254,11 @@
                             exibidos++;
                         });
 
-                        if (matchesHtml) { 
+                        // LÓGICA DO PLACAR VAZIO E MENSAGEM
+                        if (exibidos > 0) { 
                             htmlFinal += '<h5 class="text-[10px] uppercase font-black tracking-widest text-gray-400 mt-5 mb-3 border-b border-gray-100 pb-2">' + nomeCompeticao + '</h5>\n' + matchesHtml; 
+                        } else {
+                            htmlFinal += '<div class="w-full text-center py-4 bg-white text-gray-400 text-[10px] font-bold uppercase tracking-widest border border-gray-100 rounded-sm mb-3 shadow-sm">Sem jogos hoje</div>';
                         }
                     }
                 })
@@ -1174,7 +1266,7 @@
                 .finally(function() {
                     fetchesConcluidos++;
                     if(fetchesConcluidos === ligasAtivas.length) {
-                        placar.innerHTML = htmlFinal || '<div class="text-center text-xs text-gray-400 py-4 font-bold uppercase tracking-widest">Sem jogos na ronda atual.</div>';
+                        placar.innerHTML = htmlFinal || '<div class="w-full text-center py-4 bg-white text-gray-400 text-[10px] font-bold uppercase tracking-widest border border-gray-100 rounded-sm mb-3 shadow-sm">Sem jogos hoje</div>';
                     }
                 });
             });
