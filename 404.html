@@ -20,7 +20,7 @@
     </script>
     
     <script>
-        // CONEXÃO INTELIGENTE (Deteta se está no Google ou GitHub automaticamente)
+        // CONEXÃO INTELIGENTE COM A CORREÇÃO DE SEGURANÇA (CORS)
         if (typeof google === 'undefined' || typeof google.script === 'undefined') {
             const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzZ3tg6RONdf9KODrdz25LYGjEGF6m1DTdM9_NUBnVrm6WGGp6k8rapdg-wDu049Tee/exec";
             window.google = {
@@ -48,11 +48,20 @@
                     this._onFailure = null;
                     
                     fetch(GAS_API_URL, { 
-                        method: 'POST', 
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // ETIQUETA CRUCIAL ADICIONADA AQUI
                         body: JSON.stringify({ action: funcName, args: argsArray }) 
                     })
                     .then(function(res) { return res.json(); })
-                    .then(function(result) { if (successCb) successCb(result); })
+                    .then(function(result) { 
+                        if (successCb) {
+                            var finalPayload = result;
+                            if (result && result.result !== undefined) {
+                                finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
+                            }
+                            successCb(finalPayload);
+                        }
+                    })
                     .catch(function(err) { 
                         if (failureCb) failureCb(err); 
                         else console.error("API Error:", err); 
@@ -271,7 +280,7 @@
             <!-- Container Topo (Publicidade) -->
             <div id="ads-topo-container" class="w-full mb-8 hidden grid gap-4 grid-cols-1 md:grid-cols-2"></div>
 
-            <div id="loading-noticias" class="flex flex-col items-center justify-center py-20">
+            <div id="loading-noticias" class="flex flex-col items-center justify-center py-20 hidden">
                 <div class="w-10 h-10 border-4 border-gray-200 border-t-jornal-blue rounded-full animate-spin mb-4"></div>
                 <p class="text-[10px] font-black uppercase tracking-widest text-gray-500 animate-pulse">A carregar informações do servidor...</p>
             </div>
@@ -400,7 +409,7 @@
                         </div>
                     </div>
 
-                    <!-- Placar Ao Vivo (Posicionado abaixo da Opinião) -->
+                    <!-- Placar Ao Vivo (Apenas Hoje) -->
                     <div class="mb-8 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
                         <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-2">
                             <h2 class="text-[10px] font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
@@ -651,11 +660,7 @@
         }
 
         function mostrarErro(m) {
-            // Em vez de mostrar a caixa vermelha que bloqueia o utilizador,
-            // Apenas logamos o erro no console de forma invisível.
             console.error("Aviso do Sistema:", m);
-            
-            // Se as notícias ainda não tiverem carregado, mostramos um botão amigável
             var loader = document.getElementById('loading-noticias');
             if(loader && !loader.classList.contains('hidden')) {
                 loader.innerHTML = '<div class="text-center py-10">\n' +
@@ -670,14 +675,12 @@
                 document.getElementById('master-feed-wrapper').classList.add('hidden');
                 document.getElementById('loading-noticias').classList.remove('hidden');
                 
-                // Aviso amigável aos 15 segundos (não esconde a página, apenas muda o texto)
                 var tIdAviso = setTimeout(function() {
                     var p = document.querySelector('#loading-noticias p');
                     if (p) p.innerText = "A aguardar resposta do servidor (pode demorar um pouco)...";
-                    esconderLoadingGlobal(); // Garante que a tela branca sai da frente
+                    esconderLoadingGlobal();
                 }, 15000);
                 
-                // Fallback extremo (45 segundos)
                 var tIdError = setTimeout(function() {
                     mostrarErro("O servidor demorou demasiado tempo.");
                 }, 45000);
@@ -1117,7 +1120,9 @@
             var html = '';
             html += '<article onclick="abrirNoticia(\'' + d.id + '\', true)" class="group cursor-pointer flex flex-col mb-4 bg-gray-50 p-4 border border-gray-100 rounded-sm hover:shadow-md transition-shadow">\n';
             html += '    <div class="flex items-center gap-3 mb-3">\n';
-            html += '        <div class="w-10 h-10 rounded-full bg-jornal-blue flex items-center justify-center text-white font-black text-xs shrink-0 shadow-inner">' + letraAutor + '</div>\n';
+            html += '        <div class="w-10 h-10 rounded-full bg-jornal-blue flex items-center justify-center text-white font-black text-xs shrink-0 shadow-inner">\n';
+            html += '            ' + letraAutor + '\n';
+            html += '        </div>\n';
             html += '        <div class="flex flex-col min-w-0">\n';
             html += '            <span class="text-[10px] font-black uppercase tracking-widest text-jornal-red">Opinião</span>\n';
             html += '            <span class="text-xs font-bold text-gray-700 truncate w-full">' + (d.autor || 'Editorial') + '</span>\n';
