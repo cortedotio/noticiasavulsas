@@ -1101,19 +1101,19 @@
                         var matchesHtml = ''; 
                         var exibidos = 0;
                         
-data.events.forEach(function(jogo) {
-            if (!jogo.date) return;
+                        data.events.forEach(function(jogo) {
+                            if (!jogo.date) return;
 
-            // Calcula a data de hoje e a data do jogo
-            var hoje = new Date();
-            var dataHojeLocalStr = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
-            var dtJogo = new Date(jogo.date);
-            var dataJogoLocal = dtJogo.getFullYear() + '-' + String(dtJogo.getMonth() + 1).padStart(2, '0') + '-' + String(dtJogo.getDate()).padStart(2, '0');
+                            // Calcula a data de hoje e a data do jogo
+                            var hoje = new Date();
+                            var dataHojeLocalStr = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
+                            var dtJogo = new Date(jogo.date);
+                            var dataJogoLocal = dtJogo.getFullYear() + '-' + String(dtJogo.getMonth() + 1).padStart(2, '0') + '-' + String(dtJogo.getDate()).padStart(2, '0');
 
-            // BLOQUEIO RIGOROSO: Se não for exatamente hoje, ignora e não mostra!
-            if (dataJogoLocal !== dataHojeLocalStr) return;
+                            // BLOQUEIO RIGOROSO: Se não for exatamente hoje, ignora e não mostra!
+                            if (dataJogoLocal !== dataHojeLocalStr) return;
 
-            if (exibidos >= 4) return;
+                            if (exibidos >= 4) return;
                             var matchInfo = jogo.competitions[0];
                             var casa = matchInfo.competitors.find(function(c) { return c.homeAway === 'home'; }) || matchInfo.competitors[0];
                             var fora = matchInfo.competitors.find(function(c) { return c.homeAway === 'away'; }) || matchInfo.competitors[1];
