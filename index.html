@@ -61,15 +61,9 @@
             });
         }
 
+        // Erros de JS escondidos do utilizador.
         window.onerror = function(message, source, lineno, colno, error) {
-            console.error("Erro Global JS:", message, "na linha", lineno);
-            setTimeout(function() {
-                var debugBox = document.getElementById('debug-error-box');
-                if (debugBox) {
-                    debugBox.innerHTML = "Erro de JavaScript detetado: " + message + " (Linha " + lineno + ")";
-                    debugBox.classList.remove('hidden');
-                }
-            }, 500);
+            console.error("Erro Global JS (Oculto do ecrã):", message, "na linha", lineno);
         };
 
         var paramIniciais = {};
@@ -280,7 +274,6 @@
             <div id="loading-noticias" class="flex flex-col items-center justify-center py-20">
                 <div class="w-10 h-10 border-4 border-gray-200 border-t-jornal-blue rounded-full animate-spin mb-4"></div>
                 <p class="text-[10px] font-black uppercase tracking-widest text-gray-500 animate-pulse">A carregar informações do servidor...</p>
-                <div id="debug-error-box" class="hidden mt-4 text-xs text-red-500 font-mono text-left p-4 bg-red-50 border border-red-200 rounded-sm max-w-xl break-words w-full shadow-sm"></div>
             </div>
 
             <!-- FEED PRINCIPAL -->
@@ -318,7 +311,6 @@
                         
                         <h1 id="nc-titulo" class="font-serif text-3xl md:text-5xl font-black mb-4 leading-tight text-jornal-dark break-words"></h1>
                         
-                        <!-- Linha Fina Melhorada (agora sempre visível) -->
                         <h2 id="nc-linha-fina" class="font-sans text-base md:text-xl text-gray-500 mb-6 leading-relaxed font-medium hidden break-words border-l-4 border-gray-200 pl-4"></h2>
                         
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4 mb-8 gap-4">
@@ -358,11 +350,10 @@
                         <!-- Corpo da Matéria -->
                         <div id="nc-conteudo" class="text-gray-800 text-base md:text-lg leading-relaxed font-serif whitespace-pre-line mb-8 rich-editor break-words"></div>
                         
-                        <!-- Notícias Relacionadas (Fim da Matéria) -->
+                        <!-- Notícias Relacionadas -->
                         <div id="nc-relacionadas-container" class="hidden mt-12 mb-8 bg-gray-50 border border-gray-200 p-6 rounded-sm">
                             <h3 class="text-xs font-black uppercase tracking-widest text-jornal-dark mb-4 border-b border-gray-200 pb-2">Leia Também</h3>
                             <ul id="nc-relacionadas-lista" class="space-y-3">
-                                <!-- Preenchido por JS -->
                             </ul>
                         </div>
                         
@@ -600,7 +591,6 @@
             } catch(e) { return url; }
         }
 
-        // Validação estrita de publicação (Status Ativa + Data Passada)
         function isNoticiaPublicada(n) {
             if (String(n.status).toLowerCase() !== 'ativa') return false;
             if (n.dataHora) {
@@ -660,22 +650,41 @@
             }
         }
 
+        function mostrarErro(m) {
+            // Em vez de mostrar a caixa vermelha que bloqueia o utilizador,
+            // Apenas logamos o erro no console de forma invisível.
+            console.error("Aviso do Sistema:", m);
+            
+            // Se as notícias ainda não tiverem carregado, mostramos um botão amigável
+            var loader = document.getElementById('loading-noticias');
+            if(loader && !loader.classList.contains('hidden')) {
+                loader.innerHTML = '<div class="text-center py-10">\n' +
+                                   '  <p class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">A ligação está lenta.</p>\n' +
+                                   '  <button onclick="window.location.reload()" class="bg-gray-200 text-gray-700 hover:bg-gray-300 px-6 py-2.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm">Recarregar Página</button>\n' +
+                                   '</div>';
+            }
+        }
+
         function carregarNoticias(forcarUpdate) {
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 document.getElementById('master-feed-wrapper').classList.add('hidden');
                 document.getElementById('loading-noticias').classList.remove('hidden');
-                document.getElementById('debug-error-box').classList.add('hidden');
                 
-                var tId = setTimeout(function() {
-                    var loader = document.getElementById('loading-noticias');
-                    if (loader && !loader.classList.contains('hidden')) {
-                        mostrarErro("Tempo excedido. Google Apps Script falhou a responder.");
-                    }
-                    esconderLoadingGlobal();
+                // Aviso amigável aos 15 segundos (não esconde a página, apenas muda o texto)
+                var tIdAviso = setTimeout(function() {
+                    var p = document.querySelector('#loading-noticias p');
+                    if (p) p.innerText = "A aguardar resposta do servidor (pode demorar um pouco)...";
+                    esconderLoadingGlobal(); // Garante que a tela branca sai da frente
                 }, 15000);
+                
+                // Fallback extremo (45 segundos)
+                var tIdError = setTimeout(function() {
+                    mostrarErro("O servidor demorou demasiado tempo.");
+                }, 45000);
 
                 window.google.script.run.withSuccessHandler(function(res) {
-                    clearTimeout(tId);
+                    clearTimeout(tIdAviso);
+                    clearTimeout(tIdError);
                     document.getElementById('loading-noticias').classList.add('hidden');
                     esconderLoadingGlobal();
                     
@@ -710,24 +719,18 @@
                             mostrarErro(d ? d.erro : "Resposta inválida do servidor."); 
                         }
                     } catch(e) { 
-                        mostrarErro("Falha no JS: " + e.message); 
+                        mostrarErro("Falha no JS ao processar dados."); 
                     }
                 }).withFailureHandler(function(err) {
-                    clearTimeout(tId);
-                    document.getElementById('loading-noticias').classList.add('hidden'); 
+                    clearTimeout(tIdAviso);
+                    clearTimeout(tIdError);
                     esconderLoadingGlobal();
-                    mostrarErro("Falha de Servidor: " + err.message);
+                    mostrarErro("Falha de comunicação.");
                 }).getHomeData();
             } else {
                 esconderLoadingGlobal();
                 mostrarErro("A ligação ao servidor Google não foi estabelecida.");
             }
-        }
-
-        function mostrarErro(m) {
-            var dbg = document.getElementById('debug-error-box'); 
-            dbg.innerHTML = m; 
-            dbg.classList.remove('hidden');
         }
 
         function pesquisarSite(e) {
@@ -925,7 +928,7 @@
         }
 
         function processarDadosHome(d) {
-            window.agendaCarousels = []; // Limpa o estado da agenda para evitar duplicação
+            window.agendaCarousels = []; 
 
             if (d.config) {
                 configuracoesGlobais = d.config;
@@ -1467,7 +1470,7 @@
                 atualizarDOM();
             })
             .catch(function(e){ 
-                console.warn(e); 
+                console.warn("Aviso:", e); 
                 atualizarDOM(); 
             });
 
@@ -1515,7 +1518,7 @@
                 atualizarDOM();
             })
             .catch(function(e){ 
-                console.warn(e); 
+                console.warn("Aviso:", e); 
                 atualizarDOM(); 
             });
 
@@ -1608,7 +1611,7 @@
                             var dtJogo = new Date(jogo.date);
                             var jogoStr = dtJogo.getFullYear() + '-' + String(dtJogo.getMonth() + 1).padStart(2, '0') + '-' + String(dtJogo.getDate()).padStart(2, '0');
                             
-                            // Restrição ESTRITA solicitada pelo utilizador: Apenas se for hoje OU se estiver ao vivo agora!
+                            // Restrição ESTRITA: Apenas se for hoje OU se estiver ao vivo agora
                             return (jogo.status.type.state === 'in' || jogoStr === hojeStr);
                         });
                         
@@ -1889,18 +1892,15 @@
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
                     if (res && res.sucesso) { 
-                        mostrarMensagem('Comentário publicado com sucesso!'); 
+                        // Sucesso
                         document.getElementById('form-comentario').reset(); 
                         comentariosGlobais.push(res.comentario); 
                         abrirNoticia(noticiaAbertaId, false); 
-                    } else {
-                        mostrarMensagem('Falha ao enviar comentário.', 'erro');
                     }
                     btn.innerHTML = txt; 
                     btn.disabled = false;
                 }).salvarComentarioNoSheets(payload);
             } else {
-                mostrarMensagem('Erro de conexão. Tente novamente mais tarde.', 'erro');
                 btn.innerHTML = txt; 
                 btn.disabled = false;
             }
@@ -1917,16 +1917,12 @@
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) { 
                     if (res && res.sucesso) { 
-                        mostrarMensagem('Inscrição registada com sucesso!'); 
                         document.getElementById('form-newsletter').reset(); 
-                    } else {
-                        mostrarMensagem('Falha ao registar inscrição.', 'erro');
                     }
                     btn.innerText = txt;
                     btn.disabled = false;
                 }).inscreverNewsletter({email: document.getElementById('news-email').value});
             } else {
-                mostrarMensagem('Erro de conexão. Tente novamente.', 'erro');
                 btn.innerText = txt;
                 btn.disabled = false;
             }
@@ -1986,12 +1982,10 @@
                         fecharModalLogin(); 
                         window.location.href = "admin.html";
                     } else { 
-                        mostrarMensagem(res ? res.erro : "Resposta inválida.", 'erro'); 
+                        btn.innerHTML = "ENTRAR NO PAINEL"; 
+                        btn.disabled = false;
                     }
-                    btn.innerHTML = "ENTRAR NO PAINEL"; 
-                    btn.disabled = false;
                 }).withFailureHandler(function(erro) {
-                    mostrarMensagem("Falha na rede: " + erro.message, 'erro'); 
                     btn.innerHTML = "ENTRAR NO PAINEL"; 
                     btn.disabled = false;
                 }).verificarLogin(u, p);
