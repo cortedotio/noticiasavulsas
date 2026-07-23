@@ -787,11 +787,27 @@
                     htmlAg += '            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>\n';
                     htmlAg += '            <div class="absolute bottom-0 left-0 p-4 w-full text-white min-w-0 z-10">\n';
                     
-                    if (n.dataFimEvento) {
-                        try {
-                            var dP = n.dataFimEvento.split('T')[0].split('-');
-                            htmlAg += '                <span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Até ' + dP[2] + '/' + dP[1] + '</span>\n';
-                        } catch(e){}
+                    if (n.dataFimEvento && String(n.dataFimEvento).trim() !== '') {
+                        var dtText = String(n.dataFimEvento).trim();
+                        var diaFim = '', mesFim = '';
+                        
+                        // Se a data vier com traço (ex: 2026-08-25)
+                        if (dtText.includes('-')) {
+                            var pts = dtText.split('T')[0].split('-');
+                            if(pts.length >= 3) { diaFim = pts[2]; mesFim = pts[1]; }
+                        } 
+                        // Se a data vier com barra (ex: 25/08/2026)
+                        else if (dtText.includes('/')) {
+                            var pts = dtText.split(' ')[0].split('/');
+                            if(pts.length >= 2) { diaFim = pts[0]; mesFim = pts[1]; }
+                        }
+
+                        // Aplica no ecrã o que conseguiu ler
+                        if (diaFim !== '' && mesFim !== '') {
+                            htmlAg += '                <span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Até ' + diaFim + '/' + mesFim + '</span>\n';
+                        } else {
+                            htmlAg += '                <span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Agenda</span>\n';
+                        }
                     } else { 
                         htmlAg += '                <span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Agenda</span>\n'; 
                     }
