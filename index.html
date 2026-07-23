@@ -604,6 +604,9 @@
             }
         }
 
+        // ==========================================
+        // NOVAS FUNÇÕES DO MODAL DE CLIMA E EXPEDIENTE
+        // ==========================================
         function abrirModalExpediente() {
             var m = document.getElementById('modalExpediente');
             if(m){ m.classList.remove('hidden'); m.classList.add('flex'); }
@@ -614,9 +617,6 @@
             if(m){ m.classList.add('hidden'); m.classList.remove('flex'); }
         }
 
-        // ==========================================
-        // NOVAS FUNÇÕES DO MODAL DE CLIMA 
-        // ==========================================
         function abrirModalClima() {
             var m = document.getElementById('modalClima');
             if(m){ m.classList.remove('hidden'); m.classList.add('flex'); }
@@ -742,7 +742,6 @@
                 try { iniciarCarrosselAnuncios('grid-propagandas-lateral', adsLateral); } catch(e){}
             }
             
-            // BLINDAGEM MÁXIMA DE COMPONENTES: Impede Efeito Dominó!
             try { renderizarOpinioes(); } catch(e) { console.error("Erro Opinioes:", e); }
             try { renderizarAgendaSidebar(); } catch(e) { console.error("Erro Agenda:", e); }
             try { renderizarMaisLidas(); } catch(e) { console.error("Erro Mais Lidas:", e); }
@@ -750,6 +749,9 @@
             try { renderizarPlacarAoVivo(); } catch(e) { console.error("Erro Placar:", e); }
         }
 
+        // ==========================================
+        // AGENDA COM EXTRATOR DE DATAS ROBUSTO
+        // ==========================================
         function renderizarAgendaSidebar() {
             var sidebar = document.getElementById('sidebar-editorias-especiais');
             if(!sidebar) return;
@@ -787,30 +789,25 @@
                     htmlAg += '            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>\n';
                     htmlAg += '            <div class="absolute bottom-0 left-0 p-4 w-full text-white min-w-0 z-10">\n';
                     
-                    if (n.dataFimEvento && String(n.dataFimEvento).trim() !== '') {
-                        var dtText = String(n.dataFimEvento).trim();
-                        var diaFim = '', mesFim = '';
-                        
-                        // Se a data vier com traço (ex: 2026-08-25)
-                        if (dtText.includes('-')) {
-                            var pts = dtText.split('T')[0].split('-');
-                            if(pts.length >= 3) { diaFim = pts[2]; mesFim = pts[1]; }
-                        } 
-                        // Se a data vier com barra (ex: 25/08/2026)
-                        else if (dtText.includes('/')) {
-                            var pts = dtText.split(' ')[0].split('/');
-                            if(pts.length >= 2) { diaFim = pts[0]; mesFim = pts[1]; }
-                        }
+                    // --- MÁGICA DA DATA DEFINITIVA AQUI ---
+                    var txtBadge = "Agenda"; 
+                    var dataStr = (n.dataFimEvento && String(n.dataFimEvento).trim() !== '') ? String(n.dataFimEvento).trim() : (n.dataHora ? String(n.dataHora).trim() : "");
+                    
+                    if (dataStr.length > 0) {
+                        var matchTracoISO = dataStr.match(/(\d{4})-(\d{2})-(\d{2})/); // Tenta formato 2026-09-15
+                        var matchBarra = dataStr.match(/(\d{1,2})[\/\-](\d{1,2})/); // Tenta formato 15/09 ou 15-09
 
-                        // Aplica no ecrã o que conseguiu ler
-                        if (diaFim !== '' && mesFim !== '') {
-                            htmlAg += '                <span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Até ' + diaFim + '/' + mesFim + '</span>\n';
+                        if (matchTracoISO) {
+                            txtBadge = "Até " + matchTracoISO[3] + "/" + matchTracoISO[2]; // Pega Dia e Mês
+                        } else if (matchBarra) {
+                            txtBadge = "Até " + matchBarra[1].padStart(2, '0') + "/" + matchBarra[2].padStart(2, '0'); // Pega Dia e Mês
                         } else {
-                            htmlAg += '                <span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Agenda</span>\n';
+                            txtBadge = "Até " + dataStr.substring(0, 5).trim(); // Fallback seguro
                         }
-                    } else { 
-                        htmlAg += '                <span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">Agenda</span>\n'; 
                     }
+                    
+                    htmlAg += '                <span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">' + txtBadge + '</span>\n';
+                    // ------------------------------------
                     
                     htmlAg += '                <h4 class="font-serif text-sm font-bold mb-1 leading-tight break-words line-clamp-3 text-white">' + n.titulo + '</h4>\n';
                     htmlAg += '            </div>\n';
@@ -992,18 +989,12 @@
             c_in.innerHTML = html;
         }
 
-        // ===============================================
-        // MÓDULOS DE RENDERIZAÇÃO BLINDADOS (Top 10, Clima, Placar)
-        // ===============================================
-
         function renderizarMaisLidas() {
             var lista = document.getElementById('lista-mais-lidas'); 
             if (!lista) return;
             
-            // Garantir que trabalhamos apenas com matérias válidas publicadas
             var publicadas = noticiasGlobais.filter(function(n){ return isNoticiaPublicada(n); });
             
-            // Ordenar de forma decrescente pelo número de Views
             publicadas.sort(function(a, b) {
                 var vA = parseInt(a.views) || 0;
                 var vB = parseInt(b.views) || 0;
@@ -1028,6 +1019,9 @@
             lista.innerHTML = htmlFinal;
         }
 
+        // ==========================================
+        // MÓDULO CLIMA HORÁRIO (COMPLETO)
+        // ==========================================
         function obterIconeClima(wCode) {
             if (wCode <= 3) return '☀️';
             if (wCode <= 48) return '⛅';
@@ -1070,44 +1064,45 @@
             } catch(e) { atualizarDOM(); }
 
             try {
-                fetch('https://api.open-meteo.com/v1/forecast?latitude=-15.5961&longitude=-56.0967&current_weather=true&hourly=temperature_2m,relativehumidity_2m,precipitation_probability,windspeed_10m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=America/Cuiaba')
+                fetch('https://api.open-meteo.com/v1/forecast?latitude=-15.5961&longitude=-56.0967&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&hourly=temperature_2m,relativehumidity_2m,precipitation_probability,windspeed_10m,weathercode&timezone=auto')
                 .then(function(res) { return res.json(); })
                 .then(function(dadosClima) {
-                    dadosClimaGlobal = dadosClima;
+                    window.dadosClimaGlobal = dadosClima;
+                    
                     if(dadosClima.current_weather) {
-                        clima = Math.round(dadosClima.current_weather.temperature); 
+                        clima = Math.round(dadosClima.current_weather.temperature);
                         var wCode = dadosClima.current_weather.weathercode;
                         iconeClima = obterIconeClima(wCode);
-                        if (wCode <= 3) { descClima = 'Céu Limpo'; } else if (wCode <= 48) { descClima = 'Nublado'; } else if (wCode <= 67) { descClima = 'Chuva'; } else if (wCode <= 99) { descClima = 'Tempestade'; }
-                        
-                        var elTemp = document.getElementById('temp-clima'); 
-                        var elIcone = document.getElementById('icone-clima'); 
-                        var elBgIcone = document.getElementById('bg-icone-clima'); 
+                        descClima = wCode <= 3 ? 'Céu Limpo' : wCode <= 48 ? 'Nublado' : wCode <= 67 ? 'Chuva' : 'Tempestade';
+
+                        var elTemp = document.getElementById('temp-clima');
+                        var elIcone = document.getElementById('icone-clima');
+                        var elBgIcone = document.getElementById('bg-icone-clima');
                         var elDesc = document.getElementById('desc-clima');
-                        
-                        if (elTemp) elTemp.innerText = clima + '°C'; 
-                        if (elIcone) elIcone.innerText = iconeClima; 
-                        if (elBgIcone) elBgIcone.innerText = iconeClima; 
+
+                        if (elTemp) elTemp.innerText = clima + ' °C';
+                        if (elIcone) elIcone.innerText = iconeClima;
+                        if (elBgIcone) elBgIcone.innerText = iconeClima;
                         if (elDesc) elDesc.innerText = descClima;
+
+                        // Povoa modal básico do HTML (para o popup)
+                        var mChuva = document.getElementById('modal-clima-chuva');
+                        var mUmid = document.getElementById('modal-clima-umidade');
+                        var mVento = document.getElementById('modal-clima-vento');
+                        var mDescModal = document.getElementById('modal-clima-desc');
+                        var mTempModal = document.getElementById('modal-clima-temp');
+                        var mIconeModal = document.getElementById('modal-clima-icone');
                         
-                        var mChuva = document.getElementById('modal-clima-chuva'); 
-                        var mUmid = document.getElementById('modal-clima-umidade'); 
-                        var mVento = document.getElementById('modal-clima-vento'); 
-                        var mDesc = document.getElementById('modal-clima-desc'); 
-                        var mTemp = document.getElementById('modal-clima-temp'); 
-                        var mIcone = document.getElementById('modal-clima-icone');
-                        
-                        if(mDesc) mDesc.innerText = descClima; 
-                        if(mTemp) mTemp.innerText = clima; 
-                        if(mIcone) mIcone.innerText = iconeClima;
-                        
+                        if(mDescModal) mDescModal.innerText = descClima;
+                        if(mTempModal) mTempModal.innerText = clima;
+                        if(mIconeModal) mIconeModal.innerText = iconeClima;
+
                         if(dadosClima.hourly && dadosClima.hourly.precipitation_probability) {
                             if(mChuva) mChuva.innerText = dadosClima.hourly.precipitation_probability[0] + '%';
                             if(mUmid) mUmid.innerText = dadosClima.hourly.relativehumidity_2m[0] + '%';
                             if(mVento) mVento.innerText = Math.round(dadosClima.hourly.windspeed_10m[0]) + ' km/h';
                         }
 
-                        // --- MODAL PREVISÃO 7 DIAS E HORÁRIA ---
                         var mPrevisao = document.getElementById('modal-clima-previsao');
                         if (mPrevisao && dadosClima.daily) {
                             var diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -1168,9 +1163,27 @@
                             renderizarHoras(0);
                         }
                     }
-                    atualizarDOM();
-                }).catch(function(e){ console.warn("Aviso Clima:", e); atualizarDOM(); });
-            } catch(e) { atualizarDOM(); }
+                    if (typeof atualizarDOM === 'function') atualizarDOM();
+                }).catch(function(e){ 
+                    console.warn("Aviso Clima:", e); 
+                    if (typeof atualizarDOM === 'function') atualizarDOM(); 
+                });
+            } catch(e) { 
+                if (typeof atualizarDOM === 'function') atualizarDOM(); 
+            }
+        }
+
+        // ==========================================
+        // MÓDULO PLACAR (SEM TRAVA DE DATA)
+        // ==========================================
+        function traduzirTermoPlacar(termo) {
+            if(!termo) return '';
+            var t = termo.toLowerCase();
+            if(t.includes('half')) return 'Intervalo';
+            if(t.includes('final')) return 'Encerrado';
+            if(t.includes('canceled')) return 'Cancelado';
+            if(t.includes('postponed')) return 'Adiado';
+            return termo;
         }
 
         function renderizarPlacarAoVivo() {
@@ -1201,21 +1214,16 @@
                         data.events.forEach(function(jogo) {
                             if (!jogo.date) return;
 
-                            // NOVO: BLOQUEIO RIGOROSO DE DATA
-                            var hoje = new Date();
-                            var dataHojeLocalStr = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
-                            var dtJogo = new Date(jogo.date);
-                            var dataJogoLocal = dtJogo.getFullYear() + '-' + String(dtJogo.getMonth() + 1).padStart(2, '0') + '-' + String(dtJogo.getDate()).padStart(2, '0');
-                            
-                            if (dataJogoLocal !== dataHojeLocalStr) return;
+                            // Como pediu, a trava de data rigorosa foi removida.
+                            // Ele mostra simplesmente os próximos/últimos jogos da rodada atual até o limite de 4.
                             if (exibidos >= 4) return;
                             
                             var matchInfo = jogo.competitions[0];
                             var casa = matchInfo.competitors.find(function(c) { return c.homeAway === 'home'; }) || matchInfo.competitors[0];
                             var fora = matchInfo.competitors.find(function(c) { return c.homeAway === 'away'; }) || matchInfo.competitors[1];
                             
-                            var logoCasa = casa.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽'; 
-                            var logoFora = fora.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽';
+                            var logoCasa = casa.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=C'; 
+                            var logoFora = fora.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=F';
                             var isAoVivo = jogo.status.type.state === 'in'; 
                             var isEncerrado = jogo.status.type.state === 'post'; 
                             var isAgendado = jogo.status.type.state === 'pre';
@@ -1270,27 +1278,22 @@
                             exibidos++;
                         });
 
-                        // LÓGICA DO PLACAR VAZIO E MENSAGEM
-                        if (exibidos > 0) { 
-                            htmlFinal += '<h5 class="text-[10px] uppercase font-black tracking-widest text-gray-400 mt-5 mb-3 border-b border-gray-100 pb-2">' + nomeCompeticao + '</h5>\n' + matchesHtml; 
-                        } else {
-                            htmlFinal += '<div class="w-full text-center py-4 bg-white text-gray-400 text-[10px] font-bold uppercase tracking-widest border border-gray-100 rounded-sm mb-3 shadow-sm">Sem jogos hoje</div>';
+                        if (matchesHtml === '') {
+                            matchesHtml = '<div class="w-full text-center py-4 bg-white text-gray-400 text-[10px] font-bold uppercase tracking-widest border border-gray-100 rounded-sm mb-3 shadow-sm">SEM JOGOS HOJE</div>';
                         }
+                        
+                        htmlFinal += '<h5 class="text-[10px] uppercase font-black tracking-widest text-gray-400 mt-5 mb-3 border-b border-gray-100 pb-2">' + nomeCompeticao + '</h5>\n' + matchesHtml; 
                     }
                 })
                 .catch(function(e){ console.warn("Aviso Placar:", e); })
                 .finally(function() {
                     fetchesConcluidos++;
                     if(fetchesConcluidos === ligasAtivas.length) {
-                        placar.innerHTML = htmlFinal || '<div class="w-full text-center py-4 bg-white text-gray-400 text-[10px] font-bold uppercase tracking-widest border border-gray-100 rounded-sm mb-3 shadow-sm">Sem jogos hoje</div>';
+                        placar.innerHTML = htmlFinal || '<div class="text-center text-xs text-gray-400 py-4 font-bold uppercase tracking-widest">Nenhuma partida na rodada.</div>';
                     }
                 });
             });
         }
-
-        // ===============================================
-        // FIM MÓDULOS DE RENDERIZAÇÃO BLINDADOS
-        // ===============================================
 
         function pesquisarSite(e) {
             if(e) e.preventDefault();
