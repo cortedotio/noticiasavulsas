@@ -2034,21 +2034,25 @@
             var noticia = noticiasGlobais.find(function(n) { return n && String(n.id) === String(noticiaAbertaId); }); 
             if(!noticia) return;
             
-            var urlEncoded = encodeURIComponent(window.location.href); 
-            var tituloTexto = noticia.titulo;
+            var urlAtual = window.location.href; 
+            var titulo = noticia.titulo;
+            var linhaFina = noticia.linhaFina ? noticia.linhaFina : '';
             
-            if (noticia.linhaFina) {
-                tituloTexto += " - " + noticia.linhaFina;
-            }
-            
-            var textoEncoded = encodeURIComponent(tituloTexto); 
             var link = '';
             
             if(plataforma === 'whatsapp') { 
-                link = 'https://api.whatsapp.com/send?text=' + textoEncoded + '%0A%0A' + urlEncoded; 
+                // Formatação Rica para o WhatsApp (*Negrito* e _Itálico_)
+                var textoZap = "📰 *" + titulo + "*\n\n";
+                if(linhaFina) {
+                    textoZap += "_" + linhaFina + "_\n\n";
+                }
+                textoZap += "Leia a matéria completa no nosso portal: 👇\n" + urlAtual;
+                
+                link = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(textoZap); 
             }
             if(plataforma === 'x') { 
-                link = 'https://twitter.com/intent/tweet?text=' + textoEncoded + '&url=' + urlEncoded; 
+                var textoX = titulo + (linhaFina ? " - " + linhaFina : "");
+                link = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(textoX) + '&url=' + encodeURIComponent(urlAtual); 
             }
             
             window.open(link, '_blank', 'width=600,height=400');
