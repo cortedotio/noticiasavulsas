@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Instagram - Notícias Avulsas</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Merriweather:wght@700;900&display=swap" rel="stylesheet">
+    
+    <!-- Biblioteca para transformar HTML em Imagem -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyVroxyx_f70Q2KkcnfMWtt2vV8EzQRsPBhF9nNL4frnKhdhe7t-oahNoJo9SCLfAbE/exec";
+        
+        window.google = {
+            script: {
+                run: {
+                    withSuccessHandler: function(cb) { this._onSuccess = cb; return this; },
+                    withFailureHandler: function(cb) { this._onFailure = cb; return this; }
+                }
+            }
+        };
+
+        window.google.script.run.getHomeData = function() {
+            var successCb = this._onSuccess; var failureCb = this._onFailure;
+            this._onSuccess = null; this._onFailure = null;
+            fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'getHomeData' }) })
+            .then(res => res.json()).then(result => { if (successCb) successCb(result); })
+            .catch(err => { if (failureCb) failureCb(err); });
+        };
+
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['Inter'], serif: ['Merriweather'] }, colors: { jornal: { blue: '#0F172A', red: '#E11D48', dark: '#020617' } } } }
+        };
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen text-slate-800 flex flex-col">
+
+    <header class="bg-gradient-to-r from-purple-700 to-pink-600 text-white border-b border-gray-800 shadow-md">
+        <div class="max-w-[1200px] mx-auto flex justify-between items-center px-4 py-4">
+            <span class="font-black tracking-tighter text-xl uppercase flex items-center gap-2">📸 Estúdio Instagram</span>
+            <a href="admin.html" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-sm text-xs font-bold uppercase tracking-wider transition-colors">Voltar ao Admin</a>
+        </div>
+    </header>
+
+    <main class="max-w-[1200px] mx-auto py-8 px-4 w-full flex-grow grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- COLUNA ESQUERDA: LISTA DE MATÉRIAS -->
+        <div class="lg:col-span-1 bg-white border border-gray-200 shadow-sm rounded-sm p-5 flex flex-col h-[80vh]">
+            <h2 class="font-black text-sm uppercase tracking-widest text-jornal-dark mb-4 border-b pb-2">Escolha a Matéria</h2>
+            
+            <div id="loading" class="text-center py-10 text-xs font-bold text-gray-400 uppercase tracking-widest animate-pulse">A carregar notícias...</div>
+            
+            <div id="lista-noticias" class="overflow-y-auto custom-scrollbar flex-grow space-y-2 pr-2">
+                <!-- Javascript preenche aqui -->
+            </div>
+        </div>
+
+        <!-- COLUNA DIREITA: PRÉ-VISUALIZAÇÃO E LEGENDA -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <div id="aviso-inicial" class="bg-white border border-gray-200 shadow-sm rounded-sm p-10 text-center h-full flex flex-col items-center justify-center">
+                <span class="text-4xl mb-4">👈</span>
+                <h3 class="font-black text-gray-400 uppercase tracking-widest">Selecione uma matéria ao lado</h3>
+            </div>
+
+            <div id="editor-post" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                
+                <!-- QUADRADO DO INSTAGRAM -->
+                <div class="bg-white p-4 border border-gray-200 shadow-sm rounded-sm flex flex-col items-center">
+                    <h3 class="font-black text-[10px] uppercase tracking-widest text-gray-500 mb-3 w-full text-center">Pré-visualização do Post (1:1)</h3>
+                    
+                    <!-- ESTA DIV É A IMAGEM QUE VAI SER GERADA -->
+                    <div id="post-canvas" class="w-[350px] h-[350px] relative bg-jornal-dark overflow-hidden shadow-md flex-shrink-0 group">
+                        <!-- Imagem de Fundo -->
+                        <img id="post-img" crossorigin="anonymous" src="" class="absolute inset-0 w-full h-full object-cover opacity-80" />
+                        
+                        <!-- Degradê Escuro em baixo -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+                        
+                        <!-- Etiqueta Categoria (Topo) -->
+                        <div class="absolute top-4 left-4 bg-jornal-red text-white text-[10px] font-black uppercase tracking-widest px-2 py-1 shadow-sm">
+                            <span id="post-categoria">Categoria</span>
+                        </div>
+
+                        <!-- Créditos da Foto (Canto superior direito) -->
+                        <div class="absolute top-4 right-4 text-white/70 text-[8px] font-bold shadow-sm" style="text-shadow: 1px 1px 2px black;">
+                            📷 <span id="post-creditos">Créditos</span>
+                        </div>
+                        
+                        <!-- Textos (Fundo) -->
+                        <div class="absolute bottom-0 left-0 w-full p-6 text-white">
+                            <h1 id="post-titulo" class="font-serif font-black text-2xl leading-tight mb-3 drop-shadow-lg" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">Título da Matéria</h1>
+                            <div class="w-10 h-1 bg-jornal-red mb-3"></div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-black text-[9px] uppercase tracking-widest text-white/90">Notícias Avulsas</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="baixarImagem()" id="btn-baixar" class="mt-6 w-full bg-jornal-dark text-white font-black py-3 uppercase tracking-widest text-[11px] rounded-sm hover:bg-gray-800 transition-colors shadow-md flex items-center justify-center gap-2">
+                        ⬇️ Baixar Imagem
+                    </button>
+                    <p class="text-[9px] text-gray-400 mt-2 text-center text-balance leading-tight">Nota: O Google Drive por vezes bloqueia o download automático. Se a imagem sair sem foto, clique com o botão direito no quadrado acima e faça "Copiar Imagem".</p>
+                </div>
+
+                <!-- LEGENDA PRONTA A COPIAR -->
+                <div class="bg-white p-5 border border-gray-200 shadow-sm rounded-sm h-full flex flex-col">
+                    <h3 class="font-black text-[10px] uppercase tracking-widest text-gray-500 mb-3 border-b pb-2">Legenda Gerada</h3>
+                    <textarea id="post-legenda" class="w-full flex-grow p-4 bg-gray-50 border border-gray-200 text-sm font-medium text-gray-700 rounded-sm resize-none focus:outline-none focus:border-purple-400 min-h-[250px]"></textarea>
+                    
+                    <button type="button" onclick="copiarLegenda()" id="btn-copiar" class="mt-4 w-full bg-purple-600 text-white font-black py-3 uppercase tracking-widest text-[11px] rounded-sm hover:bg-purple-700 transition-colors shadow-md flex items-center justify-center gap-2">
+                        📋 Copiar Legenda
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        var noticiasGlobal = [];
+
+        document.addEventListener("DOMContentLoaded", function() {
+            carregarNoticias();
+        });
+
+        function formatarUrlImagem(url) {
+            if (!url) return '';
+            try {
+                var s = String(url).trim();
+                var m = s.match(/\/d\/([a-zA-Z0-9_-]+)/) || s.match(/id=([a-zA-Z0-9_-]+)/);
+                return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w1000' : s;
+            } catch(e) { return url; }
+        }
+
+        function removerHTML(t) { return t ? String(t).replace(/<[^>]*>?/gm, '') : ''; }
+
+        function carregarNoticias() {
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    document.getElementById('loading').classList.add('hidden');
+                    if (res && res.sucesso && res.noticias) {
+                        noticiasGlobal = res.noticias.filter(n => n.status.toLowerCase() === 'ativa');
+                        renderizarLista();
+                    }
+                }).getHomeData();
+            }
+        }
+
+        function renderizarLista() {
+            var lista = document.getElementById('lista-noticias');
+            lista.innerHTML = '';
+            
+            noticiasGlobal.forEach(function(n) {
+                var btn = document.createElement('button');
+                btn.className = "w-full text-left p-3 border border-gray-100 bg-gray-50 hover:bg-purple-50 hover:border-purple-200 rounded-sm transition-colors group";
+                btn.onclick = function() { carregarPost(n.id); };
+                
+                var dataHtml = n.dataHora ? `<span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest block mb-1">${n.dataHora.split(' ')[0]}</span>` : '';
+                var tituloHtml = `<h4 class="text-xs font-bold text-gray-800 line-clamp-2 leading-snug group-hover:text-purple-700">${n.titulo}</h4>`;
+                
+                btn.innerHTML = dataHtml + tituloHtml;
+                lista.appendChild(btn);
+            });
+        }
+
+        function carregarPost(id) {
+            var noticia = noticiasGlobal.find(n => String(n.id) === String(id));
+            if(!noticia) return;
+
+            document.getElementById('aviso-inicial').classList.add('hidden');
+            document.getElementById('editor-post').classList.remove('hidden');
+
+            // Preencher Imagem Visual
+            document.getElementById('post-img').src = formatarUrlImagem(noticia.urlImagem) || 'https://placehold.co/1080x1080/0F172A/ffffff?text=Notícias+Avulsas';
+            document.getElementById('post-titulo').innerText = noticia.titulo;
+            document.getElementById('post-categoria').innerText = noticia.categoria.split(',')[0]; // Só a primeira categoria
+            document.getElementById('post-creditos').innerText = noticia.creditosImagem ? noticia.creditosImagem : 'Divulgação';
+
+            // Gerar Legenda
+            var resumo = noticia.linhaFina ? noticia.linhaFina : removerHTML(noticia.conteudo).substring(0, 150) + "...";
+            var link = `noticiasavulsas.com.br/?noticia=${noticia.id}`;
+            var tags = `#NoticiasAvulsas #Jornalismo #${noticia.categoria.split(',')[0].replace(/\s+/g, '')} #MatoGrosso #Noticia`;
+
+            var legenda = `📰 ${noticia.titulo}\n\n${resumo}\n\n📲 Leia a matéria completa no nosso portal! Acesse o link na Bio ou copie o link:\n🔗 ${link}\n\n.\n.\n.\n${tags}`;
+            
+            document.getElementById('post-legenda').value = legenda;
+        }
+
+        function copiarLegenda() {
+            var texto = document.getElementById('post-legenda');
+            texto.select();
+            document.execCommand('copy');
+            
+            var btn = document.getElementById('btn-copiar');
+            var original = btn.innerHTML;
+            btn.innerHTML = '✅ Copiado!';
+            setTimeout(function() { btn.innerHTML = original; }, 2000);
+        }
+
+        function baixarImagem() {
+            var btn = document.getElementById('btn-baixar');
+            var original = btn.innerHTML;
+            btn.innerHTML = '⏳ A gerar...';
+            btn.disabled = true;
+
+            var element = document.getElementById('post-canvas');
+            
+            html2canvas(element, {
+                useCORS: true,
+                allowTaint: true,
+                scale: 3 // Alta resolução para o Instagram
+            }).then(function(canvas) {
+                var link = document.createElement('a');
+                link.download = 'post_instagram.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                btn.innerHTML = '✅ Sucesso!';
+                setTimeout(function() { btn.innerHTML = original; btn.disabled = false; }, 2000);
+            }).catch(function(err) {
+                alert("Ocorreu um erro ao gerar a imagem. O seu navegador bloqueou o download automático da foto do Google Drive.\n\nAlternativa: Clique com o botão direito na imagem quadrada e faça 'Guardar Imagem Como...'.");
+                btn.innerHTML = original;
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>
