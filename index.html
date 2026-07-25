@@ -221,13 +221,6 @@
                                 <div class="text-sm font-bold text-gray-800 break-words" id="nc-autor"></div>
                                 <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate" id="nc-data"></div>
                             </div>
-                            
-                            <button id="btn-curtir" onclick="curtirNoticiaAtual()" class="flex justify-center items-center gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-5 py-2.5 rounded-full transition-colors group shrink-0 w-full sm:w-auto shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" id="icone-coracao" class="h-5 w-5 text-gray-400 group-hover:text-jornal-red transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                </svg>
-                                <span id="nc-likes" class="text-sm font-black text-gray-700">0</span>
-                            </button>
                         </div>
 
                         <div class="flex flex-wrap items-center gap-2 md:gap-4 mb-8">
@@ -430,7 +423,6 @@
 
     <script>
         var IMG_FALLBACK = 'https://placehold.co/600x400/e2e8f0/475569?text=Sem+Foto';
-        var ICON_HEART = '<svg class="w-4 h-4 fill-current inline animate-pulse" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
 
         function formatarUrlImagem(url) {
             if (!url) return '';
@@ -1566,9 +1558,6 @@
             cHTML += '            <span class="truncate pr-2">\n';
             cHTML += '                ' + (n.dataHora ? n.dataHora.replace(' ', ' às ') : '') + '\n';
             cHTML += '            </span>\n';
-            cHTML += '            <span class="flex items-center gap-1 text-jornal-red shrink-0">\n';
-            cHTML += '                ' + ICON_HEART + '&nbsp;' + (n.likes || 0) + '\n';
-            cHTML += '            </span>\n';
             cHTML += '        </div>\n';
             cHTML += '    </div>\n';
             cHTML += '</article>\n';
@@ -1611,9 +1600,6 @@
             cHTML += '        <div class="mt-auto flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest w-full border-t border-gray-100 pt-4">\n';
             cHTML += '            <span>\n';
             cHTML += '                ' + (n.dataHora ? n.dataHora.replace(' ', ' às ') : '') + '\n';
-            cHTML += '            </span>\n';
-            cHTML += '            <span class="flex items-center gap-1 text-jornal-red shrink-0">\n';
-            cHTML += '                ' + ICON_HEART + '&nbsp;' + (n.likes || 0) + '\n';
             cHTML += '            </span>\n';
             cHTML += '        </div>\n';
             cHTML += '    </div>\n';
@@ -1962,32 +1948,6 @@
             });
             
             return strT;
-        }
-
-        function curtirNoticiaAtual() {
-            if(!noticiaAbertaId) return;
-            var icone = document.getElementById('icone-coracao'); 
-            
-            if (icone) { 
-                icone.classList.add('text-jornal-red', 'fill-current', 'heart-beat'); 
-                setTimeout(function() { 
-                    icone.classList.remove('heart-beat'); 
-                }, 300); 
-            }
-            
-            var spanLikes = document.getElementById('nc-likes'); 
-            if (spanLikes) { 
-                spanLikes.innerText = parseInt(spanLikes.innerText) + 1; 
-            }
-            
-            var idx = noticiasGlobais.findIndex(function(n) { return n.id === noticiaAbertaId; }); 
-            if(idx > -1) { 
-                noticiasGlobais[idx].likes += 1; 
-            }
-            
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
-                window.google.script.run.curtirNoticiaNoSheets(noticiaAbertaId); 
-            }
         }
 
         function enviarComentario(e) {
