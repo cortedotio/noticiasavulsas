@@ -3,229 +3,620 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Instagram - Notícias Avulsas</title>
+    <title>Estúdio Instagram - Notícias Avulsas</title>
     
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fontes do Google -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Merriweather:wght@700;900&display=swap" rel="stylesheet">
     
-    <!-- Biblioteca para transformar HTML em Imagem -->
+    <!-- Biblioteca para transformar HTML em Imagem de alta resolução -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
+    <!-- Configuração do Tailwind -->
     <script>
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyVroxyx_f70Q2KkcnfMWtt2vV8EzQRsPBhF9nNL4frnKhdhe7t-oahNoJo9SCLfAbE/exec";
-        
-        window.google = {
-            script: {
-                run: {
-                    withSuccessHandler: function(cb) { this._onSuccess = cb; return this; },
-                    withFailureHandler: function(cb) { this._onFailure = cb; return this; }
-                }
+        tailwind.config = {
+            theme: { 
+                extend: { 
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'], 
+                        serif: ['Merriweather', 'serif'] 
+                    }, 
+                    colors: { 
+                        jornal: { 
+                            blue: '#0F172A', 
+                            red: '#E11D48', 
+                            dark: '#020617' 
+                        } 
+                    } 
+                } 
             }
         };
-
-        window.google.script.run.getHomeData = function() {
-            var successCb = this._onSuccess; var failureCb = this._onFailure;
-            this._onSuccess = null; this._onFailure = null;
-            fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'getHomeData' }) })
-            .then(res => res.json()).then(result => { if (successCb) successCb(result); })
-            .catch(err => { if (failureCb) failureCb(err); });
-        };
-
-        tailwind.config = {
-            theme: { extend: { fontFamily: { sans: ['Inter'], serif: ['Merriweather'] }, colors: { jornal: { blue: '#0F172A', red: '#E11D48', dark: '#020617' } } } }
-        };
     </script>
-</head>
-<body class="bg-gray-100 min-h-screen text-slate-800 flex flex-col">
 
-    <header class="bg-gradient-to-r from-purple-700 to-pink-600 text-white border-b border-gray-800 shadow-md">
-        <div class="max-w-[1200px] mx-auto flex justify-between items-center px-4 py-4">
-            <span class="font-black tracking-tighter text-xl uppercase flex items-center gap-2">📸 Estúdio Instagram</span>
-            <a href="admin.html" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-sm text-xs font-bold uppercase tracking-wider transition-colors">Voltar ao Admin</a>
+    <style>
+        /* Estilos para a barra de rolagem */
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* 
+         * ÁREAS DE EXPORTAÇÃO ESCONDIDAS 
+         * Estas divs ficam fora do ecrã para serem desenhadas no tamanho real (1080p e 1920p)
+         * sem quebrar o layout do site. O html2canvas vai "fotografar" estas divs.
+         */
+        #canvas-area-export {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+            z-index: -1;
+        }
+
+        /* Template Feed: 1080 x 1080 pixels */
+        .template-feed {
+            width: 1080px;
+            height: 1080px;
+            position: relative;
+            background-color: #020617; /* jornal-dark */
+            overflow: hidden;
+            /* Borda grossa na cor definida (azul escuro do tema principal) */
+            border: 30px solid #0F172A; 
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Template Story: 1080 x 1920 pixels */
+        .template-story {
+            width: 1080px;
+            height: 1920px;
+            position: relative;
+            background-color: #020617; /* jornal-dark */
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Estilos comuns aos textos dos templates */
+        .template-bg-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
+
+        .template-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 50%, transparent 100%);
+            z-index: 2;
+        }
+
+        .template-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 80px;
+            z-index: 3;
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .template-badge {
+            display: inline-block;
+            background-color: #E11D48; /* jornal-red */
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 12px 24px;
+            font-size: 24px;
+            margin-bottom: 30px;
+            align-self: flex-start;
+        }
+
+        .template-title {
+            font-family: 'Merriweather', serif;
+            font-weight: 900;
+            color: white;
+            line-height: 1.2;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.8);
+            margin-bottom: 20px;
+        }
+
+        .template-title.feed { font-size: 64px; }
+        .template-title.story { font-size: 80px; }
+
+        .template-summary {
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 32px;
+            color: #E2E8F0;
+            line-height: 1.5;
+            text-shadow: 1px 1px 5px rgba(0,0,0,0.8);
+            margin-bottom: 40px;
+        }
+
+        .template-footer {
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            font-size: 24px;
+            color: rgba(255,255,255,0.8);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .template-footer::before {
+            content: '';
+            display: inline-block;
+            width: 60px;
+            height: 6px;
+            background-color: #E11D48;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen text-slate-800 flex flex-col font-sans relative">
+
+    <!-- Cabeçalho Principal -->
+    <header class="bg-gradient-to-r from-purple-700 to-pink-600 text-white border-b border-gray-800 shadow-md sticky top-0 z-40">
+        <div class="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-center px-6 py-5 gap-4">
+            <div class="flex items-center gap-3">
+                <span class="text-3xl">📸</span>
+                <div>
+                    <h1 class="font-black tracking-tighter text-2xl uppercase leading-none">Estúdio IG</h1>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-pink-200">Gerador de Artes para Instagram</p>
+                </div>
+            </div>
+            
+            <a href="admin.html" class="bg-white text-purple-700 hover:bg-gray-100 px-6 py-2.5 rounded-sm text-xs font-black uppercase tracking-widest transition-colors shadow-sm flex items-center gap-2">
+                <span>&larr;</span> Voltar ao Painel
+            </a>
         </div>
     </header>
 
-    <main class="max-w-[1200px] mx-auto py-8 px-4 w-full flex-grow grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Ecrã de Carregamento -->
+    <div id="loading-overlay" class="fixed inset-0 z-50 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center transition-opacity duration-300">
+        <div class="w-16 h-16 border-4 border-gray-200 border-t-purple-600 rounded-full animate-spin mb-4"></div>
+        <p class="text-sm font-black uppercase tracking-widest text-purple-700 animate-pulse">A carregar banco de matérias...</p>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <main class="max-w-[1400px] mx-auto py-8 px-6 w-full flex-grow flex flex-col">
         
-        <!-- COLUNA ESQUERDA: LISTA DE MATÉRIAS -->
-        <div class="lg:col-span-1 bg-white border border-gray-200 shadow-sm rounded-sm p-5 flex flex-col h-[80vh]">
-            <h2 class="font-black text-sm uppercase tracking-widest text-jornal-dark mb-4 border-b pb-2">Escolha a Matéria</h2>
+        <!-- Barra de Filtros e Pesquisa -->
+        <div class="bg-white border border-gray-200 shadow-sm rounded-sm p-5 mb-8 flex flex-col md:flex-row gap-4 items-end">
             
-            <div id="loading" class="text-center py-10 text-xs font-bold text-gray-400 uppercase tracking-widest animate-pulse">A carregar notícias...</div>
+            <div class="w-full md:w-1/3">
+                <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Pesquisar Matéria</label>
+                <input type="text" id="filtro-pesquisa" onkeyup="aplicarFiltros()" placeholder="Digite título ou resumo..." class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium text-gray-700 rounded-sm" />
+            </div>
+
+            <div class="w-full md:w-1/4">
+                <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Filtrar por Editoria</label>
+                <select id="filtro-editoria" onchange="aplicarFiltros()" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-bold text-gray-700 rounded-sm">
+                    <option value="Todas">Todas as Editorias</option>
+                    <!-- As opções serão preenchidas via JavaScript -->
+                </select>
+            </div>
+
+            <div class="w-full md:w-auto">
+                <button type="button" onclick="aplicarFiltros()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-black px-8 py-3 uppercase tracking-widest text-xs rounded-sm transition-colors shadow-sm">
+                    Filtrar
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Tabela de Notícias (4 Colunas) -->
+        <div class="bg-white shadow-sm border border-gray-200 rounded-sm overflow-hidden flex-grow flex flex-col">
+            <div class="overflow-x-auto custom-scrollbar flex-grow">
+                <table class="w-full text-left text-sm whitespace-nowrap md:whitespace-normal">
+                    <thead class="bg-gray-100 border-b border-gray-300 text-[10px] uppercase tracking-widest text-gray-500">
+                        <tr>
+                            <th class="p-4 w-[15%]">Editoria</th>
+                            <th class="p-4 w-[50%]">Título da Matéria</th>
+                            <th class="p-4 w-[17.5%] text-center">Exportar Feed (1:1)</th>
+                            <th class="p-4 w-[17.5%] text-center">Exportar Story (9:16)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-noticias" class="divide-y divide-gray-200">
+                        <!-- Linhas da tabela serão geradas aqui -->
+                    </tbody>
+                </table>
+            </div>
             
-            <div id="lista-noticias" class="overflow-y-auto custom-scrollbar flex-grow space-y-2 pr-2">
-                <!-- Javascript preenche aqui -->
+            <div id="mensagem-vazia" class="hidden p-10 text-center flex-grow flex flex-col items-center justify-center">
+                <span class="text-4xl mb-3">📭</span>
+                <p class="text-sm font-bold text-gray-400 uppercase tracking-widest">Nenhuma matéria encontrada com estes filtros.</p>
             </div>
         </div>
 
-        <!-- COLUNA DIREITA: PRÉ-VISUALIZAÇÃO E LEGENDA -->
-        <div class="lg:col-span-2 space-y-6">
-            
-            <div id="aviso-inicial" class="bg-white border border-gray-200 shadow-sm rounded-sm p-10 text-center h-full flex flex-col items-center justify-center">
-                <span class="text-4xl mb-4">👈</span>
-                <h3 class="font-black text-gray-400 uppercase tracking-widest">Selecione uma matéria ao lado</h3>
-            </div>
-
-            <div id="editor-post" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                
-                <!-- QUADRADO DO INSTAGRAM -->
-                <div class="bg-white p-4 border border-gray-200 shadow-sm rounded-sm flex flex-col items-center">
-                    <h3 class="font-black text-[10px] uppercase tracking-widest text-gray-500 mb-3 w-full text-center">Pré-visualização do Post (1:1)</h3>
-                    
-                    <!-- ESTA DIV É A IMAGEM QUE VAI SER GERADA -->
-                    <div id="post-canvas" class="w-[350px] h-[350px] relative bg-jornal-dark overflow-hidden shadow-md flex-shrink-0 group">
-                        <!-- Imagem de Fundo -->
-                        <img id="post-img" crossorigin="anonymous" src="" class="absolute inset-0 w-full h-full object-cover opacity-80" />
-                        
-                        <!-- Degradê Escuro em baixo -->
-                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
-                        
-                        <!-- Etiqueta Categoria (Topo) -->
-                        <div class="absolute top-4 left-4 bg-jornal-red text-white text-[10px] font-black uppercase tracking-widest px-2 py-1 shadow-sm">
-                            <span id="post-categoria">Categoria</span>
-                        </div>
-
-                        <!-- Créditos da Foto (Canto superior direito) -->
-                        <div class="absolute top-4 right-4 text-white/70 text-[8px] font-bold shadow-sm" style="text-shadow: 1px 1px 2px black;">
-                            📷 <span id="post-creditos">Créditos</span>
-                        </div>
-                        
-                        <!-- Textos (Fundo) -->
-                        <div class="absolute bottom-0 left-0 w-full p-6 text-white">
-                            <h1 id="post-titulo" class="font-serif font-black text-2xl leading-tight mb-3 drop-shadow-lg" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">Título da Matéria</h1>
-                            <div class="w-10 h-1 bg-jornal-red mb-3"></div>
-                            <div class="flex items-center gap-2">
-                                <span class="font-black text-[9px] uppercase tracking-widest text-white/90">Notícias Avulsas</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button type="button" onclick="baixarImagem()" id="btn-baixar" class="mt-6 w-full bg-jornal-dark text-white font-black py-3 uppercase tracking-widest text-[11px] rounded-sm hover:bg-gray-800 transition-colors shadow-md flex items-center justify-center gap-2">
-                        ⬇️ Baixar Imagem
-                    </button>
-                    <p class="text-[9px] text-gray-400 mt-2 text-center text-balance leading-tight">Nota: O Google Drive por vezes bloqueia o download automático. Se a imagem sair sem foto, clique com o botão direito no quadrado acima e faça "Copiar Imagem".</p>
-                </div>
-
-                <!-- LEGENDA PRONTA A COPIAR -->
-                <div class="bg-white p-5 border border-gray-200 shadow-sm rounded-sm h-full flex flex-col">
-                    <h3 class="font-black text-[10px] uppercase tracking-widest text-gray-500 mb-3 border-b pb-2">Legenda Gerada</h3>
-                    <textarea id="post-legenda" class="w-full flex-grow p-4 bg-gray-50 border border-gray-200 text-sm font-medium text-gray-700 rounded-sm resize-none focus:outline-none focus:border-purple-400 min-h-[250px]"></textarea>
-                    
-                    <button type="button" onclick="copiarLegenda()" id="btn-copiar" class="mt-4 w-full bg-purple-600 text-white font-black py-3 uppercase tracking-widest text-[11px] rounded-sm hover:bg-purple-700 transition-colors shadow-md flex items-center justify-center gap-2">
-                        📋 Copiar Legenda
-                    </button>
-                </div>
-
-            </div>
-        </div>
     </main>
 
+    <!-- MODAL DE PRÉ-VISUALIZAÇÃO (Mostra a imagem gerada) -->
+    <div id="modal-preview" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
+        <!-- Fundo escuro com blur -->
+        <div class="absolute inset-0 bg-jornal-dark/90 backdrop-blur-md" onclick="fecharModalPreview()"></div>
+        
+        <!-- Janela do Modal -->
+        <div class="bg-white w-full max-w-4xl max-h-[90vh] rounded-sm shadow-2xl relative z-10 flex flex-col border-t-4 border-purple-600 overflow-hidden">
+            
+            <!-- Cabeçalho do Modal -->
+            <div class="flex justify-between items-center p-5 border-b border-gray-200 bg-gray-50">
+                <h2 class="font-sans text-lg font-black uppercase text-jornal-dark tracking-tighter" id="modal-titulo-tipo">Pré-visualização</h2>
+                <button type="button" onclick="fecharModalPreview()" class="text-gray-400 hover:text-red-600 transition-colors text-2xl font-bold">&times;</button>
+            </div>
+            
+            <!-- Corpo do Modal -->
+            <div class="flex flex-col md:flex-row flex-grow overflow-hidden">
+                
+                <!-- Lado Esquerdo: A Imagem Gerada (Preview) -->
+                <div class="w-full md:w-1/2 p-6 bg-gray-200 flex items-center justify-center overflow-y-auto custom-scrollbar relative border-r border-gray-300">
+                    
+                    <!-- Loading da Imagem -->
+                    <div id="preview-loading" class="absolute inset-0 bg-white/80 flex flex-col items-center justify-center z-20">
+                        <div class="w-10 h-10 border-4 border-gray-300 border-t-purple-600 rounded-full animate-spin mb-3"></div>
+                        <p class="text-xs font-black uppercase tracking-widest text-purple-700">A processar imagem de alta resolução...</p>
+                    </div>
+
+                    <!-- Aqui entra a imagem exportada -->
+                    <img id="imagem-resultado" src="" alt="Preview" class="max-w-full max-h-full object-contain shadow-lg hidden rounded-sm" />
+                </div>
+                
+                <!-- Lado Direito: Opções de Download e Legenda -->
+                <div class="w-full md:w-1/2 p-6 flex flex-col bg-white overflow-y-auto custom-scrollbar">
+                    
+                    <div class="mb-6">
+                        <button type="button" id="btn-baixar-imagem" class="w-full bg-jornal-dark text-white font-black py-4 uppercase tracking-widest text-xs rounded-sm hover:bg-gray-800 transition-colors shadow-md flex items-center justify-center gap-2">
+                            <span>⬇️</span> Baixar Imagem (PNG)
+                        </button>
+                        <p class="text-[9px] text-gray-400 mt-2 text-center leading-tight font-medium">A imagem é baixada em alta resolução, otimizada para o Instagram.</p>
+                    </div>
+
+                    <div class="flex-grow flex flex-col">
+                        <h3 class="font-black text-[10px] uppercase tracking-widest text-gray-500 mb-2">Legenda Pronta para o Instagram</h3>
+                        <textarea id="texto-legenda" readonly class="w-full flex-grow p-4 bg-gray-50 border border-gray-200 text-xs font-medium text-gray-700 rounded-sm resize-none focus:outline-none custom-scrollbar min-h-[150px]"></textarea>
+                        
+                        <button type="button" id="btn-copiar-legenda" onclick="copiarLegenda()" class="mt-4 w-full bg-purple-600 text-white font-black py-3 uppercase tracking-widest text-[10px] rounded-sm hover:bg-purple-700 transition-colors shadow-md flex items-center justify-center gap-2">
+                            <span>📋</span> Copiar Legenda
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- 
+    ========================================================================
+    ÁREA ESCONDIDA: TEMPLATES REAIS (Estes elementos serão fotografados)
+    ========================================================================
+    -->
+    <div id="canvas-area-export">
+        
+        <!-- Template Feed (1:1) -->
+        <div id="template-feed" class="template-feed">
+            <img id="feed-img" class="template-bg-image" crossorigin="anonymous" src="" />
+            <div class="template-overlay"></div>
+            <div class="template-content">
+                <span id="feed-categoria" class="template-badge">Editoria</span>
+                <h1 id="feed-titulo" class="template-title feed">Manchete da Notícia Aqui</h1>
+                <p id="feed-resumo" class="template-summary">Linha fina ou resumo da notícia aparecerá neste local para atrair o leitor.</p>
+                <div class="template-footer">Notícias Avulsas</div>
+            </div>
+        </div>
+
+        <!-- Template Story (9:16) -->
+        <div id="template-story" class="template-story">
+            <img id="story-img" class="template-bg-image" crossorigin="anonymous" src="" />
+            <div class="template-overlay" style="height: 50%;"></div>
+            <div class="template-content">
+                <span id="story-categoria" class="template-badge">Editoria</span>
+                <!-- O Story só tem título, não tem resumo -->
+                <h1 id="story-titulo" class="template-title story" style="margin-bottom: 40px;">Manchete da Notícia Aqui</h1>
+                <div class="template-footer">Arraste para ler</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT GLOBAL DO ESTÚDIO IG -->
     <script>
+        // ==========================================
+        // ATENÇÃO ULYSSES: COLE O SEU LINK DO GOOGLE AQUI!
+        // ==========================================
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyVroxyx_f70Q2KkcnfMWtt2vV8EzQRsPBhF9nNL4frnKhdhe7t-oahNoJo9SCLfAbE/exec";
+        
         var noticiasGlobal = [];
+        var categoriasGlobal = [];
+        var urlImagemBase64 = null; // Armazena a imagem gerada para download
 
         document.addEventListener("DOMContentLoaded", function() {
-            carregarNoticias();
+            carregarDadosServidor();
         });
 
-        function formatarUrlImagem(url) {
+        // ------------------------------------------------------------------------
+        // 1. CARREGAR DADOS DO GOOGLE APPS SCRIPT
+        // ------------------------------------------------------------------------
+        function carregarDadosServidor() {
+            fetch(GAS_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'getHomeData', args: [] })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(resultado) {
+                // Remove a tela de loading
+                document.getElementById('loading-overlay').classList.add('hidden');
+                
+                var data = typeof resultado === 'string' ? JSON.parse(resultado) : resultado;
+                
+                if (data && data.sucesso && data.noticias) {
+                    // Filtramos apenas as publicadas (Ativa) e as agendadas (Agendada)
+                    noticiasGlobal = data.noticias.filter(function(n) {
+                        var st = String(n.status).toLowerCase();
+                        return st === 'ativa' || st === 'agendada';
+                    });
+                    
+                    if(data.categorias) {
+                        categoriasGlobal = data.categorias;
+                    }
+                    
+                    preencherFiltroCategorias();
+                    aplicarFiltros(); // Inicializa a tabela
+                } else {
+                    alert("Erro ao ler as matérias da base de dados.");
+                }
+            })
+            .catch(function(err) {
+                document.getElementById('loading-overlay').classList.add('hidden');
+                alert("Falha na comunicação com o servidor.");
+                console.error(err);
+            });
+        }
+
+        // ------------------------------------------------------------------------
+        // 2. FUNÇÕES DE INTERFACE (FILTROS E TABELA)
+        // ------------------------------------------------------------------------
+        function preencherFiltroCategorias() {
+            var select = document.getElementById('filtro-editoria');
+            categoriasGlobal.forEach(function(cat) {
+                var option = document.createElement('option');
+                option.value = cat;
+                option.text = cat;
+                select.appendChild(option);
+            });
+        }
+
+        function aplicarFiltros() {
+            var termoPesquisa = document.getElementById('filtro-pesquisa').value.toLowerCase().trim();
+            var categoriaSelecionada = document.getElementById('filtro-editoria').value;
+            
+            var noticiasFiltradas = noticiasGlobal.filter(function(n) {
+                var matchTexto = true;
+                if (termoPesquisa !== "") {
+                    var textoBusca = (n.titulo + " " + n.linhaFina + " " + n.categoria).toLowerCase();
+                    matchTexto = textoBusca.indexOf(termoPesquisa) !== -1;
+                }
+                
+                var matchCategoria = true;
+                if (categoriaSelecionada !== "Todas") {
+                    matchCategoria = String(n.categoria).toLowerCase().indexOf(categoriaSelecionada.toLowerCase()) !== -1;
+                }
+                
+                return matchTexto && matchCategoria;
+            });
+            
+            renderizarTabela(noticiasFiltradas);
+        }
+
+        function renderizarTabela(noticias) {
+            var tbody = document.getElementById('tabela-noticias');
+            var msgVazia = document.getElementById('mensagem-vazia');
+            
+            tbody.innerHTML = '';
+            
+            if (noticias.length === 0) {
+                tbody.parentElement.classList.add('hidden');
+                msgVazia.classList.remove('hidden');
+                return;
+            }
+            
+            tbody.parentElement.classList.remove('hidden');
+            msgVazia.classList.add('hidden');
+            
+            noticias.forEach(function(n) {
+                var isAgendada = String(n.status).toLowerCase() === 'agendada';
+                var badgeAgendada = isAgendada ? '<span class="ml-2 bg-amber-100 text-amber-700 border border-amber-300 text-[9px] px-2 py-0.5 rounded-sm uppercase tracking-widest font-black shrink-0">Agendada</span>' : '';
+                
+                var tr = document.createElement('tr');
+                tr.className = "hover:bg-purple-50 transition-colors border-b border-gray-100";
+                
+                tr.innerHTML = `
+                    <td class="p-4 align-top">
+                        <span class="bg-gray-200 text-gray-700 px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest font-black whitespace-normal break-words inline-block">
+                            ${n.categoria || 'Geral'}
+                        </span>
+                    </td>
+                    <td class="p-4 align-top whitespace-normal">
+                        <div class="flex items-start gap-2">
+                            <h4 class="text-sm font-bold text-gray-800 leading-snug line-clamp-3 break-words">${n.titulo}</h4>
+                            ${badgeAgendada}
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1 italic line-clamp-2 break-words">${n.linhaFina || 'Sem resumo disponível.'}</p>
+                    </td>
+                    <td class="p-4 align-middle text-center">
+                        <button type="button" onclick="iniciarExportacao('${n.id}', 'feed')" class="bg-purple-100 hover:bg-purple-600 text-purple-700 hover:text-white border border-purple-200 hover:border-purple-600 px-4 py-2 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all shadow-sm w-full md:w-auto">
+                            Gerar Feed
+                        </button>
+                    </td>
+                    <td class="p-4 align-middle text-center">
+                        <button type="button" onclick="iniciarExportacao('${n.id}', 'story')" class="bg-pink-100 hover:bg-pink-600 text-pink-700 hover:text-white border border-pink-200 hover:border-pink-600 px-4 py-2 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all shadow-sm w-full md:w-auto">
+                            Gerar Story
+                        </button>
+                    </td>
+                `;
+                
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ------------------------------------------------------------------------
+        // 3. LÓGICA DE EXPORTAÇÃO E CANVAS
+        // ------------------------------------------------------------------------
+
+        // Função auxiliar para forçar imagem do Google Drive a abrir no Canvas
+        function formatarUrlImagemGoogle(url) {
             if (!url) return '';
             try {
                 var s = String(url).trim();
                 var m = s.match(/\/d\/([a-zA-Z0-9_-]+)/) || s.match(/id=([a-zA-Z0-9_-]+)/);
-                return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w1000' : s;
+                // Usamos o visualizador direto para evitar CORS issues no html2canvas
+                return m ? 'https://lh3.googleusercontent.com/d/' + m[1] : s;
             } catch(e) { return url; }
         }
 
-        function removerHTML(t) { return t ? String(t).replace(/<[^>]*>?/gm, '') : ''; }
-
-        function carregarNoticias() {
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.withSuccessHandler(function(res) {
-                    document.getElementById('loading').classList.add('hidden');
-                    if (res && res.sucesso && res.noticias) {
-                        noticiasGlobal = res.noticias.filter(n => n.status.toLowerCase() === 'ativa');
-                        renderizarLista();
-                    }
-                }).getHomeData();
-            }
+        // Função que tira o HTML puro das notícias
+        function removerHTML(t) { 
+            return t ? String(t).replace(/<[^>]*>?/gm, '') : ''; 
         }
 
-        function renderizarLista() {
-            var lista = document.getElementById('lista-noticias');
-            lista.innerHTML = '';
+        function iniciarExportacao(idNoticia, tipo) {
+            var noticia = noticiasGlobal.find(function(n) { return String(n.id) === String(idNoticia); });
+            if (!noticia) return;
+
+            // 1. Abrir Modal de Loading
+            abrirModalPreview(tipo);
+
+            // 2. Preencher o Legenda Automática
+            var resumoTexto = noticia.linhaFina ? noticia.linhaFina : removerHTML(noticia.conteudo).substring(0, 150) + "...";
+            var linkDireto = `noticiasavulsas.com.br/?noticia=${noticia.id}`;
+            var catPrincipal = String(noticia.categoria).split(',')[0].trim();
+            var tags = `#NoticiasAvulsas #Jornalismo #${catPrincipal.replace(/\s+/g, '')} #MatoGrosso #Informacao`;
             
-            noticiasGlobal.forEach(function(n) {
-                var btn = document.createElement('button');
-                btn.className = "w-full text-left p-3 border border-gray-100 bg-gray-50 hover:bg-purple-50 hover:border-purple-200 rounded-sm transition-colors group";
-                btn.onclick = function() { carregarPost(n.id); };
-                
-                var dataHtml = n.dataHora ? `<span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest block mb-1">${n.dataHora.split(' ')[0]}</span>` : '';
-                var tituloHtml = `<h4 class="text-xs font-bold text-gray-800 line-clamp-2 leading-snug group-hover:text-purple-700">${n.titulo}</h4>`;
-                
-                btn.innerHTML = dataHtml + tituloHtml;
-                lista.appendChild(btn);
-            });
+            var legendaGerada = `📰 ${noticia.titulo}\n\n${resumoTexto}\n\n📲 Leia a matéria completa no nosso portal! Acesse o link na Bio ou copie o endereço abaixo:\n🔗 ${linkDireto}\n\n.\n.\n.\n${tags}`;
+            document.getElementById('texto-legenda').value = legendaGerada;
+
+            // 3. Preparar o Template Escondido
+            var imagemOriginal = formatarUrlImagemGoogle(noticia.urlImagem) || 'https://placehold.co/1080x1080/0F172A/ffffff?text=Notícias+Avulsas';
+            
+            // Garantir que carregamos a imagem num objeto Image antes para contornar problemas de CORS
+            var proxyImg = new Image();
+            proxyImg.crossOrigin = "anonymous";
+            proxyImg.src = imagemOriginal;
+            
+            proxyImg.onload = function() {
+                var targetElement;
+
+                if (tipo === 'feed') {
+                    targetElement = document.getElementById('template-feed');
+                    document.getElementById('feed-img').src = proxyImg.src;
+                    document.getElementById('feed-categoria').innerText = catPrincipal;
+                    document.getElementById('feed-titulo').innerText = noticia.titulo;
+                    document.getElementById('feed-resumo').innerText = resumoTexto;
+                } else if (tipo === 'story') {
+                    targetElement = document.getElementById('template-story');
+                    document.getElementById('story-img').src = proxyImg.src;
+                    document.getElementById('story-categoria').innerText = catPrincipal;
+                    document.getElementById('story-titulo').innerText = noticia.titulo;
+                }
+
+                // 4. Transformar HTML em Imagem com Html2Canvas
+                // Timeout ligeiro para garantir que o CSS do template renderizou a fonte
+                setTimeout(function() {
+                    html2canvas(targetElement, {
+                        scale: 1, // Mantém a resolução 1:1 original das divs (1080px)
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: null, // Transparente para manter as bordas corretas
+                        logging: false
+                    }).then(function(canvas) {
+                        try {
+                            urlImagemBase64 = canvas.toDataURL("image/jpeg", 0.9);
+                            
+                            // Mostrar no Modal
+                            document.getElementById('preview-loading').classList.add('hidden');
+                            var imgResult = document.getElementById('imagem-resultado');
+                            imgResult.src = urlImagemBase64;
+                            imgResult.classList.remove('hidden');
+                            
+                            // Configurar botão de Download
+                            var btnBaixar = document.getElementById('btn-baixar-imagem');
+                            btnBaixar.onclick = function() {
+                                var link = document.createElement('a');
+                                link.download = 'NoticiasAvulsas_' + tipo + '_' + noticia.id + '.jpg';
+                                link.href = urlImagemBase64;
+                                link.click();
+                            };
+
+                        } catch(e) {
+                            alert("Ocorreu um erro de segurança de imagem (CORS). A imagem da base de dados bloqueou a extração. Tente usar uma imagem carregada do seu computador.");
+                            fecharModalPreview();
+                        }
+                    });
+                }, 500);
+            };
+
+            proxyImg.onerror = function() {
+                alert("Erro ao carregar a imagem original para o ecrã de exportação. Verifique se o link da foto é válido.");
+                fecharModalPreview();
+            };
         }
 
-        function carregarPost(id) {
-            var noticia = noticiasGlobal.find(n => String(n.id) === String(id));
-            if(!noticia) return;
-
-            document.getElementById('aviso-inicial').classList.add('hidden');
-            document.getElementById('editor-post').classList.remove('hidden');
-
-            // Preencher Imagem Visual
-            document.getElementById('post-img').src = formatarUrlImagem(noticia.urlImagem) || 'https://placehold.co/1080x1080/0F172A/ffffff?text=Notícias+Avulsas';
-            document.getElementById('post-titulo').innerText = noticia.titulo;
-            document.getElementById('post-categoria').innerText = noticia.categoria.split(',')[0]; // Só a primeira categoria
-            document.getElementById('post-creditos').innerText = noticia.creditosImagem ? noticia.creditosImagem : 'Divulgação';
-
-            // Gerar Legenda
-            var resumo = noticia.linhaFina ? noticia.linhaFina : removerHTML(noticia.conteudo).substring(0, 150) + "...";
-            var link = `noticiasavulsas.com.br/?noticia=${noticia.id}`;
-            var tags = `#NoticiasAvulsas #Jornalismo #${noticia.categoria.split(',')[0].replace(/\s+/g, '')} #MatoGrosso #Noticia`;
-
-            var legenda = `📰 ${noticia.titulo}\n\n${resumo}\n\n📲 Leia a matéria completa no nosso portal! Acesse o link na Bio ou copie o link:\n🔗 ${link}\n\n.\n.\n.\n${tags}`;
+        // ------------------------------------------------------------------------
+        // 4. CONTROLO DO MODAL E CÓPIA
+        // ------------------------------------------------------------------------
+        function abrirModalPreview(tipo) {
+            var modal = document.getElementById('modal-preview');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
             
-            document.getElementById('post-legenda').value = legenda;
+            document.getElementById('modal-titulo-tipo').innerText = tipo === 'feed' ? '🎨 Arte para o Feed (1:1)' : '📱 Arte para o Story (9:16)';
+            
+            // Resetar estados
+            document.getElementById('preview-loading').classList.remove('hidden');
+            document.getElementById('imagem-resultado').classList.add('hidden');
+            document.getElementById('imagem-resultado').src = '';
+            urlImagemBase64 = null;
+        }
+
+        function fecharModalPreview() {
+            var modal = document.getElementById('modal-preview');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
 
         function copiarLegenda() {
-            var texto = document.getElementById('post-legenda');
-            texto.select();
+            var textarea = document.getElementById('texto-legenda');
+            textarea.select();
             document.execCommand('copy');
             
-            var btn = document.getElementById('btn-copiar');
-            var original = btn.innerHTML;
-            btn.innerHTML = '✅ Copiado!';
-            setTimeout(function() { btn.innerHTML = original; }, 2000);
-        }
-
-        function baixarImagem() {
-            var btn = document.getElementById('btn-baixar');
-            var original = btn.innerHTML;
-            btn.innerHTML = '⏳ A gerar...';
-            btn.disabled = true;
-
-            var element = document.getElementById('post-canvas');
+            var btn = document.getElementById('btn-copiar-legenda');
+            var originalHtml = btn.innerHTML;
             
-            html2canvas(element, {
-                useCORS: true,
-                allowTaint: true,
-                scale: 3 // Alta resolução para o Instagram
-            }).then(function(canvas) {
-                var link = document.createElement('a');
-                link.download = 'post_instagram.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                
-                btn.innerHTML = '✅ Sucesso!';
-                setTimeout(function() { btn.innerHTML = original; btn.disabled = false; }, 2000);
-            }).catch(function(err) {
-                alert("Ocorreu um erro ao gerar a imagem. O seu navegador bloqueou o download automático da foto do Google Drive.\n\nAlternativa: Clique com o botão direito na imagem quadrada e faça 'Guardar Imagem Como...'.");
-                btn.innerHTML = original;
-                btn.disabled = false;
-            });
+            btn.innerHTML = '<span>✅</span> Copiado com Sucesso!';
+            btn.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+            btn.classList.add('bg-green-600', 'hover:bg-green-700');
+            
+            setTimeout(function() {
+                btn.innerHTML = originalHtml;
+                btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                btn.classList.add('bg-purple-600', 'hover:bg-purple-700');
+            }, 2500);
         }
     </script>
 </body>
