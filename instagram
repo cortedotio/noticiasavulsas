@@ -3,16 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estúdio Instagram - Notícias Avulsas</title>
+    <title>Estúdio Instagram - Painel Admin</title>
     
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fontes do Google -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
     
-    <!-- Biblioteca HTML2Canvas para transformar o HTML numa imagem JPG/PNG -->
+    <!-- Biblioteca HTML2Canvas para gerar o JPG -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
+    <!-- Configuração de Cores para manter o padrão do Painel Admin -->
     <script>
         tailwind.config = {
             theme: { 
@@ -22,7 +26,11 @@
                         serif: ['Merriweather', 'serif'] 
                     }, 
                     colors: { 
-                        jornal: { blue: '#0F172A', red: '#E11D48', dark: '#020617' } 
+                        jornal: { 
+                            blue: '#0F172A', 
+                            red: '#E11D48', 
+                            dark: '#020617' 
+                        } 
                     } 
                 } 
             }
@@ -30,12 +38,30 @@
     </script>
 
     <style>
-        body { background-color: #f1f2f5; color: #111111; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        body { 
+            background-color: #f1f2f5; 
+            color: #111111; 
+        }
         
-        /* ÁREA DE EXPORTAÇÃO ESCONDIDA (Fora da tela, processada pelo html2canvas) */
+        .custom-scrollbar::-webkit-scrollbar { 
+            width: 8px; 
+            height: 8px; 
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track { 
+            background: #f1f1f1; 
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb { 
+            background: #cbd5e1; 
+            border-radius: 4px; 
+        }
+        
+        /* ========================================================
+           ÁREA DE EXPORTAÇÃO ESCONDIDA
+           Estes elementos ficam fora da tela e são "fotografados"
+           pelo html2canvas para gerar as imagens finais.
+           ======================================================== */
         #canvas-area-export {
             position: absolute;
             top: -9999px;
@@ -43,20 +69,20 @@
             z-index: -1;
         }
 
-        /* Template Feed: 1080 x 1080 pixels (Quadrado perfeito) */
+        /* 1. Template Feed (Quadrado 1080x1080) */
         .template-feed {
             width: 1080px;
             height: 1080px;
             position: relative;
             background-color: #020617;
             overflow: hidden;
-            border: 25px solid #0F172A; /* Borda na cor principal do design */
+            border: 30px solid #0F172A; /* Borda na cor principal exigida */
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
         }
 
-        /* Template Story: 1080 x 1920 pixels (Tela inteira do telemóvel) */
+        /* 2. Template Story (Vertical 1080x1920) */
         .template-story {
             width: 1080px;
             height: 1920px;
@@ -77,13 +103,14 @@
             z-index: 1;
         }
 
+        /* Degradê para o texto ficar legível em cima da foto */
         .template-overlay {
             position: absolute;
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 70%;
-            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 40%, transparent 100%);
+            height: 80%;
+            background: linear-gradient(to top, rgba(2,6,23,1) 0%, rgba(2,6,23,0.8) 40%, transparent 100%);
             z-index: 2;
         }
 
@@ -107,52 +134,62 @@
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 0.1em;
-            padding: 12px 24px;
-            font-size: 24px;
+            padding: 16px 28px;
+            font-size: 26px;
             margin-bottom: 30px;
             align-self: flex-start;
+            border-radius: 4px;
         }
 
         .template-title {
             font-family: 'Merriweather', serif;
             font-weight: 900;
             color: white;
-            line-height: 1.2;
+            line-height: 1.25;
             text-shadow: 2px 2px 10px rgba(0,0,0,0.9);
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
-        .template-title.feed { font-size: 64px; }
-        .template-title.story { font-size: 80px; margin-bottom: 60px; }
+        
+        .template-title.feed { 
+            font-size: 60px; 
+        }
+        
+        .template-title.story { 
+            font-size: 80px; 
+            margin-bottom: 80px; /* Story tem mais margem pois não tem resumo */
+        }
 
+        /* Resumo da Matéria (Apenas para o Feed) */
         .template-summary {
             font-family: 'Inter', sans-serif;
             font-weight: 500;
             font-size: 32px;
             color: #E2E8F0;
-            line-height: 1.5;
-            text-shadow: 1px 1px 5px rgba(0,0,0,0.9);
+            line-height: 1.6;
             margin-bottom: 40px;
             display: -webkit-box;
             -webkit-line-clamp: 4;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            text-shadow: 1px 1px 5px rgba(0,0,0,0.9);
         }
 
         .template-footer {
             font-family: 'Inter', sans-serif;
             font-weight: 900;
-            font-size: 24px;
-            color: rgba(255,255,255,0.8);
+            font-size: 26px;
+            color: rgba(255,255,255,0.7);
             text-transform: uppercase;
             letter-spacing: 0.1em;
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 20px;
         }
+        
         .template-footer::before {
             content: '';
             display: inline-block;
-            width: 60px;
+            width: 70px;
             height: 6px;
             background-color: #E11D48;
         }
@@ -160,50 +197,52 @@
 </head>
 <body class="bg-gray-100 min-h-screen text-slate-800 flex flex-col font-sans relative">
 
-    <!-- Cabeçalho Principal -->
-    <header class="bg-gradient-to-r from-purple-700 to-pink-600 text-white border-b border-gray-800 shadow-md sticky top-0 z-40">
-        <div class="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-center px-6 py-4 gap-4">
+    <header class="bg-jornal-dark text-white border-b border-gray-800 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-[1200px] mx-auto flex justify-between items-center px-4 py-3">
             <div class="flex items-center gap-3">
-                <span class="text-3xl">📸</span>
-                <div>
-                    <h1 class="font-black tracking-tighter text-2xl uppercase leading-none">Estúdio Instagram</h1>
-                    <p class="text-[10px] font-bold uppercase tracking-widest text-pink-200">Gerador Automático de Artes</p>
-                </div>
+                <span class="text-xl">📸</span>
+                <span class="font-sans font-black tracking-tighter text-lg uppercase text-slate-100 flex items-center gap-2">
+                    Estúdio<span class="text-rose-600">IG</span>
+                </span>
             </div>
-            
-            <a href="admin.html" class="bg-white text-purple-700 hover:bg-gray-100 px-6 py-2.5 rounded-sm text-xs font-black uppercase tracking-widest transition-colors shadow-sm flex items-center gap-2">
-                &larr; Voltar ao Painel Admin
-            </a>
+            <div class="flex items-center gap-4">
+                <a href="admin.html" class="text-gray-400 hover:text-white text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors">
+                    &larr; Voltar ao Painel Admin
+                </a>
+            </div>
         </div>
     </header>
 
-    <!-- Ecrã de Carregamento -->
     <div id="loading-overlay" class="fixed inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center transition-opacity duration-300">
-        <div class="w-16 h-16 border-4 border-gray-200 border-t-purple-600 rounded-full animate-spin mb-4"></div>
-        <p class="text-sm font-black uppercase tracking-widest text-purple-700 animate-pulse">A carregar banco de matérias...</p>
+        <div class="w-16 h-16 border-4 border-gray-200 border-t-jornal-blue rounded-full animate-spin mb-4"></div>
+        <p class="text-sm font-black uppercase tracking-widest text-jornal-dark animate-pulse">A procurar matérias no servidor...</p>
     </div>
 
-    <!-- Conteúdo Principal -->
-    <main class="max-w-[1400px] mx-auto py-8 px-6 w-full flex-grow flex flex-col">
+    <main class="max-w-[1200px] mx-auto py-8 px-4 w-full flex-grow flex flex-col">
         
-        <!-- Barra de Filtros e Pesquisa -->
-        <div class="bg-white border border-gray-200 shadow-sm rounded-sm p-5 mb-6 flex flex-col md:flex-row gap-4 items-end">
+        <div class="border-l-4 border-purple-600 pl-3 mb-6">
+            <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Gerador de Artes Instagram</h2>
+        </div>
+
+        <div class="bg-white border border-gray-200 shadow-sm rounded-sm p-6 mb-6 flex flex-col md:flex-row gap-6 items-end">
             
-            <div class="w-full md:w-1/2">
-                <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Pesquisar Matéria</label>
-                <input type="text" id="filtro-pesquisa" onkeyup="aplicarFiltros()" placeholder="Digite título ou resumo..." class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium text-gray-700 rounded-sm" />
+            <div class="w-full md:w-2/3">
+                <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Pesquisar por Título ou Resumo</label>
+                <input type="text" id="filtro-pesquisa" onkeyup="aplicarFiltros()" placeholder="Digite uma palavra-chave..." 
+                       class="w-full px-5 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium text-gray-700 rounded-sm" />
             </div>
 
             <div class="w-full md:w-1/3">
                 <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Filtrar por Editoria</label>
-                <select id="filtro-editoria" onchange="aplicarFiltros()" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-bold text-gray-700 rounded-sm uppercase">
+                <select id="filtro-editoria" onchange="aplicarFiltros()" 
+                        class="w-full px-5 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-bold text-gray-700 rounded-sm uppercase">
                     <option value="Todas">Todas as Editorias</option>
-                    <!-- Preenchido via JavaScript -->
+                    <!-- JavaScript preencherá as restantes opções -->
                 </select>
             </div>
+            
         </div>
 
-        <!-- Tabela de Notícias (4 Colunas Solicitadas) -->
         <div class="bg-white shadow-sm border border-gray-200 rounded-sm overflow-hidden flex-grow flex flex-col">
             <div class="overflow-x-auto custom-scrollbar flex-grow">
                 <table class="w-full text-left text-sm whitespace-nowrap md:whitespace-normal">
@@ -211,59 +250,66 @@
                         <tr>
                             <th class="p-4 w-[15%]">Editoria</th>
                             <th class="p-4 w-[50%]">Título da Matéria</th>
-                            <th class="p-4 w-[17.5%] text-center">Exportar Feed</th>
-                            <th class="p-4 w-[17.5%] text-center">Exportar Story</th>
+                            <th class="p-4 w-[17.5%] text-center">Formato Feed</th>
+                            <th class="p-4 w-[17.5%] text-center">Formato Story</th>
                         </tr>
                     </thead>
-                    <tbody id="tabela-noticias" class="divide-y divide-gray-200">
-                        <!-- Linhas da tabela serão geradas aqui -->
+                    <tbody id="tabela-noticias" class="divide-y divide-gray-100">
+                        <!-- Tabela preenchida via JS -->
                     </tbody>
                 </table>
             </div>
             
-            <div id="mensagem-vazia" class="hidden p-10 text-center flex-grow flex flex-col items-center justify-center">
-                <span class="text-4xl mb-3">📭</span>
+            <div id="mensagem-vazia" class="hidden p-12 text-center flex-grow flex flex-col items-center justify-center">
                 <p class="text-sm font-bold text-gray-400 uppercase tracking-widest">Nenhuma matéria encontrada com estes filtros.</p>
             </div>
         </div>
     </main>
 
-    <!-- MODAL DE PRÉ-VISUALIZAÇÃO (Mostra a imagem gerada e a legenda pronta) -->
     <div id="modal-preview" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
-        <div class="absolute inset-0 bg-jornal-dark/90 backdrop-blur-md" onclick="fecharModalPreview()"></div>
+        <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md" onclick="fecharModalPreview()"></div>
         
         <div class="bg-white w-full max-w-5xl max-h-[90vh] rounded-sm shadow-2xl relative z-10 flex flex-col border-t-4 border-purple-600 overflow-hidden">
             
-            <div class="flex justify-between items-center p-5 border-b border-gray-200 bg-gray-50 shrink-0">
-                <h2 class="font-sans text-lg font-black uppercase text-jornal-dark tracking-tighter" id="modal-titulo-tipo">Pré-visualização</h2>
+            <div class="flex justify-between items-center p-6 border-b border-gray-200 bg-gray-50 shrink-0">
+                <h2 class="font-sans text-xl font-black uppercase text-jornal-dark tracking-tighter" id="modal-titulo-tipo">
+                    Pré-visualização da Imagem
+                </h2>
                 <button type="button" onclick="fecharModalPreview()" class="text-gray-400 hover:text-red-600 transition-colors text-2xl font-bold leading-none">&times;</button>
             </div>
             
             <div class="flex flex-col md:flex-row flex-grow overflow-hidden">
                 
-                <!-- Imagem Gerada -->
-                <div class="w-full md:w-1/2 p-6 bg-gray-200 flex items-center justify-center overflow-y-auto custom-scrollbar relative border-r border-gray-300">
+                <!-- Área da Imagem Gerada -->
+                <div class="w-full md:w-1/2 p-8 bg-gray-200 flex items-center justify-center overflow-y-auto custom-scrollbar relative border-r border-gray-300">
                     <div id="preview-loading" class="absolute inset-0 bg-white/80 flex flex-col items-center justify-center z-20">
                         <div class="w-10 h-10 border-4 border-gray-300 border-t-purple-600 rounded-full animate-spin mb-3"></div>
                         <p class="text-xs font-black uppercase tracking-widest text-purple-700 text-center px-4">A desenhar arte em alta resolução...</p>
                     </div>
-                    <img id="imagem-resultado" src="" alt="Preview" class="max-w-full max-h-full object-contain shadow-lg hidden rounded-sm" />
+                    
+                    <!-- A imagem exportada aparece aqui -->
+                    <img id="imagem-resultado" src="" alt="Arte Gerada" class="max-w-full max-h-full object-contain shadow-2xl hidden rounded-sm" />
                 </div>
                 
-                <!-- Opções e Legenda -->
-                <div class="w-full md:w-1/2 p-6 flex flex-col bg-white overflow-y-auto custom-scrollbar">
+                <!-- Área das Opções de Partilha e Legenda -->
+                <div class="w-full md:w-1/2 p-8 flex flex-col bg-white overflow-y-auto custom-scrollbar">
                     
-                    <div class="mb-6 shrink-0">
-                        <button type="button" id="btn-baixar-imagem" class="w-full bg-jornal-dark text-white font-black py-4 uppercase tracking-widest text-xs rounded-sm hover:bg-gray-800 transition-colors shadow-md flex items-center justify-center gap-2">
-                            <span>⬇️</span> Baixar Imagem Otimizada
+                    <div class="mb-8 shrink-0">
+                        <button type="button" id="btn-baixar-imagem" class="w-full bg-jornal-dark text-white font-black py-4 uppercase tracking-widest text-sm rounded-sm hover:bg-gray-800 transition-colors shadow-md flex items-center justify-center gap-3">
+                            <span>⬇️</span> Baixar Imagem (JPG)
                         </button>
                     </div>
 
-                    <div class="flex-grow flex flex-col min-h-[250px]">
-                        <h3 class="font-black text-[10px] uppercase tracking-widest text-gray-500 mb-2">Legenda Pronta para Copiar</h3>
-                        <textarea id="texto-legenda" readonly class="w-full flex-grow p-4 bg-gray-50 border border-gray-200 text-xs font-medium text-gray-700 rounded-sm resize-none focus:outline-none custom-scrollbar"></textarea>
+                    <div class="flex-grow flex flex-col min-h-[300px]">
+                        <h3 class="font-black text-[10px] uppercase tracking-widest text-gray-500 mb-3 block">
+                            Legenda pronta para Instagram
+                        </h3>
                         
-                        <button type="button" id="btn-copiar-legenda" onclick="copiarLegenda()" class="mt-4 shrink-0 w-full bg-purple-600 text-white font-black py-4 uppercase tracking-widest text-[10px] rounded-sm hover:bg-purple-700 transition-colors shadow-md flex items-center justify-center gap-2">
+                        <textarea id="texto-legenda" readonly 
+                                  class="w-full flex-grow p-5 bg-gray-50 border border-gray-200 text-sm font-medium text-gray-700 rounded-sm resize-none focus:outline-none custom-scrollbar"></textarea>
+                        
+                        <button type="button" id="btn-copiar-legenda" onclick="copiarLegenda()" 
+                                class="mt-4 shrink-0 w-full bg-purple-600 text-white font-black py-4 uppercase tracking-widest text-xs rounded-sm hover:bg-purple-700 transition-colors shadow-md flex items-center justify-center gap-2">
                             <span>📋</span> Copiar Legenda
                         </button>
                     </div>
@@ -273,48 +319,47 @@
         </div>
     </div>
 
-    <!-- ÁREA ESCONDIDA: TEMPLATES REAIS PARA TIRAR "FOTOGRAFIA" (HTML2Canvas) -->
     <div id="canvas-area-export">
         
-        <!-- Template Feed (1:1 Quadrado) -->
+        <!-- 1. FEED (1080 x 1080) -->
         <div id="template-feed" class="template-feed">
             <img id="feed-img" class="template-bg-image" crossorigin="anonymous" src="" />
             <div class="template-overlay"></div>
             <div class="template-content">
                 <span id="feed-categoria" class="template-badge">Editoria</span>
-                <h1 id="feed-titulo" class="template-title feed">Manchete da Notícia</h1>
-                <!-- O feed inclui o resumo (linha fina) conforme solicitado -->
-                <p id="feed-resumo" class="template-summary">Linha fina da notícia...</p>
+                <h1 id="feed-titulo" class="template-title feed">Manchete</h1>
+                <!-- Feed leva Linha Fina (Resumo) -->
+                <p id="feed-resumo" class="template-summary">Resumo</p>
                 <div class="template-footer">Notícias Avulsas</div>
             </div>
         </div>
 
-        <!-- Template Story (9:16 Vertical) -->
+        <!-- 2. STORY (1080 x 1920) -->
         <div id="template-story" class="template-story">
             <img id="story-img" class="template-bg-image" crossorigin="anonymous" src="" />
-            <div class="template-overlay" style="height: 60%;"></div>
+            <div class="template-overlay"></div>
             <div class="template-content">
                 <span id="story-categoria" class="template-badge">Editoria</span>
-                <!-- O Story apenas tem o Título conforme solicitado -->
-                <h1 id="story-titulo" class="template-title story">Manchete da Notícia</h1>
-                <div class="template-footer">Leia no Link</div>
+                <!-- Story leva apenas o Título gigante -->
+                <h1 id="story-titulo" class="template-title story">Manchete</h1>
+                <div class="template-footer">Toque no Link</div>
             </div>
         </div>
 
     </div>
 
     <script>
-        // O SEU LINK DA BASE DE DADOS GOOGLE
+        // URL Oficial da sua API Google Apps Script
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyVroxyx_f70Q2KkcnfMWtt2vV8EzQRsPBhF9nNL4frnKhdhe7t-oahNoJo9SCLfAbE/exec";
         
-        var noticiasGlobal = [];
-        var urlImagemBase64 = null; 
+        let noticiasGlobais = [];
+        let urlImagemGerada = null; 
 
         document.addEventListener("DOMContentLoaded", function() {
             carregarDadosServidor();
         });
 
-        // 1. CARREGAR DADOS DA REDAÇÃO
+        // 1. LER DADOS (Ativas e Agendadas)
         function carregarDadosServidor() {
             fetch(GAS_API_URL, {
                 method: 'POST',
@@ -326,48 +371,50 @@
                 document.getElementById('loading-overlay').classList.add('hidden');
                 
                 if (data && data.sucesso && data.noticias) {
-                    // Queremos matérias Publicadas (Ativa) E as Agendadas!
-                    noticiasGlobal = data.noticias.filter(n => {
-                        var st = String(n.status).toLowerCase();
+                    
+                    // Queremos apenas as matérias que estão no ar ou programadas para entrar
+                    noticiasGlobais = data.noticias.filter(n => {
+                        let st = String(n.status).toLowerCase();
                         return st === 'ativa' || st === 'agendada';
                     });
                     
                     preencherFiltroCategorias(data.categorias || []);
                     aplicarFiltros(); 
                 } else {
-                    alert("Erro ao ler as matérias da base de dados.");
+                    alert("Aviso: Não foi possível ler as matérias. Verifique o link do Google.");
                 }
             })
             .catch(err => {
                 document.getElementById('loading-overlay').classList.add('hidden');
-                alert("Falha na comunicação com o servidor.");
+                alert("Falha na comunicação com a base de dados do Google.");
                 console.error(err);
             });
         }
 
-        // 2. FILTROS E TABELA
+        // 2. PREENCHER SELECT DE EDITORIAS
         function preencherFiltroCategorias(categorias) {
-            var select = document.getElementById('filtro-editoria');
+            let select = document.getElementById('filtro-editoria');
             categorias.forEach(cat => {
-                var option = document.createElement('option');
+                let option = document.createElement('option');
                 option.value = cat;
                 option.text = cat;
                 select.appendChild(option);
             });
         }
 
+        // 3. APLICAR FILTROS DE PESQUISA
         function aplicarFiltros() {
-            var termoPesquisa = document.getElementById('filtro-pesquisa').value.toLowerCase().trim();
-            var categoriaSelecionada = document.getElementById('filtro-editoria').value;
+            let termoPesquisa = document.getElementById('filtro-pesquisa').value.toLowerCase().trim();
+            let categoriaSelecionada = document.getElementById('filtro-editoria').value;
             
-            var noticiasFiltradas = noticiasGlobal.filter(n => {
-                var matchTexto = true;
+            let noticiasFiltradas = noticiasGlobais.filter(n => {
+                let matchTexto = true;
                 if (termoPesquisa !== "") {
-                    var textoBusca = (n.titulo + " " + n.linhaFina + " " + n.categoria).toLowerCase();
+                    let textoBusca = (n.titulo + " " + n.linhaFina + " " + n.categoria).toLowerCase();
                     matchTexto = textoBusca.indexOf(termoPesquisa) !== -1;
                 }
                 
-                var matchCategoria = true;
+                let matchCategoria = true;
                 if (categoriaSelecionada !== "Todas") {
                     matchCategoria = String(n.categoria).toLowerCase().indexOf(categoriaSelecionada.toLowerCase()) !== -1;
                 }
@@ -378,9 +425,10 @@
             renderizarTabela(noticiasFiltradas);
         }
 
+        // 4. RENDERIZAR TABELA COM 4 COLUNAS
         function renderizarTabela(noticias) {
-            var tbody = document.getElementById('tabela-noticias');
-            var msgVazia = document.getElementById('mensagem-vazia');
+            let tbody = document.getElementById('tabela-noticias');
+            let msgVazia = document.getElementById('mensagem-vazia');
             
             tbody.innerHTML = '';
             
@@ -394,16 +442,15 @@
             msgVazia.classList.add('hidden');
             
             noticias.forEach(n => {
-                var isAgendada = String(n.status).toLowerCase() === 'agendada';
-                var badgeAgendada = isAgendada ? '<span class="ml-2 bg-amber-100 text-amber-800 border border-amber-300 text-[9px] px-2 py-0.5 rounded-sm uppercase tracking-widest font-black shrink-0">Agendada</span>' : '';
+                let isAgendada = String(n.status).toLowerCase() === 'agendada';
+                let badgeAgendada = isAgendada ? '<span class="ml-2 bg-amber-100 text-amber-800 border border-amber-300 text-[9px] px-2 py-0.5 rounded-sm uppercase tracking-widest font-black shrink-0">Agendada</span>' : '';
                 
-                var tr = document.createElement('tr');
+                let tr = document.createElement('tr');
                 tr.className = "hover:bg-purple-50 transition-colors border-b border-gray-100";
                 
-                // Coluna 1: Editoria | Coluna 2: Título | Coluna 3: Feed | Coluna 4: Story
                 tr.innerHTML = `
                     <td class="p-4 align-top">
-                        <span class="bg-gray-200 text-gray-800 px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest font-black whitespace-normal break-words inline-block">
+                        <span class="bg-gray-200 text-jornal-dark px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest font-black whitespace-normal break-words inline-block">
                             ${n.categoria || 'Geral'}
                         </span>
                     </td>
@@ -412,16 +459,15 @@
                             <h4 class="text-sm font-bold text-gray-800 leading-snug line-clamp-2">${n.titulo}</h4>
                             ${badgeAgendada}
                         </div>
-                        <p class="text-[11px] text-gray-500 mt-1 italic line-clamp-1">${n.linhaFina || 'Sem resumo disponível.'}</p>
                     </td>
                     <td class="p-4 align-middle text-center">
-                        <button type="button" onclick="iniciarExportacao('${n.id}', 'feed')" class="bg-purple-100 hover:bg-purple-600 text-purple-700 hover:text-white border border-purple-200 hover:border-purple-600 px-4 py-2 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all shadow-sm w-full">
-                            📸 Gerar Feed
+                        <button type="button" onclick="iniciarExportacao('${n.id}', 'feed')" class="bg-purple-100 hover:bg-purple-600 text-purple-700 hover:text-white border border-purple-200 hover:border-purple-600 px-5 py-2.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all shadow-sm w-full">
+                            📸 Feed (1:1)
                         </button>
                     </td>
                     <td class="p-4 align-middle text-center">
-                        <button type="button" onclick="iniciarExportacao('${n.id}', 'story')" class="bg-pink-100 hover:bg-pink-600 text-pink-700 hover:text-white border border-pink-200 hover:border-pink-600 px-4 py-2 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all shadow-sm w-full">
-                            📱 Gerar Story
+                        <button type="button" onclick="iniciarExportacao('${n.id}', 'story')" class="bg-pink-100 hover:bg-pink-600 text-pink-700 hover:text-white border border-pink-200 hover:border-pink-600 px-5 py-2.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all shadow-sm w-full">
+                            📱 Story (9:16)
                         </button>
                     </td>
                 `;
@@ -429,58 +475,63 @@
             });
         }
 
+        // 5. AJUDANTE PARA CORRIGIR LINK DO GOOGLE DRIVE
         function formatarUrlImagemGoogle(url) {
             if (!url) return '';
             try {
-                var s = String(url).trim();
-                var m = s.match(/\/d\/([a-zA-Z0-9_-]+)/) || s.match(/id=([a-zA-Z0-9_-]+)/);
+                let s = String(url).trim();
+                let m = s.match(/\/d\/([a-zA-Z0-9_-]+)/) || s.match(/id=([a-zA-Z0-9_-]+)/);
                 return m ? 'https://lh3.googleusercontent.com/d/' + m[1] : s;
             } catch(e) { return url; }
         }
 
-        function removerHTML(t) { return t ? String(t).replace(/<[^>]*>?/gm, '') : ''; }
+        // Remove tags HTML do resumo
+        function removerHTML(t) { 
+            return t ? String(t).replace(/<[^>]*>?/gm, '') : ''; 
+        }
 
         function iniciarExportacao(idNoticia, tipo) {
-            var noticia = noticiasGlobal.find(n => String(n.id) === String(idNoticia));
+            let noticia = noticiasGlobais.find(n => String(n.id) === String(idNoticia));
             if (!noticia) return;
 
             abrirModalPreview(tipo);
 
-            // Preparar a Legenda Automática (Texto a copiar)
-            var resumoTexto = noticia.linhaFina ? noticia.linhaFina : removerHTML(noticia.conteudo).substring(0, 150) + "...";
-            var linkDireto = `noticiasavulsas.com.br/?noticia=${noticia.id}`;
-            var catPrincipal = String(noticia.categoria).split(',')[0].trim();
+            // Monta a legenda que o jornalista vai apenas "Copiar"
+            let resumoLimpo = noticia.linhaFina ? noticia.linhaFina : removerHTML(noticia.conteudo).substring(0, 150) + "...";
+            let linkSite = `noticiasavulsas.com.br/?noticia=${noticia.id}`;
+            let catUnica = String(noticia.categoria).split(',')[0].trim();
             
-            var legendaGerada = `📰 ${noticia.titulo}\n\n${resumoTexto}\n\n📲 Leia a matéria completa no nosso portal! Acesse o link na Bio ou copie o endereço abaixo:\n🔗 ${linkDireto}\n\n.\n.\n.\n#NoticiasAvulsas #Jornalismo #${catPrincipal.replace(/\s+/g, '')}`;
-            document.getElementById('texto-legenda').value = legendaGerada;
+            let txtLegenda = `📰 ${noticia.titulo}\n\n${resumoLimpo}\n\n📲 Leia a matéria completa no nosso portal! Acesse o link na Bio ou copie o endereço abaixo:\n🔗 ${linkSite}\n\n.\n.\n.\n#NoticiasAvulsas #Jornalismo #${catUnica.replace(/\s+/g, '')}`;
+            document.getElementById('texto-legenda').value = txtLegenda;
 
-            // Iniciar o Processo da Imagem
-            var imagemOriginal = formatarUrlImagemGoogle(noticia.urlImagem) || 'https://placehold.co/1080x1080/0F172A/ffffff?text=Notícias+Avulsas';
+            // Busca a imagem original da matéria e lida com problemas de CORS (segurança do navegador)
+            let imagemOriginal = formatarUrlImagemGoogle(noticia.urlImagem) || 'https://placehold.co/1080x1920/0F172A/ffffff?text=Notícias+Avulsas';
             
-            var proxyImg = new Image();
-            proxyImg.crossOrigin = "anonymous";
-            proxyImg.src = imagemOriginal;
+            let imgTemporaria = new Image();
+            imgTemporaria.crossOrigin = "anonymous";
+            imgTemporaria.src = imagemOriginal;
             
-            proxyImg.onload = function() {
-                var targetElement;
+            imgTemporaria.onload = function() {
+                let alvoElemento;
 
-                // Preenche o template escolhido
+                // Escolhe qual modelo HTML preencher (Feed ou Story)
                 if (tipo === 'feed') {
-                    targetElement = document.getElementById('template-feed');
-                    document.getElementById('feed-img').src = proxyImg.src;
-                    document.getElementById('feed-categoria').innerText = catPrincipal;
+                    alvoElemento = document.getElementById('template-feed');
+                    document.getElementById('feed-img').src = imgTemporaria.src;
+                    document.getElementById('feed-categoria').innerText = catUnica;
                     document.getElementById('feed-titulo').innerText = noticia.titulo;
-                    document.getElementById('feed-resumo').innerText = resumoTexto;
+                    document.getElementById('feed-resumo').innerText = resumoLimpo; // Apenas no Feed
                 } else if (tipo === 'story') {
-                    targetElement = document.getElementById('template-story');
-                    document.getElementById('story-img').src = proxyImg.src;
-                    document.getElementById('story-categoria').innerText = catPrincipal;
+                    alvoElemento = document.getElementById('template-story');
+                    document.getElementById('story-img').src = imgTemporaria.src;
+                    document.getElementById('story-categoria').innerText = catUnica;
                     document.getElementById('story-titulo').innerText = noticia.titulo;
+                    // Story não tem resumo
                 }
 
-                // Aguarda o render e tira o "Print"
+                // Aguarda meio segundo para as Fontes (Merriweather e Inter) carregarem visualmente
                 setTimeout(function() {
-                    html2canvas(targetElement, {
+                    html2canvas(alvoElemento, {
                         scale: 1, 
                         useCORS: true,
                         allowTaint: true,
@@ -488,73 +539,76 @@
                         logging: false
                     }).then(function(canvas) {
                         try {
-                            urlImagemBase64 = canvas.toDataURL("image/jpeg", 0.95);
+                            urlImagemGerada = canvas.toDataURL("image/jpeg", 0.95);
                             
-                            // Exibe no Modal
+                            // Tira o loading e mostra a imagem pronta
                             document.getElementById('preview-loading').classList.add('hidden');
-                            var imgResult = document.getElementById('imagem-resultado');
-                            imgResult.src = urlImagemBase64;
+                            let imgResult = document.getElementById('imagem-resultado');
+                            imgResult.src = urlImagemGerada;
                             imgResult.classList.remove('hidden');
                             
-                            // Configura botão Download
-                            var btnBaixar = document.getElementById('btn-baixar-imagem');
-                            btnBaixar.onclick = function() {
-                                var link = document.createElement('a');
-                                link.download = 'NoticiasAvulsas_' + tipo + '_' + noticia.id + '.jpg';
-                                link.href = urlImagemBase64;
-                                link.click();
+                            // Configura o Botão "Baixar Imagem"
+                            let btnDownload = document.getElementById('btn-baixar-imagem');
+                            btnDownload.onclick = function() {
+                                let a = document.createElement('a');
+                                a.download = 'NoticiasAvulsas_' + tipo.toUpperCase() + '_' + noticia.id + '.jpg';
+                                a.href = urlImagemGerada;
+                                a.click();
                             };
 
                         } catch(e) {
-                            alert("Erro de segurança (CORS) ao extrair imagem da Google.");
+                            alert("Erro de segurança do navegador (CORS) ao extrair a imagem do Google Drive.");
                             fecharModalPreview();
                         }
                     });
-                }, 600); // 600ms garante que a fonte Merriweather foi renderizada corretamente
+                }, 600);
             };
 
-            proxyImg.onerror = function() {
-                alert("A imagem original da matéria não pôde ser lida pelo sistema.");
+            imgTemporaria.onerror = function() {
+                alert("O sistema não conseguiu fazer download da foto original para gerar a arte.");
                 fecharModalPreview();
             };
         }
 
+        // Abre a caixa de diálogo por cima da tela
         function abrirModalPreview(tipo) {
-            var modal = document.getElementById('modal-preview');
+            let modal = document.getElementById('modal-preview');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             
-            document.getElementById('modal-titulo-tipo').innerText = tipo === 'feed' ? '🎨 Arte para o Feed (1:1)' : '📱 Arte para o Story (9:16)';
+            document.getElementById('modal-titulo-tipo').innerText = tipo === 'feed' ? '🎨 ARTE FEED (QUADRADA)' : '📱 ARTE STORY (VERTICAL)';
             
             document.getElementById('preview-loading').classList.remove('hidden');
             document.getElementById('imagem-resultado').classList.add('hidden');
             document.getElementById('imagem-resultado').src = '';
-            urlImagemBase64 = null;
+            urlImagemGerada = null;
         }
 
+        // Fecha a caixa de diálogo
         function fecharModalPreview() {
-            var modal = document.getElementById('modal-preview');
+            let modal = document.getElementById('modal-preview');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         }
 
+        // Copia a legenda para o rato
         function copiarLegenda() {
-            var textarea = document.getElementById('texto-legenda');
-            textarea.select();
+            let caixaTexto = document.getElementById('texto-legenda');
+            caixaTexto.select();
             document.execCommand('copy');
             
-            var btn = document.getElementById('btn-copiar-legenda');
-            var originalHtml = btn.innerHTML;
+            let btn = document.getElementById('btn-copiar-legenda');
+            let txtOriginal = btn.innerHTML;
             
-            btn.innerHTML = '<span>✅</span> Copiado!';
+            btn.innerHTML = '<span>✅</span> Copiado com Sucesso!';
             btn.classList.remove('bg-purple-600', 'hover:bg-purple-700');
-            btn.classList.add('bg-green-600', 'hover:bg-green-700');
+            btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
             
             setTimeout(function() {
-                btn.innerHTML = originalHtml;
-                btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                btn.innerHTML = txtOriginal;
+                btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
                 btn.classList.add('bg-purple-600', 'hover:bg-purple-700');
-            }, 2000);
+            }, 2500);
         }
     </script>
 </body>
