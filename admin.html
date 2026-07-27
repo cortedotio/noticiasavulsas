@@ -1133,6 +1133,40 @@
         </main>
     </div>
 
+    <!-- MOLDURAS ESCONDIDAS DO INSTAGRAM (Onde a câmara atua) -->
+    <div id="canvas-area-export">
+        <!-- 1. FEED (QUADRADO) -->
+        <div id="template-feed" class="template-feed">
+            <div id="feed-img" class="template-bg-image"></div>
+            <div id="feed-credito" class="template-credito">Foto: Créditos</div>
+            <div class="template-overlay"></div>
+            <div class="template-content">
+                <span id="feed-categoria" class="template-badge">Editoria</span>
+                <h1 id="feed-titulo" class="template-title">Manchete</h1>
+                <p id="feed-resumo" class="template-summary">Resumo...</p>
+                <div class="template-footer">
+                    <div class="template-footer-line"></div>
+                    <span class="template-footer-text">NOTÍCIAS AVULSAS</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. STORY (VERTICAL) -->
+        <div id="template-story" class="template-story">
+            <div id="story-img" class="template-bg-image"></div>
+            <div id="story-credito" class="template-credito">Foto: Créditos</div>
+            <div class="template-overlay"></div>
+            <div class="template-content">
+                <span id="story-categoria" class="template-badge">Editoria</span>
+                <h1 id="story-titulo" class="template-title">Manchete</h1>
+                <div class="template-footer">
+                    <div class="template-footer-line"></div>
+                    <span class="template-footer-text">TOQUE NO LINK</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal com o Resultado do Instagram (A Fotografia Tirada) -->
     <div id="modal-arte" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md" onclick="fecharModalArte()"></div>
@@ -1798,8 +1832,34 @@
             return tmp.textContent || tmp.innerText || "";
         }
 
-        // A Mágica do Snapshot e do Proxy Duplo
-        function prepararArte(idNoticia, tipo) {
+        // Transformador de Imagem Base64 (Foge a todos os bloqueios CORS)
+        async function obterImagemBase64Segura(url) {
+            if (!url || url.includes('placehold.co')) return url;
+            
+            const proxies = [
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                `https://wsrv.nl/?url=${encodeURIComponent(url.replace(/^https?:\/\//, ''))}&output=jpg`,
+                `https://corsproxy.io/?${encodeURIComponent(url)}`
+            ];
+
+            for (let proxy of proxies) {
+                try {
+                    let response = await fetch(proxy);
+                    if (response.ok) {
+                        let blob = await response.blob();
+                        return await new Promise((resolve) => {
+                            let reader = new FileReader();
+                            reader.onloadend = () => resolve(reader.result);
+                            reader.readAsDataURL(blob);
+                        });
+                    }
+                } catch (e) { console.warn("Proxy falhou, tentando o próximo..."); }
+            }
+            return 'https://placehold.co/1080x1920/0F172A/ffffff?text=Foto+Incompativel';
+        }
+
+        // A Mágica do Snapshot Assíncrono (À prova de falhas)
+        async function prepararArte(idNoticia, tipo) {
             const noticia = noticiasGlobais.find(n => String(n.id) === String(idNoticia));
             if(!noticia) return;
 
@@ -1825,52 +1885,26 @@
             // Zera o Background
             divImagem.style.backgroundImage = 'none';
 
-            // Altera Titulos
+            // Altera Textos
             if (tipo === 'feed') {
                 let cred = document.getElementById('feed-credito');
-                if (noticia.creditosImagem) { 
-                    cred.innerText = 'Foto: ' + noticia.creditosImagem; 
-                    cred.style.display = 'block'; 
-                } else { 
-                    cred.style.display = 'none'; 
-                }
+                if (noticia.creditosImagem) { cred.innerText = 'Foto: ' + noticia.creditosImagem; cred.style.display = 'block'; } else { cred.style.display = 'none'; }
                 document.getElementById('feed-categoria').innerText = catUnica;
                 document.getElementById('feed-titulo').innerText = noticia.titulo;
                 document.getElementById('feed-resumo').innerText = resumoLimpo; 
             } else if (tipo === 'story') {
                 let cred = document.getElementById('story-credito');
-                if (noticia.creditosImagem) { 
-                    cred.innerText = 'Foto: ' + noticia.creditosImagem; 
-                    cred.style.display = 'block'; 
-                } else { 
-                    cred.style.display = 'none'; 
-                }
+                if (noticia.creditosImagem) { cred.innerText = 'Foto: ' + noticia.creditosImagem; cred.style.display = 'block'; } else { cred.style.display = 'none'; }
                 document.getElementById('story-categoria').innerText = catUnica;
                 document.getElementById('story-titulo').innerText = noticia.titulo;
             }
 
-            let timeoutFinal;
-
-            const imgTemp = new Image();
-            imgTemp.crossOrigin = "anonymous";
-
-            function fazerDesenhoFinal() {
-                clearTimeout(timeoutFinal);
+            try {
+                // Tenta carregar a imagem segura convertida em código Base64
+                let base64Imagem = await obterImagemBase64Segura(imagemOriginal);
+                divImagem.style.backgroundImage = `url('${base64Imagem}')`;
                 
-                // Converte para Base64 nativo para impedir que o html2canvas encrave na rede
-                try {
-                    const tempCanvas = document.createElement('canvas');
-                    tempCanvas.width = imgTemp.naturalWidth || 1080;
-                    tempCanvas.height = imgTemp.naturalHeight || 1080;
-                    const ctx = tempCanvas.getContext('2d');
-                    ctx.drawImage(imgTemp, 0, 0);
-                    const dataUrl = tempCanvas.toDataURL('image/jpeg', 0.9);
-                    divImagem.style.backgroundImage = `url('${dataUrl}')`;
-                } catch(e) {
-                    // Fallback se o canvas ficar sujo
-                    divImagem.style.backgroundImage = `url('${imgTemp.src}')`;
-                }
-                
+                // Aguarda 1 segundo completo para a imagem e a fonte pintarem a lona
                 setTimeout(() => {
                     html2canvas(alvoElemento, {
                         scale: 1, 
@@ -1887,38 +1921,15 @@
                         urlAtualBaixar = finalJpg;
                         nomeAtualBaixar = `NoticiasAvulsas_${tipo}_${idNoticia}.jpg`;
                     }).catch(err => {
-                        alert("Ocorreu um erro ao processar a arte. Tente novamente.");
+                        alert("Ocorreu um erro a renderizar a arte. Tente novamente.");
                         fecharModalArte();
                     });
-                }, 800); // Dá tempo à página de respirar
-            }
+                }, 1000);
 
-            imgTemp.onload = fazerDesenhoFinal;
-            
-            // TIMEOUT DE SEGURANÇA: Se demorar mais de 8 segundos, força o desenho!
-            timeoutFinal = setTimeout(() => {
-                imgTemp.removeAttribute("crossorigin");
-                imgTemp.onload = null;
-                imgTemp.onerror = null;
-                imgTemp.src = 'https://placehold.co/1080x1920/0F172A/ffffff?text=Demora+na+Rede';
-                fazerDesenhoFinal();
-            }, 8000);
-            
-            // PROXY ANTI-BLOQUEIO DUPLO
-            imgTemp.onerror = function() {
-                imgTemp.onerror = function() {
-                    imgTemp.onerror = function() {
-                        imgTemp.removeAttribute("crossorigin");
-                        imgTemp.onload = fazerDesenhoFinal;
-                        imgTemp.src = 'https://placehold.co/1080x1920/0F172A/ffffff?text=Foto+Indisponivel';
-                    };
-                    imgTemp.src = `https://api.allorigins.win/raw?url=${encodeURIComponent(imagemOriginal)}`;
-                };
-                let wsrvUrl = imagemOriginal.replace(/^https?:\/\//, '');
-                imgTemp.src = `https://wsrv.nl/?url=${encodeURIComponent(wsrvUrl)}&output=jpg`;
-            };
-            
-            imgTemp.src = imagemOriginal;
+            } catch(e) {
+                alert("Falha extrema de rede ao comunicar com o Google Drive.");
+                fecharModalArte();
+            }
         }
 
         function fecharModalArte() {
