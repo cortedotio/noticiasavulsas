@@ -16,6 +16,7 @@
     <!-- Biblioteca para "tirar fotografia" à arte (html2canvas) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
+    <!-- Configuração do Tailwind -->
     <script>
         tailwind.config = {
             theme: {
@@ -36,6 +37,7 @@
         };
     </script>
     
+    <!-- Estilos Personalizados da Arte Gerada -->
     <style>
         body { background-color: #f1f2f5; color: #111111; }
         
@@ -72,7 +74,7 @@
             overflow: hidden;
         }
 
-        /* Imagem de Fundo (Agora usa DIV com Background para evitar esticamento no html2canvas) */
+        /* Imagem de Fundo (A Mágica para não distorcer o object-fit) */
         .template-bg-image {
             position: absolute;
             top: 0;
@@ -143,7 +145,7 @@
             margin-bottom: 30px;
         }
 
-        /* O Título Gigante da Notícia */
+        /* O Título Gigante da Notícia (Corrigido para não cortar as letras em baixo) */
         .template-title {
             font-family: 'Merriweather', serif;
             font-weight: 900;
@@ -151,10 +153,10 @@
             line-height: 1.35; 
             margin: 0 0 20px 0;
             text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
-            padding-bottom: 15px; /* Evita que o p, g, j fiquem cortados na base */
+            padding-bottom: 15px; /* Segurança para as pernas das letras p, g, j */
         }
 
-        /* Ajustes precisos nas linhas e tamanhos para evitar cortes indesejados */
+        /* Limites de tamanho e linhas do título */
         .template-feed .template-title { font-size: 60px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
         .template-story .template-title { font-size: 75px; display: -webkit-box; -webkit-line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden; }
 
@@ -228,7 +230,7 @@
         <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Estúdio...</p>
     </div>
 
-    <!-- Cabeçalho (Idêntico ao Admin) -->
+    <!-- Cabeçalho (Visual idêntico ao Admin) -->
     <header class="bg-jornal-dark text-white border-b border-gray-800 sticky top-0 z-40 shadow-sm">
         <div class="max-w-[1200px] mx-auto flex justify-between items-center px-4 py-3">
             <span class="font-sans font-black tracking-tighter text-lg uppercase text-slate-100 flex items-center gap-2">
@@ -240,6 +242,7 @@
         </div>
     </header>
 
+    <!-- Estrutura Principal de Pesquisa e Tabela -->
     <main class="max-w-[1200px] mx-auto py-8 px-4 w-full flex-grow">
         
         <div class="bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
@@ -281,6 +284,7 @@
         </div>
     </main>
 
+    <!-- Área de Desenho da Imagem Escondida -->
     <div id="canvas-area-export">
         
         <!-- 1. O TEMPLATE DO FEED (QUADRADO 1080 x 1080) -->
@@ -316,11 +320,10 @@
         
     </div>
 
+    <!-- Modal com o Resultado (A Fotografia Tirada) -->
     <div id="modal-arte" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
-        <!-- Fundo escuro -->
         <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md" onclick="fecharModalArte()"></div>
         
-        <!-- Caixa do Modal -->
         <div class="bg-gray-100 w-full max-w-4xl rounded-sm shadow-2xl relative z-10 overflow-hidden flex flex-col max-h-[95vh] border-t-4 border-purple-500">
             
             <div class="p-4 bg-white border-b border-gray-200 flex justify-between items-center shrink-0">
@@ -331,7 +334,7 @@
             </div>
             
             <div class="flex flex-col md:flex-row flex-grow overflow-hidden">
-                <!-- Coluna Esquerda: Preview da Imagem -->
+                <!-- Esquerda: Preview -->
                 <div class="md:w-1/2 p-6 bg-gray-200 flex items-center justify-center overflow-y-auto custom-scrollbar border-r border-gray-300 relative min-h-[300px]">
                     
                     <div id="gerando-aviso" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-200 z-10">
@@ -343,7 +346,7 @@
                     <img id="preview-final-img" src="" class="max-w-full h-auto max-h-full object-contain shadow-2xl hidden" alt="Preview da Arte">
                 </div>
                 
-                <!-- Coluna Direita: Botões e Legenda -->
+                <!-- Direita: Botões de Ação e Instagram -->
                 <div class="md:w-1/2 p-6 md:p-8 bg-white overflow-y-auto custom-scrollbar flex flex-col">
                     
                     <button id="btn-baixar" onclick="baixarArte()" class="w-full bg-jornal-dark hover:bg-gray-800 text-white font-black text-sm uppercase tracking-widest py-4 rounded-sm shadow-lg mb-8 flex justify-center items-center gap-2 transition-colors">
@@ -354,9 +357,15 @@
                     
                     <div class="bg-gray-50 border border-gray-200 p-4 rounded-sm text-sm text-gray-700 h-48 overflow-y-auto custom-scrollbar font-medium mb-4 whitespace-pre-wrap" id="texto-legenda"></div>
                     
-                    <button onclick="copiarLegenda()" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-black text-[11px] uppercase tracking-widest py-3 rounded-sm shadow-sm transition-colors mt-auto flex justify-center items-center gap-2">
-                        <span>📋</span> COPIAR LEGENDA
-                    </button>
+                    <div class="mt-auto flex flex-col gap-3">
+                        <button onclick="copiarLegenda()" class="w-full bg-purple-100 hover:bg-purple-200 text-purple-800 border border-purple-300 font-black text-[11px] uppercase tracking-widest py-3 rounded-sm shadow-sm transition-colors flex justify-center items-center gap-2">
+                            <span>📋</span> 1. COPIAR LEGENDA
+                        </button>
+                        
+                        <button onclick="abrirInstagram()" class="w-full bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-600 hover:opacity-90 text-white font-black text-[11px] uppercase tracking-widest py-3 rounded-sm shadow-sm transition-opacity flex justify-center items-center gap-2">
+                            <span>🚀</span> 2. ABRIR INSTAGRAM
+                        </button>
+                    </div>
                     
                 </div>
             </div>
@@ -433,6 +442,7 @@
             tbody.innerHTML = '';
 
             const filtradas = noticiasGlobais.filter(n => {
+                // Remove apenas inativas (mantém publicadas e agendadas)
                 if (String(n.status).toLowerCase() === 'inativa') return false;
 
                 const matchTermo = (n.titulo.toLowerCase().includes(termo) || n.categoria.toLowerCase().includes(termo));
@@ -495,7 +505,7 @@
 
             const imagemOriginal = noticia.urlImagem || 'https://placehold.co/1080x1080/0F172A/ffffff?text=Noticias+Avulsas';
 
-            // Seleciona a div de imagem e o container correto com base no tipo de arte
+            // Seleciona a div de imagem (background) e o container correto com base no tipo de arte
             const divImagem = tipo === 'feed' ? document.getElementById('feed-img') : document.getElementById('story-img');
             const alvoElemento = tipo === 'feed' ? document.getElementById('template-feed') : document.getElementById('template-story');
             
@@ -516,16 +526,16 @@
                 document.getElementById('story-titulo').innerText = noticia.titulo;
             }
 
-            // Cria uma imagem temporária apenas na memória para passar pelas validações e Proxies
+            // Cria uma imagem temporária na memória para passar pelas validações de segurança e Proxies
             const imgTemp = new Image();
             imgTemp.crossOrigin = "anonymous";
 
-            // A FUNÇÃO MAGNÍFICA QUE DISPARA A CÂMARA (Só roda se a imagem carregar)
+            // A FUNÇÃO MAGNÍFICA QUE DISPARA A CÂMARA (Só roda se a imagem carregar com sucesso)
             function fazerDesenhoFinal() {
-                // Aplica a imagem como fundo (Resolve o esticamento do object-fit no html2canvas!)
+                // Aplica a imagem como Background (Resolve o esticamento e distorção do html2canvas)
                 divImagem.style.backgroundImage = `url('${imgTemp.src}')`;
 
-                // Aguarda 800ms para ter a certeza absoluta que a tipografia e fundos foram pintados
+                // Aguarda 800ms para ter a certeza absoluta que a tipografia pesada e os fundos foram pintados
                 setTimeout(() => {
                     html2canvas(alvoElemento, {
                         scale: 1, 
@@ -557,7 +567,7 @@
                 imgTemp.onerror = function() {
                     // Se o corsproxy falhar, tenta o wsrv.nl
                     imgTemp.onerror = function() {
-                        // Se tudo falhar, injeta a imagem de fallback para não travar
+                        // Se tudo falhar, injeta a imagem de fallback para não travar a aplicação
                         imgTemp.removeAttribute("crossorigin");
                         imgTemp.onload = fazerDesenhoFinal;
                         imgTemp.src = 'https://placehold.co/1080x1920/0F172A/ffffff?text=Foto+Indisponivel';
@@ -592,9 +602,20 @@
         function copiarLegenda() {
             const texto = document.getElementById('texto-legenda').innerText;
             navigator.clipboard.writeText(texto).then(() => {
-                alert("Legenda copiada para a Área de Transferência! Agora é só colar no Instagram.");
+                alert("A Legenda foi copiada com sucesso!\n\nAgora você pode clicar no botão 'Abrir Instagram' para fazer a sua publicação.");
             }).catch(err => {
-                alert("Não foi possível copiar automaticamente. Selecione o texto e faça Ctrl+C.");
+                alert("Não foi possível copiar automaticamente. Selecione o texto na caixa e faça Ctrl+C.");
+            });
+        }
+
+        function abrirInstagram() {
+            const texto = document.getElementById('texto-legenda').innerText;
+            navigator.clipboard.writeText(texto).then(() => {
+                alert("PASSOS PARA PUBLICAR:\n\n1. A legenda já foi copiada por nós!\n2. Verifique se clicou no botão Preto para 'Baixar Imagem'.\n3. O Instagram vai abrir agora: clique em 'Criar', coloque a imagem e faça Colar (Ctrl+V) da legenda.\n\nBoas publicações!");
+                window.open('https://instagram.com', '_blank');
+            }).catch(err => {
+                alert("Ocorreu um erro a copiar a legenda. Copie-a manualmente e o Instagram será aberto agora.");
+                window.open('https://instagram.com', '_blank');
             });
         }
     </script>
