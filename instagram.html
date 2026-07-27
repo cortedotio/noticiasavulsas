@@ -150,15 +150,17 @@
             line-height: 1.15;
             margin: 0 0 25px 0;
             text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+            padding-bottom: 5px; /* Previne o corte inferior das letras */
         }
 
-        .template-feed .template-title { font-size: 65px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-        .template-story .template-title { font-size: 85px; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+        /* Ajustes precisos nas linhas e tamanhos para evitar cortes indesejados */
+        .template-feed .template-title { font-size: 60px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+        .template-story .template-title { font-size: 75px; display: -webkit-box; -webkit-line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden; }
 
         /* O Resumo (Apenas no Feed) */
         .template-summary {
             font-family: 'Inter', sans-serif;
-            font-size: 32px;
+            font-size: 30px;
             color: #cbd5e1;
             font-weight: 400;
             line-height: 1.4;
@@ -509,14 +511,14 @@
                 document.getElementById('story-titulo').innerText = noticia.titulo;
             }
 
-            // A FUNÇÃO MAGNÍFICA QUE DISPARA A CÂMARA (APENAS QUANDO A FOTO JÁ CARREGOU 100%)
+            // A FUNÇÃO MAGNÍFICA QUE DISPARA A CÂMARA
             function fazerDesenhoFinal() {
-                // Aguarda 800ms para ter a certeza absoluta que a tipografia (Inter/Merriweather) foi pintada no ecrã
+                // Aguarda 800ms para ter a certeza absoluta que a tipografia foi pintada no ecrã
                 setTimeout(() => {
                     html2canvas(alvoElemento, {
-                        scale: 1, // Não é necessário mais do que 1 pois já é 1080px
+                        scale: 1, // Já está em 1080px, não precisa de mais scale
                         useCORS: true,
-                        allowTaint: false, // CRÍTICO: Se for true, o ecrã fica preto por segurança!
+                        allowTaint: false, // Protege contra tela preta
                         backgroundColor: '#0F172A'
                     }).then(canvasResult => {
                         const finalJpg = canvasResult.toDataURL("image/jpeg", 0.9);
@@ -538,23 +540,27 @@
             imgElemento.src = "";
             imgElemento.crossOrigin = "anonymous";
 
-            // Só quando a imagem carrega com sucesso, mandamos disparar o html2canvas
+            // Só dispara html2canvas se a imagem for validada
             imgElemento.onload = fazerDesenhoFinal;
 
-            // Motor Anti-Bloqueio (Se o Google Drive recusar a permissão CORS, aciona o Plano B)
+            // MOTOR ANTI-BLOQUEIO DUPLO (CORS BYPASS)
             imgElemento.onerror = function() {
-                // Se a primeira tentativa falhar (Drive bloqueou), tenta via Proxy AllOrigins
+                // Se o link original for bloqueado pelo Drive, tenta o proxy corsproxy.io
                 imgElemento.onerror = function() {
-                    // Se o proxy também falhar, usamos um placeholder limpo para não estragar a arte
-                    imgElemento.removeAttribute("crossorigin");
-                    imgElemento.onload = fazerDesenhoFinal; // Volta a ligar o evento de sucesso
-                    imgElemento.src = 'https://placehold.co/1080x1080/0F172A/ffffff?text=Foto+Indisponivel';
+                    // Se o corsproxy falhar, tenta o wsrv.nl
+                    imgElemento.onerror = function() {
+                        // Se tudo falhar, injeta a imagem de fallback para não quebrar a arte
+                        imgElemento.removeAttribute("crossorigin");
+                        imgElemento.onload = fazerDesenhoFinal;
+                        imgElemento.src = 'https://placehold.co/1080x1920/0F172A/ffffff?text=Foto+Indisponivel';
+                    };
+                    let wsrvUrl = imagemOriginal.replace(/^https?:\/\//, '');
+                    imgElemento.src = "https://wsrv.nl/?url=" + encodeURIComponent(wsrvUrl) + "&output=jpg";
                 };
-                // Injeta a foto através do servidor Proxy
-                imgElemento.src = "https://api.allorigins.win/raw?url=" + encodeURIComponent(imagemOriginal);
+                imgElemento.src = "https://corsproxy.io/?" + encodeURIComponent(imagemOriginal);
             };
 
-            // Inicia o processo de descarregamento da foto
+            // Inicia o processo de descarregamento
             imgElemento.src = imagemOriginal;
         }
 
