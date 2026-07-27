@@ -339,7 +339,8 @@
                     
                     <div id="gerando-aviso" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-200 z-10">
                         <div class="w-10 h-10 border-4 border-gray-300 border-t-purple-500 rounded-full animate-spin mb-4"></div>
-                        <p class="text-xs font-black text-gray-500 uppercase tracking-widest animate-pulse">A Desenhar Arte...</p>
+                        <p class="text-xs font-black text-gray-500 uppercase tracking-widest animate-pulse mt-4">A Desenhar Arte...</p>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-center px-4">Passando pela segurança da imagem...</p>
                     </div>
 
                     <img id="preview-final-img" src="" class="max-w-full h-auto max-h-full object-contain shadow-2xl hidden" alt="Preview da Arte">
@@ -396,7 +397,6 @@
             .then(data => {
                 document.getElementById('loading-global').classList.add('hidden');
                 
-                // Precisamos da propriedade correta que vem do Apps Script
                 let payload = data;
                 if(data && data.result !== undefined) {
                     payload = typeof data.result === 'string' ? JSON.parse(data.result) : data.result;
@@ -405,7 +405,7 @@
                 if (payload && payload.sucesso) {
                     noticiasGlobais = payload.noticias || [];
                     preencherFiltroEditorias(payload.categorias || []);
-                    filtrarTabela(); // Desenha a tabela com todos os dados
+                    filtrarTabela(); 
                 } else {
                     alert("Erro ao ler dados da base.");
                 }
@@ -430,7 +430,6 @@
             return tmp.textContent || tmp.innerText || "";
         }
 
-        // Desenha a Tabela conforme os Filtros
         function filtrarTabela() {
             const tbody = document.getElementById('tabela-noticias');
             const termo = document.getElementById('pesquisa-materia').value.toLowerCase().trim();
@@ -439,7 +438,6 @@
             tbody.innerHTML = '';
 
             const filtradas = noticiasGlobais.filter(n => {
-                // Aqui permitimos Ativas e Agendadas, excluímos apenas as Inativas (lixo)
                 if (String(n.status).toLowerCase() === 'inativa') return false;
 
                 const matchTermo = (n.titulo.toLowerCase().includes(termo) || n.categoria.toLowerCase().includes(termo));
@@ -481,25 +479,18 @@
             });
         }
 
-        // ==========================================
-        // O MOTOR DE DESENHO (HTML2CANVAS)
-        // ==========================================
         function prepararArte(idNoticia, tipo) {
             const noticia = noticiasGlobais.find(n => String(n.id) === String(idNoticia));
             if(!noticia) return;
 
-            // Abre o Modal
             const modal = document.getElementById('modal-arte');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             
             document.getElementById('modal-titulo').innerHTML = tipo === 'feed' ? '<span>🎨</span> ARTE FEED (QUADRADA)' : '<span>📱</span> ARTE STORY (VERTICAL)';
-            
-            // Mostra o Spinner e esconde a imagem antiga
             document.getElementById('gerando-aviso').classList.remove('hidden');
             document.getElementById('preview-final-img').classList.add('hidden');
 
-            // Preparar a Legenda Copiável
             const resumoLimpo = noticia.linhaFina ? noticia.linhaFina : removerHTML(noticia.conteudo).substring(0, 150) + '...';
             const catUnica = noticia.categoria.split(',')[0];
             const hashtagEdit = "#" + catUnica.replace(/\s+/g, '');
@@ -507,37 +498,15 @@
             
             document.getElementById('texto-legenda').innerText = `📰 ${noticia.titulo}\n\n${resumoLimpo}\n\n📲 Leia a matéria completa no nosso portal! Acesse o link na Bio ou copie o endereço abaixo:\n🔗 ${linkPortal}\n.\n.\n.\n#NoticiasAvulsas #Jornalismo ${hashtagEdit}`;
 
-            // Imagem de Fundo (Usa Placeholder se não houver)
             const imagemOriginal = noticia.urlImagem || 'https://placehold.co/1080x1080/0F172A/ffffff?text=Noticias+Avulsas';
 
-            // TRUQUE ANTI-BLOQUEIO (CORS):
-            // O html2canvas odeia imagens de outros servidores (Google Drive). 
-            // Para resolver isto, puxamos a imagem, desenhamos num mini-canvas da memória e transformamos em Base64 nativo.
-            let imgTemporaria = new Image();
-            imgTemporaria.crossOrigin = "anonymous"; // Obriga os navegadores a aceitar o download
-            imgTemporaria.src = imagemOriginal;
-            
-            imgTemporaria.onload = function() {
+            // FUNÇÃO QUE FAZ O DESENHO FINAL (Chamada quando a imagem é desbloqueada)
+            function concluirDesenho(urlImagemSegura) {
                 let alvoElemento;
                 
-                // Extrai a imagem carregada para base64 num mini-canvas
-                // Isso resolve 100% o bug do html2canvas distorcer imagens e falhas de fundo
-                let safeBase64Url = imgTemporaria.src;
-                try {
-                    let tempCanvas = document.createElement('canvas');
-                    tempCanvas.width = imgTemporaria.width;
-                    tempCanvas.height = imgTemporaria.height;
-                    let ctx = tempCanvas.getContext('2d');
-                    ctx.drawImage(imgTemporaria, 0, 0);
-                    safeBase64Url = tempCanvas.toDataURL('image/jpeg', 0.9);
-                } catch(e) {
-                    console.warn("CORS bloqueou a conversão direta, usando URL original.", e);
-                }
-
-                // Preencher o template selecionado pelo utilizador (FEED ou STORY)
                 if (tipo === 'feed') {
                     alvoElemento = document.getElementById('template-feed');
-                    document.getElementById('feed-img').style.backgroundImage = `url('${safeBase64Url}')`;
+                    document.getElementById('feed-img').style.backgroundImage = `url('${urlImagemSegura}')`;
                     
                     let cred = document.getElementById('feed-credito');
                     if (noticia.creditosImagem) { cred.innerText = 'Foto: ' + noticia.creditosImagem; cred.style.display = 'block'; } else { cred.style.display = 'none'; }
@@ -547,7 +516,7 @@
                     document.getElementById('feed-resumo').innerText = resumoLimpo; 
                 } else if (tipo === 'story') {
                     alvoElemento = document.getElementById('template-story');
-                    document.getElementById('story-img').style.backgroundImage = `url('${safeBase64Url}')`;
+                    document.getElementById('story-img').style.backgroundImage = `url('${urlImagemSegura}')`;
                     
                     let cred = document.getElementById('story-credito');
                     if (noticia.creditosImagem) { cred.innerText = 'Foto: ' + noticia.creditosImagem; cred.style.display = 'block'; } else { cred.style.display = 'none'; }
@@ -556,37 +525,77 @@
                     document.getElementById('story-titulo').innerText = noticia.titulo;
                 }
 
-                // Esperamos 600 milisegundos para garantir que as Fontes do Google carregaram na tela escondida
+                // Dá tempo para o CSS atualizar o background
                 setTimeout(() => {
                     html2canvas(alvoElemento, {
-                        scale: 1, // Escala 1 para garantir 1080p nativos
+                        scale: 1,
                         useCORS: true,
                         allowTaint: true,
-                        backgroundColor: '#0F172A' // Fundo da borda
+                        backgroundColor: '#0F172A'
                     }).then(canvasResult => {
-                        // Converte o canvas final num JPG e mostra na tela
-                        const finalJpg = canvasResult.toDataURL("image/jpeg", 0.9);
-                        
-                        const prevImg = document.getElementById('preview-final-img');
-                        prevImg.src = finalJpg;
-                        prevImg.classList.remove('hidden');
-                        document.getElementById('gerando-aviso').classList.add('hidden');
-                        
-                        // Guarda dados para o botão "Baixar"
-                        urlAtualBaixar = finalJpg;
-                        nomeAtualBaixar = `NoticiasAvulsas_${tipo}_${idNoticia}.jpg`;
+                        try {
+                            const finalJpg = canvasResult.toDataURL("image/jpeg", 0.9);
+                            const prevImg = document.getElementById('preview-final-img');
+                            prevImg.src = finalJpg;
+                            prevImg.classList.remove('hidden');
+                            document.getElementById('gerando-aviso').classList.add('hidden');
+                            
+                            urlAtualBaixar = finalJpg;
+                            nomeAtualBaixar = `NoticiasAvulsas_${tipo}_${idNoticia}.jpg`;
+                        } catch (e) {
+                            alert("O Google Drive bloqueou o desenho final. Se tiver problemas constantes, experimente subir a foto pelo computador.");
+                            fecharModalArte();
+                        }
                     });
-                }, 600);
+                }, 800);
+            }
+
+            // O MOTOR DE DESBLOQUEIO CORS (TENTA 3 MÉTODOS)
+            let imgDireta = new Image();
+            imgDireta.crossOrigin = "anonymous";
+            
+            imgDireta.onload = function() {
+                try {
+                    let tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = imgDireta.width;
+                    tempCanvas.height = imgDireta.height;
+                    tempCanvas.getContext('2d').drawImage(imgDireta, 0, 0);
+                    concluirDesenho(tempCanvas.toDataURL('image/jpeg', 0.9));
+                } catch(e) {
+                    tentarComProxy();
+                }
             };
             
-            // Caso a imagem falhe a carregar por proteção do servidor original
-            imgTemporaria.onerror = function() {
-                alert("O servidor da imagem bloqueou a transferência (CORS). Tente usar uma foto diferente.");
-                fecharModalArte();
-            };
+            imgDireta.onerror = tentarComProxy;
+            imgDireta.src = imagemOriginal;
+
+            function tentarComProxy() {
+                // Se a ligação direta for bloqueada, usamos o allorigins para mascarar a ligação
+                let proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(imagemOriginal);
+                let imgProxy = new Image();
+                imgProxy.crossOrigin = "anonymous";
+                
+                imgProxy.onload = function() {
+                    try {
+                        let tCanvas = document.createElement('canvas');
+                        tCanvas.width = imgProxy.width;
+                        tCanvas.height = imgProxy.height;
+                        tCanvas.getContext('2d').drawImage(imgProxy, 0, 0);
+                        concluirDesenho(tCanvas.toDataURL('image/jpeg', 0.9));
+                    } catch(e) {
+                        // Se falhar tudo, tenta forçar a leitura e deixa o html2canvas resolver
+                        concluirDesenho(imagemOriginal);
+                    }
+                };
+                
+                imgProxy.onerror = function() {
+                    concluirDesenho(imagemOriginal);
+                };
+                
+                imgProxy.src = proxyUrl;
+            }
         }
 
-        // Funções de Interação (Botões)
         function fecharModalArte() {
             document.getElementById('modal-arte').classList.add('hidden');
             document.getElementById('modal-arte').classList.remove('flex');
