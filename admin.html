@@ -17,7 +17,7 @@
         // ==========================================
         // ATENÇÃO: COLOQUE AQUI O SEU LINK DO GOOGLE
         // ==========================================
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyVroxyx_f70Q2KkcnfMWtt2vV8EzQRsPBhF9nNL4frnKhdhe7t-oahNoJo9SCLfAbE/exec";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzzMrmdM47OGoGMdzGfTmvR1VpOeEOLP_PTX0VQnXg1i98TkVs4sH8O2Tv-aiGHikrR/exec";
         
         // Ponte de comunicação com o Backend
         window.google = {
@@ -1420,7 +1420,7 @@
                         limparFormEquipa();
                         carregarListaEquipa();
                     } else {
-                        mostrarMensagem('Erro ao salvar membro.', 'erro');
+                        mostrarMensagem(res.erro ? 'Erro do servidor: ' + res.erro : 'Falha desconhecida.', 'erro');
                     }
                     btn.innerText = txt; 
                     btn.disabled = false;
