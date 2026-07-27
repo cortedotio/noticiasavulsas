@@ -147,10 +147,12 @@
             font-family: 'Merriweather', serif;
             font-weight: 900;
             color: white;
-            line-height: 1.15;
-            margin: 0 0 25px 0;
+            /* AUMENTO DA ENTRELINHA PARA EVITAR CORTES DO HTML2CANVAS */
+            line-height: 1.35; 
+            margin: 0 0 20px 0;
             text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
-            padding-bottom: 5px; /* Previne o corte inferior das letras */
+            /* PREENCHIMENTO EXTRA NA BASE PARA PROTEGER AS LETRAS (g, p, q) */
+            padding-bottom: 15px; 
         }
 
         /* Ajustes precisos nas linhas e tamanhos para evitar cortes indesejados */
@@ -163,12 +165,15 @@
             font-size: 30px;
             color: #cbd5e1;
             font-weight: 400;
-            line-height: 1.4;
+            /* AUMENTO DA ENTRELINHA */
+            line-height: 1.5;
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
             margin-bottom: 40px;
+            /* ESPAÇO EXTRA NA BASE */
+            padding-bottom: 10px; 
         }
 
         /* Créditos da Foto na Imagem Gerada (Canto superior direito) */
