@@ -72,15 +72,16 @@
             overflow: hidden;
         }
 
-        /* Imagem de Fundo em formato tag <img> com object-fit cover (evita imagem preta e esmagamento) */
+        /* Imagem de Fundo (Agora usa DIV com Background para evitar esticamento no html2canvas) */
         .template-bg-image {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            object-position: center;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
             z-index: 1;
         }
 
@@ -147,12 +148,10 @@
             font-family: 'Merriweather', serif;
             font-weight: 900;
             color: white;
-            /* AUMENTO DA ENTRELINHA PARA EVITAR CORTES DO HTML2CANVAS */
             line-height: 1.35; 
             margin: 0 0 20px 0;
             text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
-            /* PREENCHIMENTO EXTRA NA BASE PARA PROTEGER AS LETRAS (g, p, q) */
-            padding-bottom: 15px; 
+            padding-bottom: 15px; /* Evita que o p, g, j fiquem cortados na base */
         }
 
         /* Ajustes precisos nas linhas e tamanhos para evitar cortes indesejados */
@@ -165,14 +164,12 @@
             font-size: 30px;
             color: #cbd5e1;
             font-weight: 400;
-            /* AUMENTO DA ENTRELINHA */
             line-height: 1.5;
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
             margin-bottom: 40px;
-            /* ESPAÇO EXTRA NA BASE */
             padding-bottom: 10px; 
         }
 
@@ -288,7 +285,7 @@
         
         <!-- 1. O TEMPLATE DO FEED (QUADRADO 1080 x 1080) -->
         <div id="template-feed" class="template-feed">
-            <img id="feed-img" crossorigin="anonymous" class="template-bg-image" src="" alt="Fundo Feed" />
+            <div id="feed-img" class="template-bg-image"></div>
             <div id="feed-credito" class="template-credito">Foto: Créditos</div>
             <div class="template-overlay"></div>
             <div class="template-content">
@@ -304,7 +301,7 @@
 
         <!-- 2. O TEMPLATE DO STORY (VERTICAL 1080 x 1920) -->
         <div id="template-story" class="template-story">
-            <img id="story-img" crossorigin="anonymous" class="template-bg-image" src="" alt="Fundo Story" />
+            <div id="story-img" class="template-bg-image"></div>
             <div id="story-credito" class="template-credito">Foto: Créditos</div>
             <div class="template-overlay"></div>
             <div class="template-content">
@@ -498,10 +495,13 @@
 
             const imagemOriginal = noticia.urlImagem || 'https://placehold.co/1080x1080/0F172A/ffffff?text=Noticias+Avulsas';
 
-            // Seleciona a imagem e o container correto com base no tipo de arte
-            const imgElemento = tipo === 'feed' ? document.getElementById('feed-img') : document.getElementById('story-img');
+            // Seleciona a div de imagem e o container correto com base no tipo de arte
+            const divImagem = tipo === 'feed' ? document.getElementById('feed-img') : document.getElementById('story-img');
             const alvoElemento = tipo === 'feed' ? document.getElementById('template-feed') : document.getElementById('template-story');
             
+            // Limpa o fundo antigo
+            divImagem.style.backgroundImage = 'none';
+
             // Textos Dinâmicos e Créditos
             if (tipo === 'feed') {
                 let cred = document.getElementById('feed-credito');
@@ -516,14 +516,21 @@
                 document.getElementById('story-titulo').innerText = noticia.titulo;
             }
 
-            // A FUNÇÃO MAGNÍFICA QUE DISPARA A CÂMARA
+            // Cria uma imagem temporária apenas na memória para passar pelas validações e Proxies
+            const imgTemp = new Image();
+            imgTemp.crossOrigin = "anonymous";
+
+            // A FUNÇÃO MAGNÍFICA QUE DISPARA A CÂMARA (Só roda se a imagem carregar)
             function fazerDesenhoFinal() {
-                // Aguarda 800ms para ter a certeza absoluta que a tipografia foi pintada no ecrã
+                // Aplica a imagem como fundo (Resolve o esticamento do object-fit no html2canvas!)
+                divImagem.style.backgroundImage = `url('${imgTemp.src}')`;
+
+                // Aguarda 800ms para ter a certeza absoluta que a tipografia e fundos foram pintados
                 setTimeout(() => {
                     html2canvas(alvoElemento, {
-                        scale: 1, // Já está em 1080px, não precisa de mais scale
+                        scale: 1, 
                         useCORS: true,
-                        allowTaint: false, // Protege contra tela preta
+                        allowTaint: false, 
                         backgroundColor: '#0F172A'
                     }).then(canvasResult => {
                         const finalJpg = canvasResult.toDataURL("image/jpeg", 0.9);
@@ -541,32 +548,28 @@
                 }, 800);
             }
 
-            // Prepara a Imagem Limpando Cache Antigo
-            imgElemento.src = "";
-            imgElemento.crossOrigin = "anonymous";
-
             // Só dispara html2canvas se a imagem for validada
-            imgElemento.onload = fazerDesenhoFinal;
+            imgTemp.onload = fazerDesenhoFinal;
 
             // MOTOR ANTI-BLOQUEIO DUPLO (CORS BYPASS)
-            imgElemento.onerror = function() {
+            imgTemp.onerror = function() {
                 // Se o link original for bloqueado pelo Drive, tenta o proxy corsproxy.io
-                imgElemento.onerror = function() {
+                imgTemp.onerror = function() {
                     // Se o corsproxy falhar, tenta o wsrv.nl
-                    imgElemento.onerror = function() {
-                        // Se tudo falhar, injeta a imagem de fallback para não quebrar a arte
-                        imgElemento.removeAttribute("crossorigin");
-                        imgElemento.onload = fazerDesenhoFinal;
-                        imgElemento.src = 'https://placehold.co/1080x1920/0F172A/ffffff?text=Foto+Indisponivel';
+                    imgTemp.onerror = function() {
+                        // Se tudo falhar, injeta a imagem de fallback para não travar
+                        imgTemp.removeAttribute("crossorigin");
+                        imgTemp.onload = fazerDesenhoFinal;
+                        imgTemp.src = 'https://placehold.co/1080x1920/0F172A/ffffff?text=Foto+Indisponivel';
                     };
                     let wsrvUrl = imagemOriginal.replace(/^https?:\/\//, '');
-                    imgElemento.src = "https://wsrv.nl/?url=" + encodeURIComponent(wsrvUrl) + "&output=jpg";
+                    imgTemp.src = "https://wsrv.nl/?url=" + encodeURIComponent(wsrvUrl) + "&output=jpg";
                 };
-                imgElemento.src = "https://corsproxy.io/?" + encodeURIComponent(imagemOriginal);
+                imgTemp.src = "https://corsproxy.io/?" + encodeURIComponent(imagemOriginal);
             };
 
-            // Inicia o processo de descarregamento
-            imgElemento.src = imagemOriginal;
+            // Inicia a transferência e cadeia de verificação
+            imgTemp.src = imagemOriginal;
         }
 
         function fecharModalArte() {
