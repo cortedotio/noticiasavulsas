@@ -44,10 +44,7 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* 
-           A Área de Exportação é onde desenhamos a arte com os 1080x1080 reais.
-           Colocamos fora da tela (left: -9999px) para o utilizador não ver o "desenho a ser feito". 
-        */
+        /* A Área de Exportação fica fora da tela para o utilizador não ver a arte a ser desenhada */
         #canvas-area-export {
             position: fixed;
             top: 0;
@@ -75,20 +72,19 @@
             overflow: hidden;
         }
 
-        /* Imagem de Fundo (A foto da Matéria com corte perfeito "cover") */
+        /* Imagem de Fundo em formato tag <img> com object-fit cover (evita imagem preta e esmagamento) */
         .template-bg-image {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            object-fit: cover;
+            object-position: center;
             z-index: 1;
         }
 
-        /* Para o Feed, a imagem tem uma margem para formar a borda */
+        /* Para o Feed, a imagem tem uma margem para formar a borda colorida */
         .template-feed .template-bg-image {
             top: 40px;
             left: 40px;
@@ -163,7 +159,7 @@
         .template-summary {
             font-family: 'Inter', sans-serif;
             font-size: 32px;
-            color: #cbd5e1; /* Cinza clarinho */
+            color: #cbd5e1;
             font-weight: 400;
             line-height: 1.4;
             display: -webkit-box;
@@ -190,7 +186,6 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            backdrop-filter: blur(4px);
         }
 
         /* Ajuste do crédito no Feed para alinhar com a borda */
@@ -223,11 +218,13 @@
 </head>
 <body class="antialiased min-h-screen flex flex-col relative selection:bg-purple-500 selection:text-white">
 
+    <!-- Loader Global -->
     <div id="loading-global" class="fixed inset-0 z-[99998] bg-jornal-dark flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="w-12 h-12 border-4 border-gray-700 border-t-purple-500 rounded-full animate-spin mb-4"></div>
         <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Estúdio...</p>
     </div>
 
+    <!-- Cabeçalho (Idêntico ao Admin) -->
     <header class="bg-jornal-dark text-white border-b border-gray-800 sticky top-0 z-40 shadow-sm">
         <div class="max-w-[1200px] mx-auto flex justify-between items-center px-4 py-3">
             <span class="font-sans font-black tracking-tighter text-lg uppercase text-slate-100 flex items-center gap-2">
@@ -247,7 +244,7 @@
                 <p class="text-xs text-gray-500 mt-1 font-medium">Gere imagens profissionais em 1 clique para o seu Feed e Stories.</p>
             </div>
             
-            <!-- Filtros -->
+            <!-- Filtros de Pesquisa -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 border border-gray-200 rounded-sm">
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Filtrar por Editoria</label>
@@ -261,7 +258,7 @@
                 </div>
             </div>
             
-            <!-- Tabela -->
+            <!-- Tabela de Matérias -->
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm whitespace-nowrap">
                     <thead class="bg-gray-100 border-b border-gray-300 text-[10px] uppercase tracking-widest text-gray-500">
@@ -282,17 +279,15 @@
 
     <div id="canvas-area-export">
         
-        <!-- ==============================================
-             1. O TEMPLATE DO FEED (QUADRADO 1080 x 1080) 
-             ============================================== -->
+        <!-- 1. O TEMPLATE DO FEED (QUADRADO 1080 x 1080) -->
         <div id="template-feed" class="template-feed">
-            <div id="feed-img" class="template-bg-image"></div>
+            <img id="feed-img" crossorigin="anonymous" class="template-bg-image" src="" alt="Fundo Feed" />
             <div id="feed-credito" class="template-credito">Foto: Créditos</div>
             <div class="template-overlay"></div>
             <div class="template-content">
                 <span id="feed-categoria" class="template-badge">Editoria</span>
-                <h1 id="feed-titulo" class="template-title">Manchete da Notícia Ficará Aqui</h1>
-                <p id="feed-resumo" class="template-summary">Este é um resumo do que a notícia fala, ocupando até três linhas de forma elegante e chamativa.</p>
+                <h1 id="feed-titulo" class="template-title">Manchete da Notícia</h1>
+                <p id="feed-resumo" class="template-summary">Resumo de três linhas...</p>
                 <div class="template-footer">
                     <div class="template-footer-line"></div>
                     <span class="template-footer-text">NOTÍCIAS AVULSAS</span>
@@ -300,16 +295,14 @@
             </div>
         </div>
 
-        <!-- ==============================================
-             2. O TEMPLATE DO STORY (VERTICAL 1080 x 1920) 
-             ============================================== -->
+        <!-- 2. O TEMPLATE DO STORY (VERTICAL 1080 x 1920) -->
         <div id="template-story" class="template-story">
-            <div id="story-img" class="template-bg-image"></div>
+            <img id="story-img" crossorigin="anonymous" class="template-bg-image" src="" alt="Fundo Story" />
             <div id="story-credito" class="template-credito">Foto: Créditos</div>
             <div class="template-overlay"></div>
             <div class="template-content">
                 <span id="story-categoria" class="template-badge">Editoria</span>
-                <h1 id="story-titulo" class="template-title">Manchete da Notícia Ficará Aqui</h1>
+                <h1 id="story-titulo" class="template-title">Manchete da Notícia</h1>
                 <div class="template-footer">
                     <div class="template-footer-line"></div>
                     <span class="template-footer-text">TOQUE NO LINK</span>
@@ -334,13 +327,13 @@
             </div>
             
             <div class="flex flex-col md:flex-row flex-grow overflow-hidden">
-                <!-- Coluna Esquerda: Preview da Imagem (Pode fazer Scroll se a tela for pequena) -->
+                <!-- Coluna Esquerda: Preview da Imagem -->
                 <div class="md:w-1/2 p-6 bg-gray-200 flex items-center justify-center overflow-y-auto custom-scrollbar border-r border-gray-300 relative min-h-[300px]">
                     
                     <div id="gerando-aviso" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-200 z-10">
                         <div class="w-10 h-10 border-4 border-gray-300 border-t-purple-500 rounded-full animate-spin mb-4"></div>
                         <p class="text-xs font-black text-gray-500 uppercase tracking-widest animate-pulse mt-4">A Desenhar Arte...</p>
-                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-center px-4">Passando pela segurança da imagem...</p>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-center px-4">A alinhar fotografia e textos...</p>
                     </div>
 
                     <img id="preview-final-img" src="" class="max-w-full h-auto max-h-full object-contain shadow-2xl hidden" alt="Preview da Arte">
@@ -370,13 +363,11 @@
         // ATENÇÃO: Link do Google Apps Script
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyVroxyx_f70Q2KkcnfMWtt2vV8EzQRsPBhF9nNL4frnKhdhe7t-oahNoJo9SCLfAbE/exec";
         
-        // Dados guardados na memória
         let noticiasGlobais = [];
         let urlAtualBaixar = "";
         let nomeAtualBaixar = "";
 
         document.addEventListener("DOMContentLoaded", function() {
-            // Verifica se o Utilizador está Logado como Admin
             if (localStorage.getItem('admin_logado') !== 'true') {
                 alert("Acesso Negado. Faça login no Painel Administrativo primeiro.");
                 window.location.href = "admin.html";
@@ -500,100 +491,71 @@
 
             const imagemOriginal = noticia.urlImagem || 'https://placehold.co/1080x1080/0F172A/ffffff?text=Noticias+Avulsas';
 
-            // FUNÇÃO QUE FAZ O DESENHO FINAL (Chamada quando a imagem é desbloqueada)
-            function concluirDesenho(urlImagemSegura) {
-                let alvoElemento;
-                
-                if (tipo === 'feed') {
-                    alvoElemento = document.getElementById('template-feed');
-                    document.getElementById('feed-img').style.backgroundImage = `url('${urlImagemSegura}')`;
-                    
-                    let cred = document.getElementById('feed-credito');
-                    if (noticia.creditosImagem) { cred.innerText = 'Foto: ' + noticia.creditosImagem; cred.style.display = 'block'; } else { cred.style.display = 'none'; }
-                    
-                    document.getElementById('feed-categoria').innerText = catUnica;
-                    document.getElementById('feed-titulo').innerText = noticia.titulo;
-                    document.getElementById('feed-resumo').innerText = resumoLimpo; 
-                } else if (tipo === 'story') {
-                    alvoElemento = document.getElementById('template-story');
-                    document.getElementById('story-img').style.backgroundImage = `url('${urlImagemSegura}')`;
-                    
-                    let cred = document.getElementById('story-credito');
-                    if (noticia.creditosImagem) { cred.innerText = 'Foto: ' + noticia.creditosImagem; cred.style.display = 'block'; } else { cred.style.display = 'none'; }
-                    
-                    document.getElementById('story-categoria').innerText = catUnica;
-                    document.getElementById('story-titulo').innerText = noticia.titulo;
-                }
+            // Seleciona a imagem e o container correto com base no tipo de arte
+            const imgElemento = tipo === 'feed' ? document.getElementById('feed-img') : document.getElementById('story-img');
+            const alvoElemento = tipo === 'feed' ? document.getElementById('template-feed') : document.getElementById('template-story');
+            
+            // Textos Dinâmicos e Créditos
+            if (tipo === 'feed') {
+                let cred = document.getElementById('feed-credito');
+                if (noticia.creditosImagem) { cred.innerText = 'Foto: ' + noticia.creditosImagem; cred.style.display = 'block'; } else { cred.style.display = 'none'; }
+                document.getElementById('feed-categoria').innerText = catUnica;
+                document.getElementById('feed-titulo').innerText = noticia.titulo;
+                document.getElementById('feed-resumo').innerText = resumoLimpo; 
+            } else if (tipo === 'story') {
+                let cred = document.getElementById('story-credito');
+                if (noticia.creditosImagem) { cred.innerText = 'Foto: ' + noticia.creditosImagem; cred.style.display = 'block'; } else { cred.style.display = 'none'; }
+                document.getElementById('story-categoria').innerText = catUnica;
+                document.getElementById('story-titulo').innerText = noticia.titulo;
+            }
 
-                // Dá tempo para o CSS atualizar o background
+            // A FUNÇÃO MAGNÍFICA QUE DISPARA A CÂMARA (APENAS QUANDO A FOTO JÁ CARREGOU 100%)
+            function fazerDesenhoFinal() {
+                // Aguarda 800ms para ter a certeza absoluta que a tipografia (Inter/Merriweather) foi pintada no ecrã
                 setTimeout(() => {
                     html2canvas(alvoElemento, {
-                        scale: 1,
+                        scale: 1, // Não é necessário mais do que 1 pois já é 1080px
                         useCORS: true,
-                        allowTaint: true,
+                        allowTaint: false, // CRÍTICO: Se for true, o ecrã fica preto por segurança!
                         backgroundColor: '#0F172A'
                     }).then(canvasResult => {
-                        try {
-                            const finalJpg = canvasResult.toDataURL("image/jpeg", 0.9);
-                            const prevImg = document.getElementById('preview-final-img');
-                            prevImg.src = finalJpg;
-                            prevImg.classList.remove('hidden');
-                            document.getElementById('gerando-aviso').classList.add('hidden');
-                            
-                            urlAtualBaixar = finalJpg;
-                            nomeAtualBaixar = `NoticiasAvulsas_${tipo}_${idNoticia}.jpg`;
-                        } catch (e) {
-                            alert("O Google Drive bloqueou o desenho final. Se tiver problemas constantes, experimente subir a foto pelo computador.");
-                            fecharModalArte();
-                        }
+                        const finalJpg = canvasResult.toDataURL("image/jpeg", 0.9);
+                        const prevImg = document.getElementById('preview-final-img');
+                        prevImg.src = finalJpg;
+                        prevImg.classList.remove('hidden');
+                        document.getElementById('gerando-aviso').classList.add('hidden');
+                        
+                        urlAtualBaixar = finalJpg;
+                        nomeAtualBaixar = `NoticiasAvulsas_${tipo}_${idNoticia}.jpg`;
+                    }).catch(err => {
+                        alert("Ocorreu um erro ao processar a arte. Tente novamente.");
+                        fecharModalArte();
                     });
                 }, 800);
             }
 
-            // O MOTOR DE DESBLOQUEIO CORS (TENTA 3 MÉTODOS)
-            let imgDireta = new Image();
-            imgDireta.crossOrigin = "anonymous";
-            
-            imgDireta.onload = function() {
-                try {
-                    let tempCanvas = document.createElement('canvas');
-                    tempCanvas.width = imgDireta.width;
-                    tempCanvas.height = imgDireta.height;
-                    tempCanvas.getContext('2d').drawImage(imgDireta, 0, 0);
-                    concluirDesenho(tempCanvas.toDataURL('image/jpeg', 0.9));
-                } catch(e) {
-                    tentarComProxy();
-                }
-            };
-            
-            imgDireta.onerror = tentarComProxy;
-            imgDireta.src = imagemOriginal;
+            // Prepara a Imagem Limpando Cache Antigo
+            imgElemento.src = "";
+            imgElemento.crossOrigin = "anonymous";
 
-            function tentarComProxy() {
-                // Se a ligação direta for bloqueada, usamos o allorigins para mascarar a ligação
-                let proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(imagemOriginal);
-                let imgProxy = new Image();
-                imgProxy.crossOrigin = "anonymous";
-                
-                imgProxy.onload = function() {
-                    try {
-                        let tCanvas = document.createElement('canvas');
-                        tCanvas.width = imgProxy.width;
-                        tCanvas.height = imgProxy.height;
-                        tCanvas.getContext('2d').drawImage(imgProxy, 0, 0);
-                        concluirDesenho(tCanvas.toDataURL('image/jpeg', 0.9));
-                    } catch(e) {
-                        // Se falhar tudo, tenta forçar a leitura e deixa o html2canvas resolver
-                        concluirDesenho(imagemOriginal);
-                    }
+            // Só quando a imagem carrega com sucesso, mandamos disparar o html2canvas
+            imgElemento.onload = fazerDesenhoFinal;
+
+            // Motor Anti-Bloqueio (Se o Google Drive recusar a permissão CORS, aciona o Plano B)
+            imgElemento.onerror = function() {
+                // Se a primeira tentativa falhar (Drive bloqueou), tenta via Proxy AllOrigins
+                imgElemento.onerror = function() {
+                    // Se o proxy também falhar, usamos um placeholder limpo para não estragar a arte
+                    imgElemento.removeAttribute("crossorigin");
+                    imgElemento.onload = fazerDesenhoFinal; // Volta a ligar o evento de sucesso
+                    imgElemento.src = 'https://placehold.co/1080x1080/0F172A/ffffff?text=Foto+Indisponivel';
                 };
-                
-                imgProxy.onerror = function() {
-                    concluirDesenho(imagemOriginal);
-                };
-                
-                imgProxy.src = proxyUrl;
-            }
+                // Injeta a foto através do servidor Proxy
+                imgElemento.src = "https://api.allorigins.win/raw?url=" + encodeURIComponent(imagemOriginal);
+            };
+
+            // Inicia o processo de descarregamento da foto
+            imgElemento.src = imagemOriginal;
         }
 
         function fecharModalArte() {
