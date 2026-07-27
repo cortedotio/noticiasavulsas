@@ -353,9 +353,11 @@
                         <span>⬇️</span> BAIXAR IMAGEM (JPG)
                     </button>
                     
-                    <h4 class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3">Legenda Pronta para Instagram</h4>
+                    <div class="flex justify-between items-end mb-3">
+                        <h4 class="text-[10px] font-black uppercase tracking-widest text-gray-500">Legenda (Pode Editar)</h4>
+                    </div>
                     
-                    <div class="bg-gray-50 border border-gray-200 p-4 rounded-sm text-sm text-gray-700 h-48 overflow-y-auto custom-scrollbar font-medium mb-4 whitespace-pre-wrap" id="texto-legenda"></div>
+                    <textarea class="w-full bg-white border border-gray-300 p-4 rounded-sm text-sm text-gray-700 h-48 custom-scrollbar font-medium mb-4 resize-none focus:outline-none focus:ring-1 focus:ring-purple-500 shadow-inner" id="texto-legenda"></textarea>
                     
                     <div class="mt-auto flex flex-col gap-3">
                         <button onclick="copiarLegenda()" class="w-full bg-purple-100 hover:bg-purple-200 text-purple-800 border border-purple-300 font-black text-[11px] uppercase tracking-widest py-3 rounded-sm shadow-sm transition-colors flex justify-center items-center gap-2">
@@ -501,7 +503,7 @@
             const hashtagEdit = "#" + catUnica.replace(/\s+/g, '');
             const linkPortal = `noticiasavulsas.com.br/?noticia=${noticia.id}`;
             
-            document.getElementById('texto-legenda').innerText = `📰 ${noticia.titulo}\n\n${resumoLimpo}\n\n📲 Leia a matéria completa no nosso portal! Acesse o link na Bio ou copie o endereço abaixo:\n🔗 ${linkPortal}\n.\n.\n.\n#NoticiasAvulsas #Jornalismo ${hashtagEdit}`;
+            document.getElementById('texto-legenda').value = `📰 ${noticia.titulo}\n\n${resumoLimpo}\n\n📲 Leia a matéria completa no nosso portal! Acesse o link na Bio ou copie o endereço abaixo:\n🔗 ${linkPortal}\n.\n.\n.\n#NoticiasAvulsas #Jornalismo ${hashtagEdit}`;
 
             const imagemOriginal = noticia.urlImagem || 'https://placehold.co/1080x1080/0F172A/ffffff?text=Noticias+Avulsas';
 
@@ -600,7 +602,7 @@
         }
 
         function copiarLegenda() {
-            const texto = document.getElementById('texto-legenda').innerText;
+            const texto = document.getElementById('texto-legenda').value;
             navigator.clipboard.writeText(texto).then(() => {
                 alert("A Legenda foi copiada com sucesso!\n\nAgora você pode clicar no botão 'Abrir Instagram' para fazer a sua publicação.");
             }).catch(err => {
@@ -609,7 +611,7 @@
         }
 
         function abrirInstagram() {
-            const texto = document.getElementById('texto-legenda').innerText;
+            const texto = document.getElementById('texto-legenda').value;
             navigator.clipboard.writeText(texto).then(() => {
                 alert("PASSOS PARA PUBLICAR:\n\n1. A legenda já foi copiada por nós!\n2. Verifique se clicou no botão Preto para 'Baixar Imagem'.\n3. O Instagram vai abrir agora: clique em 'Criar', coloque a imagem e faça Colar (Ctrl+V) da legenda.\n\nBoas publicações!");
                 window.open('https://instagram.com', '_blank');
