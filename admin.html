@@ -1849,11 +1849,27 @@
                 document.getElementById('story-titulo').innerText = noticia.titulo;
             }
 
+            let timeoutFinal;
+
             const imgTemp = new Image();
             imgTemp.crossOrigin = "anonymous";
 
             function fazerDesenhoFinal() {
-                divImagem.style.backgroundImage = `url('${imgTemp.src}')`;
+                clearTimeout(timeoutFinal);
+                
+                // Converte para Base64 nativo para impedir que o html2canvas encrave na rede
+                try {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = imgTemp.naturalWidth || 1080;
+                    tempCanvas.height = imgTemp.naturalHeight || 1080;
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(imgTemp, 0, 0);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', 0.9);
+                    divImagem.style.backgroundImage = `url('${dataUrl}')`;
+                } catch(e) {
+                    // Fallback se o canvas ficar sujo
+                    divImagem.style.backgroundImage = `url('${imgTemp.src}')`;
+                }
                 
                 setTimeout(() => {
                     html2canvas(alvoElemento, {
@@ -1879,7 +1895,16 @@
 
             imgTemp.onload = fazerDesenhoFinal;
             
-            // PROXY ANTI-BLOQUEIO
+            // TIMEOUT DE SEGURANÇA: Se demorar mais de 8 segundos, força o desenho!
+            timeoutFinal = setTimeout(() => {
+                imgTemp.removeAttribute("crossorigin");
+                imgTemp.onload = null;
+                imgTemp.onerror = null;
+                imgTemp.src = 'https://placehold.co/1080x1920/0F172A/ffffff?text=Demora+na+Rede';
+                fazerDesenhoFinal();
+            }, 8000);
+            
+            // PROXY ANTI-BLOQUEIO DUPLO
             imgTemp.onerror = function() {
                 imgTemp.onerror = function() {
                     imgTemp.onerror = function() {
@@ -1887,10 +1912,10 @@
                         imgTemp.onload = fazerDesenhoFinal;
                         imgTemp.src = 'https://placehold.co/1080x1920/0F172A/ffffff?text=Foto+Indisponivel';
                     };
-                    let wsrvUrl = imagemOriginal.replace(/^https?:\/\//, '');
-                    imgTemp.src = "https://wsrv.nl/?url=" + encodeURIComponent(wsrvUrl) + "&output=jpg";
+                    imgTemp.src = `https://api.allorigins.win/raw?url=${encodeURIComponent(imagemOriginal)}`;
                 };
-                imgTemp.src = "https://corsproxy.io/?" + encodeURIComponent(imagemOriginal);
+                let wsrvUrl = imagemOriginal.replace(/^https?:\/\//, '');
+                imgTemp.src = `https://wsrv.nl/?url=${encodeURIComponent(wsrvUrl)}&output=jpg`;
             };
             
             imgTemp.src = imagemOriginal;
