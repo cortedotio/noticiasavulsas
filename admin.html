@@ -215,8 +215,8 @@
             <div class="max-w-[1200px] mx-auto flex justify-between items-center px-4 py-3">
                 <div class="flex items-center gap-3">
                     <span class="font-sans font-black tracking-tighter text-lg uppercase text-slate-100 flex items-center gap-2">Painel<span class="text-rose-600">Admin</span></span>
-                    <span class="hidden md:inline-block ml-4 bg-gray-800 text-[9px] uppercase tracking-widest font-bold px-2 py-1 rounded-sm text-gray-300 border border-gray-700">
-                        Redação Oficial
+                    <span id="label-usuario-logado" class="hidden md:inline-flex ml-4 bg-[#1F2937] text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 rounded-sm text-gray-300 border border-gray-700 items-center">
+                        LOGADO COMO: ADMIN
                     </span>
                 </div>
                 <div class="flex items-center gap-4">
@@ -228,16 +228,16 @@
 
         <main class="max-w-[1200px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
             <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar" id="nav-abas-admin">
-                <button type="button" onclick="alternarAbaAdmin('form-noticia-container')" id="aba-noticia" class="py-3 px-5 font-black text-[11px] bg-jornal-blue text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Publicar</button>
+                <button type="button" onclick="alternarAbaAdmin('form-noticia-container')" id="aba-noticia" class="py-3 px-5 font-black text-[11px] bg-jornal-dark text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Publicar</button>
                 
                 <button type="button" onclick="alternarAbaAdmin('lista-noticias-container')" id="aba-lista" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Gerir Matérias</button>
                 
-                <button type="button" onclick="alternarAbaAdmin('form-capa-container')" id="aba-capa" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Layout Capa</button>
-                
-                <button type="button" onclick="alternarAbaAdmin('form-placar-container')" id="aba-placar" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Placar</button>
-                
-                <a href="config.html" id="aba-configuracoes" class="py-3 px-5 font-black text-[11px] bg-gray-800 text-white hover:bg-gray-700 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-2 shadow-sm ml-auto">
+                <a href="config.html" id="aba-configuracoes" class="py-3 px-5 font-black text-[11px] bg-[#1F2937] text-white hover:bg-gray-800 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-2 shadow-sm ml-1">
                     ⚙️ CONFIGURAÇÕES
+                </a>
+                
+                <a href="instagram.html" target="_blank" id="aba-estudio" class="py-3 px-5 font-black text-[11px] bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:opacity-90 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-opacity flex items-center gap-2 shadow-sm">
+                    📸 ESTÚDIO IG ↗
                 </a>
             </div>
 
@@ -439,69 +439,6 @@
                     </table>
                 </div>
             </div>
-
-            <!-- ========================================================= -->
-            <!-- ABA 3: CAPA                                               -->
-            <!-- ========================================================= -->
-            <div id="form-capa-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
-                <div class="border-l-4 border-emerald-600 pl-3 mb-6">
-                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Organizar Capa</h2>
-                </div>
-                
-                <form onsubmit="salvarOrdemCapa(event)">
-                    <p class="text-xs text-gray-500 mb-6 font-medium">Escolha até 8 editorias que devem aparecer em destaque abaixo do carrossel principal no portal.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="selects-capa-container"></div>
-                    
-                    <div class="pt-6 border-t border-gray-200 flex justify-end">
-                        <button type="submit" id="btn-salvar-capa" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-black px-10 py-3.5 uppercase tracking-widest text-sm rounded-sm transition-colors shadow-md">Salvar Ordem</button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- ========================================================= -->
-            <!-- ABA 4: PLACAR AO VIVO                                     -->
-            <!-- ========================================================= -->
-            <div id="form-placar-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
-                <div class="border-l-4 border-green-600 pl-3 mb-6">
-                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Desporto ao Vivo</h2>
-                </div>
-                
-                <form id="form-placar" onsubmit="salvarPlacarAoVivo(event)">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                        <div class="p-5 bg-gray-50 border border-gray-200 rounded-sm">
-                            <h3 class="text-[11px] font-black uppercase tracking-widest text-gray-900 mb-4 border-b border-gray-200 pb-2">Futebol: Brasil</h3>
-                            <label class="flex items-center gap-3 mb-3 cursor-pointer">
-                                <input type="checkbox" name="liga-placar" value="soccer/bra.1" class="w-4 h-4 text-green-600 rounded" />
-                                <span class="text-sm font-bold text-gray-700">Brasileirão Série A</span>
-                            </label>
-                            <label class="flex items-center gap-3 mb-3 cursor-pointer">
-                                <input type="checkbox" name="liga-placar" value="soccer/bra.2" class="w-4 h-4 text-green-600 rounded" />
-                                <span class="text-sm font-bold text-gray-700">Brasileirão Série B</span>
-                            </label>
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" name="liga-placar" value="soccer/bra.copa_do_brasil" class="w-4 h-4 text-green-600 rounded" />
-                                <span class="text-sm font-bold text-gray-700">Copa do Brasil</span>
-                            </label>
-                        </div>
-                        
-                        <div class="p-5 bg-gray-50 border border-gray-200 rounded-sm">
-                            <h3 class="text-[11px] font-black uppercase tracking-widest text-green-700 mb-4 border-b border-gray-200 pb-2">Futebol: Internacional</h3>
-                            <label class="flex items-center gap-3 mb-3 cursor-pointer">
-                                <input type="checkbox" name="liga-placar" value="soccer/conmebol.libertadores" class="w-4 h-4 text-green-600 rounded" />
-                                <span class="text-sm font-bold text-gray-700">Copa Libertadores</span>
-                            </label>
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" name="liga-placar" value="soccer/uefa.champions" class="w-4 h-4 text-green-600 rounded" />
-                                <span class="text-sm font-bold text-gray-700">Champions League</span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="pt-6 border-t border-gray-200 flex justify-end">
-                        <button type="submit" id="btn-salvar-placar" class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-black px-12 py-3.5 uppercase tracking-widest text-sm rounded-sm shadow-md transition-colors">Salvar Ligas</button>
-                    </div>
-                </form>
-            </div>
             
         </main>
     </div>
@@ -524,6 +461,15 @@
         window.relacionadasEditadasManualmente = false;
 
         document.addEventListener("DOMContentLoaded", function() {
+            var user = localStorage.getItem('admin_user') || localStorage.getItem('admin_usuario');
+            var elUser = document.getElementById('label-usuario-logado');
+            if (user && elUser) {
+                elUser.innerText = 'LOGADO COMO: ' + user.toUpperCase();
+                elUser.classList.remove('hidden');
+            } else if (elUser) {
+                elUser.innerText = 'LOGADO COMO: ADMIN';
+                elUser.classList.remove('hidden');
+            }
             carregarNoticiasAdmin();
         });
 
@@ -551,12 +497,6 @@
                         if (document.getElementById('aba-lista').style.display !== 'none') {
                             carregarListaEdicao();
                         }
-                        if (document.getElementById('aba-capa').style.display !== 'none') {
-                            preencherFormCapa();
-                        }
-                        if (document.getElementById('aba-placar').style.display !== 'none') {
-                            preencherFormPlacar();
-                        }
                     }
                 }).withFailureHandler(function(err) {
                     document.getElementById('loading-global').classList.add('hidden'); 
@@ -568,9 +508,7 @@
         function alternarAbaAdmin(abaId) {
             var contentIds = [
                 'form-noticia-container', 
-                'lista-noticias-container', 
-                'form-capa-container', 
-                'form-placar-container'
+                'lista-noticias-container'
             ];
             
             contentIds.forEach(function(id) { 
@@ -582,9 +520,7 @@
             
             var tabIds = [
                 'aba-noticia', 
-                'aba-lista', 
-                'aba-capa', 
-                'aba-placar'
+                'aba-lista'
             ];
             
             tabIds.forEach(function(id) { 
@@ -604,19 +540,11 @@
             
             if (abaId === 'form-noticia-container') { 
                 botaoId = 'aba-noticia'; 
-                classAtiva = "bg-jornal-blue text-white font-black"; 
+                classAtiva = "bg-jornal-dark text-white font-black"; 
             } else if (abaId === 'lista-noticias-container') { 
                 botaoId = 'aba-lista'; 
                 classAtiva = "bg-jornal-dark text-white font-black"; 
                 carregarListaEdicao(); 
-            } else if (abaId === 'form-capa-container') { 
-                botaoId = 'aba-capa'; 
-                classAtiva = "bg-emerald-600 text-white font-black"; 
-                preencherFormCapa(); 
-            } else if (abaId === 'form-placar-container') { 
-                botaoId = 'aba-placar'; 
-                classAtiva = "bg-green-700 text-white font-black"; 
-                preencherFormPlacar(); 
             }
             
             var btnEl = document.getElementById(botaoId); 
@@ -1337,104 +1265,6 @@
             atualizarPreviewURL();
         }
 
-        function preencherFormCapa() {
-            var container = document.getElementById('selects-capa-container'); 
-            if(!container) return;
-            
-            var html = ''; 
-            var ordemAtual = []; 
-            
-            if(configuracoesGlobais['CategoriasCapa']) { 
-                try { 
-                    ordemAtual = JSON.parse(configuracoesGlobais['CategoriasCapa']); 
-                } catch(e){} 
-            }
-            
-            for(var i=1; i<=8; i++) { 
-                var v = ordemAtual.length >= i ? ordemAtual[i-1] : ''; 
-                
-                html += `
-                    <div>
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">
-                            Posição ${i}
-                        </label>
-                        <select id="capa-pos-${i}" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm font-bold text-gray-700 uppercase rounded-sm">
-                            <option value="">-- NENHUMA --</option>
-                `; 
-                
-                listaCategoriasLocais.forEach(function(c) { 
-                    var selectedAttr = (c === v) ? ' selected' : ''; 
-                    html += `<option value="${c}"${selectedAttr}>${c}</option>`; 
-                }); 
-                
-                html += `</select></div>`; 
-            }
-            container.innerHTML = html;
-        }
-
-        function salvarOrdemCapa(e) {
-            e.preventDefault(); 
-            
-            var btn = document.getElementById('btn-salvar-capa'); 
-            var txt = btn.innerHTML; 
-            btn.innerHTML = "A SALVAR..."; 
-            btn.disabled = true;
-            
-            var sel = []; 
-            for(var i=1; i<=8; i++) { 
-                var val = document.getElementById(`capa-pos-${i}`).value; 
-                if(val) { 
-                    sel.push(val); 
-                } 
-            } 
-            
-            var jsonStr = JSON.stringify(sel);
-            
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
-                window.google.script.run.withSuccessHandler(function() { 
-                    mostrarMensagem("Ordem da capa atualizada!"); 
-                    configuracoesGlobais['CategoriasCapa'] = jsonStr; 
-                    btn.innerHTML = txt; 
-                    btn.disabled = false; 
-                    localStorage.removeItem('admin_data_cache'); 
-                }).salvarConfiguracaoHTMLCustom('CategoriasCapa', jsonStr); 
-            }
-        }
-
-        function preencherFormPlacar() {
-            var ligasAtivas = []; 
-            if (configuracoesGlobais['LigasPlacar']) { 
-                try { 
-                    ligasAtivas = JSON.parse(configuracoesGlobais['LigasPlacar']); 
-                } catch(e){} 
-            }
-            
-            document.querySelectorAll('input[name="liga-placar"]').forEach(function(cb) { 
-                cb.checked = ligasAtivas.indexOf(cb.value) !== -1; 
-            });
-        }
-
-        function salvarPlacarAoVivo(e) {
-            e.preventDefault(); 
-            
-            var btn = document.getElementById('btn-salvar-placar'); 
-            btn.innerText = "A SALVAR..."; 
-            btn.disabled = true;
-            
-            var ligas = Array.from(document.querySelectorAll('input[name="liga-placar"]:checked')).map(function(cb) { 
-                return cb.value; 
-            });
-            
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
-                window.google.script.run.withSuccessHandler(function() { 
-                    mostrarMensagem("Placar atualizado!"); 
-                    btn.innerText = "Salvar Ligas"; 
-                    btn.disabled = false; 
-                    configuracoesGlobais['LigasPlacar'] = JSON.stringify(ligas); 
-                    localStorage.removeItem('admin_data_cache'); 
-                }).salvarConfiguracaoHTMLCustom("LigasPlacar", JSON.stringify(ligas)); 
-            }
-        }
     </script>
 </body>
 </html>
