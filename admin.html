@@ -2399,56 +2399,69 @@
             });
         }
 
-        // MOTOR FOTOGRÁFICO DE ALTA VELOCIDADE (Promise.any)
+        // MOTOR FOTOGRÁFICO BLINDADO (Carregamento Sequencial com Fallback Interno)
         async function obterImagemBase64Segura(url) {
-            if (!url || url.includes('placehold.co') || url.includes('data:image')) {
-                return url;
-            }
             
+            // Gera um placeholder em Base64 internamente para evitar que o html2canvas bloqueie com URLs externas
+            const gerarFallbackBase64 = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 1080; canvas.height = 1080;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#0F172A'; ctx.fillRect(0,0,1080,1080);
+                ctx.fillStyle = '#ffffff'; ctx.font = 'bold 70px Inter, sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText('FOTO INDISPONÍVEL', 540, 500);
+                ctx.font = '35px Inter, sans-serif'; ctx.fillStyle = '#94a3b8';
+                ctx.fillText('Ocorreu um bloqueio na imagem original.', 540, 580);
+                return canvas.toDataURL('image/jpeg', 0.8);
+            };
+
+            if (!url || url.includes('placehold.co')) return gerarFallbackBase64();
+            if (url.startsWith('data:image')) return url;
+
             const urlLimpa = encodeURIComponent(url.replace(/^https?:\/\//, ''));
             const urlCompleta = encodeURIComponent(url);
-            
-            // OTIMIZAÇÃO EXTREMA: Comprime on-the-fly para formato leve WEBP (1080px)
-            const proxies = [
+
+            // Sequência de Túneis (Proxies). Tenta um a um para não engarrafar o navegador.
+            const rotas = [
                 `https://wsrv.nl/?url=${urlLimpa}&output=webp&w=1080&q=80`,
                 `https://corsproxy.io/?${urlCompleta}`,
-                `https://api.allorigins.win/raw?url=${urlCompleta}`
+                `https://api.allorigins.win/raw?url=${urlCompleta}`,
+                url // Último recurso: tenta aceder direto
             ];
 
-            const fetchWithTimeout = (resource, timeout = 3000) => {
+            const tentarCarregar = (src) => {
                 return new Promise((resolve, reject) => {
-                    const timer = setTimeout(() => {
-                        reject(new Error('Timeout de ' + timeout + 'ms excedido'));
-                    }, timeout);
-                    
-                    fetch(resource).then(response => {
+                    const img = new Image();
+                    img.crossOrigin = 'Anonymous';
+                    const timer = setTimeout(() => { img.src = ''; reject('Timeout'); }, 4000); // 4 segs max por rota
+                    img.onload = () => {
                         clearTimeout(timer);
-                        resolve(response);
-                    }).catch(err => {
-                        clearTimeout(timer);
-                        reject(err);
-                    });
+                        try {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.width; canvas.height = img.height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0);
+                            resolve(canvas.toDataURL('image/jpeg', 0.8));
+                        } catch(e) { reject('CORS Error'); }
+                    };
+                    img.onerror = () => { clearTimeout(timer); reject('Load Error'); };
+                    img.src = src;
                 });
             };
 
-            try {
-                const blob = await Promise.any(proxies.map(async (proxy) => {
-                    const res = await fetchWithTimeout(proxy, 3000);
-                    if (!res.ok) {
-                        throw new Error('Falha no proxy: ' + proxy);
-                    }
-                    return res.blob();
-                }));
-                
-                return new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result);
-                    reader.readAsDataURL(blob);
-                });
-
-            } catch (error) {
-                return 'https://placehold.co/1080x1920/0F172A/ffffff?text=Foto+Indisponivel';
+            // Tenta as rotas em ordem
+            for (let rota of rotas) {
+                try {
+                    const base64 = await tentarCarregar(rota);
+                    return base64; // Sucesso! Devolve a imagem.
+                } catch (e) {
+                    console.warn("Rota falhou, a tentar a próxima:", rota);
+                    continue; 
+                }
             }
+
+            // Se todas falharem, devolve o nosso Fallback Interno seguro
+            return gerarFallbackBase64();
         }
 
         function prepararArte(idNoticia, tipo) {
@@ -2473,7 +2486,7 @@
             
             document.getElementById('texto-legenda').value = `📰 ${noticia.titulo}\n\n${resumoLimpo}\n\n📲 Leia a matéria completa no nosso portal! Acesse o link na Bio ou copie o endereço abaixo:\n🔗 ${linkPortal}\n.\n.\n.\n#NoticiasAvulsas #Jornalismo ${hashtagEdit}`;
 
-            const imagemOriginal = noticia.urlImagem || 'https://placehold.co/1080x1080/0F172A/ffffff?text=Noticias+Avulsas';
+            const imagemOriginal = noticia.urlImagem || ''; // Agora é vazio em vez de placeholder
 
             const divImagem = tipo === 'feed' ? document.getElementById('feed-img') : document.getElementById('story-img');
             const alvoElemento = tipo === 'feed' ? document.getElementById('template-feed') : document.getElementById('template-story');
@@ -2506,10 +2519,10 @@
             obterImagemBase64Segura(imagemOriginal).then(base64Image => {
                 divImagem.style.backgroundImage = `url('${base64Image}')`;
 
-                // OTIMIZAÇÃO DE VELOCIDADE: Cortado o tempo de espera do Flash de 800ms para 150ms!
+                // Aumenta ligeiramente a pausa (300ms) para dar tempo ao browser de renderizar o fundo
                 setTimeout(() => {
                     html2canvas(alvoElemento, {
-                        scale: 1, 
+                        scale: 1.5, // Leve aumento para garantir qualidade superior
                         useCORS: true,
                         allowTaint: false, 
                         backgroundColor: tipo === 'feed' ? null : '#0F172A'
@@ -2527,7 +2540,7 @@
                         mostrarMensagem("Ocorreu um erro a processar a arte.", "erro");
                         fecharModalArte();
                     });
-                }, 150); 
+                }, 300); 
             });
         }
 
