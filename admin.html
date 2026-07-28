@@ -14,9 +14,9 @@
         // ==========================================
         // ATENÇÃO: COLOQUE AQUI O SEU LINK DO GOOGLE
         // ==========================================
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzzMrmdM47OGoGMdzGfTmvR1VpOeEOLP_PTX0VQnXg1i98TkVs4sH8O2Tv-aiGHikrR/exec";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyVroxyx_f70Q2KkcnfMWtt2vV8EzQRsPBhF9nNL4frnKhdhe7t-oahNoJo9SCLfAbE/exec";
         
-        // Ponte de comunicação com o Backend
+        // Ponte de comunicação blindada com o Backend
         window.google = {
             script: {
                 run: {
@@ -45,12 +45,11 @@
             'adicionarCategoriaNoSheets', 
             'chamarGeminiBackend', 
             'chamarGeminiImagemBackend',
-            'listarUsuarios',
-            'salvarUsuario',
+            'listarUsuarios', 
+            'salvarUsuario', 
             'excluirUsuario'
         ];
 
-        // Mapeamento automático das funções
         apiFunctions.forEach(function(funcName) {
             window.google.script.run[funcName] = function() {
                 var argsArray = Array.prototype.slice.call(arguments);
@@ -60,29 +59,41 @@
                 this._onSuccess = null; 
                 this._onFailure = null;
                 
+                // Fetch fortificado para impedir que o browser transforme POST em GET
+                // Isto resolve o erro "Unexpected token A" na tela de login
                 fetch(GAS_API_URL, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'text/plain;charset=utf-8' 
                     },
+                    redirect: 'follow',
                     body: JSON.stringify({ 
                         action: funcName, 
                         args: argsArray 
                     })
                 })
                 .then(function(res) { 
-                    return res.json(); 
+                    if (!res.ok) {
+                        throw new Error("Erro HTTP: " + res.status);
+                    }
+                    // Lemos como texto primeiro para evitar o erro do "token A"
+                    return res.text(); 
                 })
-                .then(function(result) {
-                    if (successCb) {
-                        var finalPayload = result;
-                        
-                        // Parse automático de strings JSON
-                        if (result && result.result !== undefined) {
-                            finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
+                .then(function(text) {
+                    try {
+                        var result = JSON.parse(text); 
+                        if (successCb) {
+                            var finalPayload = result;
+                            if (result && result.result !== undefined) {
+                                finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
+                            }
+                            successCb(finalPayload);
                         }
-                        
-                        successCb(finalPayload);
+                    } catch (e) {
+                        console.error("Erro a converter resposta: ", text);
+                        if (failureCb) {
+                            failureCb(new Error("O servidor não retornou dados válidos. Resposta: " + text.substring(0, 50)));
+                        }
                     }
                 })
                 .catch(function(err) {
@@ -101,23 +112,22 @@
                 setTimeout(configureTailwind, 10); 
                 return; 
             }
-            
             tailwind.config = {
-                theme: {
-                    extend: {
+                theme: { 
+                    extend: { 
                         fontFamily: { 
                             sans: ['Inter', 'sans-serif'], 
                             serif: ['Merriweather', 'serif'] 
-                        },
-                        colors: {
+                        }, 
+                        colors: { 
                             jornal: { 
                                 blue: '#0F172A', 
                                 red: '#E11D48', 
                                 gray: '#F8FAFC', 
                                 dark: '#020617' 
-                            }
-                        }
-                    }
+                            } 
+                        } 
+                    } 
                 }
             };
         };
@@ -125,31 +135,29 @@
     </script>
     
     <style>
-        /* Estilos Globais */
         body { 
             background-color: #f1f2f5; 
             color: #111111; 
         }
         
-        /* Scrollbar Personalizada (Barra de rolagem) */
         .custom-scrollbar::-webkit-scrollbar { 
             width: 6px; 
             height: 6px; 
         }
+        
         .custom-scrollbar::-webkit-scrollbar-track { 
             background: #f1f1f1; 
         }
+        
         .custom-scrollbar::-webkit-scrollbar-thumb { 
             background: #cbd5e1; 
             border-radius: 10px; 
         }
+        
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { 
             background: #94a3b8; 
         }
         
-        /* ============================================================ */
-        /* ESTILOS DO EDITOR DE TEXTO DA NOTÍCIA (RICH TEXT)            */
-        /* ============================================================ */
         .rich-editor img { 
             max-width: 100%; 
             height: auto; 
@@ -211,7 +219,7 @@
 </head>
 <body class="antialiased min-h-screen flex flex-col relative selection:bg-jornal-red selection:text-white">
 
-    <!-- Sistema de Notificações (Toast) -->
+    <!-- Caixa de Mensagens (Toast) -->
     <div id="toast" class="hidden fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border rounded-sm">
         <span id="toast-icon" class="text-xl"></span>
         <span id="toast-msg" class="text-sm"></span>
@@ -223,7 +231,7 @@
         <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Sistema...</p>
     </div>
 
-    <!-- Modal de Login Padrão -->
+    <!-- Modal de Login -->
     <div id="modalLogin" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md"></div>
         <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
@@ -240,7 +248,7 @@
         </div>
     </div>
 
-    <!-- Modal de Troca de Senha Obrigatória (Primeiro Acesso) -->
+    <!-- Modal Troca de Senha Obrigatória (Primeiro Acesso) -->
     <div id="modalTrocarSenha" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md"></div>
         <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
@@ -248,7 +256,6 @@
                 <h2 class="font-sans text-xl font-black uppercase text-jornal-dark tracking-tighter">Bem-vindo(a)!</h2>
                 <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-2">Por segurança, é obrigatório criar a sua própria senha pessoal neste primeiro acesso.</p>
             </div>
-            
             <form onsubmit="trocarSenhaPrimeiroAcesso(event)" class="space-y-4">
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Nova Senha Pessoal</label>
@@ -271,10 +278,7 @@
             <div class="max-w-[1200px] mx-auto flex justify-between items-center px-4 py-3">
                 <div class="flex items-center gap-3">
                     <img id="preview-icone-admin" class="h-8 w-8 object-contain hidden bg-white rounded p-1" />
-                    <span class="font-sans font-black tracking-tighter text-lg uppercase text-slate-100 flex items-center gap-2">
-                        Painel<span class="text-rose-600">Admin</span>
-                    </span>
-                    <!-- Distintivo do Usuário Logado -->
+                    <span class="font-sans font-black tracking-tighter text-lg uppercase text-slate-100 flex items-center gap-2">Painel<span class="text-rose-600">Admin</span></span>
                     <span class="hidden md:inline-block ml-4 bg-gray-800 text-[9px] uppercase tracking-widest font-bold px-2 py-1 rounded-sm text-gray-300 border border-gray-700">
                         Logado como: <span id="label-usuario-logado" class="text-white"></span>
                     </span>
@@ -298,7 +302,7 @@
                 <button type="button" onclick="alternarAbaAdmin('form-placar-container')" id="aba-placar" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors hidden">Placar</button>
                 <button type="button" onclick="alternarAbaAdmin('form-equipa-container')" id="aba-equipa" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors hidden">👥 Equipa</button>
                 
-                <!-- BOTÃO DO ESTÚDIO IG (Abre nova janela) -->
+                <!-- BOTÃO DO ESTÚDIO IG (Abre nova janela para manter o painel limpo) -->
                 <a href="instagram.html" target="_blank" id="aba-estudio" class="py-3 px-5 font-black text-[11px] bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:opacity-90 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-opacity flex items-center gap-2 shadow-sm hidden">
                     📸 ESTÚDIO IG ↗
                 </a>
@@ -316,16 +320,12 @@
                     <input type="hidden" id="admin-id-noticia" value="" />
                     
                     <div class="flex flex-col lg:flex-row gap-6">
-                        <!-- Manchete, Link e Resumo (Esquerda) -->
                         <div class="lg:w-2/3 flex flex-col gap-6">
                             <div>
                                 <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Manchete</label>
                                 <input type="text" id="admin-titulo" oninput="atualizarPreviewURL()" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue font-serif font-bold text-lg text-jornal-dark rounded-sm" required />
-                                <p id="preview-url-noticia" class="text-[10px] text-gray-400 mt-2 font-medium truncate hidden">
-                                    Link final: <span class="text-blue-600 font-bold"></span>
-                                </p>
+                                <p id="preview-url-noticia" class="text-[10px] text-gray-400 mt-2 font-medium truncate hidden">Link final: <span class="text-blue-600 font-bold"></span></p>
                             </div>
-                            
                             <div>
                                 <div class="flex justify-between items-end mb-2">
                                     <label class="text-[10px] font-black uppercase tracking-widest text-gray-500">Linha Fina (Opcional - SEO)</label>
@@ -334,47 +334,33 @@
                                 <input type="text" id="admin-linha-fina" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-medium text-gray-700 rounded-sm" placeholder="Breve resumo da matéria..." />
                             </div>
                         </div>
-                        
-                        <!-- Editorias (Direita) -->
                         <div class="lg:w-1/3">
                             <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Editorias (Múltipla Seleção)</label>
                             <div class="p-4 bg-gray-50 border border-gray-300 rounded-sm">
-                                <div id="admin-categoria-checklist" class="max-h-[120px] overflow-y-auto custom-scrollbar flex flex-col gap-2">
-                                    <!-- Preenchido via JS -->
-                                </div>
+                                <div id="admin-categoria-checklist" class="max-h-[120px] overflow-y-auto custom-scrollbar flex flex-col gap-2"></div>
                             </div>
                             <button type="button" onclick="novaCategoria()" class="text-[10px] font-black text-jornal-red hover:opacity-80 mt-2 block">+ Nova Editoria</button>
                         </div>
                     </div>
 
-                    <!-- Caixa Cidade (Aparece se "Cidades" for checado) -->
                     <div id="admin-cidade-container" class="hidden p-5 bg-blue-50 border border-blue-200 rounded-sm">
                         <label for="admin-cidade" class="text-[11px] font-black uppercase tracking-widest text-jornal-blue mb-2 block">Cidade *</label>
                         <input type="text" id="admin-cidade" placeholder="Informe a cidade da matéria" class="w-full px-4 py-3 bg-white border border-blue-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm" />
-                        <p class="text-[9px] text-gray-500 mt-2">Este campo aparece somente quando a editoria Cidades está selecionada.</p>
                     </div>
 
-                    <!-- Autor -->
                     <div>
                         <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Autor / Assinatura</label>
                         <input type="text" id="admin-autor" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm" placeholder="Ex: João Silva (Vazio = 'da redação')" />
                     </div>
 
-                    <!-- Editor de Texto (Rich Text) -->
                     <div>
                         <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Conteúdo (Rich Text Avançado)</label>
                         <input type="file" id="upload-imagem-conteudo" accept="image/*" class="hidden" onchange="processarUploadImagemConteudo(this)" />
-                        
-                        <!-- Barra de Ferramentas -->
                         <div class="flex flex-wrap gap-1 p-2 bg-gray-100 border border-gray-300 border-b-0 rounded-t-sm items-center">
-                            
-                            <!-- Formatação Básica -->
-                            <button type="button" onclick="execCmd('bold')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm transition-colors">B</button>
-                            <button type="button" onclick="execCmd('italic')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm transition-colors">I</button>
-                            <button type="button" onclick="execCmd('underline')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs underline rounded shadow-sm transition-colors">U</button>
+                            <button type="button" onclick="execCmd('bold')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm">B</button>
+                            <button type="button" onclick="execCmd('italic')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm">I</button>
+                            <button type="button" onclick="execCmd('underline')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs underline rounded shadow-sm">U</button>
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
-                            
-                            <!-- Tamanho da Fonte -->
                             <div class="relative flex items-center">
                                 <span class="text-xs font-bold mr-2 text-gray-600 hidden sm:block">TT</span>
                                 <select onchange="execCmd('fontSize', this.value); this.selectedIndex=1;" class="px-2 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer">
@@ -385,35 +371,23 @@
                                 </select>
                             </div>
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
-                            
-                            <!-- Alinhamentos e Listas -->
                             <button type="button" onclick="execCmd('justifyLeft')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Esq</button>
                             <button type="button" onclick="execCmd('justifyCenter')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Cen</button>
                             <span class="w-[1px] h-5 bg-gray-300 mx-1 hidden sm:block"></span>
                             <button type="button" onclick="execCmd('insertUnorderedList')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm hidden sm:block">UL</button>
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
-                            
-                            <!-- Multimédia -->
                             <button type="button" onclick="inserirLinkRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-blue-600 rounded font-semibold shadow-sm" title="Inserir Link">🔗</button>
                             <button type="button" onclick="inserirImagemRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-emerald-600 rounded font-semibold shadow-sm" title="Upload Imagem">🖼️</button>
                             <button type="button" onclick="inserirVideoRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-purple-600 rounded font-semibold shadow-sm" title="Vídeo">📹</button>
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
-                            
-                            <!-- Estilos Especiais -->
                             <button type="button" onclick="execCmd('formatBlock', 'H2')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm">H2</button>
                             <button type="button" onclick="execCmd('formatBlock', 'blockquote')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm">""</button>
                             <button type="button" onclick="execCmd('removeFormat')" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-xs font-bold text-red-600 rounded shadow-sm ml-1">Limpar</button>
-                            
-                            <!-- Escrita via Inteligência Artificial -->
-                            <button type="button" id="btn-ia-conteudo" onclick="gerarConteudoIA()" class="ml-auto px-4 py-1.5 bg-purple-100 hover:bg-purple-200 border border-purple-300 text-xs text-purple-800 font-bold tracking-wide rounded shadow-sm transition-colors flex items-center justify-center">✨ Escrever com IA</button>
+                            <button type="button" id="btn-ia-conteudo" onclick="gerarConteudoIA()" class="ml-auto px-4 py-1.5 bg-purple-100 hover:bg-purple-200 border border-purple-300 text-xs text-purple-800 font-bold tracking-wide rounded shadow-sm flex items-center justify-center">✨ Escrever com IA</button>
                         </div>
-                        
-                        <!-- A Área de Texto -->
                         <div id="admin-editor-rich" contenteditable="true" class="w-full px-6 py-6 bg-white border border-gray-300 rounded-b-sm min-h-[350px] max-h-[600px] overflow-y-auto focus:outline-none focus:ring-1 focus:ring-jornal-blue text-base leading-relaxed font-serif custom-scrollbar rich-editor"></div>
                     </div>
                     
-                    
-                    <!-- Upload de Foto de Capa e Datas -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-gray-50 border border-gray-200 rounded-sm">
                         <div>
                             <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3 block">Upload da Foto de Capa</label>
@@ -422,12 +396,10 @@
                             </div>
                             <img id="preview-imagem" loading="lazy" src="" class="mt-4 w-full h-40 object-contain bg-gray-900 rounded-sm hidden shadow-inner" />
                         </div>
-                        
                         <div class="flex flex-col gap-6">
                             <div>
                                 <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 block mb-2">Agendamento ou Publicação Retroativa</label>
                                 <input type="datetime-local" id="admin-agendamento" class="w-full px-4 py-2.5 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue text-xs font-bold text-jornal-dark rounded-sm shadow-sm" />
-                                <p class="text-[9px] text-gray-400 mt-1.5">Data passada publica na hora. Futura agenda a publicação.</p>
                             </div>
                             <div>
                                 <label class="text-[10px] font-black uppercase tracking-widest text-rose-600 block mb-2">Fim do Evento (Obrigatório se for Agenda)</label>
@@ -436,7 +408,6 @@
                         </div>
                     </div>
 
-                    <!-- Metadados da Imagem Obrigatórios -->
                     <div id="admin-imagem-metadados" class="hidden p-6 bg-amber-50 border border-amber-200 rounded-sm">
                         <h4 class="text-[11px] font-black text-amber-800 uppercase tracking-widest mb-4">⚠️ Créditos de Imagem Obrigatórios</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -451,26 +422,17 @@
                         </div>
                     </div>
 
-                    <!-- Notícias Relacionadas Inteligentes -->
                     <div class="p-6 bg-indigo-50 border border-indigo-100 rounded-sm">
-                        <label class="text-[11px] font-black uppercase tracking-widest text-indigo-800 mb-3 block">
-                            Notícias Relacionadas (Até 3 Matérias)
-                        </label>
-                        <p class="text-[9px] text-gray-500 mb-4">O sistema preenche automaticamente ao selecionar uma editoria acima. Pode também pesquisar.</p>
-                        
+                        <label class="text-[11px] font-black uppercase tracking-widest text-indigo-800 mb-3 block">Notícias Relacionadas</label>
                         <div class="flex gap-2">
-                            <input type="text" id="admin-busca-relacionada" placeholder="Pesquisar por título, editoria ou cidade..." class="flex-grow px-4 py-3 border border-indigo-200 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400">
-                            <button type="button" onclick="buscarRelacionadas()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-sm text-xs font-bold uppercase tracking-widest transition-colors shadow-sm">
-                                Pesquisar
-                            </button>
+                            <input type="text" id="admin-busca-relacionada" placeholder="Pesquisar por título..." class="flex-grow px-4 py-3 border border-indigo-200 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400">
+                            <button type="button" onclick="buscarRelacionadas()" class="bg-indigo-600 text-white px-6 py-3 rounded-sm text-xs font-bold uppercase tracking-widest">Pesquisar</button>
                         </div>
-                        
                         <div id="lista-resultados-relacionadas" class="mt-4 space-y-2"></div>
                         <div id="lista-selecionadas-relacionadas" class="mt-4 space-y-2"></div>
                         <input type="hidden" id="admin-relacionadas-ids" value="">
                     </div>
 
-                    <!-- Opção de Carrossel -->
                     <div class="p-5 bg-sky-50 border border-sky-100 rounded-sm">
                         <label class="flex items-center gap-3 cursor-pointer">
                             <input type="checkbox" id="admin-carrossel" class="w-5 h-5 text-jornal-blue border-gray-300 rounded focus:ring-jornal-blue" />
@@ -478,14 +440,9 @@
                         </label>
                     </div>
 
-                    <!-- Botões de Ação Finais -->
                     <div class="pt-6 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
-                        <button type="button" onclick="limparFormNoticia()" class="text-xs font-black text-gray-500 hover:text-jornal-red uppercase tracking-widest w-full md:w-auto text-center md:text-left py-2 transition-colors">
-                            Limpar Form
-                        </button>
-                        <button type="submit" id="btn-salvar-noticia" class="w-full md:w-auto bg-jornal-dark text-white font-black px-12 py-4 hover:opacity-90 transition-opacity uppercase tracking-widest text-sm rounded-sm shadow-xl">
-                            Publicar Matéria
-                        </button>
+                        <button type="button" onclick="limparFormNoticia()" class="text-xs font-black text-gray-500 hover:text-jornal-red uppercase tracking-widest w-full md:w-auto text-center py-2">Limpar Form</button>
+                        <button type="submit" id="btn-salvar-noticia" class="w-full md:w-auto bg-jornal-dark text-white font-black px-12 py-4 uppercase tracking-widest text-sm rounded-sm shadow-xl">Publicar Matéria</button>
                     </div>
                 </form>
             </div>
@@ -523,9 +480,7 @@
                                 <th class="p-4 text-center">Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="admin-tabela-noticias" class="divide-y divide-gray-200">
-                            <!-- Preenchido via JS -->
-                        </tbody>
+                        <tbody id="admin-tabela-noticias" class="divide-y divide-gray-200"></tbody>
                     </table>
                 </div>
             </div>
@@ -538,16 +493,10 @@
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Organizar Capa</h2>
                 </div>
                 <form onsubmit="salvarOrdemCapa(event)">
-                    <p class="text-xs text-gray-500 mb-6 font-medium">Escolha até 8 editorias que devem aparecer em destaque abaixo do carrossel principal e a ordem delas.</p>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="selects-capa-container">
-                        <!-- Selects preenchidos via JS -->
-                    </div>
-                    
+                    <p class="text-xs text-gray-500 mb-6 font-medium">Escolha até 8 editorias em destaque abaixo do carrossel principal.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="selects-capa-container"></div>
                     <div class="pt-6 border-t border-gray-200 flex justify-end">
-                        <button type="submit" id="btn-salvar-capa" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-black px-10 py-3.5 uppercase tracking-widest text-sm rounded-sm transition-colors shadow-md">
-                            Salvar Ordem
-                        </button>
+                        <button type="submit" id="btn-salvar-capa" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-black px-10 py-3.5 uppercase tracking-widest text-sm rounded-sm transition-colors shadow-md">Salvar Ordem</button>
                     </div>
                 </form>
             </div>
@@ -567,9 +516,7 @@
                         </label>
                         <div class="flex items-center gap-3">
                             <img id="preview-icone-admin-upload" class="h-10 w-10 object-contain hidden bg-white border border-gray-200 rounded p-1 shadow-sm" />
-                            <button type="button" id="btn-remover-icone" onclick="removerIconeLogo()" class="text-[9px] text-red-500 font-bold uppercase tracking-wider hover:underline hidden">
-                                Remover
-                            </button>
+                            <button type="button" id="btn-remover-icone" onclick="removerIconeLogo()" class="text-[9px] text-red-500 font-bold uppercase tracking-wider hover:underline hidden">Remover</button>
                         </div>
                         <p class="text-[9px] text-gray-400 mt-2 text-left md:text-right">Recomendado: Ficheiro PNG ou SVG transparente.</p>
                     </div>
@@ -623,6 +570,7 @@
                             <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Posição</label>
                             <select id="prop-local" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm font-medium rounded-sm focus:outline-none focus:ring-1 focus:ring-jornal-blue" required>
                                 <option value="Topo">1 - Topo do Feed Principal</option>
+                                <option value="Entre Editorias">Entre as editorias no painel principal</option>
                                 <option value="Lateral">Sidebar - Topo</option>
                             </select>
                         </div>
@@ -682,39 +630,24 @@
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Gestão de Redes Sociais</h2>
                 </div>
                 <form id="form-sociais" onsubmit="salvarRedesSociais(event)">
-                    
                     <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-5 border border-gray-100 bg-gray-50 rounded-sm mb-3">
-                        <div class="font-bold text-sm w-32 flex items-center gap-2">
-                            <span class="text-pink-600 text-lg">📷</span> Instagram
-                        </div>
+                        <div class="font-bold text-sm w-32 flex items-center gap-2">📷 Instagram</div>
                         <input type="url" id="soc-inst-url" placeholder="https://instagram.com/..." class="w-full md:flex-grow px-4 py-2.5 border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-jornal-blue" />
                     </div>
-                    
                     <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-5 border border-gray-100 bg-gray-50 rounded-sm mb-3">
-                        <div class="font-bold text-sm w-32 flex items-center gap-2">
-                            <span class="text-blue-600 text-lg">📘</span> Facebook
-                        </div>
+                        <div class="font-bold text-sm w-32 flex items-center gap-2">📘 Facebook</div>
                         <input type="url" id="soc-fb-url" placeholder="https://facebook.com/..." class="w-full md:flex-grow px-4 py-2.5 border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-jornal-blue" />
                     </div>
-                    
                     <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-5 border border-gray-100 bg-gray-50 rounded-sm mb-3">
-                        <div class="font-bold text-sm w-32 flex items-center gap-2">
-                            <span class="text-black text-lg">𝕏</span> X (Twitter)
-                        </div>
+                        <div class="font-bold text-sm w-32 flex items-center gap-2">𝕏 X (Twitter)</div>
                         <input type="url" id="soc-x-url" placeholder="https://x.com/..." class="w-full md:flex-grow px-4 py-2.5 border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-jornal-blue" />
                     </div>
-                    
                     <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-5 border border-gray-100 bg-gray-50 rounded-sm">
-                        <div class="font-bold text-sm w-32 flex items-center gap-2">
-                            <span class="text-red-600 text-lg">▶️</span> YouTube
-                        </div>
+                        <div class="font-bold text-sm w-32 flex items-center gap-2">▶️ YouTube</div>
                         <input type="url" id="soc-yt-url" placeholder="https://youtube.com/..." class="w-full md:flex-grow px-4 py-2.5 border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-jornal-blue" />
                     </div>
-                    
                     <div class="pt-6 border-t border-gray-200 flex justify-end mt-6">
-                        <button type="submit" id="btn-salvar-sociais" class="w-full md:w-auto bg-jornal-blue text-white font-black px-12 py-3.5 uppercase tracking-widest text-sm rounded-sm shadow-md hover:bg-gray-800 transition-colors">
-                            Salvar Redes Sociais
-                        </button>
+                        <button type="submit" id="btn-salvar-sociais" class="w-full md:w-auto bg-jornal-blue text-white font-black px-12 py-3.5 uppercase tracking-widest text-sm rounded-sm shadow-md hover:bg-gray-800 transition-colors">Salvar Redes Sociais</button>
                     </div>
                 </form>
             </div>
@@ -727,65 +660,50 @@
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Desporto ao Vivo</h2>
                 </div>
                 <form id="form-placar" onsubmit="salvarPlacarAoVivo(event)">
-                    
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                        
                         <div class="p-5 bg-gray-50 border border-gray-200 rounded-sm">
                             <h3 class="text-[11px] font-black uppercase tracking-widest text-jornal-blue mb-4 border-b border-gray-200 pb-2">Futebol: Brasil</h3>
-                            
                             <label class="flex items-center gap-3 mb-3 cursor-pointer">
                                 <input type="checkbox" name="liga-placar" value="soccer/bra.1" class="w-4 h-4 text-jornal-blue rounded" />
                                 <span class="text-sm font-bold text-gray-700">Brasileirão Série A</span>
                             </label>
-                            
                             <label class="flex items-center gap-3 mb-3 cursor-pointer">
                                 <input type="checkbox" name="liga-placar" value="soccer/bra.2" class="w-4 h-4 text-jornal-blue rounded" />
                                 <span class="text-sm font-bold text-gray-700">Brasileirão Série B</span>
                             </label>
-                            
                             <label class="flex items-center gap-3 cursor-pointer">
                                 <input type="checkbox" name="liga-placar" value="soccer/bra.copa_do_brasil" class="w-4 h-4 text-jornal-blue rounded" />
                                 <span class="text-sm font-bold text-gray-700">Copa do Brasil</span>
                             </label>
                         </div>
-                        
                         <div class="p-5 bg-gray-50 border border-gray-200 rounded-sm">
                             <h3 class="text-[11px] font-black uppercase tracking-widest text-green-700 mb-4 border-b border-gray-200 pb-2">Futebol: Internacional</h3>
-                            
                             <label class="flex items-center gap-3 mb-3 cursor-pointer">
                                 <input type="checkbox" name="liga-placar" value="soccer/conmebol.libertadores" class="w-4 h-4 text-jornal-blue rounded" />
                                 <span class="text-sm font-bold text-gray-700">Copa Libertadores</span>
                             </label>
-                            
                             <label class="flex items-center gap-3 mb-3 cursor-pointer">
                                 <input type="checkbox" name="liga-placar" value="soccer/conmebol.sudamericana" class="w-4 h-4 text-jornal-blue rounded" />
                                 <span class="text-sm font-bold text-gray-700">Copa Sul-Americana</span>
                             </label>
-                            
                             <label class="flex items-center gap-3 cursor-pointer">
                                 <input type="checkbox" name="liga-placar" value="soccer/uefa.champions" class="w-4 h-4 text-jornal-blue rounded" />
                                 <span class="text-sm font-bold text-gray-700">Champions League</span>
                             </label>
                         </div>
-                        
                         <div class="p-5 bg-gray-50 border border-gray-200 rounded-sm">
                             <h3 class="text-[11px] font-black uppercase tracking-widest text-orange-600 mb-4 border-b border-gray-200 pb-2">Outros</h3>
-                            
                             <label class="flex items-center gap-3 cursor-pointer">
                                 <input type="checkbox" name="liga-placar" value="basketball/nba" class="w-4 h-4 text-jornal-blue rounded" />
                                 <span class="text-sm font-bold text-gray-700">NBA (Basquete)</span>
                             </label>
                         </div>
                     </div>
-                    
                     <div class="pt-6 border-t border-gray-200 flex justify-end">
-                        <button type="submit" id="btn-salvar-placar" class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-black px-12 py-3.5 uppercase tracking-widest text-sm rounded-sm shadow-md transition-colors">
-                            Salvar Ligas
-                        </button>
+                        <button type="submit" id="btn-salvar-placar" class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-black px-12 py-3.5 uppercase tracking-widest text-sm rounded-sm shadow-md transition-colors">Salvar Ligas</button>
                     </div>
                 </form>
             </div>
-            
 
             <!-- ========================================================= -->
             <!-- ABA: GESTÃO DE EQUIPA E PERMISSÕES                        -->
@@ -793,13 +711,9 @@
             <div id="form-equipa-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-jornal-dark pl-3 mb-8">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Gestão de Equipa & Acessos</h2>
-                    <p class="text-xs text-gray-500 mt-1 font-medium">Crie utilizadores e defina exatamente quais as secções que eles podem acessar no painel.</p>
                 </div>
-                
                 <form id="form-membro-equipa" onsubmit="salvarMembroEquipa(event)" class="mb-10 bg-gray-50 p-6 border border-gray-200 rounded-sm">
                     <input type="hidden" id="equipa-user-original" value="">
-                    
-                    <h3 class="text-[11px] font-black uppercase tracking-widest text-jornal-dark mb-4 border-b border-gray-200 pb-2">Adicionar / Editar Membro</h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                         <div>
@@ -808,7 +722,7 @@
                         </div>
                         <div>
                             <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Senha de Acesso</label>
-                            <input type="text" id="equipa-senha" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm" placeholder="Deixe em branco para manter (na edição)" />
+                            <input type="password" id="equipa-senha" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm" placeholder="Deixe em branco para manter (na edição)" />
                         </div>
                     </div>
                     
@@ -823,40 +737,36 @@
                         <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3 block">Permissões de Acesso (Assinale as abas permitidas)</label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 bg-white p-5 border border-gray-200 rounded-sm">
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" value="aba-noticia" class="chk-perm w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-400" checked> 
-                                <span class="text-xs font-bold text-gray-700">Publicar Matéria</span>
+                                <input type="checkbox" value="aba-noticia" class="chk-perm w-4 h-4 text-jornal-blue" checked> 
+                                <span class="text-xs font-bold">Publicar Matéria</span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" value="aba-lista" class="chk-perm w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-400" checked> 
-                                <span class="text-xs font-bold text-gray-700">Gerir Matérias</span>
+                                <input type="checkbox" value="aba-lista" class="chk-perm w-4 h-4 text-jornal-blue" checked> 
+                                <span class="text-xs font-bold">Gerir Matérias</span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" value="aba-capa" class="chk-perm w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-400" checked> 
-                                <span class="text-xs font-bold text-gray-700">Layout Capa</span>
+                                <input type="checkbox" value="aba-capa" class="chk-perm w-4 h-4 text-jornal-blue" checked> 
+                                <span class="text-xs font-bold">Layout Capa</span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" value="aba-logo" class="chk-perm w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-400" checked> 
-                                <span class="text-xs font-bold text-gray-700">IA & Design</span>
+                                <input type="checkbox" value="aba-logo" class="chk-perm w-4 h-4 text-jornal-blue" checked> 
+                                <span class="text-xs font-bold">IA & Design</span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" value="aba-propaganda" class="chk-perm w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-400" checked> 
-                                <span class="text-xs font-bold text-gray-700">Anúncios</span>
+                                <input type="checkbox" value="aba-propaganda" class="chk-perm w-4 h-4 text-jornal-blue" checked> 
+                                <span class="text-xs font-bold">Anúncios</span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" value="aba-social" class="chk-perm w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-400" checked> 
-                                <span class="text-xs font-bold text-gray-700">Redes Sociais</span>
+                                <input type="checkbox" value="aba-social" class="chk-perm w-4 h-4 text-jornal-blue" checked> 
+                                <span class="text-xs font-bold">Redes Sociais</span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" value="aba-placar" class="chk-perm w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-400" checked> 
-                                <span class="text-xs font-bold text-gray-700">Placar ao Vivo</span>
+                                <input type="checkbox" value="aba-placar" class="chk-perm w-4 h-4 text-jornal-blue" checked> 
+                                <span class="text-xs font-bold">Placar ao Vivo</span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" value="aba-estudio" class="chk-perm w-4 h-4 text-purple-600 rounded focus:ring-purple-600 border-gray-400" checked> 
-                                <span class="text-xs font-bold text-purple-700">Estúdio IG</span>
-                            </label>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" value="aba-equipa" class="chk-perm w-4 h-4 text-jornal-dark rounded focus:ring-jornal-dark border-gray-400"> 
-                                <span class="text-xs font-bold text-gray-700">Gestão de Equipa</span>
+                                <input type="checkbox" value="aba-equipa" class="chk-perm w-4 h-4 text-jornal-dark"> 
+                                <span class="text-xs font-bold">Gestão de Equipa</span>
                             </label>
                         </div>
                     </div>
@@ -878,13 +788,11 @@
                             <thead class="bg-gray-100 border-b border-gray-300 text-[10px] uppercase tracking-widest text-gray-500">
                                 <tr>
                                     <th class="p-4">Usuário</th>
-                                    <th class="p-4">Nível de Acesso (Abas Permitidas)</th>
+                                    <th class="p-4">Nível de Acesso</th>
                                     <th class="p-4 text-center">Ações</th>
                                 </tr>
                             </thead>
-                            <tbody id="tabela-equipa" class="divide-y divide-gray-200">
-                                <!-- Javascript preenche aqui -->
-                            </tbody>
+                            <tbody id="tabela-equipa" class="divide-y divide-gray-200"></tbody>
                         </table>
                     </div>
                 </div>
@@ -897,33 +805,24 @@
     <!-- SCRIPTS GLOBAIS BLINDADOS                                 -->
     <!-- ========================================================= -->
     <script>
-        // Variáveis Globais de Estado
         var IMG_FALLBACK = 'https://placehold.co/600x400/e2e8f0/475569?text=Sem+Foto';
         var noticiasGlobais = [];
         var configuracoesGlobais = {};
-        var listaCategoriasLocais = [
-            'Política', 'Economia', 'Cidades', 'Polícia', 'Justiça', 'Esportes', 'Brasil', 'Mundo'
-        ];
-        
+        var usuariosGlobais = [];
+        var listaCategoriasLocais = ['Política', 'Economia', 'Cidades', 'Polícia', 'Justiça', 'Esportes', 'Brasil', 'Mundo'];
         var base64StringNoticia = ""; 
         var mimeStringNoticia = ""; 
         var nameStringNoticia = "";
-        
         var base64StringProp = ""; 
         var mimeStringProp = ""; 
         var nameStringProp = "";
-        
         window.relacionadasSelecionadas = [];
         window.relacionadasEditadasManualmente = false;
-
-        // Controle de Sessão de Acesso Global e Papéis
-        window.usuarioLogado = 'admin';
+        window.usuarioLogado = 'admin'; 
         window.roleLogado = 'admin';
 
-        // Executado quando a página carrega completamente
         document.addEventListener("DOMContentLoaded", function() {
             var inputArquivoAnuncio = document.getElementById('prop-arquivo');
-            
             if (inputArquivoAnuncio) {
                 inputArquivoAnuncio.addEventListener('change', function(e) {
                     var file = e.target.files[0];
@@ -931,165 +830,121 @@
                         document.getElementById('prop-arquivo-nome').innerText = file.name;
                         mimeStringProp = file.type; 
                         nameStringProp = file.name;
-                        var reader = new FileReader();
+                        var reader = new FileReader(); 
                         reader.onload = function(evt) { 
                             base64StringProp = evt.target.result.split(',')[1]; 
-                        };
+                        }; 
                         reader.readAsDataURL(file);
                     } else {
-                        document.getElementById('prop-arquivo-nome').innerText = "Nenhum arquivo escolhido";
+                        document.getElementById('prop-arquivo-nome').innerText = "Nenhum arquivo escolhido"; 
                         base64StringProp = "";
                     }
                 });
             }
 
-            // Verifica se existe sessão guardada no localStorage
             if (localStorage.getItem('admin_logado') === 'true') {
                 window.usuarioLogado = localStorage.getItem('admin_user') || 'admin';
                 window.roleLogado = localStorage.getItem('admin_role') || 'admin';
-                
                 document.getElementById('modalLogin').classList.add('hidden');
                 document.getElementById('view-admin').classList.remove('hidden');
-                
-                aplicarPermissoes(window.roleLogado);
+                aplicarPermissoes(window.roleLogado); 
                 carregarNoticiasAdmin();
             } else {
-                // Se não estiver logado, exibe o modal de login
                 document.getElementById('loading-global').classList.add('hidden');
                 document.getElementById('modalLogin').classList.remove('hidden');
                 document.getElementById('modalLogin').classList.add('flex');
             }
         });
 
-        // ==========================================
-        // CONTROLO DE PERMISSÕES MODULARES E ACESSOS
-        // ==========================================
         function aplicarPermissoes(role) {
-            const todasAbas = [
-                'aba-noticia', 
-                'aba-lista', 
-                'aba-capa', 
-                'aba-logo', 
-                'aba-propaganda', 
-                'aba-social', 
-                'aba-placar', 
-                'aba-estudio', 
-                'aba-equipa'
-            ];
-            
-            // Exibe o nome de usuário na barra superior do painel
+            const todasAbas = ['aba-noticia', 'aba-lista', 'aba-capa', 'aba-logo', 'aba-propaganda', 'aba-social', 'aba-placar', 'aba-estudio', 'aba-equipa'];
             document.getElementById('label-usuario-logado').innerText = window.usuarioLogado;
             
-            // O Master Admin tem acesso livre a tudo
             if (role === 'admin' || role === 'administrador') {
-                todasAbas.forEach(id => {
-                   let el = document.getElementById(id);
-                   if (el) el.style.display = id === 'aba-estudio' ? 'flex' : 'block'; 
+                todasAbas.forEach(id => { 
+                    let el = document.getElementById(id); 
+                    if (el) {
+                        el.style.display = id === 'aba-estudio' ? 'flex' : 'block'; 
+                    }
                 });
-                alternarAbaAdmin('form-noticia-container');
+                alternarAbaAdmin('form-noticia-container'); 
                 return;
             }
             
-            // Lógica para Contas de Permissão Específica (Modulares)
             let allowedTabs = [];
             if (role.indexOf('tabs:') !== -1) {
                 let tabsPart = role.split('tabs:')[1].split(';')[0];
                 allowedTabs = tabsPart.split(',');
             }
 
-            // Esconde abas proibidas
             todasAbas.forEach(id => {
                 let el = document.getElementById(id);
-                if (el) {
-                    if (allowedTabs.includes(id)) {
-                        el.style.display = id === 'aba-estudio' ? 'flex' : 'block';
-                    } else {
-                        el.style.display = 'none';
-                    }
+                if (el) { 
+                    el.style.display = allowedTabs.includes(id) ? (id === 'aba-estudio' ? 'flex' : 'block') : 'none'; 
                 }
             });
 
-            // Ativa automaticamente a primeira aba que o utilizador tiver permissão
             if (allowedTabs.length > 0) {
-                 const mapContainers = {
-                    'aba-noticia': 'form-noticia-container',
-                    'aba-lista': 'lista-noticias-container',
-                    'aba-capa': 'form-capa-container',
-                    'aba-logo': 'form-logo-container',
-                    'aba-propaganda': 'form-propaganda-container',
-                    'aba-social': 'form-social-container',
-                    'aba-placar': 'form-placar-container',
-                    'aba-estudio': 'estudio-ig-container',
-                    'aba-equipa': 'form-equipa-container'
+                 const mapContainers = { 
+                     'aba-noticia': 'form-noticia-container', 
+                     'aba-lista': 'lista-noticias-container', 
+                     'aba-capa': 'form-capa-container', 
+                     'aba-logo': 'form-logo-container', 
+                     'aba-propaganda': 'form-propaganda-container', 
+                     'aba-social': 'form-social-container', 
+                     'aba-placar': 'form-placar-container', 
+                     'aba-equipa': 'form-equipa-container' 
                  };
-                 // Garante que não tenta abrir a aba de estúdio dentro do próprio painel
-                 if(allowedTabs[0] !== 'aba-estudio') {
+                 if (allowedTabs[0] !== 'aba-estudio') {
                      alternarAbaAdmin(mapContainers[allowedTabs[0]]);
                  } else if (allowedTabs.length > 1) {
                      alternarAbaAdmin(mapContainers[allowedTabs[1]]);
                  }
-            } else {
-                 mostrarMensagem("A sua conta não tem nenhuma permissão atribuída.", "erro");
+            } else { 
+                mostrarMensagem("A sua conta não tem permissões.", "erro"); 
             }
         }
 
-        // ==========================================
-        // LÓGICA DE GESTÃO DE EQUIPA BLINDADA
-        // ==========================================
         function carregarListaEquipa() {
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
-                    if (res && res.sucesso) {
-                        renderizarTabelaEquipa(res.usuarios);
+                    if (res && res.sucesso) { 
+                        usuariosGlobais = res.usuarios; 
+                        renderizarTabelaEquipa(res.usuarios); 
                     }
                 }).listarUsuarios();
             }
         }
 
         function renderizarTabelaEquipa(usuarios) {
-            const tbody = document.getElementById('tabela-equipa');
-            if(!tbody) return;
+            const tbody = document.getElementById('tabela-equipa'); 
+            if(!tbody) return; 
             tbody.innerHTML = '';
             
-            if(!usuarios || usuarios.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-xs font-bold text-gray-400">Nenhum membro listado.</td></tr>';
-                return;
+            if(!usuarios || usuarios.length === 0) { 
+                tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-xs font-bold text-gray-400">Nenhum membro listado.</td></tr>'; 
+                return; 
             }
             
             usuarios.forEach(u => {
-                let acessosText = '<span class="bg-jornal-dark text-white px-2 py-0.5 rounded text-[9px] uppercase tracking-widest font-black">Acesso Total (Master)</span>';
-                
-                // Formata o texto de permissões para exibir bonito na tabela
+                let acessosText = '<span class="bg-jornal-dark text-white px-2 py-0.5 rounded text-[9px] uppercase tracking-widest font-black">Master</span>';
                 if (u.role.indexOf('tabs:') !== -1) {
                     let tabsPart = u.role.split('tabs:')[1].split(';')[0];
                     let modulos = tabsPart.replace(/aba-/g, '').replace(/,/g, ', ').toUpperCase();
                     acessosText = `<span class="text-[10px] font-bold text-gray-500">${modulos}</span>`;
                 }
-                
-                // Alerta caso a pessoa não tenha feito o primeiro login ainda
                 let reqSenhaLabel = u.role.includes('req_pass_change:true') ? '<span class="text-amber-600 font-black text-[9px] uppercase ml-2 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Troca Pendente</span>' : '';
-
-                let botoesAcao = `
-                    <button onclick="editarMembro('${u.usuario}', '${u.role}')" class="text-blue-600 border border-blue-200 hover:bg-blue-50 px-3 py-1 rounded text-[10px] uppercase font-black tracking-widest transition-colors mr-2">
-                        Editar
-                    </button>
-                `;
+                let botoesAcao = `<button onclick="editarMembro('${u.usuario}')" class="text-blue-600 border border-blue-200 px-3 py-1 rounded text-[10px] uppercase font-black transition-colors mr-2">Editar</button>`;
                 
                 if (u.usuario !== 'admin') {
-                    botoesAcao += `
-                        <button onclick="excluirMembro('${u.usuario}')" class="text-red-600 border border-red-200 hover:bg-red-50 px-3 py-1 rounded text-[10px] uppercase font-black tracking-widest transition-colors">
-                            Excluir
-                        </button>
-                    `;
+                    botoesAcao += `<button onclick="excluirMembro('${u.usuario}')" class="text-red-600 border border-red-200 px-3 py-1 rounded text-[10px] uppercase font-black transition-colors">Excluir</button>`;
                 }
-
+                
                 tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50 border-b border-gray-100 transition-colors">
-                        <td class="p-4 font-bold text-sm text-jornal-dark flex items-center">${u.usuario} ${reqSenhaLabel}</td>
-                        <td class="p-4 whitespace-normal max-w-sm">${acessosText}</td>
-                        <td class="p-4 text-center">
-                            ${botoesAcao}
-                        </td>
+                    <tr class="hover:bg-gray-50 border-b border-gray-100">
+                        <td class="p-4 font-bold text-sm flex items-center">${u.usuario} ${reqSenhaLabel}</td>
+                        <td class="p-4 whitespace-normal">${acessosText}</td>
+                        <td class="p-4 text-center">${botoesAcao}</td>
                     </tr>
                 `;
             });
@@ -1097,209 +952,205 @@
         
         function salvarMembroEquipa(e) {
             e.preventDefault();
-            const usuario = document.getElementById('equipa-user').value.trim();
+            const usuario = document.getElementById('equipa-user').value.trim(); 
             const senha = document.getElementById('equipa-senha').value.trim();
-            const usuarioOriginal = document.getElementById('equipa-user-original').value;
+            const usuarioOriginal = document.getElementById('equipa-user-original').value; 
             const reqSenha = document.getElementById('equipa-req-senha').checked;
-            
             const checkboxes = document.querySelectorAll('.chk-perm:checked');
-            let tabs = Array.from(checkboxes).map(cb => cb.value).join(',');
             
-            // O Master "admin" nativo nunca perde poderes para não bloquear o sistema acidentalmente
+            let tabs = Array.from(checkboxes).map(cb => cb.value).join(',');
             if (usuario === 'admin') {
                 tabs = 'aba-noticia,aba-lista,aba-capa,aba-logo,aba-propaganda,aba-social,aba-placar,aba-estudio,aba-equipa';
             }
             
             let roleStr = `req_pass_change:${reqSenha};tabs:${tabs}`;
-            
-            if(!usuario) return;
-            
-            // Senha obrigatória na criação inicial
-            if(!usuarioOriginal && !senha) {
-                mostrarMensagem('Para um novo membro, informe uma senha inicial temporária.', 'erro');
+            if (!usuario) {
                 return;
             }
+            if (!usuarioOriginal && !senha) { 
+                mostrarMensagem('Informe uma senha inicial.', 'erro'); 
+                return; 
+            }
             
-            const btn = document.getElementById('btn-salvar-membro');
-            const txt = btn.innerText;
+            const btn = document.getElementById('btn-salvar-membro'); 
+            const txt = btn.innerText; 
             btn.innerText = 'A SALVAR...'; 
             btn.disabled = true;
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
-                    if(res.sucesso) {
-                        mostrarMensagem('Membro salvo com sucesso na equipa!');
-                        limparFormEquipa();
-                        carregarListaEquipa();
-                    } else {
-                        mostrarMensagem(res.erro ? 'Erro do servidor: ' + res.erro : 'Falha desconhecida.', 'erro');
+                    if (res.sucesso) { 
+                        mostrarMensagem('Membro salvo!'); 
+                        limparFormEquipa(); 
+                        carregarListaEquipa(); 
+                    } else { 
+                        mostrarMensagem(res.erro || 'Falha.', 'erro'); 
                     }
                     btn.innerText = txt; 
                     btn.disabled = false;
-                }).salvarUsuario({
-                    usuarioOriginal: usuarioOriginal,
-                    usuario: usuario,
-                    senha: senha,
-                    role: roleStr
+                }).salvarUsuario({ 
+                    usuarioOriginal: usuarioOriginal, 
+                    usuario: usuario, 
+                    senha: senha, 
+                    role: roleStr 
                 });
             }
         }
         
-        function editarMembro(usuario, role) {
-            document.getElementById('equipa-user-original').value = usuario;
-            document.getElementById('equipa-user').value = usuario;
-            document.getElementById('equipa-senha').value = '';
-            document.getElementById('equipa-req-senha').checked = role.includes('req_pass_change:true');
+        function editarMembro(usuario) {
+            var u = usuariosGlobais.find(x => x.usuario === usuario); 
+            if (!u) return;
             
-            // Reseta todos os campos
+            document.getElementById('equipa-user-original').value = u.usuario; 
+            document.getElementById('equipa-user').value = u.usuario;
+            document.getElementById('equipa-senha').value = ''; 
+            document.getElementById('equipa-req-senha').checked = u.role.includes('req_pass_change:true');
             document.querySelectorAll('.chk-perm').forEach(cb => cb.checked = false);
             
-            // Preenche de acordo com os níveis
-            if (role === 'admin' || role === 'administrador') {
+            if (u.role === 'admin' || u.role === 'administrador') {
                 document.querySelectorAll('.chk-perm').forEach(cb => cb.checked = true);
-            } else if (role.indexOf('tabs:') !== -1) {
-                let tabsPart = role.split('tabs:')[1].split(';')[0];
-                let allowedTabs = tabsPart.split(',');
-                document.querySelectorAll('.chk-perm').forEach(cb => {
-                    if (allowedTabs.includes(cb.value)) cb.checked = true;
+            } else if (u.role.indexOf('tabs:') !== -1) {
+                let allowedTabs = u.role.split('tabs:')[1].split(';')[0].split(',');
+                document.querySelectorAll('.chk-perm').forEach(cb => { 
+                    if (allowedTabs.includes(cb.value)) {
+                        cb.checked = true;
+                    }
                 });
             }
-            
-            // Rola a página para cima
             window.scrollTo(0, document.getElementById('form-equipa-container').offsetTop - 100);
         }
         
         function excluirMembro(usuario) {
-            if(!confirm(`Tem a certeza que deseja EXCLUIR o acesso de ${usuario}? Ele deixará de poder aceder ao painel imediatamente.`)) return;
-            
+            if (!confirm(`Excluir o acesso de ${usuario}?`)) {
+                return;
+            }
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.withSuccessHandler(function(res) {
-                    if(res.sucesso) {
-                        mostrarMensagem('Acesso revogado com sucesso!');
-                        carregarListaEquipa();
-                    }
+                window.google.script.run.withSuccessHandler(function(res) { 
+                    if(res.sucesso) { 
+                        mostrarMensagem('Revogado com sucesso!'); 
+                        carregarListaEquipa(); 
+                    } 
                 }).excluirUsuario(usuario);
             }
         }
         
-        function limparFormEquipa() {
-            document.getElementById('form-membro-equipa').reset();
-            document.getElementById('equipa-user-original').value = '';
+        function limparFormEquipa() { 
+            document.getElementById('form-membro-equipa').reset(); 
+            document.getElementById('equipa-user-original').value = ''; 
             document.querySelectorAll('.chk-perm').forEach(cb => cb.checked = true); 
         }
 
-        // ==========================================
-        // FUNÇÕES DE UTILIDADE E LOGIN DE BASE
-        // ==========================================
-
         function isNoticiaPublicada(n) {
-            if (String(n.status).toLowerCase() !== 'ativa') return false;
-            if (n.dataHora) {
-                var pts = n.dataHora.split(/[\/\s:]/);
-                if (pts.length >= 5) {
-                    var dtP = new Date(pts[2], pts[1]-1, pts[0], pts[3], pts[4]);
-                    if (dtP > new Date()) return false;
-                }
+            if (String(n.status).toLowerCase() !== 'ativa') {
+                return false;
             }
+            if (n.dataHora) { 
+                var pts = n.dataHora.split(/[\/\s:]/); 
+                if (pts.length >= 5) { 
+                    if (new Date(pts[2], pts[1]-1, pts[0], pts[3], pts[4]) > new Date()) {
+                        return false; 
+                    }
+                } 
+            } 
             return true;
         }
 
         function mostrarMensagem(mensagem, tipo) {
-            if(tipo === undefined) tipo = 'sucesso';
-            
-            var toast = document.getElementById('toast');
+            var toast = document.getElementById('toast'); 
             document.getElementById('toast-msg').innerText = mensagem;
-            
-            if (tipo === 'erro') {
-                toast.className = 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-white border-red-600 text-red-600 rounded-sm';
-                document.getElementById('toast-icon').innerHTML = '⚠️';
-            } else {
-                toast.className = 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-jornal-dark border-jornal-dark text-white rounded-sm';
-                document.getElementById('toast-icon').innerHTML = '✓';
+            if (tipo === 'erro') { 
+                toast.className = 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-white border-red-600 text-red-600 rounded-sm'; 
+                document.getElementById('toast-icon').innerHTML = '⚠️'; 
+            } else { 
+                toast.className = 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-jornal-dark border-jornal-dark text-white rounded-sm'; 
+                document.getElementById('toast-icon').innerHTML = '✓'; 
             }
-            
-            toast.classList.remove('hidden');
-            setTimeout(function() { toast.classList.add('hidden'); }, 4500);
+            toast.classList.remove('hidden'); 
+            setTimeout(function() { 
+                toast.classList.add('hidden'); 
+            }, 4500);
         }
 
         function fazerLogin(e) {
             e.preventDefault();
-            var u = document.getElementById('login-user').value;
+            var u = document.getElementById('login-user').value; 
             var p = document.getElementById('login-pass').value;
-            var btn = document.getElementById('btn-fazer-login');
+            var btn = document.getElementById('btn-fazer-login'); 
             
-            btn.innerHTML = "A VERIFICAR..."; btn.disabled = true;
+            btn.innerHTML = "A VERIFICAR..."; 
+            btn.disabled = true;
 
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
                     if (res && res.sucesso) {
-                        
-                        let roleStr = res.role || 'admin';
-                        window.usuarioLogado = res.usuario || u;
+                        let roleStr = res.role || 'admin'; 
+                        window.usuarioLogado = res.usuario || u; 
                         window.roleLogado = roleStr;
-                        
-                        // Verifica se este usuário tem a obrigatoriedade de trocar a senha
                         if (roleStr.includes('req_pass_change:true')) {
-                            document.getElementById('modalLogin').classList.add('hidden');
-                            document.getElementById('modalTrocarSenha').classList.remove('hidden');
+                            document.getElementById('modalLogin').classList.add('hidden'); 
+                            document.getElementById('modalTrocarSenha').classList.remove('hidden'); 
                             document.getElementById('modalTrocarSenha').classList.add('flex');
-                        } else {
-                            iniciarSessao(window.usuarioLogado, window.roleLogado);
+                        } else { 
+                            iniciarSessao(window.usuarioLogado, window.roleLogado); 
                         }
-                    } else {
-                        mostrarMensagem(res ? res.erro : "Resposta inválida.", 'erro');
-                        btn.innerHTML = "ENTRAR NO PAINEL"; btn.disabled = false;
+                    } else { 
+                        mostrarMensagem(res ? res.erro : "Resposta inválida.", 'erro'); 
+                        btn.innerHTML = "Entrar no Painel"; 
+                        btn.disabled = false; 
                     }
                 }).withFailureHandler(function(erro) {
-                    mostrarMensagem("Falha na rede: " + erro.message, 'erro');
-                    btn.innerHTML = "ENTRAR NO PAINEL"; btn.disabled = false;
+                    mostrarMensagem("Falha na rede: " + erro.message, 'erro'); 
+                    btn.innerHTML = "Entrar no Painel"; 
+                    btn.disabled = false;
                 }).verificarLogin(u, p);
             } else {
-                // Modo Fallback Local
-                setTimeout(function() {
-                    if (u === 'admin') {
-                        iniciarSessao('admin', 'admin');
+                setTimeout(function() { 
+                    if (u === 'admin') { 
+                        iniciarSessao('admin', 'admin'); 
                     } else { 
                         mostrarMensagem('Acesso negado localmente.', 'erro'); 
-                        btn.innerHTML = "ENTRAR NO PAINEL"; btn.disabled = false;
-                    }
+                        btn.innerHTML = "Entrar no Painel"; 
+                        btn.disabled = false; 
+                    } 
                 }, 500);
             }
         }
 
         function trocarSenhaPrimeiroAcesso(e) {
-            e.preventDefault();
-            const novaSenha = document.getElementById('nova-senha').value;
+            e.preventDefault(); 
+            const novaSenha = document.getElementById('nova-senha').value; 
             const confSenha = document.getElementById('confirmar-nova-senha').value;
             
-            if(novaSenha !== confSenha) {
-                mostrarMensagem('Atenção: As senhas não coincidem.', 'erro');
-                return;
+            if(novaSenha !== confSenha) { 
+                mostrarMensagem('As senhas não coincidem.', 'erro'); 
+                return; 
             }
-            if(novaSenha.length < 6) {
-                mostrarMensagem('A senha deve ter pelo menos 6 caracteres para sua segurança.', 'erro');
-                return;
+            if(novaSenha.length < 6) { 
+                mostrarMensagem('Mínimo de 6 caracteres.', 'erro'); 
+                return; 
             }
             
-            const btn = document.getElementById('btn-trocar-senha');
-            btn.innerHTML = 'A ATUALIZAR...'; btn.disabled = true;
+            const btn = document.getElementById('btn-trocar-senha'); 
+            btn.innerHTML = 'A ATUALIZAR...'; 
+            btn.disabled = true;
             
             const novoRole = window.roleLogado.replace('req_pass_change:true', 'req_pass_change:false');
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
-                    if (res.sucesso) {
-                        mostrarMensagem('Senha atualizada! Bem-vindo(a) ao painel.');
-                        iniciarSessao(window.usuarioLogado, novoRole);
-                    } else {
-                        mostrarMensagem('Erro ao atualizar a senha no servidor.', 'erro');
-                        btn.innerHTML = 'Salvar Nova Senha e Entrar'; btn.disabled = false;
+                    if (res.sucesso) { 
+                        mostrarMensagem('Senha atualizada!'); 
+                        iniciarSessao(window.usuarioLogado, novoRole); 
+                    } else { 
+                        mostrarMensagem('Erro.', 'erro'); 
+                        btn.innerHTML = 'Salvar Nova Senha e Entrar'; 
+                        btn.disabled = false; 
                     }
-                }).salvarUsuario({
-                    usuarioOriginal: window.usuarioLogado,
-                    usuario: window.usuarioLogado,
-                    senha: novaSenha,
-                    role: novoRole
+                }).salvarUsuario({ 
+                    usuarioOriginal: window.usuarioLogado, 
+                    usuario: window.usuarioLogado, 
+                    senha: novaSenha, 
+                    role: novoRole 
                 });
             }
         }
@@ -1311,12 +1162,12 @@
                 localStorage.setItem('admin_role', role); 
             } catch(err) {}
             
-            document.getElementById('modalTrocarSenha').classList.add('hidden');
+            document.getElementById('modalTrocarSenha').classList.add('hidden'); 
             document.getElementById('modalTrocarSenha').classList.remove('flex');
-            document.getElementById('modalLogin').classList.add('hidden');
+            document.getElementById('modalLogin').classList.add('hidden'); 
             document.getElementById('view-admin').classList.remove('hidden');
             
-            aplicarPermissoes(role);
+            aplicarPermissoes(role); 
             carregarNoticiasAdmin();
         }
 
@@ -1325,50 +1176,69 @@
                 localStorage.removeItem('admin_logado'); 
                 localStorage.removeItem('admin_user'); 
                 localStorage.removeItem('admin_role'); 
-            } catch(err) {
-                console.error(err);
-            }
+            } catch(err) {}
             window.location.href = "index.html";
         }
 
         function carregarNoticiasAdmin() {
             document.getElementById('loading-global').classList.remove('hidden');
             
+            // Cache local para abertura instantanea
+            var cache = localStorage.getItem('admin_data_cache');
+            if(cache) {
+                try {
+                    var dados = JSON.parse(cache);
+                    if (dados && dados.sucesso) {
+                        noticiasGlobais = dados.noticias || []; 
+                        configuracoesGlobais = dados.config || {};
+                        if (dados.categorias && dados.categorias.length > 0) {
+                            listaCategoriasLocais = dados.categorias;
+                        }
+                        renderizarChecklistCategoriasAdmin();
+                        document.getElementById('loading-global').classList.add('hidden');
+                        if (document.getElementById('aba-lista').style.display !== 'none') {
+                            carregarListaEdicao();
+                        }
+                        if (document.getElementById('aba-capa').style.display !== 'none') {
+                            preencherFormCapa();
+                        }
+                        if (document.getElementById('aba-placar').style.display !== 'none') {
+                            preencherFormPlacar();
+                        }
+                        preencherConfigsGerais();
+                    }
+                } catch(e){}
+            }
+
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
                     document.getElementById('loading-global').classList.add('hidden');
-                    
                     if (res && res.sucesso) {
-                        noticiasGlobais = res.noticias || [];
+                        localStorage.setItem('admin_data_cache', JSON.stringify(res)); // Salva o novo Cache
+                        noticiasGlobais = res.noticias || []; 
                         configuracoesGlobais = res.config || {};
-                        
                         if (res.categorias && res.categorias.length > 0) {
                             listaCategoriasLocais = res.categorias;
                         }
-                        
                         renderizarChecklistCategoriasAdmin();
                         
-                        // Renderizar Listas com base no que é visível
-                        if(document.getElementById('aba-lista').style.display !== 'none') carregarListaEdicao();
-                        if(document.getElementById('aba-capa').style.display !== 'none') preencherFormCapa();
-                        if(document.getElementById('aba-placar').style.display !== 'none') preencherFormPlacar();
+                        if (document.getElementById('aba-lista').style.display !== 'none') {
+                            carregarListaEdicao();
+                        }
+                        if (document.getElementById('aba-capa').style.display !== 'none') {
+                            preencherFormCapa();
+                        }
+                        if (document.getElementById('aba-placar').style.display !== 'none') {
+                            preencherFormPlacar();
+                        }
                         preencherConfigsGerais();
-                    } else { 
-                        mostrarMensagem("Erro ao carregar dados.", 'erro'); 
                     }
                 }).withFailureHandler(function(err) {
-                    document.getElementById('loading-global').classList.add('hidden');
+                    document.getElementById('loading-global').classList.add('hidden'); 
                     mostrarMensagem("Falha de Servidor.", 'erro');
                 }).getHomeData();
-            } else {
-                document.getElementById('loading-global').classList.add('hidden');
-                renderizarChecklistCategoriasAdmin();
-                carregarListaEdicao();
-                preencherFormCapa();
-                preencherFormPlacar();
             }
         }
-
 
         function alternarAbaAdmin(abaId) {
             var contentIds = [
@@ -1378,13 +1248,13 @@
                 'form-propaganda-container', 
                 'form-social-container', 
                 'form-placar-container', 
-                'form-capa-container',
+                'form-capa-container', 
                 'form-equipa-container'
             ];
             
             contentIds.forEach(function(id) { 
                 var el = document.getElementById(id); 
-                if(el) el.classList.add('hidden'); 
+                if (el) el.classList.add('hidden'); 
             });
             
             var tabIds = [
@@ -1400,38 +1270,57 @@
             
             tabIds.forEach(function(id) { 
                 var el = document.getElementById(id); 
-                if(el) {
+                if (el) {
                     el.className = "py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors " + (el.style.display==='none'?'hidden':''); 
                 }
             });
             
-            var targetEl = document.getElementById(abaId);
-            if(targetEl) targetEl.classList.remove('hidden');
+            var targetEl = document.getElementById(abaId); 
+            if(targetEl) {
+                targetEl.classList.remove('hidden');
+            }
             
             var botaoId = ""; 
             var classAtiva = "bg-jornal-dark text-white font-black";
             
-            if (abaId === 'form-noticia-container') { botaoId = 'aba-noticia'; classAtiva = "bg-jornal-blue text-white font-black"; } 
-            else if (abaId === 'lista-noticias-container') { botaoId = 'aba-lista'; classAtiva = "bg-jornal-dark text-white font-black"; carregarListaEdicao(); } 
-            else if (abaId === 'form-capa-container') { botaoId = 'aba-capa'; classAtiva = "bg-emerald-600 text-white font-black"; preencherFormCapa(); } 
-            else if (abaId === 'form-logo-container') { botaoId = 'aba-logo'; classAtiva = "bg-purple-800 text-white font-black"; } 
-            else if (abaId === 'form-propaganda-container') { botaoId = 'aba-propaganda'; classAtiva = "bg-jornal-dark text-white font-black"; } 
-            else if (abaId === 'form-social-container') { botaoId = 'aba-social'; classAtiva = "bg-jornal-dark text-white font-black"; } 
-            else if (abaId === 'form-placar-container') { botaoId = 'aba-placar'; classAtiva = "bg-green-700 text-white font-black"; preencherFormPlacar(); } 
-            else if (abaId === 'form-equipa-container') { botaoId = 'aba-equipa'; classAtiva = "bg-jornal-dark text-white font-black"; carregarListaEquipa(); }
+            if (abaId === 'form-noticia-container') { 
+                botaoId = 'aba-noticia'; 
+                classAtiva = "bg-jornal-blue text-white font-black"; 
+            } else if (abaId === 'lista-noticias-container') { 
+                botaoId = 'aba-lista'; 
+                classAtiva = "bg-jornal-dark text-white font-black"; 
+                carregarListaEdicao(); 
+            } else if (abaId === 'form-capa-container') { 
+                botaoId = 'aba-capa'; 
+                classAtiva = "bg-emerald-600 text-white font-black"; 
+                preencherFormCapa(); 
+            } else if (abaId === 'form-logo-container') { 
+                botaoId = 'aba-logo'; 
+                classAtiva = "bg-purple-800 text-white font-black"; 
+            } else if (abaId === 'form-propaganda-container') { 
+                botaoId = 'aba-propaganda'; 
+                classAtiva = "bg-jornal-dark text-white font-black"; 
+            } else if (abaId === 'form-social-container') { 
+                botaoId = 'aba-social'; 
+                classAtiva = "bg-jornal-dark text-white font-black"; 
+            } else if (abaId === 'form-placar-container') { 
+                botaoId = 'aba-placar'; 
+                classAtiva = "bg-green-700 text-white font-black"; 
+                preencherFormPlacar(); 
+            } else if (abaId === 'form-equipa-container') { 
+                botaoId = 'aba-equipa'; 
+                classAtiva = "bg-jornal-dark text-white font-black"; 
+                carregarListaEquipa(); 
+            }
             
-            var btnEl = document.getElementById(botaoId);
+            var btnEl = document.getElementById(botaoId); 
             if(btnEl) {
                 btnEl.className = `py-3 px-5 uppercase tracking-widest text-[11px] whitespace-nowrap rounded-t-sm transition-colors ${classAtiva}`;
             }
         }
 
-        // =========================================================
-        // REDIGIR MATÉRIA E FORMULÁRIOS
-        // =========================================================
-
         function renderizarChecklistCategoriasAdmin() {
-            var checklistAdmin = document.getElementById('admin-categoria-checklist');
+            var checklistAdmin = document.getElementById('admin-categoria-checklist'); 
             if(!checklistAdmin) return;
             
             if (!listaCategoriasLocais || listaCategoriasLocais.length === 0) {
@@ -1439,12 +1328,11 @@
             }
             
             checklistAdmin.innerHTML = '';
-            
             listaCategoriasLocais.forEach(function(c) {
                 checklistAdmin.innerHTML += `
                     <label class="flex items-center gap-3 cursor-pointer text-xs font-bold text-slate-700 p-2 hover:bg-gray-100 rounded transition-colors">
-                        <input type="checkbox" name="admin-categorias-checkbox" value="${c}" onchange="atualizarCampoCidadeAdmin(); atualizarPreviewURL(); autoPreencherRelacionadas();" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-400" />
-                        ${c.toUpperCase()}
+                        <input type="checkbox" name="admin-categorias-checkbox" value="${c}" onchange="atualizarCampoCidadeAdmin(); atualizarPreviewURL(); autoPreencherRelacionadas();" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-400" /> 
+                        ${c.toUpperCase()} 
                     </label>
                 `;
             });
@@ -1454,93 +1342,101 @@
             return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); 
         }
 
-        function normalizarTextoUrl(text) {
-            if (!text) return 'geral';
-            return String(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
+        function normalizarTextoUrl(text) { 
+            if (!text) return 'geral'; 
+            return String(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, ''); 
         }
 
         function atualizarCampoCidadeAdmin() {
             var selecionadas = Array.from(document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked'));
-            var mostraCidade = selecionadas.some(function(cb) { return normalizarTexto(cb.value) === 'cidades'; });
-            var container = document.getElementById('admin-cidade-container');
+            var mostraCidade = selecionadas.some(function(cb) { 
+                return normalizarTexto(cb.value) === 'cidades'; 
+            });
+            var container = document.getElementById('admin-cidade-container'); 
             var input = document.getElementById('admin-cidade');
             
             if (container) { 
-                if (mostraCidade) container.classList.remove('hidden'); 
-                else container.classList.add('hidden'); 
+                if (mostraCidade) {
+                    container.classList.remove('hidden'); 
+                } else {
+                    container.classList.add('hidden'); 
+                }
             }
-            
             if (input) { 
                 input.required = mostraCidade; 
-                if (!mostraCidade) input.value = ''; 
+                if (!mostraCidade) {
+                    input.value = ''; 
+                }
             }
         }
 
         function atualizarPreviewURL() {
-            var titulo = document.getElementById('admin-titulo').value;
+            var titulo = document.getElementById('admin-titulo').value; 
             var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
-            var cat = checkboxes.length > 0 ? checkboxes[0].value : 'geral';
+            var cat = checkboxes.length > 0 ? checkboxes[0].value : 'geral'; 
             var p = document.getElementById('preview-url-noticia');
             
-            if (titulo) {
-                var slugCat = normalizarTextoUrl(cat);
-                var slugTit = normalizarTextoUrl(titulo);
-                var span = p.querySelector('span');
-                span.innerText = `https://noticiasavulsas.com.br/${slugCat}/${slugTit}/[ID_DA_MATERIA]`;
-                p.classList.remove('hidden');
-            } else {
-                p.classList.add('hidden');
+            if (titulo) { 
+                var slugCat = normalizarTextoUrl(cat); 
+                var slugTit = normalizarTextoUrl(titulo); 
+                var span = p.querySelector('span'); 
+                span.innerText = `https://noticiasavulsas.com.br/${slugCat}/${slugTit}/[ID]`; 
+                p.classList.remove('hidden'); 
+            } else { 
+                p.classList.add('hidden'); 
             }
         }
 
         function novaCategoria() {
-            var nome = prompt("Escreva o nome da nova editoria (Ex: Saúde, Tecnologia):");
-            if(!nome) return;
-            
+            var nome = prompt("Escreva o nome da nova editoria (Ex: Saúde, Tecnologia):"); 
+            if (!nome) {
+                return;
+            }
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.withSuccessHandler(function(res) {
+                window.google.script.run.withSuccessHandler(function(res) { 
                     if(res && res.sucesso) { 
                         mostrarMensagem("Editoria adicionada!"); 
-                        if (listaCategoriasLocais.indexOf(nome) === -1) listaCategoriasLocais.push(nome);
+                        if (listaCategoriasLocais.indexOf(nome) === -1) {
+                            listaCategoriasLocais.push(nome); 
+                        }
                         renderizarChecklistCategoriasAdmin(); 
-                    }
+                    } 
                 }).adicionarCategoriaNoSheets({nome: nome});
-            } else {
+            } else { 
                 listaCategoriasLocais.push(nome); 
                 renderizarChecklistCategoriasAdmin(); 
-                mostrarMensagem("Adicionado localmente.");
+                mostrarMensagem("Adicionado localmente."); 
             }
         }
 
         function autoPreencherRelacionadas() {
-            if (window.relacionadasEditadasManualmente) return;
-            
-            var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
-            if (checkboxes.length === 0) {
-                window.relacionadasSelecionadas = [];
-                atualizarUIListaRelacionadas(); 
+            if (window.relacionadasEditadasManualmente) {
                 return;
             }
-            
-            var catStr = normalizarTextoUrl(checkboxes[0].value);
+            var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
+            if (checkboxes.length === 0) { 
+                window.relacionadasSelecionadas = []; 
+                atualizarUIListaRelacionadas(); 
+                return; 
+            }
+            var catStr = normalizarTextoUrl(checkboxes[0].value); 
             var idAtual = document.getElementById('admin-id-noticia').value;
             
-            var sugestoes = noticiasGlobais.filter(function(n) {
-                if (String(n.id) === String(idAtual)) return false;
-                if (!isNoticiaPublicada(n)) return false;
-                return normalizarTextoUrl(n.categoria).indexOf(catStr) !== -1;
+            var sugestoes = noticiasGlobais.filter(function(n) { 
+                if (String(n.id) === String(idAtual)) return false; 
+                if (!isNoticiaPublicada(n)) return false; 
+                return normalizarTextoUrl(n.categoria).indexOf(catStr) !== -1; 
             }).slice(0, 3);
             
-            window.relacionadasSelecionadas = sugestoes.map(function(n) {
-                var tituloSafe = n.titulo.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                return { id: n.id, titulo: tituloSafe };
+            window.relacionadasSelecionadas = sugestoes.map(function(n) { 
+                var tituloSafe = n.titulo.replace(/'/g, "\\'").replace(/"/g, '&quot;'); 
+                return { id: n.id, titulo: tituloSafe }; 
             });
-            
             atualizarUIListaRelacionadas();
         }
 
         function buscarRelacionadas() {
-            var inputVal = normalizarTexto(document.getElementById('admin-busca-relacionada').value);
+            var inputVal = normalizarTexto(document.getElementById('admin-busca-relacionada').value); 
             var divResultados = document.getElementById('lista-resultados-relacionadas');
             
             if(!inputVal || inputVal.length < 2) { 
@@ -1548,24 +1444,24 @@
                 return; 
             }
             
-            var res = noticiasGlobais.filter(function(n) {
-                var isPub = String(n.status).toLowerCase() === 'ativa';
-                var txt = normalizarTexto([n.titulo, n.categoria, n.cidade].join(' '));
-                return isPub && txt.indexOf(inputVal) !== -1;
+            var res = noticiasGlobais.filter(function(n) { 
+                var isPub = String(n.status).toLowerCase() === 'ativa'; 
+                var txt = normalizarTexto([n.titulo, n.categoria, n.cidade].join(' ')); 
+                return isPub && txt.indexOf(inputVal) !== -1; 
             }).slice(0, 5);
             
             var html = '';
             if (res.length === 0) { 
                 html = `<div class="text-xs text-indigo-500 font-bold p-2">Nenhum resultado encontrado.</div>`; 
             } else {
-                res.forEach(function(n) {
-                    var tituloSafe = n.titulo.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                res.forEach(function(n) { 
+                    var tituloSafe = n.titulo.replace(/'/g, "\\'").replace(/"/g, '&quot;'); 
                     html += `
-                    <div class="flex justify-between items-center p-3 bg-white border border-indigo-200 text-xs rounded-sm hover:shadow-md transition-shadow">
-                        <div class="flex-grow min-w-0 pr-2 truncate font-bold text-gray-700">${n.titulo}</div>
-                        <button type="button" onclick="adicionarRelacionada('${n.id}', '${tituloSafe}')" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-black px-3 py-1 rounded text-[10px] uppercase tracking-widest shrink-0">Add</button>
-                    </div>
-                    `;
+                        <div class="flex justify-between items-center p-3 bg-white border border-indigo-200 text-xs rounded-sm hover:shadow-md transition-shadow">
+                            <div class="flex-grow min-w-0 pr-2 truncate font-bold text-gray-700">${n.titulo}</div>
+                            <button type="button" onclick="adicionarRelacionada('${n.id}', '${tituloSafe}')" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-black px-3 py-1 rounded text-[10px] uppercase tracking-widest shrink-0">Add</button>
+                        </div>
+                    `; 
                 });
             }
             divResultados.innerHTML = html;
@@ -1574,44 +1470,45 @@
         function adicionarRelacionada(id, titulo) {
             window.relacionadasEditadasManualmente = true;
             if (window.relacionadasSelecionadas.length >= 3) { 
-                mostrarMensagem("Limite de 3 matérias atingido.", "erro"); 
+                mostrarMensagem("Limite de 3 matérias.", "erro"); 
                 return; 
             }
             if (window.relacionadasSelecionadas.find(function(r) { return r.id === id; })) { 
-                mostrarMensagem("Matéria já selecionada.", "erro"); 
+                mostrarMensagem("Já selecionada.", "erro"); 
                 return; 
             }
-            
-            window.relacionadasSelecionadas.push({ id: id, titulo: titulo });
+            window.relacionadasSelecionadas.push({ id: id, titulo: titulo }); 
             atualizarUIListaRelacionadas();
-            
             document.getElementById('lista-resultados-relacionadas').innerHTML = ''; 
             document.getElementById('admin-busca-relacionada').value = '';
         }
 
-        function removerRelacionada(id) {
-            window.relacionadasEditadasManualmente = true;
-            window.relacionadasSelecionadas = window.relacionadasSelecionadas.filter(function(r) { return r.id !== id; });
-            atualizarUIListaRelacionadas();
+        function removerRelacionada(id) { 
+            window.relacionadasEditadasManualmente = true; 
+            window.relacionadasSelecionadas = window.relacionadasSelecionadas.filter(function(r) { 
+                return r.id !== id; 
+            }); 
+            atualizarUIListaRelacionadas(); 
         }
 
         function atualizarUIListaRelacionadas() {
             var html = '';
-            window.relacionadasSelecionadas.forEach(function(r) {
+            window.relacionadasSelecionadas.forEach(function(r) { 
                 html += `
-                <div class="flex justify-between items-center p-4 bg-indigo-600 text-white text-xs rounded-sm shadow-sm mb-2">
-                    <div class="flex-grow min-w-0 pr-4 font-bold text-sm truncate">${r.titulo}</div>
-                    <button type="button" onclick="removerRelacionada('${r.id}')" class="text-amber-300 hover:text-amber-100 font-black uppercase tracking-widest text-[10px] shrink-0">Remover</button>
-                </div>
-                `;
+                    <div class="flex justify-between items-center p-4 bg-indigo-600 text-white text-xs rounded-sm shadow-sm mb-2">
+                        <div class="flex-grow min-w-0 pr-4 font-bold text-sm truncate">${r.titulo}</div>
+                        <button type="button" onclick="removerRelacionada('${r.id}')" class="text-amber-300 hover:text-amber-100 font-black uppercase tracking-widest text-[10px] shrink-0">Remover</button>
+                    </div>
+                `; 
             });
-            
-            document.getElementById('lista-selecionadas-relacionadas').innerHTML = html;
+            document.getElementById('lista-selecionadas-relacionadas').innerHTML = html; 
             document.getElementById('admin-relacionadas-ids').value = window.relacionadasSelecionadas.map(function(r){ return r.id; }).join(',');
         }
 
         function execCmd(command, arg) { 
-            if(arg === undefined) arg = null; 
+            if(arg === undefined) {
+                arg = null; 
+            }
             document.execCommand(command, false, arg); 
             document.getElementById('admin-editor-rich').focus(); 
         }
@@ -1628,12 +1525,14 @@
         }
 
         function processarUploadImagemConteudo(input) {
-            if (!input.files || !input.files[0]) return;
-            var file = input.files[0];
-            var legenda = prompt("Legenda para a imagem (opcional):") || "";
+            if (!input.files || !input.files[0]) {
+                return; 
+            }
+            var file = input.files[0]; 
+            var legenda = prompt("Legenda para a imagem (opcional):") || ""; 
             var creditos = prompt("Créditos da foto (obrigatório se houver direitos):") || "";
-            
             var reader = new FileReader();
+            
             reader.onload = function(e) {
                 var img = new Image();
                 img.onload = function() {
@@ -1642,30 +1541,32 @@
                     var maxWidth = 800; 
                     var scale = 1;
                     
-                    if (img.width > maxWidth) scale = maxWidth / img.width;
+                    if (img.width > maxWidth) {
+                        scale = maxWidth / img.width;
+                    }
                     
                     canvas.width = img.width * scale; 
-                    canvas.height = img.height * scale;
+                    canvas.height = img.height * scale; 
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     var base64Resized = canvas.toDataURL('image/jpeg', 0.8);
-                    
                     var htmlImg = `
-                        <br><figure style="margin: 16px auto; text-align: center; max-width: 100%; display: block;">
+                        <br>
+                        <figure style="margin: 16px auto; text-align: center; max-width: 100%; display: block;">
                             <img src="${base64Resized}" style="max-width: 100%; height: auto; border-radius: 8px; display: inline-block; margin: 0 auto; border: 1px solid #e2e8f0;" />
                     `;
                     
-                    if (legenda || creditos) {
+                    if (legenda || creditos) { 
                         var credTexto = creditos ? `Foto: ${creditos}` : ''; 
-                        var sep = (legenda && creditos) ? ' - ' : '';
-                        htmlImg += `<figcaption style="font-size: 12px; color: #64748b; margin-top: 8px; font-style: italic; text-align: center;">${legenda}${sep}${credTexto}</figcaption>`;
+                        var sep = (legenda && creditos) ? ' - ' : ''; 
+                        htmlImg += `<figcaption style="font-size: 12px; color: #64748b; margin-top: 8px; font-style: italic; text-align: center;">${legenda}${sep}${credTexto}</figcaption>`; 
                     }
                     
-                    htmlImg += `</figure><br><p>&#8203;</p>`;
+                    htmlImg += `</figure><br><p>&#8203;</p>`; 
                     execCmd('insertHTML', htmlImg); 
                     input.value = '';
-                };
+                }; 
                 img.src = e.target.result;
-            };
+            }; 
             reader.readAsDataURL(file);
         }
 
@@ -1677,23 +1578,22 @@
         }
 
         function gerarLinhaFinaIA() {
-            var t = document.getElementById('admin-titulo').value.trim();
+            var t = document.getElementById('admin-titulo').value.trim(); 
             if(!t) { 
                 mostrarMensagem("Preencha a Manchete primeiro.", "erro"); 
                 return; 
             }
-            
             var btn = document.getElementById('btn-ia-linhafina'); 
             var txt = btn.innerText; 
             btn.innerText = "...";
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.withSuccessHandler(function(res) {
+                window.google.script.run.withSuccessHandler(function(res) { 
                     if(res && res.sucesso && res.texto) { 
                         document.getElementById('admin-linha-fina').value = res.texto.trim(); 
                         mostrarMensagem("Linha fina gerada!"); 
-                    }
-                    btn.innerText = txt;
+                    } 
+                    btn.innerText = txt; 
                 }).chamarGeminiBackend(`Escreva uma linha fina curta (SEO) para o título: "${t}"`);
             } else { 
                 btn.innerText = txt; 
@@ -1701,27 +1601,26 @@
         }
 
         function gerarConteudoIA() {
-            var t = document.getElementById('admin-titulo').value.trim();
+            var t = document.getElementById('admin-titulo').value.trim(); 
             if(!t) { 
                 mostrarMensagem("Preencha a Manchete primeiro.", "erro"); 
                 return; 
             }
-            
             var btn = document.getElementById('btn-ia-conteudo'); 
             var txt = btn.innerText; 
             btn.innerText = "A escrever...";
             
-            var lf = document.getElementById('admin-linha-fina').value.trim();
+            var lf = document.getElementById('admin-linha-fina').value.trim(); 
             var promptStr = `Escreva uma notícia completa em HTML (use apenas tags <p>, <h2>, <ul>). Manchete: "${t}". ${lf ? `Linha Fina: "${lf}"` : ''}`;
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.withSuccessHandler(function(res) {
-                    if(res && res.sucesso && res.texto) {
-                        var cleanHtml = res.texto.replace(/(\`\`\`html|\`\`\`)/gi, '').trim();
+                window.google.script.run.withSuccessHandler(function(res) { 
+                    if(res && res.sucesso && res.texto) { 
+                        var cleanHtml = res.texto.replace(/(\`\`\`html|\`\`\`)/gi, '').trim(); 
                         document.getElementById('admin-editor-rich').innerHTML = cleanHtml; 
-                        mostrarMensagem("Texto gerado!");
-                    }
-                    btn.innerText = txt;
+                        mostrarMensagem("Texto gerado!"); 
+                    } 
+                    btn.innerText = txt; 
                 }).chamarGeminiBackend(promptStr);
             } else { 
                 btn.innerText = txt; 
@@ -1729,30 +1628,37 @@
         }
 
         function verificarUploadMedia(input) {
-            var containerMetadados = document.getElementById('admin-imagem-metadados');
+            var containerMetadados = document.getElementById('admin-imagem-metadados'); 
             var inputCreditos = document.getElementById('admin-creditos-imagem');
             
-            if (input && input.files && input.files[0]) {
-                if (containerMetadados) containerMetadados.classList.remove('hidden');
-                if (inputCreditos) inputCreditos.required = true;
-            } else {
-                var prevSrc = document.getElementById('preview-imagem').src;
-                if (!prevSrc || prevSrc === "" || prevSrc.indexOf('placehold.co') !== -1) {
-                    if (containerMetadados) containerMetadados.classList.add('hidden');
-                    if (inputCreditos) inputCreditos.required = false;
+            if (input && input.files && input.files[0]) { 
+                if (containerMetadados) {
+                    containerMetadados.classList.remove('hidden'); 
                 }
+                if (inputCreditos) {
+                    inputCreditos.required = true; 
+                }
+            } else { 
+                var prevSrc = document.getElementById('preview-imagem').src; 
+                if (!prevSrc || prevSrc === "" || prevSrc.indexOf('placehold.co') !== -1) { 
+                    if (containerMetadados) {
+                        containerMetadados.classList.add('hidden'); 
+                    }
+                    if (inputCreditos) {
+                        inputCreditos.required = false; 
+                    }
+                } 
             }
         }
 
         var adminArquivoInput = document.getElementById('admin-arquivo-imagem');
         if(adminArquivoInput) {
             adminArquivoInput.addEventListener('change', function(e) {
-                var file = e.target.files[0];
+                var file = e.target.files[0]; 
                 if (!file) { 
                     base64StringNoticia = ""; 
                     return; 
                 }
-                
                 if (file.size > 5 * 1024 * 1024) { 
                     alert('Ficheiro excede 5MB.'); 
                     this.value = ""; 
@@ -1761,61 +1667,62 @@
                 
                 mimeStringNoticia = file.type; 
                 nameStringNoticia = file.name;
+                var reader = new FileReader(); 
                 
-                var reader = new FileReader();
                 reader.onload = function(evt) { 
-                    base64StringNoticia = evt.target.result.split(',')[1];
-                    document.getElementById('preview-imagem').src = evt.target.result;
-                    document.getElementById('preview-imagem').classList.remove('hidden');
-                    verificarUploadMedia(e.target);
-                };
+                    base64StringNoticia = evt.target.result.split(',')[1]; 
+                    document.getElementById('preview-imagem').src = evt.target.result; 
+                    document.getElementById('preview-imagem').classList.remove('hidden'); 
+                    verificarUploadMedia(e.target); 
+                }; 
                 reader.readAsDataURL(file);
             });
         }
 
         function limparFormNoticia() {
-            document.getElementById('form-admin').reset();
-            document.getElementById('admin-id-noticia').value = "";
-            document.getElementById('preview-imagem').classList.add('hidden');
-            document.getElementById('preview-imagem').src = "";
-            document.getElementById('admin-carrossel').checked = false;
-            document.getElementById('admin-editor-rich').innerHTML = "";
-            document.getElementById('admin-imagem-metadados').classList.add('hidden');
-            document.getElementById('admin-creditos-imagem').required = false;
+            document.getElementById('form-admin').reset(); 
+            document.getElementById('admin-id-noticia').value = ""; 
+            document.getElementById('preview-imagem').classList.add('hidden'); 
+            document.getElementById('preview-imagem').src = ""; 
+            document.getElementById('admin-carrossel').checked = false; 
+            document.getElementById('admin-editor-rich').innerHTML = ""; 
+            document.getElementById('admin-imagem-metadados').classList.add('hidden'); 
+            document.getElementById('admin-creditos-imagem').required = false; 
             base64StringNoticia = "";
             
             document.querySelectorAll('input[name="admin-categorias-checkbox"]').forEach(function(cb) { 
                 cb.checked = false; 
             });
             
-            atualizarCampoCidadeAdmin();
+            atualizarCampoCidadeAdmin(); 
             window.relacionadasSelecionadas = []; 
-            window.relacionadasEditadasManualmente = false;
+            window.relacionadasEditadasManualmente = false; 
             atualizarUIListaRelacionadas(); 
             atualizarPreviewURL();
             
-            var btnSalvar = document.getElementById('btn-salvar-noticia');
-            if (btnSalvar) btnSalvar.innerText = "PUBLICAR MATÉRIA";
+            var btnSalvar = document.getElementById('btn-salvar-noticia'); 
+            if (btnSalvar) {
+                btnSalvar.innerText = "PUBLICAR MATÉRIA";
+            }
         }
 
         function salvarNoticia(e) {
-            e.preventDefault();
-            var editandoID = document.getElementById('admin-id-noticia').value;
-            var noCarrossel = document.getElementById('admin-carrossel').checked;
-            var prevSrc = document.getElementById('preview-imagem').src;
+            e.preventDefault(); 
+            var editandoID = document.getElementById('admin-id-noticia').value; 
+            var noCarrossel = document.getElementById('admin-carrossel').checked; 
+            var prevSrc = document.getElementById('preview-imagem').src; 
             var temImagemAnterior = prevSrc && (prevSrc.indexOf('http') !== -1 || prevSrc.indexOf('data:image') !== -1);
             
-            var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
+            var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked'); 
             if (checkboxes.length === 0) { 
                 mostrarMensagem("Selecione ao menos 1 Editoria.", "erro"); 
                 return; 
             }
             
-            var categoriasSelecionadasArray = Array.from(checkboxes).map(function(cb) { return cb.value; });
+            var categoriasSelecionadasArray = Array.from(checkboxes).map(function(cb) { return cb.value; }); 
             var categoriasSelecionadas = categoriasSelecionadasArray.join(", ");
-            
-            var campoCidade = document.getElementById('admin-cidade');
-            var cidadeSelecionada = campoCidade ? campoCidade.value.trim() : '';
+            var campoCidade = document.getElementById('admin-cidade'); 
+            var cidadeSelecionada = campoCidade ? campoCidade.value.trim() : ''; 
             var creditos = document.getElementById('admin-creditos-imagem').value.trim();
             
             if ((base64StringNoticia || temImagemAnterior) && !creditos) { 
@@ -1823,7 +1730,7 @@
                 document.getElementById('admin-creditos-imagem').focus(); 
                 return; 
             }
-
+            
             var btn = document.getElementById('btn-salvar-noticia'); 
             var txt = btn.innerHTML; 
             btn.innerHTML = 'A publicar...'; 
@@ -1831,22 +1738,22 @@
             
             var conteudoRich = document.getElementById('admin-editor-rich').innerHTML;
             
-            var payload = {
+            var payload = { 
                 id: editandoID, 
-                titulo: document.getElementById('admin-titulo').value,
+                titulo: document.getElementById('admin-titulo').value, 
                 categoria: categoriasSelecionadas, 
-                cidade: cidadeSelecionada,
+                cidade: cidadeSelecionada, 
                 linhaFina: document.getElementById('admin-linha-fina').value, 
-                conteudo: conteudoRich,
-                autor: document.getElementById('admin-autor').value,
+                conteudo: conteudoRich, 
+                autor: document.getElementById('admin-autor').value, 
                 dataAgendamento: document.getElementById('admin-agendamento').value, 
-                dataFimEvento: document.getElementById('admin-data-fim-evento').value,
+                dataFimEvento: document.getElementById('admin-data-fim-evento').value, 
                 noCarrossel: noCarrossel, 
-                legendaImagem: document.getElementById('admin-legenda-imagem').value,
+                legendaImagem: document.getElementById('admin-legenda-imagem').value, 
                 creditosImagem: creditos, 
-                relacionadas: document.getElementById('admin-relacionadas-ids').value
+                relacionadas: document.getElementById('admin-relacionadas-ids').value 
             };
-
+            
             if (base64StringNoticia) { 
                 payload.isUpload = true; 
                 payload.base64 = base64StringNoticia; 
@@ -1860,6 +1767,7 @@
                 window.google.script.run.withSuccessHandler(function(res) {
                     if (res && res.sucesso) { 
                         mostrarMensagem('Matéria Guardada!'); 
+                        localStorage.removeItem('admin_data_cache'); 
                         limparFormNoticia(); 
                         carregarNoticiasAdmin(); 
                         setTimeout(function() { 
@@ -1874,14 +1782,11 @@
             }
         }
 
-        // =========================================================
-        // LISTAGENS E CONFIGURAÇÕES
-        // ==========================================
-
         function atualizarFiltroEditoriasAdmin() {
-            var select = document.getElementById('admin-filtro-editoria');
-            if (!select) return;
-            var valorAtual = select.value || 'todas';
+            var select = document.getElementById('admin-filtro-editoria'); 
+            if (!select) return; 
+            
+            var valorAtual = select.value || 'todas'; 
             var categorias = [];
             
             noticiasGlobais.forEach(function(n) { 
@@ -1893,41 +1798,36 @@
                 }); 
             });
             
-            categorias.sort();
-            var htmlOpcoes = '<option value="todas">Todas as editorias</option>';
+            categorias.sort(); 
+            var htmlOpcoes = '<option value="todas">Todas as editorias</option>'; 
             
             htmlOpcoes += categorias.map(function(c) { 
                 return `<option value="${c.replace(/"/g, '&quot;')}">${c}</option>`; 
             }).join('');
             
-            select.innerHTML = htmlOpcoes;
-            var existeOpcaoAtual = Array.from(select.options).some(function(o) { 
-                return o.value === valorAtual; 
-            });
-            
-            select.value = existeOpcaoAtual ? valorAtual : 'todas';
+            select.innerHTML = htmlOpcoes; 
+            select.value = Array.from(select.options).some(function(o) { return o.value === valorAtual; }) ? valorAtual : 'todas';
         }
 
         function carregarListaEdicao() {
-            var tbody = document.getElementById('admin-tabela-noticias');
-            if(!tbody) return;
+            var tbody = document.getElementById('admin-tabela-noticias'); 
+            if(!tbody) return; 
             
-            atualizarFiltroEditoriasAdmin();
+            atualizarFiltroEditoriasAdmin(); 
             tbody.innerHTML = '';
             
             var sel = document.getElementById('admin-filtro-editoria'); 
-            var inp = document.getElementById('admin-pesquisa-materia');
-            
+            var inp = document.getElementById('admin-pesquisa-materia'); 
             var catSel = normalizarTexto(sel ? sel.value : 'todas'); 
             var term = normalizarTexto(inp ? inp.value : '');
             
-            var filtradas = noticiasGlobais.filter(function(n) {
-                if (!n) return false;
-                var cats = String(n.categoria || '').split(',').map(normalizarTexto);
-                var matchCat = catSel === 'todas' || cats.indexOf(catSel) !== -1;
-                var text = normalizarTexto([n.titulo, n.linhaFina, n.cidade].join(' '));
-                var matchTerm = !term || text.indexOf(term) !== -1;
-                return matchCat && matchTerm;
+            var filtradas = noticiasGlobais.filter(function(n) { 
+                if (!n) return false; 
+                var cats = String(n.categoria || '').split(',').map(normalizarTexto); 
+                var matchCat = catSel === 'todas' || cats.indexOf(catSel) !== -1; 
+                var text = normalizarTexto([n.titulo, n.linhaFina, n.cidade].join(' ')); 
+                var matchTerm = !term || text.indexOf(term) !== -1; 
+                return matchCat && matchTerm; 
             });
             
             if (filtradas.length === 0) { 
@@ -1937,8 +1837,8 @@
             
             filtradas.forEach(function(n) {
                 var isAtivo = n.status.toLowerCase() === 'ativa'; 
-                var isAgendada = n.status.toLowerCase() === 'agendada';
-                var txtStat = isAtivo ? 'ATIVO' : (isAgendada ? 'AGENDADO' : 'INATIVO');
+                var isAgendada = n.status.toLowerCase() === 'agendada'; 
+                var txtStat = isAtivo ? 'ATIVO' : (isAgendada ? 'AGENDADO' : 'INATIVO'); 
                 var corStat = isAtivo ? 'text-gray-700' : (isAgendada ? 'text-amber-600' : 'text-gray-400');
                 
                 tbody.innerHTML += `
@@ -1975,6 +1875,7 @@
             }
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
+                localStorage.removeItem('admin_data_cache'); 
                 window.google.script.run.withSuccessHandler(function(res){ 
                     if(res && res.sucesso) { 
                         carregarNoticiasAdmin(); 
@@ -1984,9 +1885,10 @@
         }
 
         function apagarMateria(id) {
-            if(!confirm("Atenção! Vai eliminar a notícia permanentemente.")) return;
+            if(!confirm("Atenção! Vai eliminar permanentemente.")) return;
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
+                localStorage.removeItem('admin_data_cache'); 
                 window.google.script.run.withSuccessHandler(function(res){ 
                     carregarNoticiasAdmin(); 
                 }).excluirNoticia(id); 
@@ -1994,22 +1896,24 @@
         }
 
         function editarNoticia(id) {
-            var noticia = noticiasGlobais.find(function(n) { return String(n.id) === String(id); }); 
+            var noticia = noticiasGlobais.find(function(n) { 
+                return String(n.id) === String(id); 
+            }); 
             if(!noticia) return;
             
-            limparFormNoticia();
-            document.getElementById('admin-id-noticia').value = noticia.id;
-            document.getElementById('admin-titulo').value = noticia.titulo || '';
-            document.getElementById('admin-linha-fina').value = noticia.linhaFina || "";
-            document.getElementById('admin-editor-rich').innerHTML = noticia.conteudo || '';
-            document.getElementById('admin-autor').value = noticia.autor !== "da redação" ? (noticia.autor || '') : "";
+            limparFormNoticia(); 
+            document.getElementById('admin-id-noticia').value = noticia.id; 
+            document.getElementById('admin-titulo').value = noticia.titulo || ''; 
+            document.getElementById('admin-linha-fina').value = noticia.linhaFina || ""; 
+            document.getElementById('admin-editor-rich').innerHTML = noticia.conteudo || ''; 
+            document.getElementById('admin-autor').value = noticia.autor !== "da redação" ? (noticia.autor || '') : ""; 
             document.getElementById('admin-carrossel').checked = (String(noticia.noCarrossel) === 'true');
             
-            if (noticia.dataHora) {
-                var p = noticia.dataHora.split(/[\/\s:]/);
+            if (noticia.dataHora) { 
+                var p = noticia.dataHora.split(/[\/\s:]/); 
                 if (p.length >= 5) { 
                     document.getElementById('admin-agendamento').value = `${p[2]}-${p[1]}-${p[0]}T${p[3]}:${p[4]}`; 
-                }
+                } 
             }
             
             if (noticia.dataFimEvento) { 
@@ -2021,49 +1925,52 @@
                 } catch(e){} 
             }
             
-            var cats = String(noticia.categoria).split(',').map(function(c) { return c.trim().toLowerCase(); });
+            var cats = String(noticia.categoria).split(',').map(function(c) { 
+                return c.trim().toLowerCase(); 
+            }); 
+            
             document.querySelectorAll('input[name="admin-categorias-checkbox"]').forEach(function(cb) { 
                 cb.checked = cats.indexOf(cb.value.toLowerCase()) !== -1; 
             });
             
-            var campoCidade = document.getElementById('admin-cidade');
+            var campoCidade = document.getElementById('admin-cidade'); 
             if (campoCidade) { 
                 campoCidade.value = noticia.cidade || ''; 
-            }
+            } 
             atualizarCampoCidadeAdmin();
             
-            document.getElementById('admin-legenda-imagem').value = noticia.legendaImagem || '';
+            document.getElementById('admin-legenda-imagem').value = noticia.legendaImagem || ''; 
             document.getElementById('admin-creditos-imagem').value = noticia.creditosImagem || '';
-
-            var prevImg = document.getElementById('preview-imagem');
-            if (prevImg) {
+            
+            var prevImg = document.getElementById('preview-imagem'); 
+            if (prevImg) { 
                 if(noticia.urlImagem) { 
                     prevImg.src = noticia.urlImagem; 
                     prevImg.classList.remove('hidden'); 
                     document.getElementById('admin-imagem-metadados').classList.remove('hidden'); 
                 } else { 
                     prevImg.classList.add('hidden'); 
-                }
+                } 
             }
             
-            if (noticia.relacionadas) {
+            if (noticia.relacionadas) { 
                 var relIds = String(noticia.relacionadas).split(','); 
-                window.relacionadasSelecionadas = [];
-                
-                relIds.forEach(function(rId) {
-                    var rn = noticiasGlobais.find(function(x) { return String(x.id) === String(rId.trim()); });
+                window.relacionadasSelecionadas = []; 
+                relIds.forEach(function(rId) { 
+                    var rn = noticiasGlobais.find(function(x) { 
+                        return String(x.id) === String(rId.trim()); 
+                    }); 
                     if(rn) { 
                         window.relacionadasSelecionadas.push({ id: rn.id, titulo: rn.titulo }); 
-                    }
-                });
-                
-                window.relacionadasEditadasManualmente = true;
-                atualizarUIListaRelacionadas();
+                    } 
+                }); 
+                window.relacionadasEditadasManualmente = true; 
+                atualizarUIListaRelacionadas(); 
             } else { 
                 window.relacionadasEditadasManualmente = false; 
             }
-
-            var btnSalvar = document.getElementById('btn-salvar-noticia');
+            
+            var btnSalvar = document.getElementById('btn-salvar-noticia'); 
             if(btnSalvar) { 
                 btnSalvar.innerText = "SALVAR ALTERAÇÕES"; 
             }
@@ -2078,24 +1985,22 @@
             if(!container) return;
             
             var html = ''; 
-            var ordemAtual = [];
-            
+            var ordemAtual = []; 
             if(configuracoesGlobais['CategoriasCapa']) { 
                 try { 
                     ordemAtual = JSON.parse(configuracoesGlobais['CategoriasCapa']); 
                 } catch(e){} 
             }
             
-            for(var i=1; i<=8; i++) {
-                var v = ordemAtual.length >= i ? ordemAtual[i-1] : '';
-                html += `<div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Posição ${i}</label><select id="capa-pos-${i}" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm font-bold text-gray-700 uppercase rounded-sm"><option value="">-- NENHUMA --</option>`;
+            for(var i=1; i<=8; i++) { 
+                var v = ordemAtual.length >= i ? ordemAtual[i-1] : ''; 
+                html += `<div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Posição ${i}</label><select id="capa-pos-${i}" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm font-bold text-gray-700 uppercase rounded-sm"><option value="">-- NENHUMA --</option>`; 
                 listaCategoriasLocais.forEach(function(c) { 
                     var selectedAttr = (c === v) ? ' selected' : ''; 
                     html += `<option value="${c}"${selectedAttr}>${c}</option>`; 
-                });
-                html += `</select></div>`;
+                }); 
+                html += `</select></div>`; 
             }
-            
             container.innerHTML = html;
         }
 
@@ -2112,16 +2017,17 @@
                 if(val) { 
                     sel.push(val); 
                 } 
-            }
-            
+            } 
             var jsonStr = JSON.stringify(sel);
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
                 window.google.script.run.withSuccessHandler(function() { 
                     mostrarMensagem("Ordem da capa atualizada!"); 
                     configuracoesGlobais['CategoriasCapa'] = jsonStr; 
                     btn.innerHTML = txt; 
                     btn.disabled = false; 
-                }).salvarConfiguracaoHTMLCustom('CategoriasCapa', jsonStr);
+                    localStorage.removeItem('admin_data_cache'); 
+                }).salvarConfiguracaoHTMLCustom('CategoriasCapa', jsonStr); 
             }
         }
 
@@ -2132,7 +2038,6 @@
                     ligasAtivas = JSON.parse(configuracoesGlobais['LigasPlacar']); 
                 } catch(e){} 
             }
-            
             document.querySelectorAll('input[name="liga-placar"]').forEach(function(cb) { 
                 cb.checked = ligasAtivas.indexOf(cb.value) !== -1; 
             });
@@ -2148,13 +2053,14 @@
                 return cb.value; 
             });
             
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
                 window.google.script.run.withSuccessHandler(function() { 
                     mostrarMensagem("Placar atualizado!"); 
                     btn.innerText = "Salvar Ligas"; 
                     btn.disabled = false; 
                     configuracoesGlobais['LigasPlacar'] = JSON.stringify(ligas); 
-                }).salvarConfiguracaoHTMLCustom("LigasPlacar", JSON.stringify(ligas));
+                    localStorage.removeItem('admin_data_cache'); 
+                }).salvarConfiguracaoHTMLCustom("LigasPlacar", JSON.stringify(ligas)); 
             }
         }
 
@@ -2188,14 +2094,15 @@
                 payload.tipo = 'link'; 
             }
             
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
                 window.google.script.run.withSuccessHandler(function() { 
                     mostrarMensagem('Anúncio no ar!'); 
                     document.getElementById('form-propaganda').reset(); 
                     base64StringProp = ""; 
                     btn.innerHTML = txt; 
                     btn.disabled = false; 
-                }).salvarPropagandaNoSheets(payload);
+                    localStorage.removeItem('admin_data_cache'); 
+                }).salvarPropagandaNoSheets(payload); 
             }
         }
 
@@ -2216,13 +2123,13 @@
             if (configuracoesGlobais['soc-yt-url']) { 
                 document.getElementById('soc-yt-url').value = configuracoesGlobais['soc-yt-url']; 
             }
-            if (configuracoesGlobais['IconeLogoBase64']) {
-                window.iconeLogoAtual = configuracoesGlobais['IconeLogoBase64'];
-                var previewIcone = document.getElementById('preview-icone-admin');
+            if (configuracoesGlobais['IconeLogoBase64']) { 
+                window.iconeLogoAtual = configuracoesGlobais['IconeLogoBase64']; 
+                var previewIcone = document.getElementById('preview-icone-admin'); 
                 if (previewIcone) { 
                     previewIcone.src = window.iconeLogoAtual; 
                     previewIcone.classList.remove('hidden'); 
-                }
+                } 
             }
         }
 
@@ -2233,39 +2140,19 @@
             btn.innerHTML = "A SALVAR..."; 
             btn.disabled = true;
             
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-inst-url', document.getElementById('soc-inst-url').value);
-                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-fb-url', document.getElementById('soc-fb-url').value);
-                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-x-url', document.getElementById('soc-x-url').value);
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
+                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-inst-url', document.getElementById('soc-inst-url').value); 
+                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-fb-url', document.getElementById('soc-fb-url').value); 
+                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-x-url', document.getElementById('soc-x-url').value); 
                 window.google.script.run.withSuccessHandler(function() { 
                     mostrarMensagem("Redes sociais atualizadas!"); 
                     btn.innerHTML = txt; 
                     btn.disabled = false; 
-                }).salvarConfiguracaoHTMLCustom('soc-yt-url', document.getElementById('soc-yt-url').value);
+                    localStorage.removeItem('admin_data_cache'); 
+                }).salvarConfiguracaoHTMLCustom('soc-yt-url', document.getElementById('soc-yt-url').value); 
             }
         }
         
-        function salvarChaveIA() {
-            var val = document.getElementById('config-chave-ia').value.trim(); 
-            var btn = document.getElementById('btn-salvar-chave'); 
-            var txt = btn.innerText; 
-            btn.innerText = 'A GUARDAR...'; 
-            btn.disabled = true;
-            
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.withSuccessHandler(function() { 
-                    mostrarMensagem('Chave da IA guardada com sucesso!'); 
-                    configuracoesGlobais['ChaveIA'] = val; 
-                    btn.innerText = txt; 
-                    btn.disabled = false; 
-                }).salvarConfiguracaoHTMLCustom('ChaveIA', val);
-            }
-        }
-
-        // =========================================================
-        // DESIGN & IA (LOGOTIPOS E UPLOAD)
-        // =========================================================
-
         function processarIconeLogo(input) {
             if (!input.files || !input.files[0]) return;
             var file = input.files[0];
@@ -2285,6 +2172,24 @@
             document.getElementById('upload-icone-logo').value = '';
             document.getElementById('preview-icone-admin-upload').classList.add('hidden');
             document.getElementById('btn-remover-icone').classList.add('hidden');
+        }
+
+        function salvarChaveIA() {
+            var val = document.getElementById('config-chave-ia').value.trim(); 
+            var btn = document.getElementById('btn-salvar-chave'); 
+            var txt = btn.innerText; 
+            btn.innerText = 'A GUARDAR...'; 
+            btn.disabled = true;
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function() { 
+                    mostrarMensagem('Chave da IA guardada com sucesso!'); 
+                    configuracoesGlobais['ChaveIA'] = val; 
+                    btn.innerText = txt; 
+                    btn.disabled = false; 
+                    localStorage.removeItem('admin_data_cache');
+                }).salvarConfiguracaoHTMLCustom('ChaveIA', val);
+            }
         }
 
         function gerarLogoIA() {
@@ -2316,7 +2221,7 @@
                     btn.innerText = txt;
                     btn.disabled = false;
                 }).withFailureHandler(function(error) {
-                    mostrarMensagem("Falha na comunicação com o Google.", "erro");
+                    mostrarMensagem("Falha na comunicação com o Google. A Chave da API pode ser inválida.", "erro");
                     btn.innerText = txt;
                     btn.disabled = false;
                 }).chamarGeminiImagemBackend(promptFinal);
@@ -2340,6 +2245,7 @@
                 concluidas++;
                 if (concluidas >= chamadas) {
                     mostrarMensagem('Design atualizado no servidor!');
+                    localStorage.removeItem('admin_data_cache');
                     btn.innerText = txt;
                     btn.disabled = false;
                 }
@@ -2351,7 +2257,6 @@
                     window.google.script.run.withSuccessHandler(verificarConclusao)
                         .salvarConfiguracaoHTMLCustom('IconeLogoBase64', window.iconeLogoAtual);
                         
-                    // Atualiza o preview no painel instantaneamente
                     var previewTop = document.getElementById('preview-icone-admin');
                     if (previewTop) {
                         previewTop.src = window.iconeLogoAtual;
