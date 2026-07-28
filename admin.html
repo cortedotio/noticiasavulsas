@@ -60,7 +60,6 @@
                 this._onFailure = null;
                 
                 // Fetch fortificado para impedir que o browser transforme POST em GET
-                // Isto resolve o erro "Unexpected token A" na tela de login
                 fetch(GAS_API_URL, {
                     method: 'POST',
                     headers: { 
@@ -76,7 +75,6 @@
                     if (!res.ok) {
                         throw new Error("Erro HTTP: " + res.status);
                     }
-                    // Lemos como texto primeiro para evitar o erro do "token A"
                     return res.text(); 
                 })
                 .then(function(text) {
@@ -158,6 +156,7 @@
             background: #94a3b8; 
         }
         
+        /* Estilização do Editor Rich Text */
         .rich-editor img { 
             max-width: 100%; 
             height: auto; 
@@ -502,7 +501,7 @@
             </div>
 
             <!-- ========================================================= -->
-            <!-- ABA: LOGOTIPO E IA (DESIGN)                               -->
+            <!-- ABA: LOGOTIPO E IA (DESIGN) - HTML PURO DA MARCA          -->
             <!-- ========================================================= -->
             <div id="form-logo-container" class="hidden bg-white p-5 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-purple-600">
                 <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-8 border-l-4 border-purple-600 pl-3 gap-4">
@@ -534,17 +533,19 @@
                 </div>
                 
                 <div class="space-y-6 bg-purple-50/50 p-6 md:p-8 border border-purple-100 rounded-sm">
+                    <h3 class="font-black text-sm uppercase tracking-widest text-purple-800 mb-2">Design da Logomarca (Texto HTML)</h3>
                     <div>
-                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Descrição da Marca (Prompt para a IA)</label>
-                        <input type="text" id="prompt-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm" placeholder="Ex: deixe a logo com um azul escuro e verde gradiente" />
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Descrição (Prompt para a IA)</label>
+                        <input type="text" id="prompt-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm" placeholder="Ex: azul e verde com um emoji de globo" />
                     </div>
                     <button type="button" id="btn-gerar-logo" onclick="gerarLogoIA()" class="bg-purple-600 text-white px-8 py-4 font-black hover:bg-purple-700 transition-colors uppercase text-[11px] tracking-widest rounded-sm flex items-center justify-center gap-2 w-full md:w-auto shadow-md">
-                        ✨ Gerar Estilo com IA
+                        ✨ GERAR ESTILO COM IA
                     </button>
                     
                     <div id="preview-logo-wrapper" class="mt-10 hidden border-t border-purple-200 pt-8">
                         <h4 class="text-[10px] font-black uppercase tracking-widest text-purple-600 mb-4 text-center">Pré-visualização</h4>
-                        <div class="p-8 bg-gray-100 border border-gray-300 rounded-sm flex items-center justify-center min-h-[160px] shadow-inner">
+                        <div class="p-8 bg-gray-100 border border-gray-300 rounded-sm flex items-center justify-center min-h-[160px] shadow-inner text-center">
+                            <!-- O HTML gerado pela IA será injetado aqui -->
                             <div id="preview-logo-ia"></div>
                         </div>
                         <div class="mt-6 flex justify-end">
@@ -557,7 +558,7 @@
             </div>
 
             <!-- ========================================================= -->
-            <!-- ABA: ANÚNCIOS (PROPAGANDAS)                               -->
+            <!-- ABA: ANÚNCIOS (PROPAGANDAS) COM OS SLOTS RESTAURADOS      -->
             <!-- ========================================================= -->
             <div id="form-propaganda-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-jornal-red pl-3 mb-6">
@@ -569,9 +570,18 @@
                         <div>
                             <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Posição</label>
                             <select id="prop-local" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm font-medium rounded-sm focus:outline-none focus:ring-1 focus:ring-jornal-blue" required>
-                                <option value="Topo">1 - Topo do Feed Principal</option>
-                                <option value="Entre Editorias">Entre as editorias no painel principal</option>
-                                <option value="Lateral">Sidebar - Topo</option>
+                                <option value="">Selecione o local</option>
+                                <option value="Slot 1 (Entre Editorias)">Slot 1 (Entre Editorias)</option>
+                                <option value="Slot 2 (Entre Editorias)">Slot 2 (Entre Editorias)</option>
+                                <option value="Slot 3 (Entre Editorias)">Slot 3 (Entre Editorias)</option>
+                                <option value="Slot 4 (Entre Editorias)">Slot 4 (Entre Editorias)</option>
+                                <option value="Slot 5 (Entre Editorias)">Slot 5 (Entre Editorias)</option>
+                                <option value="Slot 6 (Entre Editorias)">Slot 6 (Entre Editorias)</option>
+                                <option value="Slot 7 (Entre Editorias)">Slot 7 (Entre Editorias)</option>
+                                <option value="Slot 8 (Entre Editorias)">Slot 8 (Entre Editorias)</option>
+                                <option value="Sidebar 1">Sidebar 1</option>
+                                <option value="Sidebar 2">Sidebar 2</option>
+                                <option value="Sidebar 3">Sidebar 3</option>
                             </select>
                         </div>
                         <div>
@@ -2123,12 +2133,12 @@
             if (configuracoesGlobais['soc-yt-url']) { 
                 document.getElementById('soc-yt-url').value = configuracoesGlobais['soc-yt-url']; 
             }
-            if (configuracoesGlobais['IconeLogoBase64']) { 
-                window.iconeLogoAtual = configuracoesGlobais['IconeLogoBase64']; 
-                var previewIcone = document.getElementById('preview-icone-admin'); 
+            if (configuracoesGlobais['LogoHTML']) { 
+                window.iconeLogoAtual = configuracoesGlobais['LogoHTML']; 
+                var previewIcone = document.getElementById('preview-logo-ia'); 
                 if (previewIcone) { 
-                    previewIcone.src = window.iconeLogoAtual; 
-                    previewIcone.classList.remove('hidden'); 
+                    previewIcone.innerHTML = window.iconeLogoAtual;
+                    document.getElementById('preview-logo-wrapper').classList.remove('hidden');
                 } 
             }
         }
@@ -2158,20 +2168,20 @@
             var file = input.files[0];
             var reader = new FileReader();
             reader.onload = function(e) {
-                window.iconeLogoAtual = e.target.result;
-                var preview = document.getElementById('preview-icone-admin-upload');
-                preview.src = window.iconeLogoAtual;
-                preview.classList.remove('hidden');
-                document.getElementById('btn-remover-icone').classList.remove('hidden');
+                var imgHtml = `<img src="${e.target.result}" class="h-10 object-contain mx-auto" />`;
+                var preview = document.getElementById('preview-logo-ia');
+                preview.innerHTML = imgHtml;
+                document.getElementById('preview-logo-wrapper').classList.remove('hidden');
+                window.novaLogoHtml = imgHtml;
             };
             reader.readAsDataURL(file);
         }
 
         function removerIconeLogo() {
-            window.iconeLogoAtual = null;
+            window.novaLogoHtml = null;
             document.getElementById('upload-icone-logo').value = '';
-            document.getElementById('preview-icone-admin-upload').classList.add('hidden');
-            document.getElementById('btn-remover-icone').classList.add('hidden');
+            document.getElementById('preview-logo-ia').innerHTML = '';
+            document.getElementById('preview-logo-wrapper').classList.add('hidden');
         }
 
         function salvarChaveIA() {
@@ -2192,10 +2202,11 @@
             }
         }
 
+        // NOVO MOTOR IA TEXTO (Cria LOGO em HTML + Tailwind em vez de Imagem)
         function gerarLogoIA() {
             var desc = document.getElementById('prompt-logo').value.trim();
             if(!desc) {
-                mostrarMensagem("Descreva como quer o logótipo (ex: Jornal moderno).", "erro");
+                mostrarMensagem("Descreva as cores/estilo que deseja (ex: azul e verde).", "erro");
                 document.getElementById('prompt-logo').focus();
                 return;
             }
@@ -2205,16 +2216,19 @@
             btn.innerText = "A CRIAR...";
             btn.disabled = true;
 
-            var promptFinal = "A highly professional, minimalist vector logo design for a digital news portal named 'Notícias Avulsas'. " + desc + ". Isolated on a clean white background, high resolution, corporate identity.";
+            // Prompt rigoroso pedindo APENAS HTML
+            var promptFinal = "Atue como um web designer. Crie um logotipo em HTML puro para o portal 'NOTÍCIAS AVULSAS'. O usuário pediu as seguintes cores e estilo: '" + desc + "'. Se a descrição pedir um emoji, coloque-o antes do nome. Use tags como <h1 class='font-black tracking-tighter text-4xl uppercase'> ou <span>. Aplique as cores usando estilo inline (style='color: ...') ou classes do Tailwind CSS (ex: text-blue-600). Retorne EXATAMENTE APENAS o código HTML do logotipo finalizado, sem blocos markdown (```html), sem explicações, pronto para ser injetado no DOM.";
 
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
-                    if(res && res.sucesso && res.base64) {
-                        var html = '<img src="data:image/jpeg;base64,' + res.base64 + '" class="h-12 object-contain cursor-pointer" onclick="voltarCapa();" />';
-                        document.getElementById('preview-logo-ia').innerHTML = html;
+                    if(res && res.sucesso && res.texto) {
+                        // Limpa lixo residual do bot
+                        var cleanHtml = res.texto.replace(/(\`\`\`html|\`\`\`)/gi, '').trim();
+                        
+                        document.getElementById('preview-logo-ia').innerHTML = cleanHtml;
                         document.getElementById('preview-logo-wrapper').classList.remove('hidden');
-                        window.novaLogoHtml = html;
-                        mostrarMensagem("Logótipo criado com sucesso!");
+                        window.novaLogoHtml = cleanHtml;
+                        mostrarMensagem("Estilo criado com sucesso!");
                     } else {
                         mostrarMensagem("Erro na IA: " + (res ? res.erro : "Falha desconhecida"), "erro");
                     }
@@ -2224,7 +2238,7 @@
                     mostrarMensagem("Falha na comunicação com o Google. A Chave da API pode ser inválida.", "erro");
                     btn.innerText = txt;
                     btn.disabled = false;
-                }).chamarGeminiImagemBackend(promptFinal);
+                }).chamarGeminiBackend(promptFinal); // Mudou para Texto
             } else {
                 mostrarMensagem("Ambiente local. Não é possível chamar a IA.", "erro");
                 btn.innerText = txt;
@@ -2238,39 +2252,15 @@
             btn.innerText = "A GUARDAR...";
             btn.disabled = true;
             
-            var chamadas = 0;
-            var concluidas = 0;
-
-            function verificarConclusao() {
-                concluidas++;
-                if (concluidas >= chamadas) {
-                    mostrarMensagem('Design atualizado no servidor!');
-                    localStorage.removeItem('admin_data_cache');
-                    btn.innerText = txt;
-                    btn.disabled = false;
-                }
-            }
-
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                if (window.iconeLogoAtual) {
-                    chamadas++;
-                    window.google.script.run.withSuccessHandler(verificarConclusao)
-                        .salvarConfiguracaoHTMLCustom('IconeLogoBase64', window.iconeLogoAtual);
-                        
-                    var previewTop = document.getElementById('preview-icone-admin');
-                    if (previewTop) {
-                        previewTop.src = window.iconeLogoAtual;
-                        previewTop.classList.remove('hidden');
-                    }
-                }
-
                 if (window.novaLogoHtml) {
-                    chamadas++;
-                    window.google.script.run.withSuccessHandler(verificarConclusao)
-                        .salvarConfiguracaoHTMLCustom('LogoHTML', window.novaLogoHtml);
-                }
-
-                if (chamadas === 0) {
+                    window.google.script.run.withSuccessHandler(function() {
+                        mostrarMensagem('Design atualizado no servidor!');
+                        localStorage.removeItem('admin_data_cache');
+                        btn.innerText = txt;
+                        btn.disabled = false;
+                    }).salvarConfiguracaoHTMLCustom('LogoHTML', window.novaLogoHtml);
+                } else {
                     mostrarMensagem("Nenhum logo novo para aplicar.", "erro");
                     btn.innerText = txt;
                     btn.disabled = false;
