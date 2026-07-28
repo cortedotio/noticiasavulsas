@@ -146,7 +146,7 @@
             margin-bottom: 30px;
         }
 
-        /* O Título Gigante da Notícia (Corrigido para não cortar as letras em baixo) */
+        /* O Título Gigante da Notícia */
         .template-title {
             font-family: 'Merriweather', serif;
             font-weight: 900;
@@ -154,7 +154,7 @@
             line-height: 1.35; 
             margin: 0 0 20px 0;
             text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
-            padding-bottom: 15px; /* Segurança para as pernas das letras p, g, j */
+            padding-bottom: 15px;
         }
 
         /* Limites de tamanho e linhas do título */
@@ -377,7 +377,7 @@
 
     <script>
         // ATENÇÃO: Link do Google Apps Script
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyVroxyx_f70Q2KkcnfMWtt2vV8EzQRsPBhF9nNL4frnKhdhe7t-oahNoJo9SCLfAbE/exec";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzzMrmdM47OGoGMdzGfTmvR1VpOeEOLP_PTX0VQnXg1i98TkVs4sH8O2Tv-aiGHikrR/exec";
         
         let noticiasGlobais = [];
         let urlAtualBaixar = "";
@@ -499,8 +499,6 @@
                 ctx.fillStyle = '#0F172A'; ctx.fillRect(0,0,1080,1080);
                 ctx.fillStyle = '#ffffff'; ctx.font = 'bold 70px Inter, sans-serif'; ctx.textAlign = 'center';
                 ctx.fillText('FOTO INDISPONÍVEL', 540, 500);
-                ctx.font = '35px Inter, sans-serif'; ctx.fillStyle = '#94a3b8';
-                ctx.fillText('Erro de bloqueio de segurança (CORS)', 540, 580);
                 return canvas.toDataURL('image/jpeg', 0.8);
             };
 
