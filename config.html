@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="pt-PT" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Máquinas - Notícias Avulsas</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] },
+                    colors: { jornal: { blue: '#0F172A', red: '#E11D48', gray: '#F8FAFC', dark: '#020617' } }
+                }
+            }
+        };
+    </script>
+    <style>
+        body { background-color: #f1f2f5; color: #111111; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col relative selection:bg-purple-500 selection:text-white">
+
+    <div id="toast" class="hidden fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border rounded-sm">
+        <span id="toast-icon" class="text-xl"></span>
+        <span id="toast-msg" class="text-sm"></span>
+    </div>
+
+    <div id="loading-global" class="fixed inset-0 z-[99998] bg-jornal-dark flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="w-12 h-12 border-4 border-gray-700 border-t-purple-500 rounded-full animate-spin mb-4"></div>
+        <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Máquinas...</p>
+    </div>
+
+    <!-- Modais de Login Idênticos ao Painel Principal -->
+    <div id="modalLogin" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md"></div>
+        <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-purple-500">
+            <div class="mb-6 text-center">
+                <h2 class="font-sans text-xl font-black uppercase text-jornal-dark tracking-tighter">Acesso Restrito</h2>
+            </div>
+            <form onsubmit="fazerLogin(event)" class="space-y-4">
+                <input type="text" id="login-user" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none text-sm font-bold rounded-sm" required placeholder="Usuário" />
+                <input type="password" id="login-pass" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none text-sm font-bold rounded-sm" required placeholder="Senha" />
+                <button type="submit" id="btn-fazer-login" class="w-full bg-purple-600 text-white font-black py-3 hover:opacity-90 transition-colors text-xs uppercase tracking-widest rounded-sm mt-4">Entrar nas Máquinas</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalTrocaSenha" class="fixed inset-0 z-[10000] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md"></div>
+        <div class="bg-white w-full max-w-md p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-emerald-500">
+            <div class="mb-6 text-center">
+                <div class="text-3xl mb-2">🔒</div>
+                <h2 class="font-sans text-xl font-black uppercase text-jornal-dark tracking-tighter">Bem-vindo(a)!</h2>
+                <p class="text-[11px] text-gray-500 font-bold mt-2">Para a sua segurança, é obrigatório criar uma nova senha pessoal.</p>
+            </div>
+            <form onsubmit="salvarNovaSenhaObrigatoria(event)" class="space-y-4">
+                <input type="password" id="nova-senha-1" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm font-bold rounded-sm" required placeholder="Nova senha" />
+                <input type="password" id="nova-senha-2" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm font-bold rounded-sm" required placeholder="Repita a nova senha" />
+                <button type="submit" id="btn-salvar-nova-senha" class="w-full bg-emerald-600 text-white font-black py-3 hover:opacity-90 text-xs uppercase rounded-sm mt-4">Salvar e Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="view-admin" class="hidden min-h-screen flex flex-col bg-gray-100 text-slate-800">
+        <header class="bg-jornal-dark text-white border-b border-gray-800 sticky top-0 z-40 shadow-sm">
+            <div class="max-w-[1400px] mx-auto flex justify-between items-center px-4 py-3">
+                <div class="flex items-center gap-3">
+                    <span class="font-sans font-black tracking-tighter text-lg uppercase text-slate-100 flex items-center gap-2">Máquinas<span class="text-purple-500">Config</span></span>
+                    <span id="label-usuario-logado" class="hidden md:inline-block ml-4 text-[9px] bg-gray-800 px-2 py-1 rounded text-gray-300 font-bold uppercase tracking-widest border border-gray-700"></span>
+                </div>
+                <div class="flex items-center gap-2 md:gap-4">
+                    <a href="index.html" class="text-gray-400 hover:text-white text-[10px] font-bold uppercase tracking-wider hidden md:flex items-center gap-1 transition-colors">Portal</a>
+                    <a href="admin.html" class="text-gray-400 hover:text-emerald-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors border-l border-gray-700 pl-4">📝 Redação</a>
+                    <a href="instagram.html" class="text-gray-400 hover:text-pink-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors border-l border-gray-700 pl-4">📸 Estúdio IG</a>
+                    <button type="button" onclick="encerrarSessao()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-colors ml-2">Sair</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-[1400px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
+            <div id="barra-de-abas" class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar"></div>
+
+            <!-- ABA 1: IA E DESIGN -->
+            <div id="form-logo-container" class="hidden bg-white p-5 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-purple-600">
+                <div class="border-l-4 border-purple-600 pl-3 mb-8">
+                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Inteligência Artificial & Design</h2>
+                </div>
+                <div class="mb-8 p-6 bg-purple-50 border border-purple-200 rounded-sm">
+                    <h3 class="font-black text-sm uppercase tracking-widest text-purple-800 mb-2">Chave de Acesso da IA (API Key)</h3>
+                    <p class="text-xs text-gray-600 mb-4 font-medium">Insira a sua chave do Google Studio para ativar o motor Gemini.</p>
+                    <div class="flex flex-col md:flex-row gap-4 md:items-center">
+                        <input type="password" id="config-chave-ia" class="flex-grow px-5 py-3 border border-gray-300 focus:border-purple-500 focus:outline-none text-sm font-mono rounded-sm shadow-sm min-w-0" placeholder="Ex: AIzaSy..." />
+                        <button type="button" onclick="salvarChaveIA()" id="btn-salvar-chave" class="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 font-black uppercase text-[11px] tracking-widest rounded-sm whitespace-nowrap transition-colors shadow-sm">Guardar Chave</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 2: ANÚNCIOS -->
+            <div id="form-propaganda-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+                <div class="border-l-4 border-jornal-red pl-3 mb-6"><h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Gerenciamento de Anúncios</h2></div>
+                <form id="form-propaganda" onsubmit="salvarPropaganda(event)">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                        <div>
+                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Posição</label>
+                            <select id="prop-local" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm font-medium rounded-sm" required><option value="Topo">Topo do Feed</option><option value="Lateral">Sidebar Lateral</option></select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Empresa</label>
+                            <input type="text" id="prop-empresa" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm font-medium rounded-sm" required />
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        <div>
+                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Tempo (Segundos)</label>
+                            <input type="number" id="prop-tempo" value="5" min="1" max="60" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm font-medium rounded-sm" required />
+                        </div>
+                    </div>
+                    <div class="p-6 border border-dashed border-gray-400 mb-8 rounded-sm">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-800 mb-4 block">Imagem / Arquivo Local</label>
+                        <div class="flex items-center gap-4">
+                            <label class="bg-jornal-dark text-white px-6 py-3 text-xs font-bold rounded-sm cursor-pointer hover:bg-gray-800 transition-colors">Escolher arquivo<input type="file" id="prop-arquivo" accept="image/*,video/*" class="hidden" /></label>
+                            <span class="text-sm text-gray-500" id="prop-arquivo-nome">Nenhum arquivo escolhido</span>
+                        </div>
+                    </div>
+                    <div class="mb-8">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Link Destino (Clique)</label>
+                        <input type="url" id="prop-link" placeholder="https://" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm font-medium rounded-sm" required />
+                    </div>
+                    <div class="flex justify-end pt-4 border-t border-gray-200"><button type="submit" id="btn-salvar-propaganda" class="w-full md:w-auto bg-emerald-600 text-white font-black px-12 py-4 uppercase tracking-widest text-sm rounded-sm hover:bg-emerald-700 shadow-md">Ativar Anúncio</button></div>
+                </form>
+            </div>
+
+            <!-- ABA 3: REDES SOCIAIS -->
+            <div id="form-social-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+                <div class="border-l-4 border-jornal-red pl-3 mb-6"><h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Gestão de Redes Sociais</h2></div>
+                <form id="form-sociais" onsubmit="salvarRedesSociais(event)">
+                    <div class="flex flex-col md:flex-row items-center gap-4 p-5 border border-gray-100 bg-gray-50 rounded-sm mb-3">
+                        <div class="font-bold text-sm w-32 flex items-center gap-2">Instagram</div>
+                        <input type="url" id="soc-inst-url" placeholder="https://instagram.com/..." class="w-full md:flex-grow px-4 py-2.5 border border-gray-300 text-sm rounded-sm" />
+                    </div>
+                    <div class="flex flex-col md:flex-row items-center gap-4 p-5 border border-gray-100 bg-gray-50 rounded-sm mb-3">
+                        <div class="font-bold text-sm w-32 flex items-center gap-2">Facebook</div>
+                        <input type="url" id="soc-fb-url" placeholder="https://facebook.com/..." class="w-full md:flex-grow px-4 py-2.5 border border-gray-300 text-sm rounded-sm" />
+                    </div>
+                    <div class="flex flex-col md:flex-row items-center gap-4 p-5 border border-gray-100 bg-gray-50 rounded-sm mb-3">
+                        <div class="font-bold text-sm w-32 flex items-center gap-2">X (Twitter)</div>
+                        <input type="url" id="soc-x-url" placeholder="https://x.com/..." class="w-full md:flex-grow px-4 py-2.5 border border-gray-300 text-sm rounded-sm" />
+                    </div>
+                    
+                    <div class="border-t border-gray-200 mt-8 pt-8">
+                        <h3 class="font-black text-sm uppercase tracking-widest text-pink-600 mb-4">🚀 Automação de Postagens (API da Meta)</h3>
+                        <div class="p-6 bg-pink-50 border border-pink-200 rounded-sm">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-pink-800 mb-2 block">Chave de Acesso do Robô (Token Permanente)</label>
+                            <input type="password" id="config-token-ig" placeholder="Cole aqui o código EAAc..." class="w-full px-4 py-3 bg-white border border-pink-300 focus:outline-none text-sm font-mono rounded-sm shadow-sm" />
+                            <p class="text-[10px] text-pink-700 mt-2 font-bold">Esta chave permite publicar diretamente do Estúdio IG para o seu perfil sem sair do painel.</p>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 border-t border-gray-200 flex justify-end mt-6"><button type="submit" id="btn-salvar-sociais" class="w-full md:w-auto bg-jornal-blue text-white font-black px-12 py-3.5 uppercase tracking-widest text-sm rounded-sm shadow-md hover:bg-gray-800 transition-colors">Salvar Redes Sociais</button></div>
+                </form>
+            </div>
+
+            <!-- ABA 4: EQUIPA -->
+            <div id="form-equipa-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-jornal-dark">
+                <div class="border-l-4 border-jornal-dark pl-3 mb-8">
+                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Gestão de Equipa & Acessos</h2>
+                    <p class="text-xs text-gray-500 mt-1 font-medium">Crie utilizadores e defina exatamente quais as secções que eles podem acessar no painel.</p>
+                </div>
+
+                <div class="bg-gray-50 p-6 border border-gray-200 rounded-sm mb-10">
+                    <h3 class="text-xs font-black uppercase tracking-widest text-jornal-dark mb-4 border-b border-gray-200 pb-2">Adicionar / Editar Membro</h3>
+                    <form onsubmit="salvarMembroEquipa(event)" id="form-membro-equipa">
+                        <input type="hidden" id="equipa-usuario-original" value="">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Usuário de Login *</label>
+                                <input type="text" id="equipa-usuario" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm" required placeholder="Ex: joao.silva">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Senha de Acesso</label>
+                                <input type="text" id="equipa-senha" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm" placeholder="Deixe em branco para não alterar">
+                            </div>
+                        </div>
+
+                        <div class="mb-6 bg-white p-4 border border-gray-300 rounded-sm">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" id="equipa-trocar-senha" class="w-5 h-5 text-jornal-blue rounded" checked>
+                                <span class="text-xs font-black uppercase tracking-widest text-jornal-dark">Exigir que o usuário mude a senha no primeiro acesso</span>
+                            </label>
+                        </div>
+
+                        <div class="mb-8">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-4">Permissões de Acesso</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-6 border border-gray-300 rounded-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equipa-permissoes" value="Publicar" class="w-4 h-4 rounded" checked><span class="text-xs font-bold text-gray-700">Publicar Matéria</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equipa-permissoes" value="Gerir" class="w-4 h-4 rounded" checked><span class="text-xs font-bold text-gray-700">Gerir Matérias</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equipa-permissoes" value="Layout" class="w-4 h-4 rounded"><span class="text-xs font-bold text-gray-700">Layout Capa</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equipa-permissoes" value="IA" class="w-4 h-4 rounded"><span class="text-xs font-bold text-gray-700">IA & Design</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equipa-permissoes" value="Anuncios" class="w-4 h-4 rounded"><span class="text-xs font-bold text-gray-700">Anúncios</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equipa-permissoes" value="Redes" class="w-4 h-4 rounded"><span class="text-xs font-bold text-gray-700">Redes Sociais</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equipa-permissoes" value="Placar" class="w-4 h-4 rounded"><span class="text-xs font-bold text-gray-700">Placar ao Vivo</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="equipa-permissoes" value="Equipa" class="w-4 h-4 rounded"><span class="text-xs font-bold text-gray-700">Gestão de Equipa</span></label>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 border-t border-gray-200 pt-6">
+                            <button type="submit" id="btn-salvar-membro" class="bg-jornal-dark hover:bg-gray-800 text-white font-black px-10 py-3 uppercase tracking-widest text-xs rounded-sm shadow-md">Salvar Membro</button>
+                            <button type="button" onclick="limparFormEquipa()" class="bg-white border border-gray-300 text-gray-600 font-bold px-8 py-3 uppercase text-xs rounded-sm">Limpar</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div>
+                    <h3 class="text-xs font-black uppercase tracking-widest text-jornal-dark mb-4">Membros da Equipa</h3>
+                    <div class="overflow-x-auto border border-gray-200 rounded-sm">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-gray-100 border-b border-gray-300 text-[10px] uppercase tracking-widest text-gray-500">
+                                <tr><th class="p-4 w-1/4">Usuário</th><th class="p-4 w-1/2">Nível de Acesso</th><th class="p-4 w-1/4 text-right">Ações</th></tr>
+                            </thead>
+                            <tbody id="tabela-equipa" class="divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzZ3tg6RONdf9KODrdz25LYGjEGF6m1DTdM9_NUBnVrm6WGGp6k8rapdg-wDu049Tee/exec";
+        let configuracoesGlobais = {};
+        let usuariosGlobais = [];
+        let usuarioLogado = "";
+        let permissoesAtuais = [];
+        let isMasterAdmin = false;
+        
+        let base64StringProp = ""; let mimeStringProp = ""; let nameStringProp = "";
+
+        const ABAS_SISTEMA = [
+            { id: 'IA', tabId: 'aba-logo', containerId: 'form-logo-container', nome: 'IA & Design', cor: 'bg-purple-800' },
+            { id: 'Anuncios', tabId: 'aba-propaganda', containerId: 'form-propaganda-container', nome: 'Anúncios', cor: 'bg-jornal-dark' },
+            { id: 'Redes', tabId: 'aba-social', containerId: 'form-social-container', nome: 'Redes', cor: 'bg-jornal-dark' },
+            { id: 'Equipa', tabId: 'aba-equipa', containerId: 'form-equipa-container', nome: '👥 Equipa', cor: 'bg-jornal-dark' }
+        ];
+
+        window.google = { script: { run: { withSuccessHandler: function(cb) { this._onSuccess = cb; return this; }, withFailureHandler: function(cb) { this._onFailure = cb; return this; } } } };
+        const apiFunctions = ['getHomeData', 'verificarLogin', 'listarUsuarios', 'salvarUsuario', 'excluirUsuario', 'salvarConfiguracaoHTMLCustom', 'salvarPropagandaNoSheets'];
+        
+        apiFunctions.forEach(function(funcName) {
+            window.google.script.run[funcName] = function() {
+                var args = Array.prototype.slice.call(arguments);
+                var suc = this._onSuccess; var fail = this._onFailure;
+                this._onSuccess = null; this._onFailure = null;
+                fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: funcName, args: args }) })
+                .then(res => res.json()).then(res => { if(suc) { let p = res; if(res && res.result) p = typeof res.result === 'string' ? JSON.parse(res.result) : res.result; suc(p); } })
+                .catch(err => { if(fail) fail(err); else mostrarMensagem("Erro na API", 'erro'); });
+            };
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            var inputArquivoAnuncio = document.getElementById('prop-arquivo');
+            if (inputArquivoAnuncio) {
+                inputArquivoAnuncio.addEventListener('change', function(e) {
+                    var file = e.target.files[0];
+                    if (file) {
+                        document.getElementById('prop-arquivo-nome').innerText = file.name;
+                        mimeStringProp = file.type; nameStringProp = file.name;
+                        var reader = new FileReader();
+                        reader.onload = function(evt) { base64StringProp = evt.target.result.split(',')[1]; };
+                        reader.readAsDataURL(file);
+                    } else {
+                        document.getElementById('prop-arquivo-nome').innerText = "Nenhum arquivo escolhido";
+                        base64StringProp = "";
+                    }
+                });
+            }
+
+            if (localStorage.getItem('admin_logado') === 'true') {
+                usuarioLogado = localStorage.getItem('admin_usuario');
+                document.getElementById('label-usuario-logado').innerText = "Logado como: " + usuarioLogado;
+                document.getElementById('label-usuario-logado').classList.remove('hidden');
+                
+                var uPerms = localStorage.getItem('admin_permissoes');
+                if(uPerms === 'master') { isMasterAdmin = true; permissoesAtuais = ABAS_SISTEMA.map(a => a.id); } 
+                else { permissoesAtuais = (uPerms || '').split(','); }
+                
+                document.getElementById('modalLogin').classList.add('hidden');
+                document.getElementById('view-admin').classList.remove('hidden');
+                construirMenuAbas();
+                carregarDadosAdmin();
+            } else {
+                document.getElementById('loading-global').classList.add('hidden');
+                document.getElementById('modalLogin').classList.remove('hidden');
+                document.getElementById('modalLogin').classList.add('flex');
+            }
+        });
+
+        function mostrarMensagem(mensagem, tipo) {
+            var toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = mensagem;
+            toast.className = tipo === 'erro' ? 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-white border-red-600 text-red-600 rounded-sm' : 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-jornal-dark text-white rounded-sm';
+            document.getElementById('toast-icon').innerHTML = tipo === 'erro' ? '⚠️' : '✓';
+            toast.classList.remove('hidden'); setTimeout(() => toast.classList.add('hidden'), 4500);
+        }
+
+        function fazerLogin(e) {
+            e.preventDefault();
+            var u = document.getElementById('login-user').value;
+            var p = document.getElementById('login-pass').value;
+            var btn = document.getElementById('btn-fazer-login');
+            btn.innerHTML = "A VERIFICAR..."; btn.disabled = true;
+
+            window.google.script.run.withSuccessHandler(function(res) {
+                if (res && res.sucesso) {
+                    var role = String(res.role || '').toLowerCase();
+                    if (role.includes('require_pwd:')) {
+                        window.tempUsuarioLogin = u; window.tempPermissoesLogin = role.replace('require_pwd:', '');
+                        document.getElementById('modalLogin').classList.add('hidden');
+                        document.getElementById('modalTrocaSenha').classList.remove('hidden');
+                        document.getElementById('modalTrocaSenha').classList.add('flex');
+                        return; 
+                    }
+                    concluirEntradaLogin(u, role);
+                } else {
+                    mostrarMensagem(res ? res.erro : "Resposta inválida.", 'erro');
+                    btn.innerHTML = "Entrar nas Máquinas"; btn.disabled = false;
+                }
+            }).verificarLogin(u, p);
+        }
+
+        function salvarNovaSenhaObrigatoria(e) {
+            e.preventDefault();
+            var s1 = document.getElementById('nova-senha-1').value;
+            var s2 = document.getElementById('nova-senha-2').value;
+            if (s1 !== s2) { mostrarMensagem("Senhas não coincidem!", "erro"); return; }
+            var btn = document.getElementById('btn-salvar-nova-senha'); btn.disabled = true;
+
+            var payload = { usuarioOriginal: window.tempUsuarioLogin, usuario: window.tempUsuarioLogin, senha: s1, role: window.tempPermissoesLogin };
+            window.google.script.run.withSuccessHandler(function(res) {
+                if (res && res.sucesso) {
+                    document.getElementById('modalTrocaSenha').classList.add('hidden');
+                    concluirEntradaLogin(window.tempUsuarioLogin, window.tempPermissoesLogin);
+                } else { mostrarMensagem("Erro", "erro"); btn.disabled = false; }
+            }).salvarUsuario(payload);
+        }
+
+        function concluirEntradaLogin(u, permissoes) {
+            localStorage.setItem('admin_logado', 'true'); localStorage.setItem('admin_usuario', u);
+            localStorage.setItem('admin_permissoes', (u === 'admin' || permissoes === 'master') ? 'master' : permissoes);
+            window.location.reload();
+        }
+
+        function encerrarSessao() {
+            localStorage.removeItem('admin_logado'); localStorage.removeItem('admin_usuario'); localStorage.removeItem('admin_permissoes');
+            window.location.reload();
+        }
+
+        function construirMenuAbas() {
+            var barra = document.getElementById('barra-de-abas');
+            barra.innerHTML = '';
+            var abasAtivas = ABAS_SISTEMA.filter(aba => permissoesAtuais.includes(aba.id) || isMasterAdmin);
+            
+            if (abasAtivas.length === 0) { mostrarMensagem("Acesso Negado às Configurações", "erro"); return; }
+
+            abasAtivas.forEach(aba => {
+                var btn = document.createElement('button');
+                btn.type = 'button'; btn.id = aba.tabId;
+                btn.className = "py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors";
+                btn.innerText = aba.nome;
+                btn.onclick = function() { alternarAbaAdmin(aba.containerId); };
+                barra.appendChild(btn);
+            });
+            alternarAbaAdmin(abasAtivas[0].containerId);
+        }
+
+        function alternarAbaAdmin(abaId) {
+            ABAS_SISTEMA.forEach(aba => {
+                var elContainer = document.getElementById(aba.containerId);
+                if (elContainer) elContainer.classList.add('hidden');
+                var elTab = document.getElementById(aba.tabId);
+                if (elTab) elTab.className = "py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors";
+            });
+
+            var abaSelecionada = ABAS_SISTEMA.find(a => a.containerId === abaId);
+            if (!abaSelecionada) return;
+
+            var targetEl = document.getElementById(abaSelecionada.containerId);
+            if(targetEl) targetEl.classList.remove('hidden');
+            var btnEl = document.getElementById(abaSelecionada.tabId);
+            if(btnEl) btnEl.className = 'py-3 px-5 uppercase tracking-widest text-[11px] whitespace-nowrap rounded-t-sm transition-colors text-white font-black ' + abaSelecionada.cor;
+
+            if (abaId === 'form-equipa-container') carregarTabelaEquipa();
+        }
+
+        function carregarDadosAdmin() {
+            document.getElementById('loading-global').classList.remove('hidden');
+            window.google.script.run.withSuccessHandler(function(res) {
+                document.getElementById('loading-global').classList.add('hidden');
+                if (res && res.sucesso) {
+                    configuracoesGlobais = res.config || {};
+                    preencherConfigsGerais();
+                    var abaVisivel = ABAS_SISTEMA.find(a => !document.getElementById(a.containerId).classList.contains('hidden'));
+                    if (abaVisivel) alternarAbaAdmin(abaVisivel.containerId);
+                } else { mostrarMensagem("Erro ao carregar.", 'erro'); }
+            }).getHomeData();
+        }
+
+        function preencherConfigsGerais() {
+            if (configuracoesGlobais['ChaveIA']) { document.getElementById('config-chave-ia').value = configuracoesGlobais['ChaveIA']; }
+            if (configuracoesGlobais['soc-inst-url']) { document.getElementById('soc-inst-url').value = configuracoesGlobais['soc-inst-url']; }
+            if (configuracoesGlobais['soc-fb-url']) { document.getElementById('soc-fb-url').value = configuracoesGlobais['soc-fb-url']; }
+            if (configuracoesGlobais['soc-x-url']) { document.getElementById('soc-x-url').value = configuracoesGlobais['soc-x-url']; }
+            if (configuracoesGlobais['TokenIG']) { 
+                var tig = document.getElementById('config-token-ig'); 
+                if (tig) tig.value = configuracoesGlobais['TokenIG']; 
+            }
+        }
+
+        function salvarChaveIA() {
+            var val = document.getElementById('config-chave-ia').value.trim(); 
+            var btn = document.getElementById('btn-salvar-chave'); 
+            var txt = btn.innerText; btn.innerText = 'A GUARDAR...'; btn.disabled = true;
+            window.google.script.run.withSuccessHandler(function() { 
+                mostrarMensagem('Chave guardada!'); configuracoesGlobais['ChaveIA'] = val; btn.innerText = txt; btn.disabled = false; 
+            }).salvarConfiguracaoHTMLCustom('ChaveIA', val);
+        }
+
+        function salvarRedesSociais(e) {
+            e.preventDefault(); var btn = document.getElementById('btn-salvar-sociais'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
+            window.google.script.run.salvarConfiguracaoHTMLCustom('soc-inst-url', document.getElementById('soc-inst-url').value);
+            window.google.script.run.salvarConfiguracaoHTMLCustom('soc-fb-url', document.getElementById('soc-fb-url').value);
+            window.google.script.run.salvarConfiguracaoHTMLCustom('TokenIG', document.getElementById('config-token-ig').value);
+            window.google.script.run.withSuccessHandler(function() { 
+                mostrarMensagem("Redes atualizadas!"); btn.innerHTML = txt; btn.disabled = false; 
+            }).salvarConfiguracaoHTMLCustom('soc-x-url', document.getElementById('soc-x-url').value);
+        }
+
+        function salvarPropaganda(e) {
+            e.preventDefault(); var btn = document.getElementById('btn-salvar-propaganda'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
+            var payload = { 
+                empresa: document.getElementById('prop-empresa').value + '|||' + document.getElementById('prop-tempo').value, 
+                local: document.getElementById('prop-local').value, linkDestino: document.getElementById('prop-link').value 
+            };
+            if (base64StringProp) { payload.isUpload = true; payload.base64 = base64StringProp; payload.mimeType = mimeStringProp; payload.fileName = nameStringProp; } 
+            else { payload.isUpload = false; payload.urlArquivo = ''; }
+            window.google.script.run.withSuccessHandler(function() { 
+                mostrarMensagem('Anúncio no ar!'); document.getElementById('form-propaganda').reset(); base64StringProp = ""; btn.innerHTML = txt; btn.disabled = false; 
+            }).salvarPropagandaNoSheets(payload);
+        }
+
+        function carregarTabelaEquipa() {
+            var tbody = document.getElementById('tabela-equipa'); if (!tbody) return;
+            tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-xs text-gray-500 font-bold">A carregar membros...</td></tr>`;
+            window.google.script.run.withSuccessHandler(function(res) {
+                if (res && res.sucesso) { usuariosGlobais = res.usuarios || []; renderizarTabelaEquipa(); } 
+                else { tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-xs text-red-500 font-bold">Erro ao carregar membros.</td></tr>`; }
+            }).listarUsuarios();
+        }
+
+        function renderizarTabelaEquipa() {
+            var tbody = document.getElementById('tabela-equipa'); tbody.innerHTML = '';
+            if (usuariosGlobais.length === 0) { tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-xs text-gray-500">Nenhum membro.</td></tr>`; return; }
+            usuariosGlobais.forEach(function(u) {
+                var permTexto = "Todas (Master Admin)";
+                var roleLimpo = u.role.replace('require_pwd:', '');
+                if (roleLimpo !== 'admin' && roleLimpo !== 'master') permTexto = roleLimpo.split(',').join(', ');
+                var tagNovaSenha = u.role.includes('require_pwd:') ? `<span class="ml-2 bg-amber-100 text-amber-800 px-2 rounded text-[8px] uppercase">Senha Pendente</span>` : '';
+                var btnAcoes = '';
+                if (u.usuario !== 'admin' && u.usuario !== usuarioLogado) {
+                    btnAcoes = `<button onclick="editarMembroEquipa('${u.usuario}')" class="text-[10px] font-black text-jornal-blue border border-jornal-blue/30 px-3 py-1.5 rounded-sm hover:bg-jornal-blue hover:text-white mr-2">Editar</button>
+                                <button onclick="excluirMembroEquipa('${u.usuario}')" class="text-[10px] font-black text-red-600 border border-red-200 px-3 py-1.5 rounded-sm hover:bg-red-50">Excluir</button>`;
+                }
+                tbody.innerHTML += `<tr class="hover:bg-gray-50 border-b border-gray-100"><td class="p-4 font-bold text-sm">${u.usuario} ${tagNovaSenha}</td><td class="p-4 text-xs">${permTexto}</td><td class="p-4 text-right">${btnAcoes}</td></tr>`;
+            });
+        }
+
+        function limparFormEquipa() {
+            document.getElementById('form-membro-equipa').reset();
+            document.getElementById('equipa-usuario-original').value = "";
+            document.getElementById('equipa-usuario').disabled = false;
+            document.getElementById('btn-salvar-membro').innerText = "SALVAR MEMBRO";
+        }
+
+        function editarMembroEquipa(nomeUser) {
+            var u = usuariosGlobais.find(x => x.usuario === nomeUser); if (!u) return;
+            document.getElementById('equipa-usuario-original').value = u.usuario;
+            document.getElementById('equipa-usuario').value = u.usuario;
+            document.getElementById('equipa-senha').value = ""; 
+            document.getElementById('equipa-trocar-senha').checked = u.role.includes('require_pwd:');
+
+            var pArr = u.role.replace('require_pwd:', '').split(',').map(s => s.trim());
+            document.querySelectorAll('input[name="equipa-permissoes"]').forEach(cb => {
+                cb.checked = pArr.includes('master') || pArr.includes('admin') || pArr.includes(cb.value);
+            });
+            document.getElementById('btn-salvar-membro').innerText = "SALVAR ALTERAÇÕES";
+            window.scrollTo(0, document.getElementById('form-equipa-container').offsetTop);
+        }
+
+        function salvarMembroEquipa(e) {
+            e.preventDefault();
+            var usuario = document.getElementById('equipa-usuario').value.trim();
+            var checkboxes = document.querySelectorAll('input[name="equipa-permissoes"]:checked');
+            if (checkboxes.length === 0) { mostrarMensagem("Assinale 1 permissão.", "erro"); return; }
+            
+            var roleStr = Array.from(checkboxes).map(cb => cb.value).join(',');
+            if (document.getElementById('equipa-trocar-senha').checked) roleStr = "require_pwd:" + roleStr;
+
+            var payload = { usuarioOriginal: document.getElementById('equipa-usuario-original').value, usuario: usuario, senha: document.getElementById('equipa-senha').value.trim(), role: roleStr };
+            var btn = document.getElementById('btn-salvar-membro'); var txt = btn.innerText; btn.innerText = "A SALVAR..."; btn.disabled = true;
+
+            window.google.script.run.withSuccessHandler(function(res) {
+                btn.innerText = txt; btn.disabled = false;
+                if (res && res.sucesso) { mostrarMensagem("Membro salvo!"); limparFormEquipa(); carregarTabelaEquipa(); } 
+                else { mostrarMensagem("Erro.", "erro"); }
+            }).salvarUsuario(payload);
+        }
+
+        function excluirMembroEquipa(nomeUser) {
+            if (!confirm(`Excluir o utilizador '${nomeUser}'?`)) return;
+            window.google.script.run.withSuccessHandler(function(res) {
+                if (res && res.sucesso) { mostrarMensagem("Excluído!"); carregarTabelaEquipa(); }
+            }).excluirUsuario(nomeUser);
+        }
+    </script>
+</body>
+</html>
