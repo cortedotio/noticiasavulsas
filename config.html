@@ -3,52 +3,1022 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configurações - Notícias Avulsas</title>
+    <title>Painel de Configurações - Notícias Avulsas</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
+    
     <script>
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyVroxyx_f70Q2KkcnfMWtt2vV8EzQRsPBhF9nNL4frnKhdhe7t-oahNoJo9SCLfAbE/exec";
-        window.google = { script: { run: { withSuccessHandler: function(cb) { this._onSuccess = cb; return this; }, withFailureHandler: function(cb) { this._onFailure = cb; return this; } } } };
-        const apiFunctions = ['salvarConfiguracaoHTMLCustom', 'salvarPropagandaNoSheets', 'salvarUsuario', 'listarUsuarios', 'excluirUsuario', 'chamarGeminiImagemBackend'];
+        
+        window.google = {
+            script: {
+                run: {
+                    withSuccessHandler: function(cb) { 
+                        this._onSuccess = cb; 
+                        return this; 
+                    },
+                    withFailureHandler: function(cb) { 
+                        this._onFailure = cb; 
+                        return this; 
+                    }
+                }
+            }
+        };
+
+        const apiFunctions = [
+            'getHomeData', 
+            'verificarLogin', 
+            'salvarConfiguracaoHTMLCustom', 
+            'salvarPropagandaNoSheets', 
+            'chamarGeminiBackend', 
+            'chamarGeminiImagemBackend',
+            'listarUsuarios', 
+            'salvarUsuario', 
+            'excluirUsuario'
+        ];
+
         apiFunctions.forEach(function(funcName) {
             window.google.script.run[funcName] = function() {
                 var argsArray = Array.prototype.slice.call(arguments);
-                var successCb = this._onSuccess; var failureCb = this._onFailure;
-                this._onSuccess = null; this._onFailure = null;
-                fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: funcName, args: argsArray }) })
-                .then(r => r.json()).then(result => { if(successCb) successCb(result); }).catch(err => { if(failureCb) failureCb(err); });
+                var successCb = this._onSuccess;
+                var failureCb = this._onFailure;
+                
+                this._onSuccess = null; 
+                this._onFailure = null;
+                
+                fetch(GAS_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    redirect: 'follow',
+                    body: JSON.stringify({ action: funcName, args: argsArray })
+                })
+                .then(function(res) { 
+                    if (!res.ok) throw new Error("Erro HTTP: " + res.status);
+                    return res.text(); 
+                })
+                .then(function(text) {
+                    try {
+                        var result = JSON.parse(text); 
+                        if (successCb) {
+                            var finalPayload = result;
+                            if (result && result.result !== undefined) {
+                                finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
+                            }
+                            successCb(finalPayload);
+                        }
+                    } catch (e) {
+                        console.error("Erro a converter resposta: ", text);
+                        if (failureCb) failureCb(new Error("O servidor não retornou dados válidos."));
+                    }
+                })
+                .catch(function(err) {
+                    if (failureCb) failureCb(err);
+                    else console.error("API Error (" + funcName + "):", err);
+                });
             };
         });
+
+        var configureTailwind = function() {
+            if (typeof tailwind === 'undefined') { 
+                setTimeout(configureTailwind, 10); 
+                return; 
+            }
+            tailwind.config = {
+                theme: { 
+                    extend: { 
+                        fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] }, 
+                        colors: { jornal: { blue: '#0F172A', red: '#E11D48', gray: '#F8FAFC', dark: '#020617' } } 
+                    } 
+                }
+            };
+        };
+        configureTailwind();
     </script>
+    
+    <style>
+        body { background-color: #f1f2f5; color: #111111; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <header class="bg-jornal-dark text-white p-4 border-b border-gray-800">
-        <div class="max-w-[1200px] mx-auto flex justify-between items-center">
-            <h1 class="font-black text-lg uppercase">Configurações</h1>
-            <nav class="flex gap-4 text-xs font-bold uppercase">
-                <a href="admin.html" class="hover:text-rose-500">Redação</a>
-                <a href="config.html" class="text-emerald-400">Configurações</a>
-            </nav>
-        </div>
-    </header>
+<body class="antialiased min-h-screen flex flex-col relative selection:bg-jornal-red selection:text-white">
 
-    <main class="max-w-[1200px] mx-auto p-4 py-8">
-        <div id="form-ia-container" class="bg-white p-6 shadow-sm rounded-sm mb-6">
-            <h2 class="font-black text-xl mb-6 border-l-4 border-purple-600 pl-3">Inteligência Artificial</h2>
+    <div id="toast" class="hidden fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border rounded-sm">
+        <span id="toast-icon" class="text-xl"></span>
+        <span id="toast-msg" class="text-sm"></span>
+    </div>
+
+    <div id="loading-global" class="fixed inset-0 z-[99998] bg-jornal-dark flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="w-12 h-12 border-4 border-gray-700 border-t-jornal-red rounded-full animate-spin mb-4"></div>
+        <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Sistema...</p>
+    </div>
+
+    <div id="modalLogin" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md"></div>
+        <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
+            <div class="mb-6 text-center">
+                <h2 class="font-sans text-xl font-black uppercase text-jornal-dark tracking-tighter">Central de Gestão</h2>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Acesso restrito a administradores</p>
+            </div>
+            
+            <form onsubmit="fazerLogin(event)" class="space-y-4">
+                <input type="text" id="login-user" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Usuário (Ex: admin)" />
+                <input type="password" id="login-pass" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Senha" />
+                <button type="submit" id="btn-fazer-login" class="w-full bg-jornal-blue text-white font-black py-3 hover:opacity-90 transition-colors text-xs uppercase tracking-widest rounded-sm mt-4 shadow-md">Entrar nas Configurações</button>
+            </form>
         </div>
+    </div>
+
+    <div id="modalTrocarSenha" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md"></div>
+        <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
+            <div class="mb-6 text-center">
+                <h2 class="font-sans text-xl font-black uppercase text-jornal-dark tracking-tighter">Bem-vindo(a)!</h2>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-2">Por segurança, é obrigatório criar a sua própria senha pessoal neste primeiro acesso.</p>
+            </div>
+            <form onsubmit="trocarSenhaPrimeiroAcesso(event)" class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Nova Senha Pessoal</label>
+                    <input type="password" id="nova-senha" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required minlength="6" placeholder="Mínimo 6 caracteres" />
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Confirmar Nova Senha</label>
+                    <input type="password" id="confirmar-nova-senha" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required minlength="6" placeholder="Repita a senha" />
+                </div>
+                <button type="submit" id="btn-trocar-senha" class="w-full bg-jornal-red text-white font-black py-4 hover:bg-red-700 transition-colors text-[11px] uppercase tracking-widest rounded-sm mt-2 shadow-md">Salvar Nova Senha e Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="view-admin" class="hidden min-h-screen flex flex-col bg-gray-100 text-slate-800">
         
-        <div id="form-propaganda-container" class="bg-white p-6 shadow-sm rounded-sm mb-6">
-            <h2 class="font-black text-xl mb-6 border-l-4 border-red-500 pl-3">Gerir Anúncios</h2>
-        </div>
+        <header class="bg-gray-900 text-white border-b border-gray-800 sticky top-0 z-40 shadow-sm">
+            <div class="max-w-[1200px] mx-auto flex justify-between items-center px-4 py-3">
+                <div class="flex items-center gap-3">
+                    <span class="font-sans font-black tracking-tighter text-lg uppercase text-slate-100 flex items-center gap-2">Painel<span class="text-purple-500">Config</span></span>
+                    <span class="hidden md:inline-block ml-4 bg-gray-800 text-[9px] uppercase tracking-widest font-bold px-2 py-1 rounded-sm text-gray-300 border border-gray-700">
+                        Logado como: <span id="label-usuario-logado" class="text-white"></span>
+                    </span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="admin.html" class="text-gray-400 hover:text-white text-[10px] font-bold uppercase tracking-wider hidden md:flex items-center gap-1 transition-colors">← Voltar à Redação</a>
+                    <button type="button" onclick="encerrarSessao()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm">Sair (Logout)</button>
+                </div>
+            </div>
+        </header>
 
-        <div id="form-equipa-container" class="bg-white p-6 shadow-sm rounded-sm">
-            <h2 class="font-black text-xl mb-6 border-l-4 border-black pl-3">Gestão de Equipa</h2>
-        </div>
-    </main>
+        <main class="max-w-[1200px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
+            <!-- Abas Dinâmicas de Configuração -->
+            <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar" id="nav-abas-admin">
+                <button type="button" onclick="alternarAbaAdmin('form-logo-container')" id="aba-logo" class="py-3 px-5 font-black text-[11px] bg-purple-800 text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors hidden">IA & Design</button>
+                <button type="button" onclick="alternarAbaAdmin('form-propaganda-container')" id="aba-propaganda" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors hidden">Anúncios</button>
+                <button type="button" onclick="alternarAbaAdmin('form-social-container')" id="aba-social" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors hidden">Redes</button>
+                <button type="button" onclick="alternarAbaAdmin('form-equipa-container')" id="aba-equipa" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors hidden">👥 Equipa</button>
+                
+                <a href="admin.html" class="py-3 px-5 font-black text-[11px] bg-jornal-dark text-white hover:bg-gray-800 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-2 shadow-sm ml-auto">
+                    📝 REDAÇÃO ↗
+                </a>
+            </div>
+
+            <div id="form-logo-container" class="hidden bg-white p-5 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-purple-600">
+                <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-8 border-l-4 border-purple-600 pl-3 gap-4">
+                    <h2 class="font-sans text-xl font-black text-gray-900 uppercase tracking-tighter">Inteligência Artificial & Design</h2>
+                    
+                    <div class="flex flex-col items-start md:items-end bg-purple-50 p-4 rounded-sm border border-purple-100 min-w-[240px]">
+                        <label class="text-[11px] font-black uppercase tracking-widest text-purple-700 mb-3 cursor-pointer hover:text-purple-900 flex items-center gap-2 transition-colors">
+                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> 
+                            Fazer Upload de Ícone (Logo)
+                            <input type="file" id="upload-icone-logo" accept="image/png, image/svg+xml, image/jpeg" class="hidden" onchange="processarIconeLogo(this)">
+                        </label>
+                        <div class="flex items-center gap-3">
+                            <button type="button" id="btn-remover-icone" onclick="removerIconeLogo()" class="text-[9px] text-red-500 font-bold uppercase tracking-wider hover:underline hidden">Remover Imagem Atual</button>
+                        </div>
+                        <p class="text-[9px] text-gray-400 mt-2 text-left md:text-right">Recomendado: Ficheiro PNG transparente.</p>
+                    </div>
+                </div>
+
+                <div class="mb-8 p-6 bg-purple-50 border border-purple-200 rounded-sm">
+                    <h3 class="font-black text-sm uppercase tracking-widest text-purple-800 mb-2">Chave de Acesso da IA (API Key)</h3>
+                    <p class="text-xs text-gray-600 mb-4 font-medium">Insira a sua chave do Google Studio para ativar o motor Gemini no seu jornal.</p>
+                    <div class="flex flex-col md:flex-row gap-4 md:items-center">
+                        <input type="password" id="config-chave-ia" class="flex-grow px-5 py-3 border border-gray-300 focus:border-purple-500 focus:outline-none text-sm font-mono rounded-sm shadow-sm min-w-0" placeholder="Ex: AIzaSy..." />
+                        <button type="button" onclick="salvarChaveIA()" id="btn-salvar-chave" class="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 font-black uppercase text-[11px] tracking-widest rounded-sm whitespace-nowrap transition-colors shrink-0 shadow-sm">
+                            Guardar Chave
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="space-y-6 bg-purple-50/50 p-6 md:p-8 border border-purple-100 rounded-sm">
+                    <h3 class="font-black text-sm uppercase tracking-widest text-purple-800 mb-2">Design da Logomarca (Texto HTML)</h3>
+                    <div>
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Descrição (Prompt para a IA)</label>
+                        <input type="text" id="prompt-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm" placeholder="Ex: azul e verde com um emoji de globo" />
+                    </div>
+                    <button type="button" id="btn-gerar-logo" onclick="gerarLogoIA()" class="bg-purple-600 text-white px-8 py-4 font-black hover:bg-purple-700 transition-colors uppercase text-[11px] tracking-widest rounded-sm flex items-center justify-center gap-2 w-full md:w-auto shadow-md">
+                        ✨ GERAR ESTILO COM IA
+                    </button>
+                    
+                    <div id="preview-logo-wrapper" class="mt-10 hidden border-t border-purple-200 pt-8">
+                        <h4 class="text-[10px] font-black uppercase tracking-widest text-purple-600 mb-4 text-center">Pré-visualização do Design</h3>
+                        <div class="p-8 bg-gray-100 border border-gray-300 rounded-sm flex items-center justify-center min-h-[160px] shadow-inner text-center">
+                            <div id="preview-logo-ia"></div>
+                        </div>
+                        <div class="mt-6 flex justify-end">
+                            <button type="button" id="btn-aplicar-logo" onclick="aplicarNovaLogo()" class="bg-gray-900 text-white font-black w-full md:w-auto px-10 py-4 uppercase tracking-widest text-sm rounded-sm hover:bg-gray-800 transition-colors shadow-xl">
+                                Aplicar ao Site
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="form-propaganda-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+                <div class="border-l-4 border-red-500 pl-3 mb-6">
+                    <h2 class="font-sans text-xl font-black text-gray-900 uppercase tracking-tighter">Gerenciamento de Anúncios</h2>
+                </div>
+                
+                <form id="form-propaganda" onsubmit="salvarPropaganda(event)">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                        <div>
+                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Posição / Slot</label>
+                            <select id="prop-local" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm font-medium rounded-sm focus:outline-none focus:ring-1 focus:ring-red-500" required>
+                                <option value="">Selecione o local</option>
+                                <option value="Topo">Topo do Feed</option>
+                                <option value="Lateral">Sidebar Lateral</option>
+                                <option value="Slot 1 (Entre Editorias)">Slot 1 (Entre Editorias)</option>
+                                <option value="Slot 2 (Entre Editorias)">Slot 2 (Entre Editorias)</option>
+                                <option value="Sidebar 1">Sidebar Extra 1</option>
+                                <option value="Sidebar 2">Sidebar Extra 2</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Empresa Anunciante</label>
+                            <input type="text" id="prop-empresa" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm font-medium rounded-sm focus:outline-none focus:ring-1 focus:ring-red-500" required />
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        <div>
+                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Tempo de Exibição (Segundos)</label>
+                            <input type="number" id="prop-tempo" value="5" min="1" max="60" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm font-medium rounded-sm focus:outline-none focus:ring-1 focus:ring-red-500" required />
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Status Inicial</label>
+                            <select class="w-full px-4 py-3 bg-white border border-gray-300 text-sm font-medium rounded-sm focus:outline-none focus:ring-1 focus:ring-red-500">
+                                <option value="Ativa">Ativo</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6 border border-dashed border-gray-400 mb-8 rounded-sm">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-800 mb-4 block">1. Imagem / Arquivo do Seu Computador</label>
+                        <div class="flex items-center gap-4">
+                            <label class="bg-gray-800 text-white px-6 py-3 text-xs font-bold rounded-sm cursor-pointer hover:bg-gray-700 transition-colors">
+                                Escolher arquivo
+                                <input type="file" id="prop-arquivo" accept="image/*,video/*" class="hidden" />
+                            </label>
+                            <span class="text-sm text-gray-500" id="prop-arquivo-nome">Nenhum arquivo escolhido</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-8">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Ou 2. Insira o Link Direto da Mídia (Opcional)</label>
+                        <input type="url" id="prop-imagem" placeholder="https://..." class="w-full px-4 py-3 bg-white border border-gray-300 text-sm font-medium rounded-sm focus:outline-none focus:ring-1 focus:ring-red-500" />
+                    </div>
+
+                    <div class="mb-8">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-red-600 mb-2 block">Link Destino (Ação no Clique) *</label>
+                        <input type="url" id="prop-link" placeholder="https://" class="w-full px-4 py-3 bg-white border border-gray-300 text-sm font-medium rounded-sm focus:outline-none focus:ring-1 focus:ring-red-500" required />
+                    </div>
+
+                    <div class="flex justify-end pt-4 border-t border-gray-200">
+                        <button type="submit" id="btn-salvar-propaganda" class="w-full md:w-auto bg-red-600 text-white font-black px-12 py-4 uppercase tracking-widest text-sm rounded-sm hover:bg-red-700 transition-colors shadow-md">
+                            Ativar Anúncio
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="form-social-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+                <div class="border-l-4 border-blue-500 pl-3 mb-6">
+                    <h2 class="font-sans text-xl font-black text-gray-900 uppercase tracking-tighter">Gestão de Redes Sociais</h2>
+                </div>
+                <form id="form-sociais" onsubmit="salvarRedesSociais(event)">
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-5 border border-gray-100 bg-gray-50 rounded-sm mb-3">
+                        <div class="font-bold text-sm w-32 flex items-center gap-2">📷 Instagram</div>
+                        <input type="url" id="soc-inst-url" placeholder="https://instagram.com/..." class="w-full md:flex-grow px-4 py-3 border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-blue-500" />
+                    </div>
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-5 border border-gray-100 bg-gray-50 rounded-sm mb-3">
+                        <div class="font-bold text-sm w-32 flex items-center gap-2">📘 Facebook</div>
+                        <input type="url" id="soc-fb-url" placeholder="https://facebook.com/..." class="w-full md:flex-grow px-4 py-3 border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-blue-500" />
+                    </div>
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-5 border border-gray-100 bg-gray-50 rounded-sm mb-3">
+                        <div class="font-bold text-sm w-32 flex items-center gap-2">𝕏 X (Twitter)</div>
+                        <input type="url" id="soc-x-url" placeholder="https://x.com/..." class="w-full md:flex-grow px-4 py-3 border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-blue-500" />
+                    </div>
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-5 border border-gray-100 bg-gray-50 rounded-sm">
+                        <div class="font-bold text-sm w-32 flex items-center gap-2">▶️ YouTube</div>
+                        <input type="url" id="soc-yt-url" placeholder="https://youtube.com/..." class="w-full md:flex-grow px-4 py-3 border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-blue-500" />
+                    </div>
+                    <div class="pt-6 border-t border-gray-200 flex justify-end mt-6">
+                        <button type="submit" id="btn-salvar-sociais" class="w-full md:w-auto bg-blue-600 text-white font-black px-12 py-3.5 uppercase tracking-widest text-sm rounded-sm shadow-md hover:bg-blue-700 transition-colors">Salvar Redes</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="form-equipa-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+                <div class="border-l-4 border-gray-900 pl-3 mb-8">
+                    <h2 class="font-sans text-xl font-black text-gray-900 uppercase tracking-tighter">Gestão de Equipa & Acessos</h2>
+                </div>
+                <form id="form-membro-equipa" onsubmit="salvarMembroEquipa(event)" class="mb-10 bg-gray-50 p-6 border border-gray-200 rounded-sm">
+                    <input type="hidden" id="equipa-user-original" value="">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                        <div>
+                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Usuário de Login *</label>
+                            <input type="text" id="equipa-user" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-gray-800 text-sm font-bold text-gray-900 rounded-sm" required placeholder="Ex: redator.maria" />
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Senha de Acesso</label>
+                            <input type="password" id="equipa-senha" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-gray-800 text-sm font-bold text-gray-900 rounded-sm" placeholder="Deixe em branco para manter a atual" />
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6 bg-white p-4 border border-gray-200 rounded-sm">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" id="equipa-req-senha" checked class="w-5 h-5 text-gray-800 border-gray-300 rounded focus:ring-gray-800" />
+                            <span class="text-[11px] font-black text-gray-900 uppercase tracking-widest block">Exigir que o usuário mude a senha no primeiro acesso</span>
+                        </label>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3 block">Permissões de Acesso (Assinale as abas permitidas)</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 bg-white p-5 border border-gray-200 rounded-sm">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" value="aba-noticia" class="chk-perm w-4 h-4 text-gray-800" checked> 
+                                <span class="text-xs font-bold">Publicar Matéria</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" value="aba-lista" class="chk-perm w-4 h-4 text-gray-800" checked> 
+                                <span class="text-xs font-bold">Gerir Matérias</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" value="aba-capa" class="chk-perm w-4 h-4 text-gray-800" checked> 
+                                <span class="text-xs font-bold">Layout Capa</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" value="aba-placar" class="chk-perm w-4 h-4 text-gray-800" checked> 
+                                <span class="text-xs font-bold">Placar ao Vivo</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" value="aba-estudio" class="chk-perm w-4 h-4 text-purple-600" checked> 
+                                <span class="text-xs font-bold">Estúdio Instagram</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" value="aba-logo" class="chk-perm w-4 h-4 text-gray-800"> 
+                                <span class="text-xs font-bold">IA & Design</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" value="aba-propaganda" class="chk-perm w-4 h-4 text-gray-800"> 
+                                <span class="text-xs font-bold">Anúncios</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" value="aba-social" class="chk-perm w-4 h-4 text-gray-800"> 
+                                <span class="text-xs font-bold">Redes Sociais</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" value="aba-equipa" class="chk-perm w-4 h-4 text-red-600"> 
+                                <span class="text-xs font-bold">Gestão de Equipa</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col md:flex-row gap-4 pt-4 border-t border-gray-200">
+                        <button type="submit" id="btn-salvar-membro" class="w-full md:w-auto bg-gray-900 hover:bg-gray-800 text-white font-black px-10 py-3.5 uppercase tracking-widest text-[11px] rounded-sm transition-colors shadow-sm">
+                            Salvar Membro
+                        </button>
+                        <button type="button" onclick="limparFormEquipa()" class="w-full md:w-auto bg-white border border-gray-300 text-gray-600 font-bold px-10 py-3.5 uppercase tracking-widest text-[11px] rounded-sm hover:bg-gray-100 transition-colors">
+                            Cancelar / Limpar
+                        </button>
+                    </div>
+                </form>
+                
+                <div>
+                    <h3 class="text-[11px] font-black uppercase tracking-widest text-gray-900 mb-4 border-b border-gray-200 pb-2">Membros da Equipa</h3>
+                    <div class="overflow-x-auto border border-gray-200 rounded-sm">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-gray-100 border-b border-gray-300 text-[10px] uppercase tracking-widest text-gray-500">
+                                <tr>
+                                    <th class="p-4">Usuário</th>
+                                    <th class="p-4">Nível de Acesso (Permissões)</th>
+                                    <th class="p-4 text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-equipa" class="divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            if (localStorage.getItem('admin_logado') !== 'true') window.location.href = 'index.html';
+        var configuracoesGlobais = {};
+        var usuariosGlobais = [];
+        var base64StringProp = ""; 
+        var mimeStringProp = ""; 
+        var nameStringProp = "";
+        window.usuarioLogado = 'admin'; 
+        window.roleLogado = 'admin';
+
+        document.addEventListener("DOMContentLoaded", function() {
+            var inputArquivoAnuncio = document.getElementById('prop-arquivo');
+            if (inputArquivoAnuncio) {
+                inputArquivoAnuncio.addEventListener('change', function(e) {
+                    var file = e.target.files[0];
+                    if (file) {
+                        document.getElementById('prop-arquivo-nome').innerText = file.name;
+                        mimeStringProp = file.type; 
+                        nameStringProp = file.name;
+                        var reader = new FileReader(); 
+                        reader.onload = function(evt) { 
+                            base64StringProp = evt.target.result.split(',')[1]; 
+                        }; 
+                        reader.readAsDataURL(file);
+                    } else {
+                        document.getElementById('prop-arquivo-nome').innerText = "Nenhum arquivo escolhido"; 
+                        base64StringProp = "";
+                    }
+                });
+            }
+
+            if (localStorage.getItem('admin_logado') === 'true') {
+                window.usuarioLogado = localStorage.getItem('admin_user') || 'admin';
+                window.roleLogado = localStorage.getItem('admin_role') || 'admin';
+                document.getElementById('modalLogin').classList.add('hidden');
+                document.getElementById('view-admin').classList.remove('hidden');
+                aplicarPermissoes(window.roleLogado); 
+                carregarDadosConfig();
+            } else {
+                document.getElementById('loading-global').classList.add('hidden');
+                document.getElementById('modalLogin').classList.remove('hidden');
+                document.getElementById('modalLogin').classList.add('flex');
+            }
         });
+
+        function mostrarMensagem(mensagem, tipo) {
+            var toast = document.getElementById('toast'); 
+            document.getElementById('toast-msg').innerText = mensagem;
+            if (tipo === 'erro') { 
+                toast.className = 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-white border-red-600 text-red-600 rounded-sm'; 
+                document.getElementById('toast-icon').innerHTML = '⚠️'; 
+            } else { 
+                toast.className = 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-gray-900 border-gray-900 text-white rounded-sm'; 
+                document.getElementById('toast-icon').innerHTML = '✓'; 
+            }
+            toast.classList.remove('hidden'); 
+            setTimeout(function() { toast.classList.add('hidden'); }, 4500);
+        }
+
+        function fazerLogin(e) {
+            e.preventDefault();
+            var u = document.getElementById('login-user').value; 
+            var p = document.getElementById('login-pass').value;
+            var btn = document.getElementById('btn-fazer-login'); 
+            
+            btn.innerHTML = "A VERIFICAR..."; 
+            btn.disabled = true;
+
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if (res && res.sucesso) {
+                        let roleStr = res.role || 'admin'; 
+                        window.usuarioLogado = res.usuario || u; 
+                        window.roleLogado = roleStr;
+                        if (roleStr.includes('req_pass_change:true')) {
+                            document.getElementById('modalLogin').classList.add('hidden'); 
+                            document.getElementById('modalTrocarSenha').classList.remove('hidden'); 
+                            document.getElementById('modalTrocarSenha').classList.add('flex');
+                        } else { 
+                            iniciarSessao(window.usuarioLogado, window.roleLogado); 
+                        }
+                    } else { 
+                        mostrarMensagem(res ? res.erro : "Resposta inválida.", 'erro'); 
+                        btn.innerHTML = "Entrar nas Configurações"; 
+                        btn.disabled = false; 
+                    }
+                }).withFailureHandler(function(erro) {
+                    mostrarMensagem("Falha na rede: " + erro.message, 'erro'); 
+                    btn.innerHTML = "Entrar nas Configurações"; 
+                    btn.disabled = false;
+                }).verificarLogin(u, p);
+            }
+        }
+
+        function trocarSenhaPrimeiroAcesso(e) {
+            e.preventDefault(); 
+            const novaSenha = document.getElementById('nova-senha').value; 
+            const confSenha = document.getElementById('confirmar-nova-senha').value;
+            
+            if(novaSenha !== confSenha) { 
+                mostrarMensagem('As senhas não coincidem.', 'erro'); 
+                return; 
+            }
+            if(novaSenha.length < 6) { 
+                mostrarMensagem('Mínimo de 6 caracteres.', 'erro'); 
+                return; 
+            }
+            
+            const btn = document.getElementById('btn-trocar-senha'); 
+            btn.innerHTML = 'A ATUALIZAR...'; 
+            btn.disabled = true;
+            
+            const novoRole = window.roleLogado.replace('req_pass_change:true', 'req_pass_change:false');
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if (res.sucesso) { 
+                        mostrarMensagem('Senha atualizada!'); 
+                        iniciarSessao(window.usuarioLogado, novoRole); 
+                    } else { 
+                        mostrarMensagem('Erro.', 'erro'); 
+                        btn.innerHTML = 'Salvar Nova Senha e Entrar'; 
+                        btn.disabled = false; 
+                    }
+                }).salvarUsuario({ 
+                    usuarioOriginal: window.usuarioLogado, 
+                    usuario: window.usuarioLogado, 
+                    senha: novaSenha, 
+                    role: novoRole 
+                });
+            }
+        }
+
+        function iniciarSessao(user, role) {
+            try { 
+                localStorage.setItem('admin_logado', 'true'); 
+                localStorage.setItem('admin_user', user); 
+                localStorage.setItem('admin_role', role); 
+            } catch(err) {}
+            
+            document.getElementById('modalTrocarSenha').classList.add('hidden'); 
+            document.getElementById('modalTrocarSenha').classList.remove('flex');
+            document.getElementById('modalLogin').classList.add('hidden'); 
+            document.getElementById('view-admin').classList.remove('hidden');
+            
+            aplicarPermissoes(role); 
+            carregarDadosConfig();
+        }
+
+        function encerrarSessao() {
+            try { 
+                localStorage.removeItem('admin_logado'); 
+                localStorage.removeItem('admin_user'); 
+                localStorage.removeItem('admin_role'); 
+            } catch(err) {}
+            window.location.href = "index.html";
+        }
+
+        function aplicarPermissoes(role) {
+            const todasAbas = ['aba-logo', 'aba-propaganda', 'aba-social', 'aba-equipa'];
+            document.getElementById('label-usuario-logado').innerText = window.usuarioLogado;
+            
+            if (role === 'admin' || role === 'administrador') {
+                todasAbas.forEach(id => { 
+                    let el = document.getElementById(id); 
+                    if (el) el.style.display = 'block'; 
+                });
+                alternarAbaAdmin('form-logo-container'); 
+                return;
+            }
+            
+            let allowedTabs = [];
+            if (role.indexOf('tabs:') !== -1) {
+                let tabsPart = role.split('tabs:')[1].split(';')[0];
+                allowedTabs = tabsPart.split(',');
+            }
+
+            todasAbas.forEach(id => {
+                let el = document.getElementById(id);
+                if (el) { 
+                    el.style.display = allowedTabs.includes(id) ? 'block' : 'none'; 
+                }
+            });
+
+            if (allowedTabs.length > 0) {
+                 const mapContainers = { 
+                     'aba-logo': 'form-logo-container', 
+                     'aba-propaganda': 'form-propaganda-container', 
+                     'aba-social': 'form-social-container', 
+                     'aba-equipa': 'form-equipa-container' 
+                 };
+                 let primeiraAbaConfig = allowedTabs.find(t => mapContainers[t]);
+                 if (primeiraAbaConfig) {
+                     alternarAbaAdmin(mapContainers[primeiraAbaConfig]);
+                 }
+            } else { 
+                mostrarMensagem("Não tem permissão para aceder às Configurações.", "erro"); 
+            }
+        }
+
+        function alternarAbaAdmin(abaId) {
+            var contentIds = [
+                'form-logo-container', 
+                'form-propaganda-container', 
+                'form-social-container', 
+                'form-equipa-container'
+            ];
+            
+            contentIds.forEach(function(id) { 
+                var el = document.getElementById(id); 
+                if (el) el.classList.add('hidden'); 
+            });
+            
+            var tabIds = ['aba-logo', 'aba-propaganda', 'aba-social', 'aba-equipa'];
+            
+            tabIds.forEach(function(id) { 
+                var el = document.getElementById(id); 
+                if (el) {
+                    el.className = "py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors " + (el.style.display==='none'?'hidden':''); 
+                }
+            });
+            
+            var targetEl = document.getElementById(abaId); 
+            if(targetEl) targetEl.classList.remove('hidden');
+            
+            var botaoId = ""; var classAtiva = "bg-gray-900 text-white font-black";
+            
+            if (abaId === 'form-logo-container') { botaoId = 'aba-logo'; classAtiva = "bg-purple-800 text-white font-black"; } 
+            else if (abaId === 'form-propaganda-container') { botaoId = 'aba-propaganda'; classAtiva = "bg-red-600 text-white font-black"; } 
+            else if (abaId === 'form-social-container') { botaoId = 'aba-social'; classAtiva = "bg-blue-600 text-white font-black"; } 
+            else if (abaId === 'form-equipa-container') { botaoId = 'aba-equipa'; classAtiva = "bg-gray-900 text-white font-black"; carregarListaEquipa(); }
+            
+            var btnEl = document.getElementById(botaoId); 
+            if(btnEl) {
+                btnEl.className = `py-3 px-5 uppercase tracking-widest text-[11px] whitespace-nowrap rounded-t-sm transition-colors ${classAtiva}`;
+            }
+        }
+
+        function carregarDadosConfig() {
+            document.getElementById('loading-global').classList.remove('hidden');
+            var cache = localStorage.getItem('admin_data_cache');
+            if(cache) {
+                try {
+                    var dados = JSON.parse(cache);
+                    if (dados && dados.sucesso) {
+                        configuracoesGlobais = dados.config || {};
+                        preencherConfigsGerais();
+                    }
+                } catch(e){}
+            }
+
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    document.getElementById('loading-global').classList.add('hidden');
+                    if (res && res.sucesso) {
+                        localStorage.setItem('admin_data_cache', JSON.stringify(res)); 
+                        configuracoesGlobais = res.config || {};
+                        preencherConfigsGerais();
+                    }
+                }).withFailureHandler(function(err) {
+                    document.getElementById('loading-global').classList.add('hidden'); 
+                    mostrarMensagem("Falha de Servidor.", 'erro');
+                }).getHomeData();
+            }
+        }
+
+        function preencherConfigsGerais() {
+            if (configuracoesGlobais['ChaveIA']) { 
+                var ic = document.getElementById('config-chave-ia'); 
+                if (ic) ic.value = configuracoesGlobais['ChaveIA']; 
+            }
+            if (configuracoesGlobais['soc-inst-url']) { document.getElementById('soc-inst-url').value = configuracoesGlobais['soc-inst-url']; }
+            if (configuracoesGlobais['soc-fb-url']) { document.getElementById('soc-fb-url').value = configuracoesGlobais['soc-fb-url']; }
+            if (configuracoesGlobais['soc-x-url']) { document.getElementById('soc-x-url').value = configuracoesGlobais['soc-x-url']; }
+            if (configuracoesGlobais['soc-yt-url']) { document.getElementById('soc-yt-url').value = configuracoesGlobais['soc-yt-url']; }
+            
+            if (configuracoesGlobais['LogoHTML']) { 
+                window.novaLogoHtml = configuracoesGlobais['LogoHTML']; 
+                var previewIcone = document.getElementById('preview-logo-ia'); 
+                if (previewIcone) { 
+                    previewIcone.innerHTML = window.novaLogoHtml;
+                    document.getElementById('preview-logo-wrapper').classList.remove('hidden');
+                    document.getElementById('btn-remover-icone').classList.remove('hidden');
+                } 
+            }
+        }
+
+        function processarIconeLogo(input) {
+            if (!input.files || !input.files[0]) return;
+            var file = input.files[0];
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var imgHtml = `<img src="${e.target.result}" class="h-10 object-contain mx-auto" />`;
+                var preview = document.getElementById('preview-logo-ia');
+                preview.innerHTML = imgHtml;
+                document.getElementById('preview-logo-wrapper').classList.remove('hidden');
+                document.getElementById('btn-remover-icone').classList.remove('hidden');
+                window.novaLogoHtml = imgHtml;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removerIconeLogo() {
+            window.novaLogoHtml = null;
+            document.getElementById('upload-icone-logo').value = '';
+            document.getElementById('preview-logo-ia').innerHTML = '';
+            document.getElementById('preview-logo-wrapper').classList.add('hidden');
+            document.getElementById('btn-remover-icone').classList.add('hidden');
+        }
+
+        function salvarChaveIA() {
+            var val = document.getElementById('config-chave-ia').value.trim(); 
+            var btn = document.getElementById('btn-salvar-chave'); 
+            var txt = btn.innerText; 
+            btn.innerText = 'A GUARDAR...'; 
+            btn.disabled = true;
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function() { 
+                    mostrarMensagem('Chave da IA guardada com sucesso!'); 
+                    configuracoesGlobais['ChaveIA'] = val; 
+                    btn.innerText = txt; 
+                    btn.disabled = false; 
+                    localStorage.removeItem('admin_data_cache');
+                }).salvarConfiguracaoHTMLCustom('ChaveIA', val);
+            }
+        }
+
+        function gerarLogoIA() {
+            var desc = document.getElementById('prompt-logo').value.trim();
+            if(!desc) {
+                mostrarMensagem("Descreva as cores/estilo que deseja (ex: azul e verde).", "erro");
+                document.getElementById('prompt-logo').focus();
+                return;
+            }
+            
+            var btn = document.getElementById('btn-gerar-logo');
+            var txt = btn.innerText;
+            btn.innerText = "A CRIAR...";
+            btn.disabled = true;
+
+            var promptFinal = "Atue como um web designer. Crie um logotipo em HTML puro para o portal 'NOTÍCIAS AVULSAS'. O usuário pediu as seguintes cores e estilo: '" + desc + "'. Se a descrição pedir um emoji, coloque-o antes do nome. Use tags como <h1 class='font-black tracking-tighter text-4xl uppercase'> ou <span>. Aplique as cores usando estilo inline (style='color: ...') ou classes do Tailwind CSS (ex: text-blue-600). Retorne EXATAMENTE APENAS o código HTML do logotipo finalizado, sem blocos markdown (```html), sem explicações, pronto para ser injetado no DOM.";
+
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if(res && res.sucesso && res.texto) {
+                        var cleanHtml = res.texto.replace(/(\`\`\`html|\`\`\`)/gi, '').trim();
+                        document.getElementById('preview-logo-ia').innerHTML = cleanHtml;
+                        document.getElementById('preview-logo-wrapper').classList.remove('hidden');
+                        document.getElementById('btn-remover-icone').classList.remove('hidden');
+                        window.novaLogoHtml = cleanHtml;
+                        mostrarMensagem("Estilo criado com sucesso!");
+                    } else {
+                        mostrarMensagem("Erro na IA: " + (res ? res.erro : "Falha desconhecida"), "erro");
+                    }
+                    btn.innerText = txt;
+                    btn.disabled = false;
+                }).withFailureHandler(function(error) {
+                    mostrarMensagem("Falha na comunicação com o Google. A Chave da API pode ser inválida.", "erro");
+                    btn.innerText = txt;
+                    btn.disabled = false;
+                }).chamarGeminiBackend(promptFinal);
+            }
+        }
+
+        function aplicarNovaLogo() {
+            var btn = document.getElementById('btn-aplicar-logo');
+            var txt = btn.innerText;
+            btn.innerText = "A GUARDAR...";
+            btn.disabled = true;
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                if (window.novaLogoHtml) {
+                    window.google.script.run.withSuccessHandler(function() {
+                        mostrarMensagem('Design atualizado no servidor!');
+                        localStorage.removeItem('admin_data_cache');
+                        btn.innerText = txt;
+                        btn.disabled = false;
+                    }).salvarConfiguracaoHTMLCustom('LogoHTML', window.novaLogoHtml);
+                } else {
+                    mostrarMensagem("Nenhum logo novo para aplicar.", "erro");
+                    btn.innerText = txt;
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        function salvarPropaganda(e) {
+            e.preventDefault(); 
+            var btn = document.getElementById('btn-salvar-propaganda'); 
+            var txt = btn.innerHTML; 
+            btn.innerHTML = "A SALVAR..."; 
+            btn.disabled = true;
+            
+            var valTempo = document.getElementById('prop-tempo').value; 
+            var valEmpresa = document.getElementById('prop-empresa').value; 
+            var valLocal = document.getElementById('prop-local').value; 
+            var valLink = document.getElementById('prop-link').value;
+            
+            var payload = { 
+                empresa: `${valEmpresa}|||${valTempo}`, 
+                local: valLocal, 
+                linkDestino: valLink 
+            };
+            
+            if (base64StringProp) { 
+                payload.isUpload = true; 
+                payload.base64 = base64StringProp; 
+                payload.mimeType = mimeStringProp; 
+                payload.fileName = nameStringProp; 
+                payload.urlArquivo = ''; 
+            } else { 
+                payload.isUpload = false; 
+                payload.urlArquivo = document.getElementById('prop-imagem').value; 
+                payload.tipo = 'link'; 
+            }
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
+                window.google.script.run.withSuccessHandler(function() { 
+                    mostrarMensagem('Anúncio no ar!'); 
+                    document.getElementById('form-propaganda').reset(); 
+                    base64StringProp = ""; 
+                    document.getElementById('prop-arquivo-nome').innerText = "Nenhum arquivo escolhido";
+                    btn.innerHTML = txt; 
+                    btn.disabled = false; 
+                    localStorage.removeItem('admin_data_cache'); 
+                }).salvarPropagandaNoSheets(payload); 
+            }
+        }
+
+        function salvarRedesSociais(e) {
+            e.preventDefault(); 
+            var btn = document.getElementById('btn-salvar-sociais'); 
+            var txt = btn.innerHTML; 
+            btn.innerHTML = "A SALVAR..."; 
+            btn.disabled = true;
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
+                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-inst-url', document.getElementById('soc-inst-url').value); 
+                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-fb-url', document.getElementById('soc-fb-url').value); 
+                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-x-url', document.getElementById('soc-x-url').value); 
+                window.google.script.run.withSuccessHandler(function() { 
+                    mostrarMensagem("Redes sociais atualizadas!"); 
+                    btn.innerHTML = txt; 
+                    btn.disabled = false; 
+                    localStorage.removeItem('admin_data_cache'); 
+                }).salvarConfiguracaoHTMLCustom('soc-yt-url', document.getElementById('soc-yt-url').value); 
+            }
+        }
+
+        function carregarListaEquipa() {
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if (res && res.sucesso) { 
+                        usuariosGlobais = res.usuarios; 
+                        renderizarTabelaEquipa(res.usuarios); 
+                    }
+                }).listarUsuarios();
+            }
+        }
+
+        function renderizarTabelaEquipa(usuarios) {
+            const tbody = document.getElementById('tabela-equipa'); 
+            if(!tbody) return; 
+            tbody.innerHTML = '';
+            
+            if(!usuarios || usuarios.length === 0) { 
+                tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-xs font-bold text-gray-400">Nenhum membro listado.</td></tr>'; 
+                return; 
+            }
+            
+            usuarios.forEach(u => {
+                let acessosText = '<span class="bg-gray-900 text-white px-2 py-0.5 rounded text-[9px] uppercase tracking-widest font-black">Master Admin</span>';
+                if (u.role.indexOf('tabs:') !== -1) {
+                    let tabsPart = u.role.split('tabs:')[1].split(';')[0];
+                    let modulos = tabsPart.replace(/aba-/g, '').replace(/,/g, ', ').toUpperCase();
+                    acessosText = `<span class="text-[10px] font-bold text-gray-600">${modulos}</span>`;
+                }
+                let reqSenhaLabel = u.role.includes('req_pass_change:true') ? '<span class="text-amber-600 font-black text-[9px] uppercase ml-2 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Troca Pendente</span>' : '';
+                
+                let botoesAcao = '';
+                if (u.usuario !== 'admin' && u.usuario !== window.usuarioLogado) {
+                    botoesAcao = `
+                        <button onclick="editarMembro('${u.usuario}')" class="text-blue-600 border border-blue-200 hover:bg-blue-50 px-3 py-1 rounded-sm text-[10px] uppercase font-black transition-colors mr-2 shadow-sm">Editar</button>
+                        <button onclick="excluirMembro('${u.usuario}')" class="text-red-600 border border-red-200 hover:bg-red-50 px-3 py-1 rounded-sm text-[10px] uppercase font-black transition-colors shadow-sm">Excluir</button>
+                    `;
+                } else if (u.usuario === window.usuarioLogado) {
+                    botoesAcao = `<span class="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Sua Conta</span>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 border-b border-gray-100 transition-colors">
+                        <td class="p-4 font-bold text-sm flex items-center text-gray-900">${u.usuario} ${reqSenhaLabel}</td>
+                        <td class="p-4 whitespace-normal">${acessosText}</td>
+                        <td class="p-4 text-center">${botoesAcao}</td>
+                    </tr>
+                `;
+            });
+        }
+        
+        function salvarMembroEquipa(e) {
+            e.preventDefault();
+            const usuario = document.getElementById('equipa-user').value.trim(); 
+            const senha = document.getElementById('equipa-senha').value.trim();
+            const usuarioOriginal = document.getElementById('equipa-user-original').value; 
+            const reqSenha = document.getElementById('equipa-req-senha').checked;
+            const checkboxes = document.querySelectorAll('.chk-perm:checked');
+            
+            let tabs = Array.from(checkboxes).map(cb => cb.value).join(',');
+            if (usuario === 'admin') {
+                tabs = 'aba-noticia,aba-lista,aba-capa,aba-logo,aba-propaganda,aba-social,aba-placar,aba-estudio,aba-equipa';
+            }
+            
+            let roleStr = `req_pass_change:${reqSenha};tabs:${tabs}`;
+            if (!usuario) {
+                return;
+            }
+            if (!usuarioOriginal && !senha) { 
+                mostrarMensagem('Informe uma senha inicial para criar o usuário.', 'erro'); 
+                return; 
+            }
+            
+            const btn = document.getElementById('btn-salvar-membro'); 
+            const txt = btn.innerText; 
+            btn.innerText = 'A SALVAR...'; 
+            btn.disabled = true;
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if (res.sucesso) { 
+                        mostrarMensagem('Membro salvo!'); 
+                        limparFormEquipa(); 
+                        carregarListaEquipa(); 
+                    } else { 
+                        mostrarMensagem(res.erro || 'Falha ao salvar membro.', 'erro'); 
+                    }
+                    btn.innerText = txt; 
+                    btn.disabled = false;
+                }).salvarUsuario({ 
+                    usuarioOriginal: usuarioOriginal, 
+                    usuario: usuario, 
+                    senha: senha, 
+                    role: roleStr 
+                });
+            }
+        }
+        
+        function editarMembro(usuario) {
+            var u = usuariosGlobais.find(x => x.usuario === usuario); 
+            if (!u) return;
+            
+            document.getElementById('equipa-user-original').value = u.usuario; 
+            document.getElementById('equipa-user').value = u.usuario;
+            document.getElementById('equipa-senha').value = ''; 
+            document.getElementById('equipa-req-senha').checked = u.role.includes('req_pass_change:true');
+            document.querySelectorAll('.chk-perm').forEach(cb => cb.checked = false);
+            
+            if (u.role === 'admin' || u.role === 'administrador') {
+                document.querySelectorAll('.chk-perm').forEach(cb => cb.checked = true);
+            } else if (u.role.indexOf('tabs:') !== -1) {
+                let allowedTabs = u.role.split('tabs:')[1].split(';')[0].split(',');
+                document.querySelectorAll('.chk-perm').forEach(cb => { 
+                    if (allowedTabs.includes(cb.value)) {
+                        cb.checked = true;
+                    }
+                });
+            }
+            
+            document.getElementById('btn-salvar-membro').innerText = "SALVAR ALTERAÇÕES";
+            window.scrollTo({ top: document.getElementById('form-equipa-container').offsetTop - 100, behavior: 'smooth' });
+        }
+        
+        function excluirMembro(usuario) {
+            if (!confirm(`Tem a certeza que deseja revogar o acesso de ${usuario}? Ele perderá acesso ao painel permanentemente.`)) {
+                return;
+            }
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) { 
+                    if(res.sucesso) { 
+                        mostrarMensagem('Acesso revogado com sucesso!'); 
+                        carregarListaEquipa(); 
+                    } 
+                }).excluirUsuario(usuario);
+            }
+        }
+        
+        function limparFormEquipa() { 
+            document.getElementById('form-membro-equipa').reset(); 
+            document.getElementById('equipa-user-original').value = ''; 
+            document.querySelectorAll('.chk-perm').forEach(cb => cb.checked = true); 
+            document.getElementById('btn-salvar-membro').innerText = "SALVAR MEMBRO";
+        }
     </script>
 </body>
 </html>
