@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Redação - Notícias Avulsas</title>
-    
+        
     <!-- Bibliotecas Externas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2408,13 +2408,14 @@
             const urlLimpa = encodeURIComponent(url.replace(/^https?:\/\//, ''));
             const urlCompleta = encodeURIComponent(url);
             
+            // OTIMIZAÇÃO EXTREMA: Comprime on-the-fly para formato leve WEBP (1080px)
             const proxies = [
-                `https://wsrv.nl/?url=${urlLimpa}&output=jpg`,
+                `https://wsrv.nl/?url=${urlLimpa}&output=webp&w=1080&q=80`,
                 `https://corsproxy.io/?${urlCompleta}`,
                 `https://api.allorigins.win/raw?url=${urlCompleta}`
             ];
 
-            const fetchWithTimeout = (resource, timeout = 4000) => {
+            const fetchWithTimeout = (resource, timeout = 3000) => {
                 return new Promise((resolve, reject) => {
                     const timer = setTimeout(() => {
                         reject(new Error('Timeout de ' + timeout + 'ms excedido'));
@@ -2432,7 +2433,7 @@
 
             try {
                 const blob = await Promise.any(proxies.map(async (proxy) => {
-                    const res = await fetchWithTimeout(proxy, 4000);
+                    const res = await fetchWithTimeout(proxy, 3000);
                     if (!res.ok) {
                         throw new Error('Falha no proxy: ' + proxy);
                     }
@@ -2505,6 +2506,7 @@
             obterImagemBase64Segura(imagemOriginal).then(base64Image => {
                 divImagem.style.backgroundImage = `url('${base64Image}')`;
 
+                // OTIMIZAÇÃO DE VELOCIDADE: Cortado o tempo de espera do Flash de 800ms para 150ms!
                 setTimeout(() => {
                     html2canvas(alvoElemento, {
                         scale: 1, 
@@ -2525,7 +2527,7 @@
                         mostrarMensagem("Ocorreu um erro a processar a arte.", "erro");
                         fecharModalArte();
                     });
-                }, 800); 
+                }, 150); 
             });
         }
 
