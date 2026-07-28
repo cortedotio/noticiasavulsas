@@ -16,7 +16,6 @@
         // ==========================================
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyVroxyx_f70Q2KkcnfMWtt2vV8EzQRsPBhF9nNL4frnKhdhe7t-oahNoJo9SCLfAbE/exec";
         
-        // Ponte de comunicação blindada com o Backend
         window.google = {
             script: {
                 run: {
@@ -32,7 +31,6 @@
             }
         };
 
-        // Funções necessárias APENAS para o Admin de Redação
         const apiFunctions = [
             'getHomeData', 
             'verificarLogin', 
@@ -41,8 +39,7 @@
             'alternarStatusNoticia', 
             'excluirNoticia', 
             'adicionarCategoriaNoSheets', 
-            'chamarGeminiBackend',
-            'salvarConfiguracaoHTMLCustom'
+            'chamarGeminiBackend'
         ];
 
         apiFunctions.forEach(function(funcName) {
@@ -54,7 +51,6 @@
                 this._onSuccess = null; 
                 this._onFailure = null;
                 
-                // Fetch fortificado para impedir que o browser transforme POST em GET
                 fetch(GAS_API_URL, {
                     method: 'POST',
                     headers: { 
@@ -99,7 +95,6 @@
             };
         });
 
-        // Configuração das cores padrão do painel
         var configureTailwind = function() {
             if (typeof tailwind === 'undefined') { 
                 setTimeout(configureTailwind, 10); 
@@ -128,104 +123,34 @@
     </script>
     
     <style>
-        body { 
-            background-color: #f1f2f5; 
-            color: #111111; 
-        }
+        body { background-color: #f1f2f5; color: #111111; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        .custom-scrollbar::-webkit-scrollbar { 
-            width: 6px; 
-            height: 6px; 
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-track { 
-            background: #f1f1f1; 
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb { 
-            background: #cbd5e1; 
-            border-radius: 10px; 
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { 
-            background: #94a3b8; 
-        }
-        
-        /* Estilização do Editor Rich Text */
-        .rich-editor img { 
-            max-width: 100%; 
-            height: auto; 
-            border-radius: 8px; 
-            margin: 16px auto; 
-            border: 1px solid #e2e8f0; 
-            display: block; 
-        }
-        
-        .rich-editor iframe, .rich-editor video { 
-            max-width: 100%; 
-            border-radius: 8px; 
-            margin: 8px 0; 
-            background: #000; 
-        }
-        
-        .rich-editor a { 
-            color: #2563eb; 
-            text-decoration: underline; 
-            font-weight: 500; 
-        }
-        
-        .rich-editor h1 { 
-            font-size: 1.5em; 
-            font-weight: 900; 
-            margin: 16px 0 8px 0; 
-            font-family: 'Inter', sans-serif; 
-        }
-        
-        .rich-editor h2 { 
-            font-size: 1.25em; 
-            font-weight: 800; 
-            margin: 12px 0 8px 0; 
-            font-family: 'Inter', sans-serif; 
-        }
-        
-        .rich-editor blockquote { 
-            border-left: 4px solid #E11D48; 
-            background: #f8fafc; 
-            padding: 12px 16px; 
-            color: #475569; 
-            font-style: italic; 
-            margin: 16px 0; 
-            border-radius: 0 8px 8px 0; 
-        }
-        
-        .rich-editor ul { 
-            list-style-type: disc; 
-            padding-left: 24px; 
-            margin-bottom: 12px; 
-        }
-        
-        .rich-editor ol { 
-            list-style-type: decimal; 
-            padding-left: 24px; 
-            margin-bottom: 12px; 
-        }
+        .rich-editor img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px auto; border: 1px solid #e2e8f0; display: block; }
+        .rich-editor iframe, .rich-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; background: #000; }
+        .rich-editor a { color: #2563eb; text-decoration: underline; font-weight: 500; }
+        .rich-editor h1 { font-size: 1.5em; font-weight: 900; margin: 16px 0 8px 0; font-family: 'Inter', sans-serif; }
+        .rich-editor h2 { font-size: 1.25em; font-weight: 800; margin: 12px 0 8px 0; font-family: 'Inter', sans-serif; }
+        .rich-editor blockquote { border-left: 4px solid #E11D48; background: #f8fafc; padding: 12px 16px; color: #475569; font-style: italic; margin: 16px 0; border-radius: 0 8px 8px 0; }
+        .rich-editor ul { list-style-type: disc; padding-left: 24px; margin-bottom: 12px; }
+        .rich-editor ol { list-style-type: decimal; padding-left: 24px; margin-bottom: 12px; }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col relative selection:bg-jornal-red selection:text-white">
 
-    <!-- Caixa de Mensagens (Toast) -->
     <div id="toast" class="hidden fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border rounded-sm">
         <span id="toast-icon" class="text-xl"></span>
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
-    <!-- Ecrã de Carregamento Global -->
     <div id="loading-global" class="fixed inset-0 z-[99998] bg-jornal-dark flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="w-12 h-12 border-4 border-gray-700 border-t-jornal-red rounded-full animate-spin mb-4"></div>
         <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Sistema...</p>
     </div>
 
-    <!-- Modal de Login -->
     <div id="modalLogin" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md"></div>
         <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
@@ -242,7 +167,6 @@
         </div>
     </div>
 
-    <!-- Modal Troca de Senha Obrigatória (Primeiro Acesso) -->
     <div id="modalTrocarSenha" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md"></div>
         <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
@@ -264,10 +188,8 @@
         </div>
     </div>
 
-    <!-- VIEW ADMIN COMPLETA -->
     <div id="view-admin" class="hidden min-h-screen flex flex-col bg-gray-100 text-slate-800">
         
-        <!-- Cabeçalho Superior -->
         <header class="bg-jornal-dark text-white border-b border-gray-800 sticky top-0 z-40 shadow-sm">
             <div class="max-w-[1200px] mx-auto flex justify-between items-center px-4 py-3">
                 <div class="flex items-center gap-3">
@@ -289,23 +211,16 @@
             <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar" id="nav-abas-admin">
                 <button type="button" onclick="alternarAbaAdmin('form-noticia-container')" id="aba-noticia" class="py-3 px-5 font-black text-[11px] bg-jornal-blue text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors hidden">Publicar</button>
                 <button type="button" onclick="alternarAbaAdmin('lista-noticias-container')" id="aba-lista" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors hidden">Gerir Matérias</button>
-                <button type="button" onclick="alternarAbaAdmin('form-capa-container')" id="aba-capa" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors hidden">Layout Capa</button>
-                <button type="button" onclick="alternarAbaAdmin('form-placar-container')" id="aba-placar" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors hidden">Placar</button>
                 
-                <!-- BOTÃO DE CONFIGURAÇÕES -->
                 <a href="config.html" id="aba-configuracoes" class="py-3 px-5 font-black text-[11px] bg-gray-800 text-white hover:bg-gray-700 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-2 shadow-sm hidden">
                     ⚙️ CONFIGURAÇÕES
                 </a>
                 
-                <!-- BOTÃO DO ESTÚDIO IG -->
                 <a href="instagram.html" target="_blank" id="aba-estudio" class="py-3 px-5 font-black text-[11px] bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:opacity-90 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-opacity flex items-center gap-2 shadow-sm hidden">
                     📸 ESTÚDIO IG ↗
                 </a>
             </div>
 
-            <!-- ========================================================= -->
-            <!-- ABA: FORMULÁRIO DE NOTÍCIA                                -->
-            <!-- ========================================================= -->
             <div id="form-noticia-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-jornal-red pl-3 mb-8">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Redigir Matéria</h2>
@@ -442,9 +357,6 @@
                 </form>
             </div>
 
-            <!-- ========================================================= -->
-            <!-- ABA: LISTAGEM DE NOTÍCIAS                                 -->
-            <!-- ========================================================= -->
             <div id="lista-noticias-container" class="hidden bg-white p-6 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-jornal-red pl-3 mb-6">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Editar Publicações</h2>
@@ -480,81 +392,9 @@
                 </div>
             </div>
 
-            <!-- ========================================================= -->
-            <!-- ABA: CONFIGURAÇÃO DA CAPA                                 -->
-            <!-- ========================================================= -->
-            <div id="form-capa-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
-                <div class="border-l-4 border-emerald-600 pl-3 mb-6">
-                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Organizar Capa</h2>
-                </div>
-                <form onsubmit="salvarOrdemCapa(event)">
-                    <p class="text-xs text-gray-500 mb-6 font-medium">Escolha até 8 editorias em destaque abaixo do carrossel principal.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="selects-capa-container"></div>
-                    <div class="pt-6 border-t border-gray-200 flex justify-end">
-                        <button type="submit" id="btn-salvar-capa" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-black px-10 py-3.5 uppercase tracking-widest text-sm rounded-sm transition-colors shadow-md">Salvar Ordem</button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- ========================================================= -->
-            <!-- ABA: PLACAR AO VIVO                                       -->
-            <!-- ========================================================= -->
-            <div id="form-placar-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
-                <div class="border-l-4 border-green-600 pl-3 mb-6">
-                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Desporto ao Vivo</h2>
-                </div>
-                <form id="form-placar" onsubmit="salvarPlacarAoVivo(event)">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                        <div class="p-5 bg-gray-50 border border-gray-200 rounded-sm">
-                            <h3 class="text-[11px] font-black uppercase tracking-widest text-jornal-blue mb-4 border-b border-gray-200 pb-2">Futebol: Brasil</h3>
-                            <label class="flex items-center gap-3 mb-3 cursor-pointer">
-                                <input type="checkbox" name="liga-placar" value="soccer/bra.1" class="w-4 h-4 text-jornal-blue rounded" />
-                                <span class="text-sm font-bold text-gray-700">Brasileirão Série A</span>
-                            </label>
-                            <label class="flex items-center gap-3 mb-3 cursor-pointer">
-                                <input type="checkbox" name="liga-placar" value="soccer/bra.2" class="w-4 h-4 text-jornal-blue rounded" />
-                                <span class="text-sm font-bold text-gray-700">Brasileirão Série B</span>
-                            </label>
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" name="liga-placar" value="soccer/bra.copa_do_brasil" class="w-4 h-4 text-jornal-blue rounded" />
-                                <span class="text-sm font-bold text-gray-700">Copa do Brasil</span>
-                            </label>
-                        </div>
-                        <div class="p-5 bg-gray-50 border border-gray-200 rounded-sm">
-                            <h3 class="text-[11px] font-black uppercase tracking-widest text-green-700 mb-4 border-b border-gray-200 pb-2">Futebol: Internacional</h3>
-                            <label class="flex items-center gap-3 mb-3 cursor-pointer">
-                                <input type="checkbox" name="liga-placar" value="soccer/conmebol.libertadores" class="w-4 h-4 text-jornal-blue rounded" />
-                                <span class="text-sm font-bold text-gray-700">Copa Libertadores</span>
-                            </label>
-                            <label class="flex items-center gap-3 mb-3 cursor-pointer">
-                                <input type="checkbox" name="liga-placar" value="soccer/conmebol.sudamericana" class="w-4 h-4 text-jornal-blue rounded" />
-                                <span class="text-sm font-bold text-gray-700">Copa Sul-Americana</span>
-                            </label>
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" name="liga-placar" value="soccer/uefa.champions" class="w-4 h-4 text-jornal-blue rounded" />
-                                <span class="text-sm font-bold text-gray-700">Champions League</span>
-                            </label>
-                        </div>
-                        <div class="p-5 bg-gray-50 border border-gray-200 rounded-sm">
-                            <h3 class="text-[11px] font-black uppercase tracking-widest text-orange-600 mb-4 border-b border-gray-200 pb-2">Outros</h3>
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" name="liga-placar" value="basketball/nba" class="w-4 h-4 text-jornal-blue rounded" />
-                                <span class="text-sm font-bold text-gray-700">NBA (Basquete)</span>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="pt-6 border-t border-gray-200 flex justify-end">
-                        <button type="submit" id="btn-salvar-placar" class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-black px-12 py-3.5 uppercase tracking-widest text-sm rounded-sm shadow-md transition-colors">Salvar Ligas</button>
-                    </div>
-                </form>
-            </div>
-
         </main>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- SCRIPTS GLOBAIS BLINDADOS                                 -->
-    <!-- ========================================================= -->
     <script>
         var IMG_FALLBACK = 'https://placehold.co/600x400/e2e8f0/475569?text=Sem+Foto';
         var noticiasGlobais = [];
@@ -584,7 +424,7 @@
         });
 
         function aplicarPermissoes(role) {
-            const todasAbas = ['aba-noticia', 'aba-lista', 'aba-capa', 'aba-placar', 'aba-configuracoes', 'aba-estudio'];
+            const todasAbas = ['aba-noticia', 'aba-lista', 'aba-configuracoes', 'aba-estudio'];
             document.getElementById('label-usuario-logado').innerText = window.usuarioLogado;
             
             if (role === 'admin' || role === 'administrador') {
@@ -614,11 +454,8 @@
             if (allowedTabs.length > 0) {
                  const mapContainers = { 
                      'aba-noticia': 'form-noticia-container', 
-                     'aba-lista': 'lista-noticias-container', 
-                     'aba-capa': 'form-capa-container', 
-                     'aba-placar': 'form-placar-container'
+                     'aba-lista': 'lista-noticias-container'
                  };
-                 // Procura a primeira aba permitida que não seja link externo (estudio ou config)
                  let primeiraAbaInterna = allowedTabs.find(t => mapContainers[t]);
                  if (primeiraAbaInterna) {
                      alternarAbaAdmin(mapContainers[primeiraAbaInterna]);
@@ -761,12 +598,6 @@
                         if (document.getElementById('aba-lista').style.display !== 'none') {
                             carregarListaEdicao();
                         }
-                        if (document.getElementById('aba-capa').style.display !== 'none') {
-                            preencherFormCapa();
-                        }
-                        if (document.getElementById('aba-placar').style.display !== 'none') {
-                            preencherFormPlacar();
-                        }
                     }
                 } catch(e){}
             }
@@ -786,12 +617,6 @@
                         if (document.getElementById('aba-lista').style.display !== 'none') {
                             carregarListaEdicao();
                         }
-                        if (document.getElementById('aba-capa').style.display !== 'none') {
-                            preencherFormCapa();
-                        }
-                        if (document.getElementById('aba-placar').style.display !== 'none') {
-                            preencherFormPlacar();
-                        }
                     }
                 }).withFailureHandler(function(err) {
                     document.getElementById('loading-global').classList.add('hidden'); 
@@ -803,9 +628,7 @@
         function alternarAbaAdmin(abaId) {
             var contentIds = [
                 'form-noticia-container', 
-                'lista-noticias-container', 
-                'form-placar-container', 
-                'form-capa-container'
+                'lista-noticias-container'
             ];
             
             contentIds.forEach(function(id) { 
@@ -815,9 +638,7 @@
             
             var tabIds = [
                 'aba-noticia', 
-                'aba-lista', 
-                'aba-capa', 
-                'aba-placar'
+                'aba-lista'
             ];
             
             tabIds.forEach(function(id) { 
@@ -842,14 +663,6 @@
                 botaoId = 'aba-lista'; 
                 classAtiva = "bg-jornal-dark text-white font-black"; 
                 carregarListaEdicao(); 
-            } else if (abaId === 'form-capa-container') { 
-                botaoId = 'aba-capa'; 
-                classAtiva = "bg-emerald-600 text-white font-black"; 
-                preencherFormCapa(); 
-            } else if (abaId === 'form-placar-container') { 
-                botaoId = 'aba-placar'; 
-                classAtiva = "bg-green-700 text-white font-black"; 
-                preencherFormPlacar(); 
             } 
             
             var btnEl = document.getElementById(botaoId); 
@@ -1520,89 +1333,6 @@
             atualizarPreviewURL();
         }
 
-        function preencherFormCapa() {
-            var container = document.getElementById('selects-capa-container'); 
-            if(!container) return;
-            
-            var html = ''; 
-            var ordemAtual = []; 
-            if(configuracoesGlobais['CategoriasCapa']) { 
-                try { 
-                    ordemAtual = JSON.parse(configuracoesGlobais['CategoriasCapa']); 
-                } catch(e){} 
-            }
-            
-            for(var i=1; i<=8; i++) { 
-                var v = ordemAtual.length >= i ? ordemAtual[i-1] : ''; 
-                html += `<div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Posição ${i}</label><select id="capa-pos-${i}" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm font-bold text-gray-700 uppercase rounded-sm"><option value="">-- NENHUMA --</option>`; 
-                listaCategoriasLocais.forEach(function(c) { 
-                    var selectedAttr = (c === v) ? ' selected' : ''; 
-                    html += `<option value="${c}"${selectedAttr}>${c}</option>`; 
-                }); 
-                html += `</select></div>`; 
-            }
-            container.innerHTML = html;
-        }
-
-        function salvarOrdemCapa(e) {
-            e.preventDefault(); 
-            var btn = document.getElementById('btn-salvar-capa'); 
-            var txt = btn.innerHTML; 
-            btn.innerHTML = "A SALVAR..."; 
-            btn.disabled = true;
-            
-            var sel = []; 
-            for(var i=1; i<=8; i++) { 
-                var val = document.getElementById(`capa-pos-${i}`).value; 
-                if(val) { 
-                    sel.push(val); 
-                } 
-            } 
-            var jsonStr = JSON.stringify(sel);
-            
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
-                window.google.script.run.withSuccessHandler(function() { 
-                    mostrarMensagem("Ordem da capa atualizada!"); 
-                    configuracoesGlobais['CategoriasCapa'] = jsonStr; 
-                    btn.innerHTML = txt; 
-                    btn.disabled = false; 
-                    localStorage.removeItem('admin_data_cache'); 
-                }).salvarConfiguracaoHTMLCustom('CategoriasCapa', jsonStr); 
-            }
-        }
-
-        function preencherFormPlacar() {
-            var ligasAtivas = []; 
-            if (configuracoesGlobais['LigasPlacar']) { 
-                try { 
-                    ligasAtivas = JSON.parse(configuracoesGlobais['LigasPlacar']); 
-                } catch(e){} 
-            }
-            document.querySelectorAll('input[name="liga-placar"]').forEach(function(cb) { 
-                cb.checked = ligasAtivas.indexOf(cb.value) !== -1; 
-            });
-        }
-
-        function salvarPlacarAoVivo(e) {
-            e.preventDefault(); 
-            var btn = document.getElementById('btn-salvar-placar'); 
-            btn.innerText = "A SALVAR..."; 
-            btn.disabled = true;
-            
-            var ligas = Array.from(document.querySelectorAll('input[name="liga-placar"]:checked')).map(function(cb) { 
-                return cb.value; 
-            });
-            
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
-                window.google.script.run.withSuccessHandler(function() { 
-                    mostrarMensagem("Placar atualizado!"); 
-                    btn.innerText = "Salvar Ligas"; 
-                    btn.disabled = false; 
-                    configuracoesGlobais['LigasPlacar'] = JSON.stringify(ligas); 
-                    localStorage.removeItem('admin_data_cache'); 
-                }).salvarConfiguracaoHTMLCustom("LigasPlacar", JSON.stringify(ligas)); 
-            }
-        }
     </script>
 </body>
 </html>
