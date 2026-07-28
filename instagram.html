@@ -58,7 +58,8 @@
         .template-feed {
             width: 1080px;
             height: 1080px;
-            background-color: #0F172A; /* Borda Azul Escura */
+            background-color: #3b82f6; /* Fallback */
+            background-image: linear-gradient(to bottom right, #3b82f6, #34d399); 
             position: relative;
             font-family: 'Inter', sans-serif;
             overflow: hidden;
@@ -230,7 +231,7 @@
         <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Estúdio...</p>
     </div>
 
-    <!-- Cabeçalho (Visual idêntico ao Admin) -->
+    <!-- Cabeçalho -->
     <header class="bg-jornal-dark text-white border-b border-gray-800 sticky top-0 z-40 shadow-sm">
         <div class="max-w-[1200px] mx-auto flex justify-between items-center px-4 py-3">
             <span class="font-sans font-black tracking-tighter text-lg uppercase text-slate-100 flex items-center gap-2">
@@ -383,6 +384,7 @@
         let nomeAtualBaixar = "";
 
         document.addEventListener("DOMContentLoaded", function() {
+            // VERIFICAÇÃO DE SEGURANÇA: Só acede se estiver logado no admin.html
             if (localStorage.getItem('admin_logado') !== 'true') {
                 alert("Acesso Negado. Faça login no Painel Administrativo primeiro.");
                 window.location.href = "admin.html";
@@ -486,6 +488,63 @@
             });
         }
 
+        // MOTOR FOTOGRÁFICO BLINDADO (Com Base64 Nativo via Proxy Fetch)
+        async function obterImagemBase64Segura(urlOriginal) {
+            
+            // Fundo de recurso à prova de balas
+            const gerarFallbackBase64 = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 1080; canvas.height = 1080;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#0F172A'; ctx.fillRect(0,0,1080,1080);
+                ctx.fillStyle = '#ffffff'; ctx.font = 'bold 70px Inter, sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText('FOTO INDISPONÍVEL', 540, 500);
+                ctx.font = '35px Inter, sans-serif'; ctx.fillStyle = '#94a3b8';
+                ctx.fillText('Erro de bloqueio de segurança (CORS)', 540, 580);
+                return canvas.toDataURL('image/jpeg', 0.8);
+            };
+
+            if (!urlOriginal || urlOriginal.includes('placehold.co')) return gerarFallbackBase64();
+            if (urlOriginal.startsWith('data:image')) return urlOriginal;
+
+            let idDrive = null;
+            let urlTratada = urlOriginal;
+
+            // Deteção e formatação específica do Google Drive
+            const matchDrive = urlOriginal.match(/id=([a-zA-Z0-9_-]+)/) || urlOriginal.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (matchDrive) {
+                idDrive = matchDrive[1];
+                // Formato que os proxies gostam mais para não dar 403 Forbidden
+                urlTratada = `https://drive.google.com/uc?export=view&id=${idDrive}`;
+            }
+
+            const urlCodificada = encodeURIComponent(urlTratada);
+
+            // CORRIDA DE TÚNEIS (Busca do Blob em vez da Imagem para converter para Base64)
+            const promessas = [
+                fetch(`https://corsproxy.io/?${urlCodificada}`).then(r => r.ok ? r.blob() : Promise.reject()),
+                fetch(`https://api.allorigins.win/raw?url=${urlCodificada}`).then(r => r.ok ? r.blob() : Promise.reject()),
+                fetch(`https://wsrv.nl/?url=${urlCodificada}`).then(r => r.ok ? r.blob() : Promise.reject())
+            ];
+
+            try {
+                // Fica com a resposta do túnel que for mais rápido
+                const blobVencedor = await Promise.any(promessas);
+
+                // Converte a imagem "sugada" num texto puro Base64
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(blobVencedor);
+                });
+
+            } catch (error) {
+                console.error("Todos os túneis falharam:", error);
+                // Se tudo falhar, gera o quadrado "FOTO INDISPONÍVEL" para nunca travar a câmara.
+                return gerarFallbackBase64();
+            }
+        }
+
         function prepararArte(idNoticia, tipo) {
             const noticia = noticiasGlobais.find(n => String(n.id) === String(idNoticia));
             if(!noticia) return;
@@ -494,7 +553,10 @@
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             
-            document.getElementById('modal-titulo').innerHTML = tipo === 'feed' ? '<span>🎨</span> ARTE FEED (QUADRADA)' : '<span>📱</span> ARTE STORY (VERTICAL)';
+            document.getElementById('modal-titulo').innerHTML = tipo === 'feed' 
+                ? '<span>🎨</span> ARTE FEED (QUADRADA)' 
+                : '<span>📱</span> ARTE STORY (VERTICAL)';
+                
             document.getElementById('gerando-aviso').classList.remove('hidden');
             document.getElementById('preview-final-img').classList.add('hidden');
 
@@ -505,48 +567,51 @@
             
             document.getElementById('texto-legenda').value = `📰 ${noticia.titulo}\n\n${resumoLimpo}\n\n📲 Leia a matéria completa no nosso portal! Acesse o link na Bio ou copie o endereço abaixo:\n🔗 ${linkPortal}\n.\n.\n.\n#NoticiasAvulsas #Jornalismo ${hashtagEdit}`;
 
-            const imagemOriginal = noticia.urlImagem || 'https://placehold.co/1080x1080/0F172A/ffffff?text=Noticias+Avulsas';
+            const imagemOriginal = noticia.urlImagem || ''; 
 
-            // Seleciona a div de imagem (background) e o container correto com base no tipo de arte
             const divImagem = tipo === 'feed' ? document.getElementById('feed-img') : document.getElementById('story-img');
             const alvoElemento = tipo === 'feed' ? document.getElementById('template-feed') : document.getElementById('template-story');
             
-            // Limpa o fundo antigo
             divImagem.style.backgroundImage = 'none';
 
-            // Textos Dinâmicos e Créditos
             if (tipo === 'feed') {
                 let cred = document.getElementById('feed-credito');
-                if (noticia.creditosImagem) { cred.innerText = 'Foto: ' + noticia.creditosImagem; cred.style.display = 'block'; } else { cred.style.display = 'none'; }
+                if (noticia.creditosImagem) { 
+                    cred.innerText = 'Foto: ' + noticia.creditosImagem; 
+                    cred.style.display = 'block'; 
+                } else { 
+                    cred.style.display = 'none'; 
+                }
                 document.getElementById('feed-categoria').innerText = catUnica;
                 document.getElementById('feed-titulo').innerText = noticia.titulo;
                 document.getElementById('feed-resumo').innerText = resumoLimpo; 
             } else if (tipo === 'story') {
                 let cred = document.getElementById('story-credito');
-                if (noticia.creditosImagem) { cred.innerText = 'Foto: ' + noticia.creditosImagem; cred.style.display = 'block'; } else { cred.style.display = 'none'; }
+                if (noticia.creditosImagem) { 
+                    cred.innerText = 'Foto: ' + noticia.creditosImagem; 
+                    cred.style.display = 'block'; 
+                } else { 
+                    cred.style.display = 'none'; 
+                }
                 document.getElementById('story-categoria').innerText = catUnica;
                 document.getElementById('story-titulo').innerText = noticia.titulo;
             }
 
-            // Cria uma imagem temporária na memória para passar pelas validações de segurança e Proxies
-            const imgTemp = new Image();
-            imgTemp.crossOrigin = "anonymous";
+            // Ativa o novo motor fotográfico super rápido (150ms) e desenha a arte!
+            obterImagemBase64Segura(imagemOriginal).then(base64Image => {
+                divImagem.style.backgroundImage = `url('${base64Image}')`;
 
-            // A FUNÇÃO MAGNÍFICA QUE DISPARA A CÂMARA (Só roda se a imagem carregar com sucesso)
-            function fazerDesenhoFinal() {
-                // Aplica a imagem como Background (Resolve o esticamento e distorção do html2canvas)
-                divImagem.style.backgroundImage = `url('${imgTemp.src}')`;
-
-                // Aguarda 800ms para ter a certeza absoluta que a tipografia pesada e os fundos foram pintados
+                // Pequeno atraso para garantir que o navegador "pintou" o Base64 na parede antes de bater a foto
                 setTimeout(() => {
                     html2canvas(alvoElemento, {
                         scale: 1, 
                         useCORS: true,
                         allowTaint: false, 
-                        backgroundColor: '#0F172A'
+                        backgroundColor: tipo === 'feed' ? null : '#0F172A'
                     }).then(canvasResult => {
                         const finalJpg = canvasResult.toDataURL("image/jpeg", 0.9);
                         const prevImg = document.getElementById('preview-final-img');
+                        
                         prevImg.src = finalJpg;
                         prevImg.classList.remove('hidden');
                         document.getElementById('gerando-aviso').classList.add('hidden');
@@ -554,34 +619,11 @@
                         urlAtualBaixar = finalJpg;
                         nomeAtualBaixar = `NoticiasAvulsas_${tipo}_${idNoticia}.jpg`;
                     }).catch(err => {
-                        alert("Ocorreu um erro ao processar a arte. Tente novamente.");
+                        alert("Ocorreu um erro a processar a arte.");
                         fecharModalArte();
                     });
-                }, 800);
-            }
-
-            // Só dispara html2canvas se a imagem for validada
-            imgTemp.onload = fazerDesenhoFinal;
-
-            // MOTOR ANTI-BLOQUEIO DUPLO (CORS BYPASS)
-            imgTemp.onerror = function() {
-                // Se o link original for bloqueado pelo Drive, tenta o proxy corsproxy.io
-                imgTemp.onerror = function() {
-                    // Se o corsproxy falhar, tenta o wsrv.nl
-                    imgTemp.onerror = function() {
-                        // Se tudo falhar, injeta a imagem de fallback para não travar a aplicação
-                        imgTemp.removeAttribute("crossorigin");
-                        imgTemp.onload = fazerDesenhoFinal;
-                        imgTemp.src = 'https://placehold.co/1080x1920/0F172A/ffffff?text=Foto+Indisponivel';
-                    };
-                    let wsrvUrl = imagemOriginal.replace(/^https?:\/\//, '');
-                    imgTemp.src = "https://wsrv.nl/?url=" + encodeURIComponent(wsrvUrl) + "&output=jpg";
-                };
-                imgTemp.src = "https://corsproxy.io/?" + encodeURIComponent(imagemOriginal);
-            };
-
-            // Inicia a transferência e cadeia de verificação
-            imgTemp.src = imagemOriginal;
+                }, 150); 
+            });
         }
 
         function fecharModalArte() {
@@ -613,10 +655,8 @@
         function abrirInstagram() {
             const texto = document.getElementById('texto-legenda').value;
             navigator.clipboard.writeText(texto).then(() => {
-                alert("PASSOS PARA PUBLICAR:\n\n1. A legenda já foi copiada por nós!\n2. Verifique se clicou no botão Preto para 'Baixar Imagem'.\n3. O Instagram vai abrir agora: clique em 'Criar', coloque a imagem e faça Colar (Ctrl+V) da legenda.\n\nBoas publicações!");
                 window.open('https://instagram.com', '_blank');
             }).catch(err => {
-                alert("Ocorreu um erro a copiar a legenda. Copie-a manualmente e o Instagram será aberto agora.");
                 window.open('https://instagram.com', '_blank');
             });
         }
