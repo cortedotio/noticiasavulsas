@@ -4,13 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Redação - Notícias Avulsas</title>
-        
+    
     <!-- Bibliotecas Externas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <!-- Configuração do Tailwind -->
     <script>
@@ -115,194 +114,6 @@
             padding-left: 24px; 
             margin-bottom: 12px; 
         }
-
-        /* ---------------------------------------------------- */
-        /* TEMPLATES DO ESTÚDIO INSTAGRAM (Ocultos da tela)     */
-        /* ---------------------------------------------------- */
-        #canvas-area-export {
-            position: fixed;
-            top: 0;
-            left: -9999px;
-            z-index: -100;
-        }
-
-        /* Arte Feed (Quadrada) com Borda Gradiente Azul-Esmeralda */
-        .template-feed {
-            width: 1080px;
-            height: 1080px;
-            background-color: #3b82f6; /* Fallback */
-            background-image: linear-gradient(to bottom right, #3b82f6, #34d399); 
-            position: relative;
-            font-family: 'Inter', sans-serif;
-            overflow: hidden;
-        }
-
-        /* Arte Story (Vertical) com Borda Escura Clássica */
-        .template-story {
-            width: 1080px;
-            height: 1920px;
-            background-color: #0F172A;
-            position: relative;
-            font-family: 'Inter', sans-serif;
-            overflow: hidden;
-        }
-
-        /* Imagem de Fundo (Preenche perfeitamente sem esmagar) */
-        .template-bg-image {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            z-index: 1;
-        }
-
-        /* Margens no Feed para revelar a borda colorida por trás */
-        .template-feed .template-bg-image {
-            top: 40px;
-            left: 40px;
-            width: calc(100% - 80px);
-            height: calc(100% - 80px);
-        }
-
-        /* Sombreamento para leitura (Degradê escuro) */
-        .template-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 75%;
-            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 40%, transparent 100%);
-            z-index: 2;
-        }
-        
-        .template-feed .template-overlay {
-            bottom: 40px;
-            left: 40px;
-            width: calc(100% - 80px);
-        }
-
-        /* Textos sobrepostos */
-        .template-content {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            padding: 80px;
-            z-index: 5;
-            color: white;
-        }
-
-        .template-feed .template-content {
-            bottom: 40px;
-            left: 40px;
-            width: calc(100% - 80px);
-            padding: 60px;
-        }
-
-        .template-badge {
-            background-color: #E11D48;
-            color: white;
-            padding: 12px 24px;
-            font-size: 28px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            display: inline-block;
-            margin-bottom: 30px;
-        }
-
-        /* Tipografia de Manchete com espaço em baixo para não cortar letras */
-        .template-title {
-            font-family: 'Merriweather', serif;
-            font-weight: 900;
-            color: white;
-            line-height: 1.4; 
-            margin: 0 0 20px 0;
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
-            padding-bottom: 15px; 
-        }
-
-        .template-feed .template-title { 
-            font-size: 60px; 
-            display: -webkit-box; 
-            -webkit-line-clamp: 4; 
-            -webkit-box-orient: vertical; 
-            overflow: hidden; 
-        }
-        
-        .template-story .template-title { 
-            font-size: 75px; 
-            display: -webkit-box; 
-            -webkit-line-clamp: 7; 
-            -webkit-box-orient: vertical; 
-            overflow: hidden; 
-        }
-
-        .template-summary {
-            font-family: 'Inter', sans-serif;
-            font-size: 30px;
-            color: #cbd5e1;
-            font-weight: 400;
-            line-height: 1.5;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            margin-bottom: 40px;
-            padding-bottom: 10px; 
-        }
-
-        .template-credito {
-            position: absolute;
-            top: 40px;
-            right: 40px;
-            background-color: rgba(0,0,0,0.75);
-            color: rgba(255,255,255,0.9);
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-family: 'Inter', sans-serif;
-            font-size: 22px;
-            font-weight: 500;
-            z-index: 10;
-            max-width: 500px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .template-feed .template-credito { 
-            top: 60px; 
-            right: 60px; 
-        }
-
-        .template-footer { 
-            display: flex; 
-            align-items: center; 
-            gap: 20px; 
-            margin-top: 20px; 
-        }
-        
-        .template-footer-line { 
-            height: 6px; 
-            width: 80px; 
-            background-color: #E11D48; 
-        }
-        
-        .template-footer-text { 
-            font-size: 26px; 
-            font-weight: 900; 
-            letter-spacing: 4px; 
-            text-transform: uppercase; 
-            color: white; 
-        }
-        
-        .template-story .template-footer-text { 
-            font-size: 32px; 
-        }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col relative selection:bg-jornal-red selection:text-white">
@@ -370,6 +181,10 @@
                     <span id="label-usuario-logado" class="hidden md:inline-block ml-4 text-[9px] bg-gray-800 px-2 py-1 rounded text-gray-300 font-bold uppercase tracking-widest border border-gray-700"></span>
                 </div>
                 <div class="flex items-center gap-4">
+                    <!-- BOTÃO PARA O ESTÚDIO IG ISOLADO -->
+                    <a href="instagram.html" target="_blank" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-1.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm flex items-center gap-2">
+                        <span>📸</span> ESTÚDIO IG
+                    </a>
                     <a href="index.html" class="text-gray-400 hover:text-white text-[10px] font-bold uppercase tracking-wider hidden md:flex items-center gap-1 transition-colors">← Voltar ao Portal</a>
                     <button type="button" onclick="encerrarSessao()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm">Sair (Logout)</button>
                 </div>
@@ -738,48 +553,7 @@
             </div>
 
             <!-- ========================================================== -->
-            <!-- ABA 8: ESTÚDIO IG                                          -->
-            <!-- ========================================================== -->
-            <div id="form-estudio-ig-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-purple-500">
-                <div class="border-l-4 border-purple-500 pl-3 mb-8 flex justify-between items-center">
-                    <div>
-                        <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Estúdio Instagram</h2>
-                        <p class="text-xs text-gray-500 mt-1 font-medium">Gere imagens profissionais em 1 clique para o seu Feed e Stories.</p>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 border border-gray-200 rounded-sm">
-                    <div>
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Filtrar por Editoria</label>
-                        <select id="ig-filtro-editoria" onchange="filtrarTabelaIG()" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-bold text-gray-700 rounded-sm">
-                            <option value="todas">Todas as Editorias</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Pesquisar Matéria</label>
-                        <input type="search" id="ig-pesquisa-materia" oninput="filtrarTabelaIG()" placeholder="Digite título ou assunto..." class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm text-gray-800 rounded-sm" />
-                    </div>
-                </div>
-                
-                <div class="overflow-x-auto border border-gray-200 rounded-sm">
-                    <table class="w-full text-left text-sm whitespace-nowrap">
-                        <thead class="bg-gray-100 border-b border-gray-300 text-[10px] uppercase tracking-widest text-gray-500">
-                            <tr>
-                                <th class="p-4">Editoria</th>
-                                <th class="p-4 w-full">Manchete / Título</th>
-                                <th class="p-4 text-center">Exportar Feed (1:1)</th>
-                                <th class="p-4 text-center">Exportar Story (9:16)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabela-noticias-ig" class="divide-y divide-gray-200">
-                            <!-- Javascript vai injetar as linhas aqui com o formato expandido -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- ========================================================== -->
-            <!-- ABA 9: EQUIPA                                              -->
+            <!-- ABA 8: EQUIPA                                              -->
             <!-- ========================================================== -->
             <div id="form-equipa-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-jornal-dark">
                 <div class="border-l-4 border-jornal-dark pl-3 mb-8">
@@ -842,10 +616,6 @@
                                     <span class="text-xs font-bold text-gray-700">Placar ao Vivo</span>
                                 </label>
                                 <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" name="equipa-permissoes" value="EstudioIG" class="w-4 h-4 text-purple-500 rounded focus:ring-purple-500 border-gray-400">
-                                    <span class="text-xs font-bold text-gray-700">Estúdio IG</span>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="checkbox" name="equipa-permissoes" value="Equipa" class="w-4 h-4 text-red-600 rounded focus:ring-red-600 border-gray-400">
                                     <span class="text-xs font-bold text-gray-700">Gestão de Equipa</span>
                                 </label>
@@ -880,91 +650,9 @@
         </main>
     </div>
 
-    <!-- ========================================================== -->
-    <!-- ÁREA DE DESENHO (MOLDURAS INVISÍVEIS DO ESTÚDIO IG)        -->
-    <!-- ========================================================== -->
-    <div id="canvas-area-export">
-        <!-- 1. O TEMPLATE DO FEED (QUADRADO 1080 x 1080) -->
-        <div id="template-feed" class="template-feed">
-            <div id="feed-img" class="template-bg-image"></div>
-            <div id="feed-credito" class="template-credito">Foto: Créditos</div>
-            <div class="template-overlay"></div>
-            <div class="template-content">
-                <span id="feed-categoria" class="template-badge">Editoria</span>
-                <h1 id="feed-titulo" class="template-title">Manchete da Notícia</h1>
-                <p id="feed-resumo" class="template-summary">Resumo de três linhas...</p>
-                <div class="template-footer">
-                    <div class="template-footer-line"></div>
-                    <span class="template-footer-text">NOTÍCIAS AVULSAS</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- 2. O TEMPLATE DO STORY (VERTICAL 1080 x 1920) -->
-        <div id="template-story" class="template-story">
-            <div id="story-img" class="template-bg-image"></div>
-            <div id="story-credito" class="template-credito">Foto: Créditos</div>
-            <div class="template-overlay"></div>
-            <div class="template-content">
-                <span id="story-categoria" class="template-badge">Editoria</span>
-                <h1 id="story-titulo" class="template-title">Manchete da Notícia</h1>
-                <div class="template-footer">
-                    <div class="template-footer-line"></div>
-                    <span class="template-footer-text">TOQUE NO LINK</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal do Estúdio IG (Resultado Final) -->
-    <div id="modal-arte" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
-        <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md" onclick="fecharModalArte()"></div>
-        
-        <div class="bg-gray-100 w-full max-w-4xl rounded-sm shadow-2xl relative z-10 overflow-hidden flex flex-col max-h-[95vh] border-t-4 border-purple-500">
-            <div class="p-4 bg-white border-b border-gray-200 flex justify-between items-center shrink-0">
-                <h3 id="modal-titulo" class="font-black text-sm uppercase tracking-widest text-jornal-dark flex items-center gap-2">
-                    <span>🎨</span> ARTE PRONTA
-                </h3>
-                <button onclick="fecharModalArte()" class="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
-            </div>
-            
-            <div class="flex flex-col md:flex-row flex-grow overflow-hidden">
-                <div class="md:w-1/2 p-6 bg-gray-200 flex items-center justify-center overflow-y-auto custom-scrollbar border-r border-gray-300 relative min-h-[300px]">
-                    <div id="gerando-aviso" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-200 z-10">
-                        <div class="w-10 h-10 border-4 border-gray-300 border-t-purple-500 rounded-full animate-spin mb-4"></div>
-                        <p class="text-xs font-black text-gray-500 uppercase tracking-widest animate-pulse mt-4">A Desenhar Arte...</p>
-                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-center px-4">A alinhar fotografia e textos...</p>
-                    </div>
-                    <img id="preview-final-img" src="" class="max-w-full h-auto max-h-full object-contain shadow-2xl hidden" alt="Preview da Arte">
-                </div>
-                
-                <div class="md:w-1/2 p-6 md:p-8 bg-white overflow-y-auto custom-scrollbar flex flex-col">
-                    <button id="btn-baixar" onclick="baixarArte()" class="w-full bg-jornal-dark hover:bg-gray-800 text-white font-black text-sm uppercase tracking-widest py-4 rounded-sm shadow-lg mb-8 flex justify-center items-center gap-2 transition-colors">
-                        <span>⬇️</span> BAIXAR IMAGEM (JPG)
-                    </button>
-                    
-                    <div class="flex justify-between items-end mb-3">
-                        <h4 class="text-[10px] font-black uppercase tracking-widest text-gray-500">Legenda (Pode Editar)</h4>
-                    </div>
-                    
-                    <textarea class="w-full bg-white border border-gray-300 p-4 rounded-sm text-sm text-gray-700 h-48 custom-scrollbar font-medium mb-4 resize-none focus:outline-none focus:ring-1 focus:ring-purple-500 shadow-inner" id="texto-legenda"></textarea>
-                    
-                    <div class="mt-auto flex flex-col gap-3">
-                        <button onclick="copiarLegenda()" class="w-full bg-purple-100 hover:bg-purple-200 text-purple-800 border border-purple-300 font-black text-[11px] uppercase tracking-widest py-3 rounded-sm shadow-sm transition-colors flex justify-center items-center gap-2">
-                            <span>📋</span> 1. COPIAR LEGENDA
-                        </button>
-                        <button onclick="abrirInstagram()" class="w-full bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-600 hover:opacity-90 text-white font-black text-[11px] uppercase tracking-widest py-3 rounded-sm shadow-sm transition-opacity flex justify-center items-center gap-2">
-                            <span>🚀</span> 2. ABRIR INSTAGRAM
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- JAVASCRIPT GLOBAL EXPANDIDO -->
     <script>
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyVroxyx_f70Q2KkcnfMWtt2vV8EzQRsPBhF9nNL4frnKhdhe7t-oahNoJo9SCLfAbE/exec";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzZ3tg6RONdf9KODrdz25LYGjEGF6m1DTdM9_NUBnVrm6WGGp6k8rapdg-wDu049Tee/exec";
         
         var IMG_FALLBACK = 'https://placehold.co/600x400/e2e8f0/475569?text=Sem+Foto';
         
@@ -981,15 +669,13 @@
         var mimeStringProp = ""; 
         var nameStringProp = "";
         
-        var urlAtualBaixar = ""; 
-        var nomeAtualBaixar = "";
-        
         window.relacionadasSelecionadas = [];
         
         var usuarioLogado = "";
         var permissoesAtuais = [];
         var isMasterAdmin = false;
 
+        // O Estúdio IG foi removido desta lista para ficar num ficheiro separado.
         const ABAS_SISTEMA = [
             { id: 'Publicar', tabId: 'aba-noticia', containerId: 'form-noticia-container', nome: 'Publicar', cor: 'bg-jornal-blue' },
             { id: 'Gerir', tabId: 'aba-lista', containerId: 'lista-noticias-container', nome: 'Gerir Matérias', cor: 'bg-jornal-dark' },
@@ -998,7 +684,6 @@
             { id: 'Anuncios', tabId: 'aba-propaganda', containerId: 'form-propaganda-container', nome: 'Anúncios', cor: 'bg-jornal-dark' },
             { id: 'Redes', tabId: 'aba-social', containerId: 'form-social-container', nome: 'Redes', cor: 'bg-jornal-dark' },
             { id: 'Placar', tabId: 'aba-placar', containerId: 'form-placar-container', nome: 'Placar', cor: 'bg-green-700' },
-            { id: 'EstudioIG', tabId: 'aba-estudio-ig', containerId: 'form-estudio-ig-container', nome: '📸 Estúdio IG', cor: 'bg-purple-600' },
             { id: 'Equipa', tabId: 'aba-equipa', containerId: 'form-equipa-container', nome: '👥 Equipa', cor: 'bg-jornal-dark' }
         ];
 
@@ -1316,8 +1001,6 @@
                 preencherFormCapa();
             } else if (abaId === 'form-placar-container') {
                 preencherFormPlacar();
-            } else if (abaId === 'form-estudio-ig-container') {
-                filtrarTabelaIG();
             } else if (abaId === 'form-equipa-container') {
                 carregarTabelaEquipa();
             }
@@ -1578,14 +1261,6 @@
                     </label>
                 `;
             });
-
-            var selectIG = document.getElementById('ig-filtro-editoria');
-            if (selectIG) {
-                selectIG.innerHTML = '<option value="todas">Todas as Editorias</option>';
-                listaCategoriasLocais.sort().forEach(c => { 
-                    selectIG.innerHTML += `<option value="${c.toLowerCase()}">${c}</option>`; 
-                });
-            }
         }
 
         function normalizarTexto(str) { 
@@ -2373,241 +2048,6 @@
                 btn.disabled = false; 
             }).salvarConfiguracaoHTMLCustom('ChaveIA', val);
         }
-
-        function filtrarTabelaIG() {
-            const tbody = document.getElementById('tabela-noticias-ig');
-            if(!tbody) return;
-            
-            const p = document.getElementById('ig-pesquisa-materia');
-            const e = document.getElementById('ig-filtro-editoria');
-            
-            const termo = p ? p.value.toLowerCase().trim() : '';
-            const editoria = e ? e.value.toLowerCase() : 'todas';
-            
-            tbody.innerHTML = '';
-
-            const filtradas = noticiasGlobais.filter(n => {
-                if (String(n.status).toLowerCase() === 'inativa') {
-                    return false;
-                }
-                const matchTermo = (n.titulo.toLowerCase().includes(termo) || n.categoria.toLowerCase().includes(termo));
-                const matchEdit = (editoria === 'todas' || n.categoria.toLowerCase().includes(editoria));
-                
-                return matchTermo && matchEdit;
-            });
-
-            if(filtradas.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="4" class="p-6 text-center text-xs font-bold text-gray-500 uppercase tracking-widest">
-                            Nenhuma matéria encontrada.
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-
-            filtradas.forEach(n => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-50 border-b border-gray-100 transition-colors";
-                
-                tr.innerHTML = `
-                    <td class="p-4">
-                        <span class="bg-gray-200 text-gray-700 px-2.5 py-1 rounded-sm text-[10px] uppercase font-black tracking-widest">
-                            ${n.categoria.split(',')[0]}
-                        </span>
-                    </td>
-                    <td class="p-4 font-bold text-sm text-jornal-dark whitespace-normal break-words max-w-[300px]">
-                        ${n.titulo}
-                    </td>
-                    <td class="p-4 text-center">
-                        <button onclick="prepararArte('${n.id}', 'feed')" class="bg-purple-100 hover:bg-purple-200 text-purple-800 border border-purple-200 font-black text-[10px] px-4 py-2 uppercase tracking-widest rounded-sm transition-colors shadow-sm">
-                            GERAR FEED
-                        </button>
-                    </td>
-                    <td class="p-4 text-center">
-                        <button onclick="prepararArte('${n.id}', 'story')" class="bg-pink-100 hover:bg-pink-200 text-pink-800 border border-pink-200 font-black text-[10px] px-4 py-2 uppercase tracking-widest rounded-sm transition-colors shadow-sm">
-                            GERAR STORY
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        // MOTOR FOTOGRÁFICO BLINDADO (Com Base64 Nativo via Proxy Fetch)
-        async function obterImagemBase64Segura(urlOriginal) {
-            
-            // Fundo de recurso à prova de balas
-            const gerarFallbackBase64 = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = 1080; canvas.height = 1080;
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#0F172A'; ctx.fillRect(0,0,1080,1080);
-                ctx.fillStyle = '#ffffff'; ctx.font = 'bold 70px Inter, sans-serif'; ctx.textAlign = 'center';
-                ctx.fillText('FOTO INDISPONÍVEL', 540, 500);
-                ctx.font = '35px Inter, sans-serif'; ctx.fillStyle = '#94a3b8';
-                ctx.fillText('Erro de bloqueio de segurança (CORS)', 540, 580);
-                return canvas.toDataURL('image/jpeg', 0.8);
-            };
-
-            if (!urlOriginal || urlOriginal.includes('placehold.co')) return gerarFallbackBase64();
-            if (urlOriginal.startsWith('data:image')) return urlOriginal;
-
-            let idDrive = null;
-            let urlTratada = urlOriginal;
-
-            // Deteção e formatação específica do Google Drive
-            const matchDrive = urlOriginal.match(/id=([a-zA-Z0-9_-]+)/) || urlOriginal.match(/\/d\/([a-zA-Z0-9_-]+)/);
-            if (matchDrive) {
-                idDrive = matchDrive[1];
-                // Formato que os proxies gostam mais para não dar 403 Forbidden
-                urlTratada = `https://drive.google.com/uc?export=view&id=${idDrive}`;
-            }
-
-            const urlCodificada = encodeURIComponent(urlTratada);
-
-            // CORRIDA DE TÚNEIS (Busca do Blob em vez da Imagem para converter para Base64)
-            const promessas = [
-                fetch(`https://corsproxy.io/?${urlCodificada}`).then(r => r.ok ? r.blob() : Promise.reject()),
-                fetch(`https://api.allorigins.win/raw?url=${urlCodificada}`).then(r => r.ok ? r.blob() : Promise.reject()),
-                fetch(`https://wsrv.nl/?url=${urlCodificada}`).then(r => r.ok ? r.blob() : Promise.reject())
-            ];
-
-            try {
-                // Fica com a resposta do túnel que for mais rápido
-                const blobVencedor = await Promise.any(promessas);
-
-                // Converte a imagem "sugada" num texto puro Base64
-                return new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result);
-                    reader.readAsDataURL(blobVencedor);
-                });
-
-            } catch (error) {
-                console.error("Todos os túneis falharam:", error);
-                // Se tudo falhar, gera o quadrado "FOTO INDISPONÍVEL" para nunca travar a câmara.
-                return gerarFallbackBase64();
-            }
-        }
-
-        function prepararArte(idNoticia, tipo) {
-            const noticia = noticiasGlobais.find(n => String(n.id) === String(idNoticia));
-            if(!noticia) return;
-
-            const modal = document.getElementById('modal-arte');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            
-            document.getElementById('modal-titulo').innerHTML = tipo === 'feed' 
-                ? '<span>🎨</span> ARTE FEED (QUADRADA)' 
-                : '<span>📱</span> ARTE STORY (VERTICAL)';
-                
-            document.getElementById('gerando-aviso').classList.remove('hidden');
-            document.getElementById('preview-final-img').classList.add('hidden');
-
-            const resumoLimpo = noticia.linhaFina ? noticia.linhaFina : removerHTML(noticia.conteudo).substring(0, 150) + '...';
-            const catUnica = noticia.categoria.split(',')[0];
-            const hashtagEdit = "#" + catUnica.replace(/\s+/g, '');
-            const linkPortal = `noticiasavulsas.com.br/?noticia=${noticia.id}`;
-            
-            document.getElementById('texto-legenda').value = `📰 ${noticia.titulo}\n\n${resumoLimpo}\n\n📲 Leia a matéria completa no nosso portal! Acesse o link na Bio ou copie o endereço abaixo:\n🔗 ${linkPortal}\n.\n.\n.\n#NoticiasAvulsas #Jornalismo ${hashtagEdit}`;
-
-            const imagemOriginal = noticia.urlImagem || ''; 
-
-            const divImagem = tipo === 'feed' ? document.getElementById('feed-img') : document.getElementById('story-img');
-            const alvoElemento = tipo === 'feed' ? document.getElementById('template-feed') : document.getElementById('template-story');
-            
-            divImagem.style.backgroundImage = 'none';
-
-            if (tipo === 'feed') {
-                let cred = document.getElementById('feed-credito');
-                if (noticia.creditosImagem) { 
-                    cred.innerText = 'Foto: ' + noticia.creditosImagem; 
-                    cred.style.display = 'block'; 
-                } else { 
-                    cred.style.display = 'none'; 
-                }
-                document.getElementById('feed-categoria').innerText = catUnica;
-                document.getElementById('feed-titulo').innerText = noticia.titulo;
-                document.getElementById('feed-resumo').innerText = resumoLimpo; 
-            } else if (tipo === 'story') {
-                let cred = document.getElementById('story-credito');
-                if (noticia.creditosImagem) { 
-                    cred.innerText = 'Foto: ' + noticia.creditosImagem; 
-                    cred.style.display = 'block'; 
-                } else { 
-                    cred.style.display = 'none'; 
-                }
-                document.getElementById('story-categoria').innerText = catUnica;
-                document.getElementById('story-titulo').innerText = noticia.titulo;
-            }
-
-            // Ativa o novo motor fotográfico e desenha a arte!
-            obterImagemBase64Segura(imagemOriginal).then(base64Image => {
-                divImagem.style.backgroundImage = `url('${base64Image}')`;
-
-                // Pequeno atraso para garantir que o navegador "pintou" o Base64 na parede antes de bater a foto
-                setTimeout(() => {
-                    html2canvas(alvoElemento, {
-                        scale: 1, 
-                        useCORS: true,
-                        allowTaint: false, 
-                        backgroundColor: tipo === 'feed' ? null : '#0F172A'
-                    }).then(canvasResult => {
-                        const finalJpg = canvasResult.toDataURL("image/jpeg", 0.9);
-                        const prevImg = document.getElementById('preview-final-img');
-                        
-                        prevImg.src = finalJpg;
-                        prevImg.classList.remove('hidden');
-                        document.getElementById('gerando-aviso').classList.add('hidden');
-                        
-                        urlAtualBaixar = finalJpg;
-                        nomeAtualBaixar = `NoticiasAvulsas_${tipo}_${idNoticia}.jpg`;
-                    }).catch(err => {
-                        mostrarMensagem("Ocorreu um erro a processar a arte.", "erro");
-                        fecharModalArte();
-                    });
-                }, 300); 
-            });
-        }
-
-        function fecharModalArte() {
-            document.getElementById('modal-arte').classList.add('hidden');
-            document.getElementById('modal-arte').classList.remove('flex');
-            urlAtualBaixar = "";
-            document.getElementById('preview-final-img').src = "";
-        }
-
-        function baixarArte() {
-            if(!urlAtualBaixar) return;
-            const a = document.createElement('a');
-            a.href = urlAtualBaixar;
-            a.download = nomeAtualBaixar;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
-        function copiarLegenda() {
-            const texto = document.getElementById('texto-legenda').value;
-            navigator.clipboard.writeText(texto).then(() => {
-                alert("A Legenda foi copiada com sucesso!\n\nAgora você pode clicar no botão 'Abrir Instagram' para fazer a sua publicação.");
-            }).catch(err => {
-                alert("Não foi possível copiar automaticamente. Selecione o texto na caixa e faça Ctrl+C.");
-            });
-        }
-
-        function abrirInstagram() {
-            const texto = document.getElementById('texto-legenda').value;
-            navigator.clipboard.writeText(texto).then(() => {
-                window.open('https://instagram.com', '_blank');
-            }).catch(err => {
-                window.open('https://instagram.com', '_blank');
-            });
-        }
-
     </script>
 </body>
 </html>
