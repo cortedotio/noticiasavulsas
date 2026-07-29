@@ -390,11 +390,10 @@
                         </label>
                     </div>
 
-                    <!-- BOTÕES DE RASCUNHO E PUBLICAR COM A LÓGICA CORRIGIDA -->
+                    <!-- BOTÕES DE RASCUNHO E PUBLICAR -->
                     <div class="pt-6 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
                         <button type="button" onclick="limparFormNoticia()" class="text-xs font-black text-gray-500 hover:text-jornal-red uppercase tracking-widest w-full md:w-auto text-center md:text-left py-2 transition-colors">Limpar Form</button>
                         <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                            <!-- Botão Rascunho Atualizado -->
                             <button type="button" id="btn-salvar-rascunho" onclick="salvarNoticia(event, 'Rascunho')" class="w-full sm:w-auto bg-gray-400 text-white font-black px-8 py-4 hover:bg-gray-500 transition-colors uppercase tracking-widest text-sm rounded-sm shadow-md">Salvar Rascunho</button>
                             
                             <button type="button" onclick="salvarNoticia(event, 'Ativa')" id="btn-salvar-noticia" class="w-full sm:w-auto bg-jornal-dark text-white font-black px-10 py-4 hover:opacity-90 transition-opacity uppercase tracking-widest text-sm rounded-sm shadow-xl">Publicar Matéria</button>
@@ -975,39 +974,54 @@
             var prevSrc = document.getElementById('preview-imagem').src; 
             var temImagemAnterior = prevSrc && (prevSrc.indexOf('http') !== -1 || prevSrc.indexOf('data:image') !== -1);
             
+            var isRascunho = (statusForcado === 'Rascunho');
             var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked'); 
-            if (checkboxes.length === 0) { 
-                mostrarMensagem("Selecione ao menos 1 Editoria.", "erro"); 
-                return; 
+            
+            var tituloDigitado = document.getElementById('admin-titulo').value.trim();
+            var creditos = document.getElementById('admin-creditos-imagem').value.trim();
+            var campoCidade = document.getElementById('admin-cidade'); 
+            var cidadeSelecionada = campoCidade ? campoCidade.value.trim() : ''; 
+
+            // VALIDAÇÕES RIGOROSAS
+            if (!isRascunho) {
+                if (!tituloDigitado) {
+                    mostrarMensagem("A Manchete é obrigatória para publicar.", "erro");
+                    document.getElementById('admin-titulo').focus();
+                    return;
+                }
+                if (checkboxes.length === 0) { 
+                    mostrarMensagem("Selecione ao menos 1 Editoria para publicar.", "erro"); 
+                    return; 
+                }
+                if ((base64StringNoticia || temImagemAnterior) && !creditos) { 
+                    mostrarMensagem("Crédito de imagem obrigatório para publicar.", "erro"); 
+                    document.getElementById('admin-creditos-imagem').focus(); 
+                    return; 
+                }
+                var containerCidade = document.getElementById('admin-cidade-container');
+                if (campoCidade && containerCidade && !containerCidade.classList.contains('hidden') && !cidadeSelecionada) {
+                    mostrarMensagem("O campo Cidade é obrigatório para esta editoria.", "erro");
+                    campoCidade.focus();
+                    return;
+                }
+            } else {
+                if (!tituloDigitado) tituloDigitado = "Rascunho sem título";
             }
             
             var categoriasSelecionadasArray = Array.from(checkboxes).map(function(cb) { return cb.value; }); 
-            var categoriasSelecionadas = categoriasSelecionadasArray.join(", ");
+            var categoriasSelecionadas = categoriasSelecionadasArray.length > 0 ? categoriasSelecionadasArray.join(", ") : "Geral";
             
-            var campoCidade = document.getElementById('admin-cidade'); 
-            var cidadeSelecionada = campoCidade ? campoCidade.value.trim() : ''; 
-            
-            var creditos = document.getElementById('admin-creditos-imagem').value.trim();
-            
-            if ((base64StringNoticia || temImagemAnterior) && !creditos) { 
-                mostrarMensagem("Crédito de imagem obrigatório.", "erro"); 
-                document.getElementById('admin-creditos-imagem').focus(); 
-                return; 
-            }
-            
-            var isRascunho = (statusForcado === 'Rascunho');
             var btn = document.getElementById(isRascunho ? 'btn-salvar-rascunho' : 'btn-salvar-noticia'); 
             var txt = btn.innerHTML; 
             btn.innerHTML = 'A guardar...'; 
             btn.disabled = true;
             
             var conteudoRich = document.getElementById('admin-editor-rich').innerHTML;
-            
             var statusFinal = statusForcado || 'Ativa';
             
             var payload = { 
                 id: editandoID, 
-                titulo: document.getElementById('admin-titulo').value, 
+                titulo: tituloDigitado, 
                 categoria: categoriasSelecionadas, 
                 cidade: cidadeSelecionada, 
                 linhaFina: document.getElementById('admin-linha-fina').value, 
@@ -1034,7 +1048,7 @@
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
                     if (res && res.sucesso) { 
-                        mostrarMensagem('Matéria Guardada!'); 
+                        mostrarMensagem(isRascunho ? 'Rascunho Guardado com Sucesso!' : 'Matéria Publicada!'); 
                         localStorage.removeItem('admin_data_cache'); 
                         limparFormNoticia(); 
                         carregarNoticiasAdmin(); 
