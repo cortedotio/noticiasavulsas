@@ -394,8 +394,9 @@
                     <div class="pt-6 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
                         <button type="button" onclick="limparFormNoticia()" class="text-xs font-black text-gray-500 hover:text-jornal-red uppercase tracking-widest w-full md:w-auto text-center md:text-left py-2 transition-colors">Limpar Form</button>
                         <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                            <!-- Botão Rascunho -->
                             <button type="button" id="btn-salvar-rascunho" onclick="salvarNoticia(event, 'Rascunho')" class="w-full sm:w-auto bg-gray-400 text-white font-black px-8 py-4 hover:bg-gray-500 transition-colors uppercase tracking-widest text-sm rounded-sm shadow-md">Salvar Rascunho</button>
-                            
+                            <!-- Botão Publicar -->
                             <button type="button" onclick="salvarNoticia(event, 'Ativa')" id="btn-salvar-noticia" class="w-full sm:w-auto bg-jornal-dark text-white font-black px-10 py-4 hover:opacity-90 transition-opacity uppercase tracking-widest text-sm rounded-sm shadow-xl">Publicar Matéria</button>
                         </div>
                     </div>
@@ -910,21 +911,38 @@
                     return; 
                 }
                 
-                if (file.size > 5 * 1024 * 1024) { 
-                    alert('Ficheiro excede 5MB.'); 
-                    this.value = ""; 
-                    return; 
-                }
-                
-                mimeStringNoticia = file.type; 
+                // NOVIDADE: Compressor Nativo em Canvas Integrado!
+                mimeStringNoticia = 'image/jpeg'; // Forçamos JPEG para aliviar o peso
                 nameStringNoticia = file.name;
-                var reader = new FileReader(); 
                 
+                var reader = new FileReader(); 
                 reader.onload = function(evt) { 
-                    base64StringNoticia = evt.target.result.split(',')[1]; 
-                    document.getElementById('preview-imagem').src = evt.target.result; 
-                    document.getElementById('preview-imagem').classList.remove('hidden'); 
-                    verificarUploadMedia(e.target); 
+                    var img = new Image();
+                    img.onload = function() {
+                        var canvas = document.createElement('canvas');
+                        var ctx = canvas.getContext('2d');
+                        var maxWidth = 1200; // Resolução ideal de Cover de site
+                        var scale = 1;
+                        
+                        if (img.width > maxWidth) {
+                            scale = maxWidth / img.width;
+                        }
+                        
+                        canvas.width = img.width * scale;
+                        canvas.height = img.height * scale;
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        // O peso da imagem desce de Megabytes para uns ~200kb!
+                        var dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                        
+                        // Passamos só o texto limpo para o Google
+                        base64StringNoticia = dataUrl.split(',')[1]; 
+                        
+                        document.getElementById('preview-imagem').src = dataUrl; 
+                        document.getElementById('preview-imagem').classList.remove('hidden'); 
+                        verificarUploadMedia(e.target); 
+                    };
+                    img.src = evt.target.result;
                 }; 
                 reader.readAsDataURL(file);
             });
@@ -982,7 +1000,7 @@
             var campoCidade = document.getElementById('admin-cidade'); 
             var cidadeSelecionada = campoCidade ? campoCidade.value.trim() : ''; 
 
-            // VALIDAÇÕES RIGOROSAS
+            // VALIDAÇÕES RIGOROSAS (Apenas aplicadas se o utilizador clicar em "Publicar Matéria")
             if (!isRascunho) {
                 if (!tituloDigitado) {
                     mostrarMensagem("A Manchete é obrigatória para publicar.", "erro");
@@ -1050,11 +1068,13 @@
                     if (res && res.sucesso) { 
                         mostrarMensagem(isRascunho ? 'Rascunho Guardado com Sucesso!' : 'Matéria Publicada!'); 
                         localStorage.removeItem('admin_data_cache'); 
+                        
+                        // Mágica UI: Troca de aba instantaneamente sem esperar pela resposta final do carregarNoticiasAdmin
                         limparFormNoticia(); 
+                        alternarAbaAdmin('lista-noticias-container'); 
+                        
+                        // Faz a tabela atualizar discretamente no fundo
                         carregarNoticiasAdmin(); 
-                        setTimeout(function() { 
-                            alternarAbaAdmin('lista-noticias-container'); 
-                        }, 1500); 
                     } else { 
                         mostrarMensagem("Erro ao guardar", 'erro'); 
                     }
@@ -1138,7 +1158,7 @@
                                 ${n.categoria || 'Geral'}
                             </span>
                         </td>
-                        <td class="p-4 font-bold text-sm text-jornal-dark truncate max-w-[250px]" title="${n.titulo}">
+                        <td class="p-4 font-bold text-sm text-jornal-dark truncate max-w-[250px]" title="${n.titulo.replace(/"/g, '&quot;')}">
                             ${n.titulo || ''}
                         </td>
                         <td class="p-4 text-center text-xs font-black text-jornal-blue">
