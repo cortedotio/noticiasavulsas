@@ -1052,7 +1052,7 @@
         }
 
         // ==========================================
-        // MÓDULO CLIMA HORÁRIO CORRIGIDO
+        // MÓDULO CLIMA HORÁRIO (COMPLETO E CORRIGIDO)
         // ==========================================
         function obterIconeClima(wCode) {
             if (wCode === 0) return '☀️';
@@ -1187,7 +1187,7 @@
                                     var horaLimpa = horaFull.substring(11, 16); 
                                     var tempH = Math.round(dadosClima.hourly.temperature_2m[j]);
                                     var iconH = obterIconeClima(dadosClima.hourly.weathercode[j]);
-                                    var probChuva = dadosClima.hourly.precipitation_probability[j];
+                                    var probChuva = dadosClima.hourly.precipitation_probability[j] || 0;
                                     
                                     containerHoras.innerHTML += `<div class="shrink-0 text-center flex flex-col items-center p-3 border border-gray-100 rounded-sm bg-gray-50 min-w-[70px]">
                                         <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">${horaLimpa}</span>
