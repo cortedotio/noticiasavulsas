@@ -139,7 +139,7 @@
         </header>
 
         <main class="max-w-[1200px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
-            <!-- ABAS DO PAINEL CORRIGIDAS COM OS LINKS -->
+            <!-- ABAS DO PAINEL -->
             <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar">
                 <button type="button" onclick="alternarAbaAdmin('form-noticia-container')" id="aba-noticia" class="py-3 px-5 font-black text-[11px] bg-jornal-blue text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Publicar</button>
                 <button type="button" onclick="alternarAbaAdmin('lista-noticias-container')" id="aba-lista" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Gerir Matérias</button>
@@ -164,7 +164,9 @@
                         <div class="lg:w-2/3 flex flex-col gap-6">
                             <div>
                                 <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Manchete</label>
-                                <input type="text" id="admin-titulo" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue font-serif font-bold text-lg text-jornal-dark rounded-sm" placeholder="O título da sua notícia..." />
+                                <input type="text" id="admin-titulo" oninput="atualizarPreviewURL()" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue font-serif font-bold text-lg text-jornal-dark rounded-sm" placeholder="O título da sua notícia..." />
+                                <!-- Pré-visualização do Link SEO -->
+                                <p id="preview-url-noticia" class="text-[10px] text-gray-400 mt-2 hidden truncate">🔗 <span class="hidden sm:inline">Link da matéria: </span><span class="text-blue-500 font-medium tracking-wide"></span></p>
                             </div>
                             
                             <div>
@@ -188,7 +190,7 @@
                         </div>
                     </div>
 
-                    <!-- Caixa Cidade (Só aparece se "Cidades" for checado) -->
+                    <!-- Caixa Cidade -->
                     <div id="admin-cidade-container" class="hidden p-5 bg-blue-50 border border-blue-200 rounded-sm">
                         <label for="admin-cidade" class="text-[11px] font-black uppercase tracking-widest text-jornal-blue mb-2 block">Cidade *</label>
                         <input type="text" id="admin-cidade" placeholder="Informe a cidade da matéria" class="w-full px-4 py-3 bg-white border border-blue-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm" />
@@ -301,9 +303,7 @@
                     <div class="pt-6 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
                         <button type="button" onclick="limparFormNoticia()" class="text-xs font-black text-gray-500 hover:text-jornal-red uppercase tracking-widest w-full md:w-auto text-center md:text-left py-2 transition-colors">Limpar Form</button>
                         <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                            <!-- Botão Rascunho Atualizado -->
                             <button type="button" id="btn-salvar-rascunho" onclick="salvarNoticia(event, 'Rascunho')" class="w-full sm:w-auto bg-gray-400 text-white font-black px-8 py-4 hover:bg-gray-500 transition-colors uppercase tracking-widest text-sm rounded-sm shadow-md">Salvar Rascunho</button>
-                            
                             <button type="button" onclick="salvarNoticia(event, 'Ativa')" id="btn-salvar-noticia" class="w-full sm:w-auto bg-jornal-dark text-white font-black px-10 py-4 hover:opacity-90 transition-opacity uppercase tracking-widest text-sm rounded-sm shadow-xl">Publicar Matéria</button>
                         </div>
                     </div>
@@ -374,6 +374,45 @@
             }
         });
 
+        // UTIL: Normalizar string para criar URL e busca
+        function normalizarTextoUrl(text) {
+            if (!text) return 'geral';
+            return String(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+                .replace(/\s+/g, '-')
+                .replace(/[^\w\-]+/g, '')
+                .replace(/\-\-+/g, '-')
+                .replace(/^-+/, '')
+                .replace(/-+$/, '');
+        }
+
+        function atualizarPreviewURL() {
+            var titulo = document.getElementById('admin-titulo').value.trim();
+            var elPreview = document.getElementById('preview-url-noticia');
+            if(!titulo) {
+                if(elPreview) elPreview.classList.add('hidden');
+                return;
+            }
+            
+            var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
+            var cat = "Geral";
+            if (checkboxes.length > 0) {
+                cat = checkboxes[0].value;
+            }
+            
+            var slugTitulo = normalizarTextoUrl(titulo);
+            var slugCat = normalizarTextoUrl(cat);
+            var idAtual = document.getElementById('admin-id-noticia').value;
+            var fakeId = idAtual ? idAtual : "1710987654321"; // Exemplo visual de ID
+            
+            var urlBase = "https://noticiasavulsas.com.br"; // Substitua pelo domínio real caso queira visualização exata
+            var finalUrl = urlBase + '/' + slugCat + '/' + slugTitulo + '/' + fakeId;
+            
+            if(elPreview) {
+                elPreview.querySelector('span').innerText = finalUrl;
+                elPreview.classList.remove('hidden');
+            }
+        }
+
         function mostrarMensagem(mensagem, tipo) {
             if(tipo === undefined) tipo = 'sucesso';
             var toast = document.getElementById('toast');
@@ -432,7 +471,6 @@
                         }
                         renderizarChecklistCategoriasAdmin();
                         
-                        // Atualiza tabela apenas se ela estiver visível para não causar lentidão na escrita
                         if (!document.getElementById('lista-noticias-container').classList.contains('hidden')) {
                             carregarListaEdicao();
                         }
@@ -481,7 +519,7 @@
             checklistAdmin.innerHTML = '';
             listaCategoriasLocais.forEach(function(c) {
                 checklistAdmin.innerHTML += '<label class="flex items-center gap-3 cursor-pointer text-xs font-bold text-slate-700 p-2 hover:bg-gray-100 rounded transition-colors">' +
-                    '<input type="checkbox" name="admin-categorias-checkbox" value="' + c + '" onchange="atualizarCampoCidadeAdmin()" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-400" />' + 
+                    '<input type="checkbox" name="admin-categorias-checkbox" value="' + c + '" onchange="atualizarCampoCidadeAdmin(); atualizarPreviewURL();" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-400" />' + 
                     c.toUpperCase() + 
                 '</label>';
             });
@@ -493,7 +531,6 @@
             var selecionadas = Array.from(document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked'));
             var mostraCidade = selecionadas.some(function(cb) { return normalizarTexto(cb.value) === 'cidades'; });
             var container = document.getElementById('admin-cidade-container');
-            var input = document.getElementById('admin-cidade');
             if (container) container.classList.toggle('hidden', !mostraCidade);
         }
 
@@ -654,7 +691,6 @@
                 mimeStringNoticia = file.type; 
                 nameStringNoticia = file.name;
                 
-                // NOVO: COMPRESSOR DE IMAGEM INVISÍVEL (Reduz o upload de 3MB para ~150KB)
                 var reader = new FileReader();
                 reader.onload = function(evt) { 
                     var img = new Image();
@@ -667,15 +703,9 @@
                         var height = img.height;
 
                         if (width > height) {
-                            if (width > MAX_WIDTH) {
-                                height *= MAX_WIDTH / width;
-                                width = MAX_WIDTH;
-                            }
+                            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
                         } else {
-                            if (height > MAX_HEIGHT) {
-                                width *= MAX_HEIGHT / height;
-                                height = MAX_HEIGHT;
-                            }
+                            if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
                         }
                         
                         canvas.width = width;
@@ -712,15 +742,12 @@
             window.relacionadasEditadasManualmente = false; 
             
             atualizarUIListaRelacionadas(); 
+            atualizarPreviewURL(); // Limpa e oculta a preview do link
             
             var btnSalvar = document.getElementById('btn-salvar-noticia'); 
-            if (btnSalvar) {
-                btnSalvar.innerText = "Publicar Matéria";
-            }
+            if (btnSalvar) btnSalvar.innerText = "Publicar Matéria";
             var btnRascunho = document.getElementById('btn-salvar-rascunho');
-            if (btnRascunho) {
-                btnRascunho.innerText = "Salvar Rascunho";
-            }
+            if (btnRascunho) btnRascunho.innerText = "Salvar Rascunho";
         }
 
         function salvarNoticia(e, statusForcado) {
@@ -739,7 +766,6 @@
             var campoCidade = document.getElementById('admin-cidade'); 
             var cidadeSelecionada = campoCidade ? campoCidade.value.trim() : ''; 
 
-            // VALIDAÇÕES RIGOROSAS (Apenas aplicadas se o utilizador clicar em "Publicar Matéria")
             if (!isRascunho) {
                 if (!tituloDigitado) {
                     mostrarMensagem("A Manchete é obrigatória para publicar.", "erro");
@@ -762,7 +788,6 @@
                     return;
                 }
             } else {
-                // Se for Rascunho e estiver sem título, o sistema coloca um nome provisório automático
                 if (!tituloDigitado) tituloDigitado = "Rascunho sem título";
             }
             
@@ -771,7 +796,7 @@
             
             var btn = document.getElementById(isRascunho ? 'btn-salvar-rascunho' : 'btn-salvar-noticia'); 
             var txtOriginal = btn.innerHTML; 
-            btn.innerHTML = 'A GUARDAR...'; 
+            btn.innerHTML = 'A guardar...'; 
             btn.disabled = true;
             
             var conteudoRich = document.getElementById('admin-editor-rich').innerHTML;
@@ -989,6 +1014,7 @@
             
             alternarAbaAdmin('form-noticia-container'); 
             window.scrollTo(0,0); 
+            atualizarPreviewURL(); // Força a atualização do preview com os dados carregados
         }
 
     </script>
