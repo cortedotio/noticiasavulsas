@@ -203,7 +203,6 @@
                         <div id="grid-noticias" class="grid gap-6 w-full min-w-0"></div>
                         
                         <div class="w-full flex justify-center mt-10">
-                            <!-- BOTÃO MOSTRAR MAIS NOTÍCIAS -->
                             <button id="btn-mostrar-mais" onclick="mostrarMaisNoticias()" class="border-2 border-jornal-dark text-jornal-dark font-black uppercase text-[11px] px-12 py-3.5 rounded-full hover:bg-jornal-dark hover:text-white transition-all tracking-widest hidden shadow-sm w-full md:w-auto">Mostrar Mais Notícias</button>
                         </div>
                     </div>
@@ -214,7 +213,6 @@
                         <span id="nc-categoria" class="text-jornal-red text-[11px] font-black uppercase tracking-widest mb-4 block cursor-pointer hover:underline" onclick="filtrarCategoria(this.innerText)"></span>
                         <h1 id="nc-titulo" class="font-serif text-3xl md:text-5xl font-black mb-5 leading-tight text-jornal-dark break-words tracking-tight"></h1>
                         
-                        <!-- Linha Fina Melhorada (Abaixo do Título) -->
                         <h2 id="nc-linha-fina" class="font-sans text-base md:text-xl text-gray-500 mb-8 leading-relaxed font-medium hidden break-words italic"></h2>
                         
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-5 mb-8 gap-4">
@@ -222,6 +220,13 @@
                                 <div class="text-sm font-bold text-gray-800 break-words" id="nc-autor"></div>
                                 <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate" id="nc-data"></div>
                             </div>
+                            
+                            <button id="btn-curtir" onclick="curtirNoticiaAtual()" class="flex justify-center items-center gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-5 py-2.5 rounded-full transition-colors group shrink-0 w-full sm:w-auto shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" id="icone-coracao" class="h-5 w-5 text-gray-400 group-hover:text-jornal-red transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                                <span id="nc-likes" class="text-sm font-black text-gray-700">0</span>
+                            </button>
                         </div>
 
                         <div class="flex flex-wrap items-center gap-2 md:gap-4 mb-8">
@@ -298,7 +303,7 @@
                         </div>
                     </div>
 
-                    <!-- OPINIÃO (AGORA É CLICÁVEL) -->
+                    <!-- OPINIÃO -->
                     <div id="sidebar-opinioes" class="hidden mb-10 bg-white border border-gray-200 p-6 shadow-sm rounded-sm">
                         <div class="border-b-4 border-jornal-red pb-3 mb-6">
                             <h2 class="text-xs font-black uppercase tracking-widest text-jornal-red cursor-pointer hover:opacity-75 transition-opacity inline-flex items-center gap-1" onclick="filtrarCategoria('Opinião', true)">OPINIÃO &raquo;</h2>
@@ -306,8 +311,8 @@
                         <div id="conteudo-opinioes" class="flex flex-col gap-5"></div>
                     </div>
 
-                    <!-- PLACAR AO VIVO (AGORA FILTRADO PARA "HOJE") -->
-                    <div class="mb-10 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
+                    <!-- PLACAR AO VIVO (COM CORREÇÃO PARA OCULTAR QUANDO VAZIO) -->
+                    <div id="container-geral-placar" class="mb-10 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
                         <div class="flex items-center justify-between mb-5 border-b border-gray-100 pb-3">
                             <h2 class="text-[11px] font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
                                 <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Placar Ao Vivo
@@ -318,18 +323,18 @@
                         </div>
                     </div>
 
-                    <!-- WIDGET CLIMA CLICÁVEL -->
-                    <div class="mb-10 bg-white border border-gray-200 p-6 shadow-sm rounded-sm cursor-pointer hover:opacity-95 transition-opacity" onclick="abrirModalClima()">
-                        <div class="border-b-4 border-sky-400 pb-3 mb-5 flex justify-between items-center">
+                    <!-- WIDGET CLIMA REDESENHADO -->
+                    <div class="mb-10 bg-white border border-gray-200 p-1 shadow-sm rounded-sm cursor-pointer hover:shadow-md transition-shadow" onclick="abrirModalClima()">
+                        <div class="border-t-4 border-sky-400 pt-2 px-4 pb-2 flex justify-between items-center bg-white">
                             <h2 class="text-xs font-black uppercase tracking-widest text-sky-500">Clima Local</h2>
-                            <span class="text-[9px] text-gray-400 uppercase font-bold tracking-widest bg-gray-50 px-2 py-1 rounded">Previsão &raquo;</span>
+                            <span class="text-[9px] text-gray-400 uppercase font-bold tracking-widest hover:text-sky-500 transition-colors">Previsão &raquo;</span>
                         </div>
-                        <div class="relative overflow-hidden bg-gradient-to-br from-sky-400 to-blue-600 rounded-sm shadow-inner p-6 text-white flex flex-col items-center">
-                            <div class="absolute -top-6 -right-4 text-9xl opacity-10 select-none pointer-events-none" id="bg-icone-clima">☀️</div>
-                            <span class="text-[10px] font-black uppercase tracking-widest opacity-90 mb-3 relative z-10" id="desc-clima">Cuiabá, MT</span>
-                            <div class="flex items-center gap-5 relative z-10">
-                                <span class="text-6xl drop-shadow-md" id="icone-clima">☀️</span>
-                                <span class="text-6xl font-black drop-shadow-md tracking-tighter" id="temp-clima">--°</span>
+                        <div class="relative overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 rounded-b-sm shadow-inner py-8 px-4 text-white flex flex-col items-center">
+                            <div class="absolute top-1/2 -translate-y-1/2 -right-10 text-[150px] opacity-10 select-none pointer-events-none" id="bg-icone-clima">☀️</div>
+                            <span class="text-[12px] font-black uppercase tracking-widest opacity-90 mb-4 relative z-10" id="desc-clima">A Atualizar...</span>
+                            <div class="flex items-center justify-center gap-6 relative z-10">
+                                <span class="text-7xl drop-shadow-md" id="icone-clima">☀️</span>
+                                <span class="text-7xl font-black drop-shadow-md tracking-tighter leading-none" id="temp-clima">--°</span>
                             </div>
                         </div>
                     </div>
@@ -372,39 +377,56 @@
     <!-- Modais de Clima e Expediente -->
     <div id="modalClima" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/80 backdrop-blur-sm" onclick="fecharModalClima()"></div>
-        <div class="bg-white w-full max-w-lg rounded-sm shadow-2xl relative z-10 overflow-hidden font-sans border-t-4 border-sky-500">
-            <div class="p-6 md:p-8">
-                <div class="flex justify-between items-start mb-6 border-b border-gray-100 pb-4">
+        <div class="bg-white w-full max-w-lg rounded-sm shadow-2xl relative z-10 overflow-hidden font-sans flex flex-col max-h-[90vh]">
+            <!-- Header -->
+            <div class="p-6 pb-0">
+                <div class="flex justify-between items-center mb-6">
                     <div class="flex items-center gap-2 text-sm text-sky-700 font-black uppercase tracking-widest">
-                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                         <span>Cuiabá, Mato Grosso</span>
                     </div>
                     <button onclick="fecharModalClima()" class="text-gray-400 hover:text-red-500 font-black text-2xl leading-none">&times;</button>
                 </div>
-                
-                <div class="flex justify-between items-center mb-10">
-                    <div class="flex items-center gap-5">
+
+                <!-- Current Weather -->
+                <div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
+                    <div class="flex items-center gap-4">
                         <span id="modal-clima-icone" class="text-7xl drop-shadow-sm">☀️</span>
                         <div class="flex items-start">
-                            <span id="modal-clima-temp" class="text-7xl font-black text-gray-800 tracking-tighter">--</span>
-                            <div class="flex flex-col text-2xl text-gray-500 mt-2 font-bold"><span>&deg;C</span></div>
+                            <span id="modal-clima-temp" class="text-7xl font-black text-gray-800 tracking-tighter leading-none">--</span>
+                            <span class="text-3xl text-gray-800 font-black mt-1">°C</span>
                         </div>
-                        <div class="text-[10px] font-black text-gray-500 ml-5 border-l-2 border-gray-200 pl-5 flex flex-col gap-2 uppercase tracking-wide">
-                            <span>Chuva: <span id="modal-clima-chuva" class="text-sky-600">0%</span></span>
+                    </div>
+                    <div class="flex gap-6 items-center">
+                        <div class="text-[10px] font-black text-gray-500 flex flex-col gap-1.5 uppercase tracking-widest border-l-2 border-gray-100 pl-4">
+                            <span>Chuva: <span id="modal-clima-chuva" class="text-sky-600">--%</span></span>
                             <span>Umidade: <span id="modal-clima-umidade" class="text-sky-600">--%</span></span>
                             <span>Vento: <span id="modal-clima-vento" class="text-sky-600">-- km/h</span></span>
                         </div>
-                    </div>
-                    <div class="text-right flex flex-col items-end">
-                        <span class="text-xl font-black text-jornal-dark uppercase" id="modal-clima-desc">Clima</span>
-                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1" id="modal-clima-dia-hora">Hoje</span>
+                        <div class="text-right">
+                            <div class="text-xl font-black text-jornal-dark uppercase leading-tight" id="modal-clima-desc">--</div>
+                            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Hoje</div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="flex gap-6 border-b-2 border-gray-100 mb-6 text-[10px] font-black uppercase tracking-widest">
-                    <button class="border-b-4 border-amber-500 pb-2 text-gray-800">Previsão 7 Dias</button>
+            </div>
+
+            <div class="overflow-y-auto custom-scrollbar p-6 pt-0">
+                <!-- Daily Forecast -->
+                <div class="mb-8">
+                    <h3 class="text-xs font-black uppercase tracking-widest text-jornal-dark border-b-2 border-amber-500 pb-2 mb-4 inline-block">Previsão 7 Dias</h3>
+                    <div class="flex gap-3 overflow-x-auto custom-scrollbar pb-2" id="modal-clima-previsao">
+                        <!-- JS fills this -->
+                    </div>
                 </div>
-                <div class="flex justify-between text-center overflow-x-auto custom-scrollbar pb-4" id="modal-clima-previsao"></div>
+
+                <!-- Hourly Forecast -->
+                <div>
+                    <h3 class="text-xs font-black uppercase tracking-widest text-gray-500 mb-4">Previsão por Hora</h3>
+                    <div class="flex gap-3 overflow-x-auto custom-scrollbar pb-2" id="horas-clima-container">
+                        <!-- JS fills this -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -843,7 +865,6 @@
                 blocoAg.classList.add('hidden'); 
             }
 
-            // CARREIRAS
             var carreiras = noticiasGlobais.filter(function(n) { return isNoticiaPublicada(n) && String(n.categoria).toLowerCase().indexOf('carreira') !== -1; });
             var blocoCa = document.getElementById('bloco-carreiras');
             var contCa = document.getElementById('conteudo-carreiras');
@@ -864,7 +885,6 @@
                 blocoCa.classList.add('hidden'); 
             }
 
-            // VARIEDADES
             var variedades = noticiasGlobais.filter(function(n) { return isNoticiaPublicada(n) && String(n.categoria).toLowerCase().indexOf('variedade') !== -1; });
             var blocoVa = document.getElementById('bloco-variedades');
             var contVa = document.getElementById('conteudo-variedades');
@@ -1029,12 +1049,19 @@
             lista.innerHTML = htmlFinal;
         }
 
+        // ==========================================
+        // MÓDULO CLIMA HORÁRIO CORRIGIDO
+        // ==========================================
         function obterIconeClima(wCode) {
-            if (wCode <= 3) return '☀️';
-            if (wCode <= 48) return '⛅';
-            if (wCode <= 67) return '🌧️';
-            if (wCode <= 77) return '❄️';
-            return '⛈️';
+            if (wCode === 0) return '☀️';
+            if (wCode === 1 || wCode === 2) return '🌤️';
+            if (wCode === 3) return '☁️';
+            if (wCode >= 45 && wCode <= 48) return '🌫️';
+            if (wCode >= 51 && wCode <= 67) return '🌧️';
+            if (wCode >= 71 && wCode <= 77) return '❄️';
+            if (wCode >= 80 && wCode <= 82) return '🌦️';
+            if (wCode >= 95) return '⛈️';
+            return '☀️';
         }
 
         function renderizarClimaEFinanceiro() {
@@ -1051,10 +1078,10 @@
                 
                 var recentes = noticiasGlobais.filter(function(n){ return isNoticiaPublicada(n); }).slice(0, 5); 
                 recentes.forEach(function(n) { 
-                    if(n) stringTicker += '<span class="mx-3 hover:text-red-200 cursor-pointer text-white underline" onclick="abrirNoticia(\'' + n.id + '\', true)">' + (n.titulo || '') + '</span> &bull; '; 
+                    if(n) stringTicker += '<span class="mx-3 hover:text-red-200 cursor-pointer text-white underline" onclick="abrirNoticia(\'' + n.id + '\', true)">' + (n.titulo || '').toUpperCase() + '</span> • '; 
                 });
                 
-                if(tick) tick.innerHTML = stringTicker.toUpperCase();
+                if(tick) tick.innerHTML = stringTicker;
             }
 
             try {
@@ -1080,18 +1107,20 @@
                         clima = Math.round(dadosClima.current_weather.temperature);
                         var wCode = dadosClima.current_weather.weathercode;
                         iconeClima = obterIconeClima(wCode);
-                        descClima = wCode <= 3 ? 'Céu Limpo' : wCode <= 48 ? 'Nublado' : wCode <= 67 ? 'Chuva' : 'Tempestade';
+                        descClima = wCode <= 2 ? 'CÉU LIMPO' : wCode <= 3 ? 'NUBLADO' : wCode <= 67 ? 'CHUVA' : 'TEMPESTADE';
 
+                        // Atualiza Widget Lateral
                         var elTemp = document.getElementById('temp-clima');
                         var elIcone = document.getElementById('icone-clima');
                         var elBgIcone = document.getElementById('bg-icone-clima');
                         var elDesc = document.getElementById('desc-clima');
 
-                        if (elTemp) elTemp.innerText = clima + ' °C';
+                        if (elTemp) elTemp.innerText = clima + '°';
                         if (elIcone) elIcone.innerText = iconeClima;
                         if (elBgIcone) elBgIcone.innerText = iconeClima;
                         if (elDesc) elDesc.innerText = descClima;
 
+                        // Atualiza Modal
                         var mChuva = document.getElementById('modal-clima-chuva');
                         var mUmid = document.getElementById('modal-clima-umidade');
                         var mVento = document.getElementById('modal-clima-vento');
@@ -1111,27 +1140,26 @@
 
                         var mPrevisao = document.getElementById('modal-clima-previsao');
                         if (mPrevisao && dadosClima.daily) {
-                            var diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-                            var htmlDias = '<div class="flex gap-3 overflow-x-auto custom-scrollbar w-full pb-2">';
+                            var diasSemana = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+                            var htmlDias = '';
                             
                             for (let i = 0; i < 7; i++) {
                                 var dataDia = new Date(dadosClima.daily.time[i] + 'T00:00:00'); 
-                                var nomeDia = i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : diasSemana[dataDia.getDay()];
+                                var nomeDia = i === 0 ? 'HOJE' : i === 1 ? 'AMANHÃ' : diasSemana[dataDia.getDay()];
                                 var iconeD = obterIconeClima(dadosClima.daily.weathercode[i]);
                                 var maxD = Math.round(dadosClima.daily.temperature_2m_max[i]);
                                 var minD = Math.round(dadosClima.daily.temperature_2m_min[i]);
                                 
-                                htmlDias += `<div class="btn-dia-clima shrink-0 cursor-pointer border-2 ${i===0 ? 'border-sky-400 bg-sky-50' : 'border-transparent bg-gray-50 hover:bg-gray-100'} p-3 rounded-sm text-center min-w-[70px] transition-all" data-dia="${i}">
-                                    <div class="text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">${nomeDia}</div>
-                                    <div class="text-2xl mb-2">${iconeD}</div>
-                                    <div class="text-[10px] font-bold"><span class="text-rose-500">${maxD}°</span> <span class="text-gray-400">${minD}°</span></div>
+                                var activeClass = i === 0 ? 'border-sky-400 bg-sky-50' : 'border-transparent bg-gray-50 hover:bg-gray-100';
+
+                                htmlDias += `<div class="btn-dia-clima shrink-0 cursor-pointer border-2 ${activeClass} p-3 rounded-sm text-center min-w-[80px] transition-all flex flex-col items-center" data-dia="${i}">
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">${nomeDia}</span>
+                                    <span class="text-3xl mb-2 drop-shadow-sm">${iconeD}</span>
+                                    <div class="text-[10px] font-bold flex gap-2"><span class="text-rose-500">${maxD}°</span> <span class="text-gray-400">${minD}°</span></div>
                                 </div>`;
                             }
-                            htmlDias += '</div>';
                             
-                            var htmlHoras = '<div class="w-full mt-6 text-left"><h4 class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3">Previsão por Hora</h4><div id="horas-clima-container" class="flex gap-4 overflow-x-auto custom-scrollbar pb-2"></div></div>';
-                            
-                            mPrevisao.innerHTML = '<div class="flex flex-col w-full">' + htmlDias + htmlHoras + '</div>';
+                            mPrevisao.innerHTML = htmlDias;
                             
                             var botoesDia = mPrevisao.querySelectorAll('.btn-dia-clima');
                             botoesDia.forEach(function(btn) {
@@ -1157,11 +1185,13 @@
                                     var horaLimpa = horaFull.substring(11, 16); 
                                     var tempH = Math.round(dadosClima.hourly.temperature_2m[j]);
                                     var iconH = obterIconeClima(dadosClima.hourly.weathercode[j]);
+                                    var probChuva = dadosClima.hourly.precipitation_probability[j];
                                     
-                                    containerHoras.innerHTML += `<div class="shrink-0 text-center flex flex-col items-center p-2 border border-gray-100 rounded-sm bg-white min-w-[60px]">
-                                        <div class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">${horaLimpa}</div>
-                                        <div class="text-xl mb-1">${iconH}</div>
-                                        <div class="text-xs font-black text-gray-700">${tempH}°</div>
+                                    containerHoras.innerHTML += `<div class="shrink-0 text-center flex flex-col items-center p-3 border border-gray-100 rounded-sm bg-gray-50 min-w-[70px]">
+                                        <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">${horaLimpa}</span>
+                                        <span class="text-2xl mb-2 drop-shadow-sm">${iconH}</span>
+                                        <span class="text-xs font-black text-jornal-dark mb-1">${tempH}°</span>
+                                        <span class="text-[9px] font-bold text-sky-500 tracking-wider flex items-center gap-0.5"><svg class="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24"><path d="M12 2.6c-3.1 3.5-6.5 7.6-6.5 11.4 0 3.6 2.9 6.5 6.5 6.5s6.5-2.9 6.5-6.5c0-3.8-3.4-7.9-6.5-11.4zm0 15.9c-2.5 0-4.5-2-4.5-4.5 0-2.8 2.5-6 4.5-8.5 2 2.5 4.5 5.7 4.5 8.5 0 2.5-2 4.5-4.5 4.5z"/></svg>${probChuva}%</span>
                                     </div>`;
                                 }
                             }
@@ -1179,6 +1209,9 @@
             }
         }
 
+        // ==========================================
+        // MÓDULO PLACAR OCULTO QUANDO VAZIO
+        // ==========================================
         function traduzirTermoPlacar(termo) {
             if(!termo) return '';
             var t = termo.toLowerCase();
@@ -1191,6 +1224,7 @@
 
         function renderizarPlacarAoVivo() {
             var placar = document.getElementById('widget-placar'); 
+            var containerGeral = document.getElementById('container-geral-placar');
             if(!placar) return;
             
             var ligasAtivas = ['soccer/bra.1']; 
@@ -1208,6 +1242,11 @@
             var htmlFinal = ''; 
             var fetchesConcluidos = 0;
 
+            if (ligasAtivas.length === 0) {
+                if (containerGeral) containerGeral.classList.add('hidden');
+                return;
+            }
+
             ligasAtivas.forEach(function(liga) {
                 fetch('https://site.api.espn.com/apis/site/v2/sports/' + liga + '/scoreboard?lang=pt&region=br')
                 .then(function(res) { return res.ok ? res.json() : null; })
@@ -1223,9 +1262,7 @@
                             var dtJogo = new Date(jogo.date);
                             var dataJogoLocal = dtJogo.getFullYear() + '-' + String(dtJogo.getMonth() + 1).padStart(2, '0') + '-' + String(dtJogo.getDate()).padStart(2, '0');
 
-                            // FILTRO: Mostrar Apenas Jogos de Hoje
                             if (dataJogoLocal !== dataHojeLocalStr) return;
-
                             if (exibidos >= 4) return;
                             
                             var matchInfo = jogo.competitions[0];
@@ -1288,18 +1325,21 @@
                             exibidos++;
                         });
 
-                        if (matchesHtml === '') {
-                            matchesHtml = '<div class="w-full text-center py-4 bg-white text-gray-400 text-[10px] font-bold uppercase tracking-widest border border-gray-100 rounded-sm mb-3 shadow-sm">Sem jogos hoje</div>';
+                        if (matchesHtml !== '') {
+                            htmlFinal += '<h5 class="text-[10px] uppercase font-black tracking-widest text-gray-400 mt-5 mb-3 border-b border-gray-100 pb-2">' + nomeCompeticao + '</h5>\n' + matchesHtml; 
                         }
-                        
-                        htmlFinal += '<h5 class="text-[10px] uppercase font-black tracking-widest text-gray-400 mt-5 mb-3 border-b border-gray-100 pb-2">' + nomeCompeticao + '</h5>\n' + matchesHtml; 
                     }
                 })
                 .catch(function(e){ console.warn("Aviso Placar:", e); })
                 .finally(function() {
                     fetchesConcluidos++;
                     if(fetchesConcluidos === ligasAtivas.length) {
-                        placar.innerHTML = htmlFinal || '<div class="text-center text-xs text-gray-400 py-4 font-bold uppercase tracking-widest">Nenhum jogo previsto para hoje.</div>';
+                        if(htmlFinal === '') {
+                            if(containerGeral) containerGeral.classList.add('hidden');
+                        } else {
+                            if(containerGeral) containerGeral.classList.remove('hidden');
+                            placar.innerHTML = htmlFinal;
+                        }
                     }
                 });
             });
@@ -1486,14 +1526,13 @@
                 montarGrelhaEditorias(f_todas_editorias);
                 if(gridEditorias) gridEditorias.classList.remove('hidden');
                 
-                // LÓGICA DO BOTÃO MOSTRAR MAIS PARA A HOME ("TODAS")
-                window.noticiasCategoriaAtual = f;
+                window.noticiasCategoriaAtual = f; 
                 window.itensExibidosCategoria = 15;
 
-                f.slice(0, window.itensExibidosCategoria).forEach(function(n) {
-                    grid.innerHTML += htmlCard(n);
+                f.slice(0, window.itensExibidosCategoria).forEach(function(n) { 
+                    grid.innerHTML += htmlCard(n); 
                 });
-
+                
                 var btnMais = document.getElementById('btn-mostrar-mais');
                 if(btnMais) {
                     if(f.length > window.itensExibidosCategoria) {
@@ -1587,6 +1626,9 @@
             cHTML += '            <span class="truncate pr-2">\n';
             cHTML += '                ' + (n.dataHora ? n.dataHora.replace(' ', ' às ') : '') + '\n';
             cHTML += '            </span>\n';
+            cHTML += '            <span class="flex items-center gap-1 text-jornal-red shrink-0">\n';
+            cHTML += '                ' + ICON_HEART + '&nbsp;' + (n.likes || 0) + '\n';
+            cHTML += '            </span>\n';
             cHTML += '        </div>\n';
             cHTML += '    </div>\n';
             cHTML += '</article>\n';
@@ -1629,6 +1671,9 @@
             cHTML += '        <div class="mt-auto flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest w-full border-t border-gray-100 pt-4">\n';
             cHTML += '            <span>\n';
             cHTML += '                ' + (n.dataHora ? n.dataHora.replace(' ', ' às ') : '') + '\n';
+            cHTML += '            </span>\n';
+            cHTML += '            <span class="flex items-center gap-1 text-jornal-red shrink-0">\n';
+            cHTML += '                ' + ICON_HEART + '&nbsp;' + (n.likes || 0) + '\n';
             cHTML += '            </span>\n';
             cHTML += '        </div>\n';
             cHTML += '    </div>\n';
@@ -1977,6 +2022,32 @@
             });
             
             return strT;
+        }
+
+        function curtirNoticiaAtual() {
+            if(!noticiaAbertaId) return;
+            var icone = document.getElementById('icone-coracao'); 
+            
+            if (icone) { 
+                icone.classList.add('text-jornal-red', 'fill-current', 'heart-beat'); 
+                setTimeout(function() { 
+                    icone.classList.remove('heart-beat'); 
+                }, 300); 
+            }
+            
+            var spanLikes = document.getElementById('nc-likes'); 
+            if (spanLikes) { 
+                spanLikes.innerText = parseInt(spanLikes.innerText) + 1; 
+            }
+            
+            var idx = noticiasGlobais.findIndex(function(n) { return n.id === noticiaAbertaId; }); 
+            if(idx > -1) { 
+                noticiasGlobais[idx].likes += 1; 
+            }
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
+                window.google.script.run.curtirNoticiaNoSheets(noticiaAbertaId); 
+            }
         }
 
         function enviarComentario(e) {
