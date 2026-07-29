@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
     <script>
-        // LIGAÇÃO À SUA BASE DE DADOS GOOGLE
+        // LIGAÇÃO À SUA BASE DE DADOS GOOGLE (Corrigida com a sua chave exata)
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzXzUp9tCWPlk_an82HFMrvdccMYUlds22Bcz4Rr8vRaKwrOPNSo45dhD1p5-us4KQp/exec";
         
         // Ponte de comunicação com o Backend
@@ -133,18 +133,19 @@
                     <span class="font-sans font-black tracking-tighter text-lg uppercase text-slate-100 flex items-center gap-2">Painel<span class="text-rose-600">Admin</span></span>
                 </div>
                 <div class="flex items-center gap-4">
-                    <a href="index.html" class="text-gray-400 hover:text-white text-[10px] font-bold uppercase tracking-wider hidden md:flex items-center gap-1 transition-colors">← Voltar ao Portal</a>
-                    <a href="config.html" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-1.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm hidden md:block">⚙️ Configurações</a>
                     <button type="button" onclick="encerrarSessao()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm">Sair (Logout)</button>
                 </div>
             </div>
         </header>
 
         <main class="max-w-[1200px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
-            <!-- Abas do Painel -->
+            <!-- ABAS DO PAINEL CORRIGIDAS COM OS LINKS -->
             <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar">
                 <button type="button" onclick="alternarAbaAdmin('form-noticia-container')" id="aba-noticia" class="py-3 px-5 font-black text-[11px] bg-jornal-blue text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Publicar</button>
                 <button type="button" onclick="alternarAbaAdmin('lista-noticias-container')" id="aba-lista" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Gerir Matérias</button>
+                <a href="config.html" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1">⚙️ Configurações</a>
+                <a href="instagram.html" target="_blank" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-purple-600 hover:text-purple-800 hover:bg-purple-100 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1">📸 Estúdio IG</a>
+                <a href="index.html" class="py-3 px-5 font-bold text-[11px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1 ml-auto">Ver Portal &raquo;</a>
             </div>
 
             <!-- ========================================================== -->
@@ -153,7 +154,6 @@
             <div id="form-noticia-container" class="bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="flex justify-between items-center mb-8 border-l-4 border-jornal-red pl-3">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Redigir Matéria</h2>
-                    <a href="instagram.html" target="_blank" class="bg-gradient-to-r from-purple-600 to-pink-500 hover:opacity-90 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded shadow-sm flex items-center gap-1 transition-opacity">📸 Estúdio Instagram</a>
                 </div>
                 
                 <form id="form-admin" class="space-y-6">
@@ -769,7 +769,6 @@
             var categoriasSelecionadasArray = Array.from(checkboxes).map(function(cb) { return cb.value; }); 
             var categoriasSelecionadas = categoriasSelecionadasArray.length > 0 ? categoriasSelecionadasArray.join(", ") : "Geral";
             
-            // Define o botão que foi ativado
             var btn = document.getElementById(isRascunho ? 'btn-salvar-rascunho' : 'btn-salvar-noticia'); 
             var txtOriginal = btn.innerHTML; 
             btn.innerHTML = 'A GUARDAR...'; 
