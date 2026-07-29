@@ -19,7 +19,7 @@
         // CONEXÃO INTELIGENTE (Deteta se está no Google ou GitHub)
         // ================================================================
         if (typeof google === 'undefined' || typeof google.script === 'undefined') {
-            const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzXzUp9tCWPlk_an82HFMrvdccMYUlds22Bcz4Rr8vRaKwrOPNSo45dhD1p5-us4KQp/exec";
+            const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzZ3tg6RONdf9KODrdz25LYGjEGF6m1DTdM9_NUBnVrm6WGGp6k8rapdg-wDu049Tee/exec";
             window.google = {
                 script: {
                     run: {
@@ -313,8 +313,8 @@
                         <div id="conteudo-opinioes" class="flex flex-col gap-5"></div>
                     </div>
 
-                    <!-- PLACAR AO VIVO -->
-                    <div id="container-placar-ao-vivo" class="mb-10 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
+                    <!-- PLACAR AO VIVO OCULTO SE VAZIO -->
+                    <div id="container-placar-ao-vivo" class="hidden mb-10 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
                         <div class="flex items-center justify-between mb-5 border-b border-gray-100 pb-3">
                             <h2 class="text-[11px] font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
                                 <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Placar Ao Vivo
@@ -325,7 +325,7 @@
                         </div>
                     </div>
 
-                    <!-- WIDGET CLIMA CLICÁVEL (NOVO VISUAL) -->
+                    <!-- WIDGET CLIMA CLICÁVEL -->
                     <div class="mb-10 bg-white border border-gray-200 p-1 shadow-sm rounded-sm cursor-pointer hover:shadow-md transition-shadow" onclick="abrirModalClima()">
                         <div class="border-t-4 border-sky-400 pt-2 px-4 pb-2 flex justify-between items-center bg-white">
                             <h2 class="text-xs font-black uppercase tracking-widest text-sky-500">Clima Local</h2>
@@ -459,16 +459,30 @@
         }
 
         function isNoticiaPublicada(n) {
-            if (!n || !n.status) return false;
-            if (String(n.status).toLowerCase() !== 'ativa') return false;
-            if (n.dataHora) {
-                var pts = n.dataHora.split(/[\/\s:]/);
-                if (pts.length >= 5) {
-                    var dtP = new Date(pts[2], pts[1]-1, pts[0], pts[3], pts[4]);
-                    if (dtP > new Date()) return false;
+            try {
+                if (!n || !n.status) return false;
+                if (String(n.status).trim().toLowerCase() !== 'ativa') return false;
+                if (n.dataHora && String(n.dataHora).trim() !== '') {
+                    var pts = String(n.dataHora).trim().split(/[\/\s:\-T]/);
+                    if (pts.length >= 5) {
+                        var ano, mes, dia, hora, min;
+                        if (pts[0].length === 4) { 
+                            ano = pts[0]; mes = pts[1]; dia = pts[2]; hora = pts[3]; min = pts[4];
+                        } else { 
+                            dia = pts[0]; mes = pts[1]; ano = pts[2]; hora = pts[3]; min = pts[4];
+                        }
+                        var dtP = new Date(ano, mes-1, dia, hora, min);
+                        if (dtP > new Date()) return false;
+                    }
                 }
+                return true;
+            } catch(e) {
+                return false;
             }
-            return true;
+        }
+
+        function normalizarTextoBusca(str) {
+            return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
         }
 
         function normalizarTextoUrl(text) {
@@ -1468,6 +1482,10 @@
             filtrarCategoria('Cidades', true);
         }
 
+        function normalizarTextoBusca(str) {
+            return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+        }
+
         function filtrarCategoria(cat, up) {
             if (up === undefined) up = true;
             window.categoriaAtual = cat; 
@@ -1499,10 +1517,11 @@
                 }
             }
             
+            var catNorm = normalizarTextoBusca(cat);
             var f = noticiasGlobais.filter(function(n) {
                 var isPub = isNoticiaPublicada(n);
                 if (cat === 'Todas') return isPub;
-                return isPub && String(n.categoria).toLowerCase().indexOf(cat.toLowerCase()) !== -1;
+                return isPub && normalizarTextoBusca(n.categoria).indexOf(catNorm) !== -1;
             });
             
             var carrosselContainer = document.getElementById('carrossel-destaques');
@@ -1531,9 +1550,13 @@
                 window.noticiasCategoriaAtual = f; 
                 window.itensExibidosCategoria = 15;
 
-                f.slice(0, window.itensExibidosCategoria).forEach(function(n) { 
-                    grid.innerHTML += htmlCard(n); 
-                });
+                if (f.length === 0) {
+                    grid.innerHTML = '<div class="col-span-full text-center py-12 bg-white border border-gray-200 rounded-sm shadow-sm"><span class="text-sm font-bold text-gray-500 uppercase tracking-widest">Nenhuma matéria publicada.</span></div>';
+                } else {
+                    f.slice(0, window.itensExibidosCategoria).forEach(function(n) { 
+                        grid.innerHTML += htmlCard(n); 
+                    });
+                }
                 
                 var btnMais = document.getElementById('btn-mostrar-mais');
                 if(btnMais) {
@@ -1553,14 +1576,20 @@
                     dest.innerHTML = htmlHero(f[0]); 
                     dest.classList.remove('hidden'); 
                     f = f.slice(1); 
+                } else {
+                    dest.classList.add('hidden');
                 }
                 
                 window.noticiasCategoriaAtual = f; 
                 window.itensExibidosCategoria = 16;
                 
-                f.slice(0, 16).forEach(function(n) { 
-                    grid.innerHTML += htmlCard(n); 
-                });
+                if (f.length === 0 && (!dest || dest.classList.contains('hidden'))) {
+                    grid.innerHTML = '<div class="col-span-full text-center py-16 text-gray-500 font-bold bg-white border border-gray-200 rounded-sm shadow-sm">Nenhuma matéria encontrada nesta editoria.</div>';
+                } else {
+                    f.slice(0, 16).forEach(function(n) { 
+                        grid.innerHTML += htmlCard(n); 
+                    });
+                }
                 
                 var btnMais = document.getElementById('btn-mostrar-mais');
                 if (btnMais) { 
