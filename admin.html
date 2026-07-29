@@ -394,9 +394,9 @@
                     <div class="pt-6 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
                         <button type="button" onclick="limparFormNoticia()" class="text-xs font-black text-gray-500 hover:text-jornal-red uppercase tracking-widest w-full md:w-auto text-center md:text-left py-2 transition-colors">Limpar Form</button>
                         <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                            <!-- Botão Rascunho -->
+                            <!-- Botão Rascunho Atualizado -->
                             <button type="button" id="btn-salvar-rascunho" onclick="salvarNoticia(event, 'Rascunho')" class="w-full sm:w-auto bg-gray-400 text-white font-black px-8 py-4 hover:bg-gray-500 transition-colors uppercase tracking-widest text-sm rounded-sm shadow-md">Salvar Rascunho</button>
-                            <!-- Botão Publicar -->
+                            
                             <button type="button" onclick="salvarNoticia(event, 'Ativa')" id="btn-salvar-noticia" class="w-full sm:w-auto bg-jornal-dark text-white font-black px-10 py-4 hover:opacity-90 transition-opacity uppercase tracking-widest text-sm rounded-sm shadow-xl">Publicar Matéria</button>
                         </div>
                     </div>
@@ -844,6 +844,9 @@
                         mostrarMensagem("Linha fina gerada!"); 
                     } 
                     btn.innerText = txt; 
+                }).withFailureHandler(function(err) {
+                    btn.innerText = txt;
+                    mostrarMensagem("Falha na IA", "erro");
                 }).chamarGeminiBackend(`Escreva uma linha fina curta (SEO) para o título: "${t}"`);
             } else { 
                 btn.innerText = txt; 
@@ -872,6 +875,9 @@
                         mostrarMensagem("Texto gerado!"); 
                     } 
                     btn.innerText = txt; 
+                }).withFailureHandler(function(err) {
+                    btn.innerText = txt;
+                    mostrarMensagem("Falha na IA", "erro");
                 }).chamarGeminiBackend(promptStr);
             } else { 
                 btn.innerText = txt; 
@@ -1029,10 +1035,14 @@
             var categoriasSelecionadasArray = Array.from(checkboxes).map(function(cb) { return cb.value; }); 
             var categoriasSelecionadas = categoriasSelecionadasArray.length > 0 ? categoriasSelecionadasArray.join(", ") : "Geral";
             
-            var btn = document.getElementById(isRascunho ? 'btn-salvar-rascunho' : 'btn-salvar-noticia'); 
-            var txt = btn.innerHTML; 
-            btn.innerHTML = 'A guardar...'; 
-            btn.disabled = true;
+            var btnId = isRascunho ? 'btn-salvar-rascunho' : 'btn-salvar-noticia';
+            var btn = document.getElementById(btnId); 
+            var txtOriginal = isRascunho ? 'SALVAR RASCUNHO' : 'PUBLICAR MATÉRIA'; 
+            
+            if (btn) {
+                btn.innerHTML = 'A GUARDAR...'; 
+                btn.disabled = true;
+            }
             
             var conteudoRich = document.getElementById('admin-editor-rich').innerHTML;
             var statusFinal = statusForcado || 'Ativa';
@@ -1064,23 +1074,33 @@
             }
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.withSuccessHandler(function(res) {
+                window.google.script.run
+                .withSuccessHandler(function(res) {
+                    if (btn) {
+                        btn.innerHTML = txtOriginal; 
+                        btn.disabled = false;
+                    }
+
                     if (res && res.sucesso) { 
                         mostrarMensagem(isRascunho ? 'Rascunho Guardado com Sucesso!' : 'Matéria Publicada!'); 
                         localStorage.removeItem('admin_data_cache'); 
                         
-                        // Mágica UI: Troca de aba instantaneamente sem esperar pela resposta final do carregarNoticiasAdmin
                         limparFormNoticia(); 
                         alternarAbaAdmin('lista-noticias-container'); 
                         
-                        // Faz a tabela atualizar discretamente no fundo
                         carregarNoticiasAdmin(); 
                     } else { 
                         mostrarMensagem("Erro ao guardar", 'erro'); 
                     }
-                    btn.innerHTML = txt; 
-                    btn.disabled = false;
-                }).salvarNoticiaNoSheets(payload);
+                })
+                .withFailureHandler(function(err) {
+                    if (btn) {
+                        btn.innerHTML = txtOriginal; 
+                        btn.disabled = false;
+                    }
+                    mostrarMensagem("Falha na comunicação com o servidor.", "erro");
+                })
+                .salvarNoticiaNoSheets(payload);
             }
         }
 
@@ -1196,11 +1216,16 @@
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
                 localStorage.removeItem('admin_data_cache'); 
-                window.google.script.run.withSuccessHandler(function(res){ 
+                window.google.script.run
+                .withSuccessHandler(function(res){ 
                     if(res && res.sucesso) { 
                         carregarNoticiasAdmin(); 
                     } 
-                }).alternarStatusNoticia(id); 
+                })
+                .withFailureHandler(function(err){
+                    mostrarMensagem("Erro de conexão.", "erro");
+                })
+                .alternarStatusNoticia(id); 
             }
         }
 
@@ -1210,9 +1235,14 @@
             }
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
                 localStorage.removeItem('admin_data_cache'); 
-                window.google.script.run.withSuccessHandler(function(res){ 
+                window.google.script.run
+                .withSuccessHandler(function(res){ 
                     carregarNoticiasAdmin(); 
-                }).excluirNoticia(id); 
+                })
+                .withFailureHandler(function(err){
+                    mostrarMensagem("Falha na rede.", "erro");
+                })
+                .excluirNoticia(id); 
             }
         }
 
