@@ -237,6 +237,7 @@
             <span class="font-sans font-black tracking-tighter text-lg uppercase text-slate-100 flex items-center gap-2">
                 <span class="text-xl">📸</span> Estúdio<span class="text-purple-500">IG</span>
             </span>
+
             <div class="flex items-center gap-4">
                 <a href="admin.html" class="text-gray-400 hover:text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1 transition-colors">← Voltar à Redação</a>
             </div>
@@ -350,7 +351,7 @@
                 <!-- Direita: Botões de Ação e Instagram -->
                 <div class="md:w-1/2 p-6 md:p-8 bg-white overflow-y-auto custom-scrollbar flex flex-col">
                     
-                    <button id="btn-baixar" onclick="baixarArte()" class="w-full bg-jornal-dark hover:bg-gray-800 text-white font-black text-sm uppercase tracking-widest py-4 rounded-sm shadow-lg mb-8 flex justify-center items-center gap-2 transition-colors">
+                    <button id="btn-baixar" onclick="baixarArte()" class="w-full bg-jornal-dark hover:bg-gray-800 text-white font-black text-sm uppercase tracking-widest py-4 rounded-sm shadow-lg mb-6 flex justify-center items-center gap-2 transition-colors">
                         <span>⬇️</span> BAIXAR IMAGEM (JPG)
                     </button>
                     
@@ -358,15 +359,12 @@
                         <h4 class="text-[10px] font-black uppercase tracking-widest text-gray-500">Legenda (Pode Editar)</h4>
                     </div>
                     
-                    <textarea class="w-full bg-white border border-gray-300 p-4 rounded-sm text-sm text-gray-700 h-48 custom-scrollbar font-medium mb-4 resize-none focus:outline-none focus:ring-1 focus:ring-purple-500 shadow-inner" id="texto-legenda"></textarea>
+                    <textarea class="w-full bg-white border border-gray-300 p-4 rounded-sm text-sm text-gray-700 h-40 custom-scrollbar font-medium mb-4 resize-none focus:outline-none focus:ring-1 focus:ring-purple-500 shadow-inner" id="texto-legenda"></textarea>
                     
                     <div class="mt-auto flex flex-col gap-3">
-                        <button onclick="copiarLegenda()" class="w-full bg-purple-100 hover:bg-purple-200 text-purple-800 border border-purple-300 font-black text-[11px] uppercase tracking-widest py-3 rounded-sm shadow-sm transition-colors flex justify-center items-center gap-2">
-                            <span>📋</span> 1. COPIAR LEGENDA
-                        </button>
-                        
-                        <button onclick="abrirInstagram()" class="w-full bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-600 hover:opacity-90 text-white font-black text-[11px] uppercase tracking-widest py-3 rounded-sm shadow-sm transition-opacity flex justify-center items-center gap-2">
-                            <span>🚀</span> 2. ABRIR INSTAGRAM
+                        <!-- NOVO BOTÃO DE PUBLICAÇÃO DIRETA AO INSTAGRAM -->
+                        <button id="btn-publicar-direto" onclick="acionarPublicacaoIG()" class="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-90 text-white font-black text-xs uppercase tracking-widest py-4 rounded-sm shadow-xl transition-opacity flex justify-center items-center gap-2">
+                            <span>🚀</span> PUBLICAR DIRETO NO INSTAGRAM
                         </button>
                     </div>
                     
@@ -446,7 +444,6 @@
             tbody.innerHTML = '';
 
             const filtradas = noticiasGlobais.filter(n => {
-                // Remove apenas inativas (mantém publicadas e agendadas)
                 if (String(n.status).toLowerCase() === 'inativa') return false;
 
                 const matchTermo = (n.titulo.toLowerCase().includes(termo) || n.categoria.toLowerCase().includes(termo));
@@ -488,10 +485,7 @@
             });
         }
 
-        // MOTOR FOTOGRÁFICO BLINDADO (Com Base64 Nativo via Proxy Fetch)
         async function obterImagemBase64Segura(urlOriginal) {
-            
-            // Fundo de recurso à prova de balas
             const gerarFallbackBase64 = () => {
                 const canvas = document.createElement('canvas');
                 canvas.width = 1080; canvas.height = 1080;
@@ -508,17 +502,13 @@
             let idDrive = null;
             let urlTratada = urlOriginal;
 
-            // Deteção e formatação específica do Google Drive
             const matchDrive = urlOriginal.match(/id=([a-zA-Z0-9_-]+)/) || urlOriginal.match(/\/d\/([a-zA-Z0-9_-]+)/);
             if (matchDrive) {
                 idDrive = matchDrive[1];
-                // Formato que os proxies gostam mais para não dar 403 Forbidden
                 urlTratada = `https://drive.google.com/uc?export=view&id=${idDrive}`;
             }
 
             const urlCodificada = encodeURIComponent(urlTratada);
-
-            // CORRIDA DE TÚNEIS (Busca do Blob em vez da Imagem para converter para Base64)
             const promessas = [
                 fetch(`https://corsproxy.io/?${urlCodificada}`).then(r => r.ok ? r.blob() : Promise.reject()),
                 fetch(`https://api.allorigins.win/raw?url=${urlCodificada}`).then(r => r.ok ? r.blob() : Promise.reject()),
@@ -526,19 +516,14 @@
             ];
 
             try {
-                // Fica com a resposta do túnel que for mais rápido
                 const blobVencedor = await Promise.any(promessas);
-
-                // Converte a imagem "sugada" num texto puro Base64
                 return new Promise((resolve) => {
                     const reader = new FileReader();
                     reader.onloadend = () => resolve(reader.result);
                     reader.readAsDataURL(blobVencedor);
                 });
-
             } catch (error) {
                 console.error("Todos os túneis falharam:", error);
-                // Se tudo falhar, gera o quadrado "FOTO INDISPONÍVEL" para nunca travar a câmara.
                 return gerarFallbackBase64();
             }
         }
@@ -595,11 +580,9 @@
                 document.getElementById('story-titulo').innerText = noticia.titulo;
             }
 
-            // Ativa o novo motor fotográfico super rápido (150ms) e desenha a arte!
             obterImagemBase64Segura(imagemOriginal).then(base64Image => {
                 divImagem.style.backgroundImage = `url('${base64Image}')`;
 
-                // Pequeno atraso para garantir que o navegador "pintou" o Base64 na parede antes de bater a foto
                 setTimeout(() => {
                     html2canvas(alvoElemento, {
                         scale: 1, 
@@ -641,21 +624,65 @@
             document.body.removeChild(a);
         }
 
-        function copiarLegenda() {
-            const texto = document.getElementById('texto-legenda').value;
-            navigator.clipboard.writeText(texto).then(() => {
-                alert("A Legenda foi copiada com sucesso!\n\nAgora você pode clicar no botão 'Abrir Instagram' para fazer a sua publicação.");
-            }).catch(err => {
-                alert("Não foi possível copiar automaticamente. Selecione o texto na caixa e faça Ctrl+C.");
-            });
-        }
+        // FUNÇÃO DE PUBLICAÇÃO AUTOMÁTICA NO INSTAGRAM
+        function acionarPublicacaoIG() {
+            var btn = document.getElementById('btn-publicar-direto');
+            var textoOriginal = btn.innerHTML;
+            
+            btn.innerHTML = '⏳ A PUBLICAR NO INSTAGRAM...';
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
 
-        function abrirInstagram() {
-            const texto = document.getElementById('texto-legenda').value;
-            navigator.clipboard.writeText(texto).then(() => {
-                window.open('https://instagram.com', '_blank');
-            }).catch(err => {
-                window.open('https://instagram.com', '_blank');
+            var legenda = document.getElementById('texto-legenda').value;
+            var imagemBase64 = urlAtualBaixar;
+
+            if (!imagemBase64 || !imagemBase64.startsWith('data:image')) {
+                alert("Erro: A arte ainda não foi gerada corretamente.");
+                btn.innerHTML = textoOriginal;
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                return;
+            }
+
+            var tokenMestre = "EAAc2ykniOzgBSD7dSuV6s4Onnoc2WobHtJySO0lilxdnqeEGQ1xZAVAUUCYgLfqC5CuN9ACCyQYymcSZB5iMtKgNNVEzMCADFvZBZAb3qZC1tqMVOjbkQPs68448tVA7739ZAffduvQB9PuUmmXA2JcntIYamBL6r7kDygvazBltqY7hpVsN86MtyBU1SjPAZDZD";
+
+            var payload = {
+                action: 'publicarNoInstagram',
+                args: [{
+                    base64: imagemBase64,
+                    legenda: legenda,
+                    token: tokenMestre
+                }]
+            };
+
+            fetch(GAS_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                let res = data;
+                if(data && data.result !== undefined) {
+                    res = typeof data.result === 'string' ? JSON.parse(data.result) : data.result;
+                }
+
+                if (res && res.sucesso) {
+                    alert("🎉 SUCESSO! A imagem e a legenda já foram publicadas no seu Instagram!");
+                    fecharModalArte();
+                } else {
+                    alert("❌ Erro ao publicar no Instagram: " + (res.erro || "Desconhecido"));
+                }
+                btn.innerHTML = textoOriginal;
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            })
+            .catch(err => {
+                alert("Falha de rede ao tentar comunicar com o servidor.");
+                console.error(err);
+                btn.innerHTML = textoOriginal;
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
             });
         }
     </script>
