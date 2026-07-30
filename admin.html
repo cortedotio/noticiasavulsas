@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
     <script>
-        // LIGAÇÃO À SUA BASE DE DADOS GOOGLE (Corrigida com a sua chave exata)
+        // LIGAÇÃO À SUA BASE DE DADOS GOOGLE
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyZD4KJlvhtMwxr8fToE7nT2ZUdVHNglay0Ynauk6ixmrc4nsYK93KenBcJJKG3psFa/exec";
         
         // Ponte de comunicação com o Backend
@@ -82,6 +82,9 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Correção para garantir a seleção de texto no Editor */
+        .rich-editor { user-select: text !important; -webkit-user-select: text !important; }
         
         .rich-editor img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px auto; border: 1px solid #e2e8f0; display: block; }
         .rich-editor iframe, .rich-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; background: #000; }
@@ -166,7 +169,6 @@
                                 <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Manchete</label>
                                 <input type="text" id="admin-titulo" oninput="atualizarPreviewURL()" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue font-serif font-bold text-lg text-jornal-dark rounded-sm" placeholder="O título da sua notícia..." />
                                 
-                                <!-- Pré-visualização do Link SEO -->
                                 <p id="preview-url-noticia" class="text-[11px] mt-2 hidden truncate">🔗 <span class="text-gray-500 hidden sm:inline">Link da matéria: </span><span id="preview-url-texto" class="text-blue-600 font-bold tracking-wide"></span></p>
                             </div>
                             
@@ -233,7 +235,9 @@
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
                             <button type="button" onclick="execCmd('formatBlock', 'H2')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm">H2</button>
                             <button type="button" onclick="execCmd('formatBlock', 'blockquote')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm">""</button>
-                            <button type="button" onclick="execCmd('removeFormat')" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-xs font-bold text-red-600 rounded shadow-sm ml-1">Limpar</button>
+                            
+                            <!-- BOTÃO DE LIMPEZA PROFUNDA DE TEXTO -->
+                            <button type="button" onclick="limparFormatacao()" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-xs font-bold text-red-600 rounded shadow-sm ml-1" title="Limpar Formatação e Estilos Colados">Limpar</button>
                             
                             <button type="button" id="btn-ia-conteudo" onclick="gerarConteudoIA()" class="ml-auto px-4 py-1.5 bg-purple-100 hover:bg-purple-200 border border-purple-300 text-xs text-purple-800 font-bold tracking-wide rounded shadow-sm transition-colors flex items-center justify-center">✨ Escrever com IA</button>
                         </div>
@@ -374,20 +378,24 @@
                 document.getElementById('modalLogin').classList.add('flex');
             }
             
-            // Lógica Global de clique no painel Rich Text (Para o botão de ajustar tamanho)
+            // INTELIGÊNCIA DOS BOTÕES DE IMAGEM (+ e -)
             var editorRich = document.getElementById('admin-editor-rich');
             if (editorRich) {
                 editorRich.addEventListener('click', function(e) {
                     var el = e.target;
-                    if (el && el.textContent && el.textContent.indexOf('Ajustar Tamanho') !== -1) {
+                    
+                    if (el && (el.classList.contains('btn-diminuir-img') || el.classList.contains('btn-aumentar-img'))) {
                         e.preventDefault();
                         e.stopPropagation();
                         
                         var img = null;
                         var figure = el.closest('figure');
+                        
+                        // Tenta encontrar a imagem no mesmo figure
                         if (figure) {
                             img = figure.querySelector('img');
                         } else {
+                            // Tenta encontrar a imagem andando para trás (caso o editor quebre a tag figure)
                             var prev = el.parentElement ? el.parentElement.previousElementSibling : el.previousElementSibling;
                             while(prev) {
                                 if(prev.tagName === 'IMG') { img = prev; break; }
@@ -397,12 +405,25 @@
                         }
                         
                         if (img) {
-                            var atual = img.style.width || '100%';
-                            var novo = prompt("Defina a largura da imagem (Ex: 100%, 50%, 300px):", atual);
-                            if (novo) {
-                                img.style.width = novo;
-                                img.style.maxWidth = '100%'; // Garante obediência visual
+                            var currentWidthStr = img.style.width || img.width + 'px';
+                            var val = parseFloat(currentWidthStr);
+                            var isPercent = currentWidthStr.indexOf('%') !== -1;
+                            
+                            if (isNaN(val)) { val = 300; isPercent = false; }
+                            
+                            var step = isPercent ? 10 : 50; // Aumenta de 10 em 10% ou 50 em 50px
+                            
+                            if (el.classList.contains('btn-aumentar-img')) {
+                                val += step;
+                            } else {
+                                val -= step;
+                                if(val < 50) val = 50; // Tamanho mínimo de segurança
                             }
+                            
+                            if (isPercent && val > 100) val = 100;
+                            
+                            img.style.width = val + (isPercent ? '%' : 'px');
+                            img.style.maxWidth = '100%';
                         } else {
                             alert("Não foi possível localizar a imagem para ajustar.");
                         }
@@ -410,6 +431,44 @@
                 });
             }
         });
+
+        // LIMPEZA PROFUNDA DE FORMATAÇÃO (Remove Fontes e Cores copiadas do Word/Sites)
+        function limparFormatacao() {
+            // Remove as formatações nativas do navegador
+            document.execCommand('removeFormat', false, null);
+            document.execCommand('unlink', false, null);
+            
+            // Mergulha no texto selecionado para remover tags de estilo invisíveis
+            var sel = window.getSelection();
+            if (!sel.isCollapsed) {
+                var range = sel.getRangeAt(0);
+                var container = range.commonAncestorContainer;
+                if (container.nodeType === 3) container = container.parentNode;
+                
+                var editor = document.getElementById('admin-editor-rich');
+                if (editor.contains(container)) {
+                    var elements = container.querySelectorAll('*');
+                    elements.forEach(function(el) {
+                        if (sel.containsNode(el, true)) {
+                            el.removeAttribute('style');
+                            el.removeAttribute('face');
+                            el.removeAttribute('size');
+                            el.removeAttribute('class');
+                            el.removeAttribute('color');
+                        }
+                    });
+                    
+                    if (container !== editor) {
+                        container.removeAttribute('style');
+                        container.removeAttribute('face');
+                        container.removeAttribute('size');
+                        container.removeAttribute('class');
+                        container.removeAttribute('color');
+                    }
+                }
+            }
+            document.getElementById('admin-editor-rich').focus();
+        }
 
         // UTIL: Normalizar string para criar URL e busca
         function normalizarTextoUrl(text) {
@@ -550,7 +609,6 @@
                         }
                         renderizarChecklistCategoriasAdmin();
                         
-                        // Executa auto-preenchimento ao carregar se não houver edição manual
                         atualizarRelacionadasAutomaticas();
 
                         if (!document.getElementById('lista-noticias-container').classList.contains('hidden')) {
@@ -662,7 +720,6 @@
             if (window.relacionadasSelecionadas.find(function(r) { return r.id === id; })) { mostrarMensagem("Matéria já selecionada.", "erro"); return; }
             window.relacionadasSelecionadas.push({id: id, titulo: titulo});
             
-            // O utilizador escolheu à mão, logo bloqueamos a geração automática
             window.relacionadasEditadasManualmente = true;
             
             atualizarUIListaRelacionadas();
@@ -672,10 +729,7 @@
 
         function removerRelacionada(id) {
             window.relacionadasSelecionadas = window.relacionadasSelecionadas.filter(function(r) { return r.id !== id; });
-            
-            // Se ele apagar alguma manualmente, também mantemos a edição manual bloqueada (para não voltar a encher sozinho)
             window.relacionadasEditadasManualmente = true;
-            
             atualizarUIListaRelacionadas();
         }
 
@@ -694,6 +748,7 @@
         function inserirLinkRichEditor() { var url = prompt("Insira a URL completa do hiperlink:"); if (url) execCmd('createLink', url); }
         function inserirImagemRichEditor() { document.getElementById('upload-imagem-conteudo').click(); }
 
+        // INJEÇÃO DA IMAGEM COM OS NOVOS BOTÕES + E -
         function processarUploadImagemConteudo(input) {
             if (!input.files || !input.files[0]) return;
             var file = input.files[0];
@@ -709,16 +764,17 @@
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     var base64Resized = canvas.toDataURL('image/jpeg', 0.8);
                     
-                    var htmlImg = '<br><figure style="margin: 16px auto; text-align: center; max-width: 100%; display: block;">' +
-                                  '<img src="' + base64Resized + '" style="width: 100%; max-width: 100%; height: auto; border-radius: 8px; display: inline-block; margin: 0 auto; border: 1px solid #e2e8f0; transition: width 0.3s;" />';
+                    var htmlImg = '<br><figure style="margin: 16px auto; text-align: center; max-width: 100%; display: block; position: relative;">' +
+                                  '<img src="' + base64Resized + '" style="width: 300px; max-width: 100%; height: auto; border-radius: 8px; display: inline-block; margin: 0 auto; border: 1px solid #e2e8f0; transition: width 0.3s;" />';
                     if (legenda || creditos) {
                         var credTexto = creditos ? 'Foto: ' + creditos : ''; var sep = (legenda && creditos) ? ' - ' : '';
                         htmlImg += '<figcaption style="font-size: 12px; color: #64748b; margin-top: 8px; font-style: italic; text-align: center;">' + legenda + sep + credTexto + '</figcaption>';
                     }
                     
-                    // BOTÃO DE AJUSTAR TAMANHO EXCLUSIVO PARA O EDITOR
-                    htmlImg += '<div contenteditable="false" style="margin-top: 10px; text-align: center;">' +
-                               '<button type="button" class="btn-ajustar-tamanho" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; user-select: none;">↕ Ajustar Tamanho</button>' +
+                    // BOTÕES DE + E - PARA AJUSTAR O TAMANHO DIRETO NO EDITOR
+                    htmlImg += '<div contenteditable="false" style="margin-top: 10px; text-align: center; user-select: none;">' +
+                               '<button type="button" class="btn-diminuir-img" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; margin-right: 8px;" title="Diminuir Imagem">-</button>' +
+                               '<button type="button" class="btn-aumentar-img" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer;" title="Aumentar Imagem">+</button>' +
                                '</div>';
                                
                     htmlImg += '</figure><br><p>&#8203;</p>';
@@ -832,13 +888,12 @@
             document.querySelectorAll('input[name="admin-categorias-checkbox"]').forEach(function(cb) { cb.checked = false; });
             atualizarCampoCidadeAdmin();
             
-            // Permite recomeçar o processo automático do zero
             window.relacionadasSelecionadas = [];
             window.relacionadasEditadasManualmente = false; 
             
             atualizarUIListaRelacionadas(); 
-            atualizarPreviewURL(); // Limpa e oculta a preview do link
-            atualizarRelacionadasAutomaticas(); // Tenta procurar as gerais caso existam
+            atualizarPreviewURL(); 
+            atualizarRelacionadasAutomaticas(); 
             
             var btnSalvar = document.getElementById('btn-salvar-noticia'); 
             if (btnSalvar) btnSalvar.innerText = "Publicar Matéria";
@@ -1096,7 +1151,7 @@
                 atualizarUIListaRelacionadas(); 
             } else { 
                 window.relacionadasEditadasManualmente = false; 
-                atualizarRelacionadasAutomaticas(); // Se estiver vazio, tenta preencher com a categoria atual
+                atualizarRelacionadasAutomaticas();
             }
             
             var btnSalvar = document.getElementById('btn-salvar-noticia'); 
@@ -1111,7 +1166,7 @@
             
             alternarAbaAdmin('form-noticia-container'); 
             window.scrollTo(0,0); 
-            atualizarPreviewURL(); // Força a atualização do preview com os dados carregados
+            atualizarPreviewURL();
         }
 
     </script>
