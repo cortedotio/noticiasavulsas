@@ -375,11 +375,12 @@
 
     <script>
         // ATENÇÃO: Link do Google Apps Script
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyhmHK8w3cJhzFVMQZ1tt9Zs0NlHrG-C4_U_ci7vShZyVwYTRGgDp_mcqR7PkqWY9oU/exec";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyZD4KJlvhtMwxr8fToE7nT2ZUdVHNglay0Ynauk6ixmrc4nsYK93KenBcJJKG3psFa/exec";
         
         let noticiasGlobais = [];
         let urlAtualBaixar = "";
         let nomeAtualBaixar = "";
+        let tipoAtualBaixar = ""; // NOVA VARIÁVEL QUE GUARDA O TIPO DA ARTE
 
         document.addEventListener("DOMContentLoaded", function() {
             // VERIFICAÇÃO DE SEGURANÇA: Só acede se estiver logado no admin.html
@@ -529,6 +530,8 @@
         }
 
         function prepararArte(idNoticia, tipo) {
+            tipoAtualBaixar = tipo; // GUARDA SE É FEED OU STORY
+            
             const noticia = noticiasGlobais.find(n => String(n.id) === String(idNoticia));
             if(!noticia) return;
 
@@ -585,10 +588,12 @@
 
                 setTimeout(() => {
                     html2canvas(alvoElemento, {
-                        scale: 1, 
+                        scale: 2, // Aumenta a qualidade e REMOVE A LINHA BRANCA
+                        width: 1080, // Força a largura exata
+                        height: tipo === 'feed' ? 1080 : 1920, // Força a altura exata
                         useCORS: true,
                         allowTaint: false, 
-                        backgroundColor: tipo === 'feed' ? null : '#0F172A'
+                        backgroundColor: tipo === 'feed' ? '#3b82f6' : '#0F172A' // Evita bordas vazias
                     }).then(canvasResult => {
                         const finalJpg = canvasResult.toDataURL("image/jpeg", 0.9);
                         const prevImg = document.getElementById('preview-final-img');
@@ -651,7 +656,8 @@
                 args: [{
                     base64: imagemBase64,
                     legenda: legenda,
-                    token: tokenMestre
+                    token: tokenMestre,
+                    tipoPost: tipoAtualBaixar // <-- AGORA ENVIAMOS O TIPO PARA O MOTOR
                 }]
             };
 
