@@ -165,8 +165,9 @@
                             <div>
                                 <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Manchete</label>
                                 <input type="text" id="admin-titulo" oninput="atualizarPreviewURL()" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue font-serif font-bold text-lg text-jornal-dark rounded-sm" placeholder="O título da sua notícia..." />
-                                <!-- Pré-visualização do Link SEO -->
-                                <p id="preview-url-noticia" class="text-[10px] text-gray-400 mt-2 hidden truncate">🔗 <span class="hidden sm:inline">Link da matéria: </span><span class="text-blue-500 font-medium tracking-wide"></span></p>
+                                
+                                <!-- Pré-visualização do Link SEO CORRIGIDA (LINK AZUL) -->
+                                <p id="preview-url-noticia" class="text-[11px] mt-2 hidden truncate">🔗 <span class="text-gray-500 hidden sm:inline">Link da matéria: </span><span id="preview-url-texto" class="text-blue-600 font-bold tracking-wide"></span></p>
                             </div>
                             
                             <div>
@@ -385,9 +386,51 @@
                 .replace(/-+$/, '');
         }
 
+        // --- SISTEMA AUTOMÁTICO DE NOTÍCIAS RELACIONADAS ---
+        function atualizarRelacionadasAutomaticas() {
+            if (window.relacionadasEditadasManualmente) return; // Se o usuário modificou à mão, não subscrevemos
+            
+            var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
+            var catsAtuais = Array.from(checkboxes).map(function(cb) { return normalizarTexto(cb.value); });
+            var idAtual = document.getElementById('admin-id-noticia').value;
+            
+            // Pega apenas as publicadas e exclui a que estamos a escrever
+            var candidatas = noticiasGlobais.filter(function(n) {
+                if (String(n.status).toLowerCase() !== 'ativa') return false;
+                if (String(n.id) === String(idAtual)) return false;
+                return true;
+            });
+            
+            var recomendadas = [];
+            
+            // Tenta priorizar a mesma categoria
+            if (catsAtuais.length > 0) {
+                var daCategoria = candidatas.filter(function(n) {
+                    var nCats = String(n.categoria || '').split(',').map(normalizarTexto);
+                    return nCats.some(function(c) { return catsAtuais.indexOf(c) !== -1; });
+                });
+                recomendadas = daCategoria.slice(0, 3);
+            }
+            
+            // Completa com outras se não der 3 (para a caixa não ficar vazia)
+            if (recomendadas.length < 3) {
+                var idsRecomendadas = recomendadas.map(function(r) { return r.id; });
+                var outras = candidatas.filter(function(n) { return idsRecomendadas.indexOf(n.id) === -1; });
+                recomendadas = recomendadas.concat(outras.slice(0, 3 - recomendadas.length));
+            }
+            
+            window.relacionadasSelecionadas = recomendadas.map(function(r) {
+                return { id: r.id, titulo: r.titulo };
+            });
+            
+            atualizarUIListaRelacionadas();
+        }
+
         function atualizarPreviewURL() {
             var titulo = document.getElementById('admin-titulo').value.trim();
             var elPreview = document.getElementById('preview-url-noticia');
+            var elPreviewTexto = document.getElementById('preview-url-texto'); // SPAN AZUL ESPECÍFICO
+            
             if(!titulo) {
                 if(elPreview) elPreview.classList.add('hidden');
                 return;
@@ -404,11 +447,11 @@
             var idAtual = document.getElementById('admin-id-noticia').value;
             var fakeId = idAtual ? idAtual : "1710987654321"; // Exemplo visual de ID
             
-            var urlBase = "https://noticiasavulsas.com.br"; // Substitua pelo domínio real caso queira visualização exata
+            var urlBase = "https://noticiasavulsas.com.br"; 
             var finalUrl = urlBase + '/' + slugCat + '/' + slugTitulo + '/' + fakeId;
             
-            if(elPreview) {
-                elPreview.querySelector('span').innerText = finalUrl;
+            if(elPreviewTexto && elPreview) {
+                elPreviewTexto.innerText = finalUrl;
                 elPreview.classList.remove('hidden');
             }
         }
@@ -471,6 +514,9 @@
                         }
                         renderizarChecklistCategoriasAdmin();
                         
+                        // Executa auto-preenchimento ao carregar se não houver edição manual
+                        atualizarRelacionadasAutomaticas();
+
                         if (!document.getElementById('lista-noticias-container').classList.contains('hidden')) {
                             carregarListaEdicao();
                         }
@@ -519,7 +565,7 @@
             checklistAdmin.innerHTML = '';
             listaCategoriasLocais.forEach(function(c) {
                 checklistAdmin.innerHTML += '<label class="flex items-center gap-3 cursor-pointer text-xs font-bold text-slate-700 p-2 hover:bg-gray-100 rounded transition-colors">' +
-                    '<input type="checkbox" name="admin-categorias-checkbox" value="' + c + '" onchange="atualizarCampoCidadeAdmin(); atualizarPreviewURL();" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-400" />' + 
+                    '<input type="checkbox" name="admin-categorias-checkbox" value="' + c + '" onchange="atualizarCampoCidadeAdmin(); atualizarPreviewURL(); atualizarRelacionadasAutomaticas();" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-400" />' + 
                     c.toUpperCase() + 
                 '</label>';
             });
@@ -579,7 +625,10 @@
             if (window.relacionadasSelecionadas.length >= 3) { mostrarMensagem("Limite de 3 matérias atingido.", "erro"); return; }
             if (window.relacionadasSelecionadas.find(function(r) { return r.id === id; })) { mostrarMensagem("Matéria já selecionada.", "erro"); return; }
             window.relacionadasSelecionadas.push({id: id, titulo: titulo});
+            
+            // O utilizador escolheu à mão, logo bloqueamos a geração automática
             window.relacionadasEditadasManualmente = true;
+            
             atualizarUIListaRelacionadas();
             document.getElementById('lista-resultados-relacionadas').innerHTML = '';
             document.getElementById('admin-busca-relacionada').value = '';
@@ -587,7 +636,10 @@
 
         function removerRelacionada(id) {
             window.relacionadasSelecionadas = window.relacionadasSelecionadas.filter(function(r) { return r.id !== id; });
+            
+            // Se ele apagar alguma manualmente, também mantemos a edição manual bloqueada (para não voltar a encher sozinho)
             window.relacionadasEditadasManualmente = true;
+            
             atualizarUIListaRelacionadas();
         }
 
@@ -738,11 +790,13 @@
             document.querySelectorAll('input[name="admin-categorias-checkbox"]').forEach(function(cb) { cb.checked = false; });
             atualizarCampoCidadeAdmin();
             
+            // Permite recomeçar o processo automático do zero
             window.relacionadasSelecionadas = [];
             window.relacionadasEditadasManualmente = false; 
             
             atualizarUIListaRelacionadas(); 
             atualizarPreviewURL(); // Limpa e oculta a preview do link
+            atualizarRelacionadasAutomaticas(); // Tenta procurar as gerais caso existam
             
             var btnSalvar = document.getElementById('btn-salvar-noticia'); 
             if (btnSalvar) btnSalvar.innerText = "Publicar Matéria";
@@ -1000,6 +1054,7 @@
                 atualizarUIListaRelacionadas(); 
             } else { 
                 window.relacionadasEditadasManualmente = false; 
+                atualizarRelacionadasAutomaticas(); // Se estiver vazio, tenta preencher com a categoria atual
             }
             
             var btnSalvar = document.getElementById('btn-salvar-noticia'); 
