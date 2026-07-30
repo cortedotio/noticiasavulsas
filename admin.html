@@ -166,7 +166,7 @@
                                 <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Manchete</label>
                                 <input type="text" id="admin-titulo" oninput="atualizarPreviewURL()" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue font-serif font-bold text-lg text-jornal-dark rounded-sm" placeholder="O título da sua notícia..." />
                                 
-                                <!-- Pré-visualização do Link SEO CORRIGIDA (LINK AZUL) -->
+                                <!-- Pré-visualização do Link SEO -->
                                 <p id="preview-url-noticia" class="text-[11px] mt-2 hidden truncate">🔗 <span class="text-gray-500 hidden sm:inline">Link da matéria: </span><span id="preview-url-texto" class="text-blue-600 font-bold tracking-wide"></span></p>
                             </div>
                             
@@ -372,6 +372,42 @@
                 document.getElementById('loading-global').classList.add('hidden');
                 document.getElementById('modalLogin').classList.remove('hidden');
                 document.getElementById('modalLogin').classList.add('flex');
+            }
+            
+            // Lógica Global de clique no painel Rich Text (Para o botão de ajustar tamanho)
+            var editorRich = document.getElementById('admin-editor-rich');
+            if (editorRich) {
+                editorRich.addEventListener('click', function(e) {
+                    var el = e.target;
+                    if (el && el.textContent && el.textContent.indexOf('Ajustar Tamanho') !== -1) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        var img = null;
+                        var figure = el.closest('figure');
+                        if (figure) {
+                            img = figure.querySelector('img');
+                        } else {
+                            var prev = el.parentElement ? el.parentElement.previousElementSibling : el.previousElementSibling;
+                            while(prev) {
+                                if(prev.tagName === 'IMG') { img = prev; break; }
+                                if(prev.querySelector('img')) { img = prev.querySelector('img'); break; }
+                                prev = prev.previousElementSibling;
+                            }
+                        }
+                        
+                        if (img) {
+                            var atual = img.style.width || '100%';
+                            var novo = prompt("Defina a largura da imagem (Ex: 100%, 50%, 300px):", atual);
+                            if (novo) {
+                                img.style.width = novo;
+                                img.style.maxWidth = '100%'; // Garante obediência visual
+                            }
+                        } else {
+                            alert("Não foi possível localizar a imagem para ajustar.");
+                        }
+                    }
+                });
             }
         });
 
@@ -674,11 +710,17 @@
                     var base64Resized = canvas.toDataURL('image/jpeg', 0.8);
                     
                     var htmlImg = '<br><figure style="margin: 16px auto; text-align: center; max-width: 100%; display: block;">' +
-                                  '<img src="' + base64Resized + '" style="max-width: 100%; height: auto; border-radius: 8px; display: inline-block; margin: 0 auto; border: 1px solid #e2e8f0;" />';
+                                  '<img src="' + base64Resized + '" style="width: 100%; max-width: 100%; height: auto; border-radius: 8px; display: inline-block; margin: 0 auto; border: 1px solid #e2e8f0; transition: width 0.3s;" />';
                     if (legenda || creditos) {
                         var credTexto = creditos ? 'Foto: ' + creditos : ''; var sep = (legenda && creditos) ? ' - ' : '';
                         htmlImg += '<figcaption style="font-size: 12px; color: #64748b; margin-top: 8px; font-style: italic; text-align: center;">' + legenda + sep + credTexto + '</figcaption>';
                     }
+                    
+                    // BOTÃO DE AJUSTAR TAMANHO EXCLUSIVO PARA O EDITOR
+                    htmlImg += '<div contenteditable="false" style="margin-top: 10px; text-align: center;">' +
+                               '<button type="button" class="btn-ajustar-tamanho" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; user-select: none;">↕ Ajustar Tamanho</button>' +
+                               '</div>';
+                               
                     htmlImg += '</figure><br><p>&#8203;</p>';
                     execCmd('insertHTML', htmlImg); input.value = '';
                 };
