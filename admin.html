@@ -86,6 +86,15 @@
         /* Força a seleção de texto no Editor (Resolve bloqueios) */
         .rich-editor { user-select: text !important; -webkit-user-select: text !important; }
         
+        /* Garante que os tamanhos de fonte do editor sejam visíveis, contornando o bloqueio do Tailwind */
+        .rich-editor font[size="1"] { font-size: 0.75rem !important; line-height: 1.1rem !important; }
+        .rich-editor font[size="2"] { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+        .rich-editor font[size="3"] { font-size: 1rem !important; line-height: 1.5rem !important; }
+        .rich-editor font[size="4"] { font-size: 1.125rem !important; line-height: 1.75rem !important; }
+        .rich-editor font[size="5"] { font-size: 1.5rem !important; line-height: 2rem !important; }
+        .rich-editor font[size="6"] { font-size: 1.875rem !important; line-height: 2.25rem !important; }
+        .rich-editor font[size="7"] { font-size: 2.25rem !important; line-height: 2.5rem !important; }
+        
         .rich-editor img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px auto; border: 1px solid #e2e8f0; display: block; }
         .rich-editor iframe, .rich-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; background: #000; }
         .rich-editor a { color: #2563eb; text-decoration: underline; font-weight: 500; }
@@ -211,31 +220,49 @@
                         <input type="file" id="upload-imagem-conteudo" accept="image/*" class="hidden" onchange="processarUploadImagemConteudo(this)" />
                         
                         <div class="flex flex-wrap gap-1 p-2 bg-gray-100 border border-gray-300 border-b-0 rounded-t-sm items-center">
+                            <!-- BOTOES DESFAZER / REFAZER -->
+                            <button type="button" onclick="execCmd('undo')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded shadow-sm transition-colors" title="Desfazer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                            </button>
+                            <button type="button" onclick="execCmd('redo')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded shadow-sm transition-colors" title="Refazer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"/></svg>
+                            </button>
+                            <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
+
                             <button type="button" onclick="execCmd('bold')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm transition-colors">B</button>
                             <button type="button" onclick="execCmd('italic')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm transition-colors">I</button>
                             <button type="button" onclick="execCmd('underline')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs underline rounded shadow-sm transition-colors">U</button>
                             
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
                             
-                            <!-- SELETOR DE FONTE (NOVO) -->
+                            <!-- SELETOR DE FONTE COM ATUALIZAÇÃO AUTOMÁTICA -->
                             <div class="relative flex items-center">
-                                <span class="text-xs font-bold mr-1 text-gray-600 hidden sm:block">Fonte</span>
-                                <select onchange="aplicarFonte(this.value); this.selectedIndex=0;" class="px-1 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer w-[90px] truncate">
-                                    <option value="" disabled selected>Alterar...</option>
-                                    <option value="Merriweather, serif">Normal (Jornal)</option>
-                                    <option value="Inter, sans-serif">Moderna (Inter)</option>
+                                <select id="fontFamilySelect" onchange="aplicarFonte(this.value);" class="px-1 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer w-[110px] truncate">
+                                    <option value="" disabled selected>Selecionar...</option>
+                                    <option value="Merriweather, serif">Serif (Jornal)</option>
+                                    <option value="Inter, sans-serif">Sans Serif</option>
                                     <option value="Arial, sans-serif">Arial</option>
-                                    <option value="LIMPAR_FONTE">❌ Remover Fonte</option>
+                                    <option value="Courier New, monospace">Largura fixa</option>
+                                    <option value="Comic Sans MS">Comic Sans MS</option>
+                                    <option value="Garamond">Garamond</option>
+                                    <option value="Georgia">Georgia</option>
+                                    <option value="Tahoma">Tahoma</option>
+                                    <option value="Trebuchet MS">Trebuchet MS</option>
+                                    <option value="Verdana">Verdana</option>
                                 </select>
                             </div>
                             
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
                             
-                            <!-- SELETOR DE TAMANHO -->
+                            <!-- SELETOR DE TAMANHO COM ATUALIZAÇÃO AUTOMÁTICA -->
                             <div class="relative flex items-center">
                                 <span class="text-xs font-bold mr-1 text-gray-600 hidden sm:block">Tam.</span>
-                                <select onchange="execCmd('fontSize', this.value); this.selectedIndex=1;" class="px-2 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer">
-                                    <option value="1">Pequeno</option><option value="3" selected>Normal</option><option value="5">Grande</option><option value="7">Enorme</option>
+                                <select id="fontSizeSelect" onchange="execCmd('fontSize', this.value);" class="px-2 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer">
+                                    <option value="" disabled selected>---</option>
+                                    <option value="1">Pequeno</option>
+                                    <option value="3">Normal</option>
+                                    <option value="5">Grande</option>
+                                    <option value="7">Enorme</option>
                                 </select>
                             </div>
                             
@@ -396,12 +423,12 @@
                 document.getElementById('modalLogin').classList.add('flex');
             }
             
-            // INTELIGÊNCIA DOS BOTÕES DE IMAGEM (+ e -)
+            // INTELIGÊNCIA DO EDITOR RICH TEXT
             var editorRich = document.getElementById('admin-editor-rich');
             if (editorRich) {
+                // Inteligência dos Botões de Imagem (+ e -)
                 editorRich.addEventListener('click', function(e) {
                     var el = e.target;
-                    
                     if (el && (el.classList.contains('btn-diminuir-img') || el.classList.contains('btn-aumentar-img'))) {
                         e.preventDefault();
                         e.stopPropagation();
@@ -409,11 +436,9 @@
                         var img = null;
                         var figure = el.closest('figure');
                         
-                        // Tenta encontrar a imagem no mesmo figure
                         if (figure) {
                             img = figure.querySelector('img');
                         } else {
-                            // Tenta encontrar a imagem andando para trás (caso o editor quebre a tag figure)
                             var prev = el.parentElement ? el.parentElement.previousElementSibling : el.previousElementSibling;
                             while(prev) {
                                 if(prev.tagName === 'IMG') { img = prev; break; }
@@ -429,13 +454,13 @@
                             
                             if (isNaN(val)) { val = 300; isPercent = false; }
                             
-                            var step = isPercent ? 10 : 50; // Aumenta de 10 em 10% ou 50 em 50px
+                            var step = isPercent ? 10 : 50; 
                             
                             if (el.classList.contains('btn-aumentar-img')) {
                                 val += step;
                             } else {
                                 val -= step;
-                                if(val < 50) val = 50; // Tamanho mínimo de segurança
+                                if(val < 50) val = 50; 
                             }
                             
                             if (isPercent && val > 100) val = 100;
@@ -447,27 +472,51 @@
                         }
                     }
                 });
+
+                // Ler Fonte e Tamanho ao clicar ou navegar no texto
+                editorRich.addEventListener('keyup', atualizarBarraFerramentas);
+                editorRich.addEventListener('mouseup', atualizarBarraFerramentas);
             }
         });
+
+        // Função que lê onde o cursor está e atualiza os Dropdowns na barra
+        function atualizarBarraFerramentas() {
+            var fontNode = document.queryCommandValue('fontName');
+            var sizeNode = document.queryCommandValue('fontSize');
+            
+            if (fontNode) {
+                var selFont = document.getElementById('fontFamilySelect');
+                var fontL = fontNode.replace(/['"]/g, '').toLowerCase().split(',')[0];
+                for(var i=0; i<selFont.options.length; i++) {
+                    if(selFont.options[i].value.toLowerCase().includes(fontL)) {
+                        selFont.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            if (sizeNode) {
+                var selSize = document.getElementById('fontSizeSelect');
+                for(var i=0; i<selSize.options.length; i++) {
+                    if(selSize.options[i].value === sizeNode.toString()) {
+                        selSize.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
 
         // APLICAR FONTE ESCOLHIDA NA CAIXA
         function aplicarFonte(valor) {
             if (!valor) return;
-            if (valor === 'LIMPAR_FONTE') {
-                limparFormatacao();
-            } else {
-                document.execCommand('fontName', false, valor);
-            }
+            document.execCommand('fontName', false, valor);
             document.getElementById('admin-editor-rich').focus();
         }
 
         // LIMPEZA PROFUNDA DE FORMATAÇÃO (Remove Fontes e Cores copiadas do Word/Sites)
         function limparFormatacao() {
-            // Remove as formatações nativas do navegador
             document.execCommand('removeFormat', false, null);
             document.execCommand('unlink', false, null);
             
-            // Mergulha no texto selecionado para remover tags de estilo invisíveis
             var sel = window.getSelection();
             if (!sel.isCollapsed) {
                 var range = sel.getRangeAt(0);
@@ -496,6 +545,10 @@
                     }
                 }
             }
+            
+            // Reseta a visualização das caixas
+            document.getElementById('fontFamilySelect').selectedIndex = 0;
+            document.getElementById('fontSizeSelect').selectedIndex = 0;
             document.getElementById('admin-editor-rich').focus();
         }
 
