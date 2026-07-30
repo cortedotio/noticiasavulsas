@@ -83,7 +83,7 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        /* Correção para garantir a seleção de texto no Editor */
+        /* Força a seleção de texto no Editor (Resolve bloqueios) */
         .rich-editor { user-select: text !important; -webkit-user-select: text !important; }
         
         .rich-editor img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px auto; border: 1px solid #e2e8f0; display: block; }
@@ -214,13 +214,31 @@
                             <button type="button" onclick="execCmd('bold')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm transition-colors">B</button>
                             <button type="button" onclick="execCmd('italic')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm transition-colors">I</button>
                             <button type="button" onclick="execCmd('underline')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs underline rounded shadow-sm transition-colors">U</button>
+                            
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
+                            
+                            <!-- SELETOR DE FONTE (NOVO) -->
                             <div class="relative flex items-center">
-                                <span class="text-xs font-bold mr-2 text-gray-600 hidden sm:block">TT</span>
+                                <span class="text-xs font-bold mr-1 text-gray-600 hidden sm:block">Fonte</span>
+                                <select onchange="aplicarFonte(this.value); this.selectedIndex=0;" class="px-1 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer w-[90px] truncate">
+                                    <option value="" disabled selected>Alterar...</option>
+                                    <option value="Merriweather, serif">Normal (Jornal)</option>
+                                    <option value="Inter, sans-serif">Moderna (Inter)</option>
+                                    <option value="Arial, sans-serif">Arial</option>
+                                    <option value="LIMPAR_FONTE">❌ Remover Fonte</option>
+                                </select>
+                            </div>
+                            
+                            <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
+                            
+                            <!-- SELETOR DE TAMANHO -->
+                            <div class="relative flex items-center">
+                                <span class="text-xs font-bold mr-1 text-gray-600 hidden sm:block">Tam.</span>
                                 <select onchange="execCmd('fontSize', this.value); this.selectedIndex=1;" class="px-2 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer">
                                     <option value="1">Pequeno</option><option value="3" selected>Normal</option><option value="5">Grande</option><option value="7">Enorme</option>
                                 </select>
                             </div>
+                            
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
                             <button type="button" onclick="execCmd('justifyLeft')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Esq</button>
                             <button type="button" onclick="execCmd('justifyCenter')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Cen</button>
@@ -236,7 +254,7 @@
                             <button type="button" onclick="execCmd('formatBlock', 'H2')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm">H2</button>
                             <button type="button" onclick="execCmd('formatBlock', 'blockquote')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm">""</button>
                             
-                            <!-- BOTÃO DE LIMPEZA PROFUNDA DE TEXTO -->
+                            <!-- BOTÃO DE LIMPEZA PROFUNDA -->
                             <button type="button" onclick="limparFormatacao()" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-xs font-bold text-red-600 rounded shadow-sm ml-1" title="Limpar Formatação e Estilos Colados">Limpar</button>
                             
                             <button type="button" id="btn-ia-conteudo" onclick="gerarConteudoIA()" class="ml-auto px-4 py-1.5 bg-purple-100 hover:bg-purple-200 border border-purple-300 text-xs text-purple-800 font-bold tracking-wide rounded shadow-sm transition-colors flex items-center justify-center">✨ Escrever com IA</button>
@@ -431,6 +449,17 @@
                 });
             }
         });
+
+        // APLICAR FONTE ESCOLHIDA NA CAIXA
+        function aplicarFonte(valor) {
+            if (!valor) return;
+            if (valor === 'LIMPAR_FONTE') {
+                limparFormatacao();
+            } else {
+                document.execCommand('fontName', false, valor);
+            }
+            document.getElementById('admin-editor-rich').focus();
+        }
 
         // LIMPEZA PROFUNDA DE FORMATAÇÃO (Remove Fontes e Cores copiadas do Word/Sites)
         function limparFormatacao() {
