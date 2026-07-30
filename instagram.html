@@ -161,14 +161,14 @@
         .template-feed .template-title { font-size: 60px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
         .template-story .template-title { font-size: 75px; display: -webkit-box; -webkit-line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden; }
 
-        /* O Resumo (Apenas no Feed) - AGORA ESCONDIDO */
+        /* O Resumo (Apenas no Feed) - ESCONDIDO PARA VISUAL MAIS LIMPO */
         .template-summary {
             font-family: 'Inter', sans-serif;
             font-size: 30px;
             color: #cbd5e1;
             font-weight: 400;
             line-height: 1.5;
-            display: none; /* <-- ALTERADO PARA ESCONDER O RESUMO */
+            display: none;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
@@ -362,7 +362,6 @@
                     <textarea class="w-full bg-white border border-gray-300 p-4 rounded-sm text-sm text-gray-700 h-40 custom-scrollbar font-medium mb-4 resize-none focus:outline-none focus:ring-1 focus:ring-purple-500 shadow-inner" id="texto-legenda"></textarea>
                     
                     <div class="mt-auto flex flex-col gap-3">
-                        <!-- NOVO BOTÃO DE PUBLICAÇÃO DIRETA AO INSTAGRAM -->
                         <button id="btn-publicar-direto" onclick="acionarPublicacaoIG()" class="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-90 text-white font-black text-xs uppercase tracking-widest py-4 rounded-sm shadow-xl transition-opacity flex justify-center items-center gap-2">
                             <span>🚀</span> PUBLICAR DIRETO NO INSTAGRAM
                         </button>
@@ -380,7 +379,7 @@
         let noticiasGlobais = [];
         let urlAtualBaixar = "";
         let nomeAtualBaixar = "";
-        let tipoAtualBaixar = ""; // NOVA VARIÁVEL QUE GUARDA O TIPO DA ARTE
+        let tipoAtualBaixar = ""; 
 
         document.addEventListener("DOMContentLoaded", function() {
             // VERIFICAÇÃO DE SEGURANÇA: Só acede se estiver logado no admin.html
@@ -528,6 +527,17 @@
                 return gerarFallbackBase64();
             }
         }
+        
+        // FUNÇÃO DE NORMALIZAÇÃO DE TEXTO PARA A URL AMIGÁVEL NO INSTAGRAM
+        function normalizarTextoUrl(text) {
+            if (!text) return 'geral';
+            return String(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+                .replace(/\s+/g, '-')
+                .replace(/[^\w\-]+/g, '')
+                .replace(/\-\-+/g, '-')
+                .replace(/^-+/, '')
+                .replace(/-+$/, '');
+        }
 
         function prepararArte(idNoticia, tipo) {
             tipoAtualBaixar = tipo; // GUARDA SE É FEED OU STORY
@@ -549,7 +559,11 @@
             const resumoLimpo = noticia.linhaFina ? noticia.linhaFina : removerHTML(noticia.conteudo).substring(0, 150) + '...';
             const catUnica = noticia.categoria.split(',')[0];
             const hashtagEdit = "#" + catUnica.replace(/\s+/g, '');
-            const linkPortal = `noticiasavulsas.com.br/?noticia=${noticia.id}`;
+            
+            // CONSTRUÇÃO DA URL AMIGÁVEL CORRIGIDA E COMPLETA
+            const slugCat = normalizarTextoUrl(catUnica);
+            const slugTitulo = normalizarTextoUrl(noticia.titulo);
+            const linkPortal = `noticiasavulsas.com.br/${slugCat}/${slugTitulo}/${noticia.id}`;
             
             document.getElementById('texto-legenda').value = `📰 ${noticia.titulo}\n\n${resumoLimpo}\n\n📲 Leia a matéria completa no nosso portal! Acesse o link na Bio ou copie o endereço abaixo:\n🔗 ${linkPortal}\n.\n.\n.\n#NoticiasAvulsas #Jornalismo ${hashtagEdit}`;
 
