@@ -19,7 +19,7 @@
         // CONEXÃO INTELIGENTE (Deteta se está no Google ou GitHub)
         // ================================================================
         if (typeof google === 'undefined' || typeof google.script === 'undefined') {
-            const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwYhWzI1nWN01rUrHrdB8EQL_a4caSTS9FjzIH9J3eGy-6X5XF_XCe9nrT8umJx2IcH/exec";
+            const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyZD4KJlvhtMwxr8fToE7nT2ZUdVHNglay0Ynauk6ixmrc4nsYK93KenBcJJKG3psFa/exec";
             window.google = {
                 script: {
                     run: {
@@ -311,13 +311,13 @@
                         </div>
                     </div>
 
-                    <!-- WIDGET CLIMA CLICÁVEL (VISUALIZACAO CORRIGIDA COM AS IMAGENS FORNECIDAS) -->
+                    <!-- WIDGET CLIMA CLICÁVEL -->
                     <div class="mb-10 bg-white border border-gray-200 p-1 shadow-sm rounded-sm cursor-pointer hover:shadow-md transition-shadow" onclick="abrirModalClima()">
                         <div class="border-t-4 border-sky-400 pt-2 px-4 pb-2 flex justify-between items-center bg-white">
                             <h2 class="text-xs font-black uppercase tracking-widest text-sky-500">Clima Local</h2>
                             <span class="text-[9px] text-gray-400 uppercase font-bold tracking-widest hover:text-sky-500 transition-colors">Previsão &raquo;</span>
                         </div>
-                        <!-- Bloco Redesenhado Igual ao Print -->
+                        <!-- Bloco Redesenhado -->
                         <div class="relative overflow-hidden bg-gradient-to-br from-sky-400 to-blue-600 rounded-b-sm shadow-inner py-8 px-4 text-white flex flex-col items-center">
                             <!-- Fundo de nuvem gigante desfocado -->
                             <div class="absolute top-1/2 -translate-y-1/2 -right-10 text-[150px] opacity-10 select-none pointer-events-none" id="bg-icone-clima">☀️</div>
@@ -470,7 +470,6 @@
             }
         }
 
-        // CORREÇÃO: Função de normalização para corrigir os filtros que falhavam devido a acentos (ex: Justiça)
         function normalizarTextoBusca(str) {
             return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
         }
@@ -1924,6 +1923,22 @@
             document.getElementById('nc-data').innerText = noticia.dataHora ? "Publicado em " + noticia.dataHora.replace(' ', ' às ') : '';
             
             var conteudoFormatado = converterVideoUrlsParaPlayers(noticia.conteudo || '');
+            
+            // --- NOVA LIMPEZA (Remove Botão "Ajustar Tamanho") ---
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = conteudoFormatado;
+            var tagsVerificar = tempDiv.querySelectorAll('button, div, span, p');
+            tagsVerificar.forEach(function(el) {
+                if (el.textContent && el.textContent.indexOf('Ajustar Tamanho') !== -1) {
+                    var txtLimpo = el.textContent.replace(/[\u2195↕\s]/g, '').toLowerCase();
+                    if (txtLimpo === 'ajustartamanho') {
+                        el.remove();
+                    }
+                }
+            });
+            conteudoFormatado = tempDiv.innerHTML;
+            // -----------------------------------------------------
+
             document.getElementById('nc-conteudo').innerHTML = conteudoFormatado || '<p class="text-gray-400 italic">Sem conteúdo disponível para esta matéria.</p>';
             
             if(conteudoFormatado.indexOf('instagram-media') !== -1) { 
