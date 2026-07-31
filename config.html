@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Completo - Notícias Avulsas</title>
+    <title>Configurações - Notícias Avulsas</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,10 +23,8 @@
         };
 
         const apiFunctions = [
-            'getHomeData', 'verificarLogin', 'salvarNoticiaNoSheets', 'alternarStatusNoticia', 
-            'excluirNoticia', 'adicionarCategoriaNoSheets', 'chamarGeminiBackend', 
-            'salvarConfiguracaoHTMLCustom', 'salvarPropagandaNoSheets', 'chamarGeminiImagemBackend', 
-            'adicionarUsuario'
+            'getHomeData', 'verificarLogin', 'salvarConfiguracaoHTMLCustom', 
+            'salvarPropagandaNoSheets', 'chamarGeminiImagemBackend', 'adicionarUsuario'
         ];
 
         apiFunctions.forEach(function(funcName) {
@@ -36,7 +34,6 @@
                 var failureCb = this._onFailure;
                 this._onSuccess = null; this._onFailure = null;
                 
-                // Fetch com blindagem e "redirect: follow" para iPhone/Safari
                 fetch(GAS_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -65,7 +62,7 @@
                 theme: {
                     extend: {
                         fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] },
-                        colors: { jornal: { blue: '#0F172A', red: '#E11D48', dark: '#020617', gray: '#F8FAFC' } }
+                        colors: { jornal: { blue: '#0F172A', red: '#E11D48', dark: '#020617' } }
                     }
                 }
             };
@@ -79,11 +76,9 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        /* Força a seleção de texto no Editor (Resolve bloqueios) */
+
+        /* Formatação Nativa do Editor Rich Text */
         .rich-editor { user-select: text !important; -webkit-user-select: text !important; }
-        
-        /* Garante que os tamanhos de fonte do editor sejam visíveis, contornando o bloqueio do Tailwind */
         .rich-editor font[size="1"] { font-size: 0.75rem !important; line-height: 1.1rem !important; }
         .rich-editor font[size="2"] { font-size: 0.875rem !important; line-height: 1.25rem !important; }
         .rich-editor font[size="3"] { font-size: 1rem !important; line-height: 1.5rem !important; }
@@ -111,281 +106,56 @@
 
     <div id="loading-global" class="fixed inset-0 z-[99998] bg-jornal-dark flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="w-12 h-12 border-4 border-gray-700 border-t-jornal-red rounded-full animate-spin mb-4"></div>
-        <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Sistema...</p>
+        <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Configurações...</p>
     </div>
 
     <div id="modalLogin" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md"></div>
         <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
             <div class="mb-6 text-center">
-                <h2 class="font-sans text-xl font-black uppercase text-jornal-dark tracking-tighter">Sistema Central</h2>
+                <h2 class="font-sans text-xl font-black uppercase text-jornal-dark tracking-tighter">Segurança</h2>
                 <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Acesso restrito a administradores</p>
             </div>
             <form onsubmit="fazerLogin(event)" class="space-y-4">
                 <input type="text" id="login-user" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Usuário (Ex: admin)" />
                 <input type="password" id="login-pass" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Senha" />
-                <button type="submit" id="btn-fazer-login" class="w-full bg-jornal-blue text-white font-black py-3 hover:opacity-90 transition-colors text-xs uppercase tracking-widest rounded-sm mt-4">Entrar no Painel</button>
+                <button type="submit" id="btn-fazer-login" class="w-full bg-jornal-blue text-white font-black py-3 hover:opacity-90 transition-colors text-xs uppercase tracking-widest rounded-sm mt-4">Acessar Painel</button>
             </form>
         </div>
     </div>
 
-    <div id="view-admin" class="hidden min-h-screen flex flex-col bg-gray-100 text-slate-800">
+    <div id="view-config" class="hidden min-h-screen flex flex-col bg-gray-100 text-slate-800">
         
         <header class="bg-jornal-dark text-white border-b border-gray-800 sticky top-0 z-40 shadow-sm">
             <div class="max-w-[1200px] mx-auto flex justify-between items-center px-4 py-3">
                 <div class="flex items-center gap-3">
-                    <span class="font-sans font-black tracking-tighter text-lg uppercase text-slate-100 flex items-center gap-2">Gestor<span class="text-rose-600">Avulsas</span></span>
+                    <span class="font-sans font-black tracking-tighter text-lg uppercase text-slate-100 flex items-center gap-2">⚙️ Configurações</span>
                 </div>
                 <div class="flex items-center gap-4">
-                    <a href="instagram.html" target="_blank" class="text-[10px] font-black uppercase tracking-widest text-purple-400 hover:text-purple-300 transition-colors hidden md:block">📸 Estúdio IG</a>
-                    <button type="button" onclick="encerrarSessao()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm ml-4">Sair (Logout)</button>
+                    <a href="admin.html" class="text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-white transition-colors hidden md:block">✏️ Redação</a>
+                    <!-- Estúdio IG agora sem target="_blank" -->
+                    <a href="instagram.html" class="text-[10px] font-black uppercase tracking-widest text-purple-400 hover:text-purple-300 transition-colors hidden md:block">📸 Estúdio IG</a>
+                    <button type="button" onclick="encerrarSessao()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm ml-4">Sair</button>
                 </div>
             </div>
         </header>
 
         <main class="max-w-[1200px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
-            <!-- ABAS DO PAINEL GIGANTE (TODAS AS FUNCIONALIDADES) -->
+            <!-- ABAS DE CONFIGURAÇÃO -->
             <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar pb-1">
-                <button type="button" onclick="alternarAbaAdmin('form-noticia-container')" id="tab-btn-publicar" class="py-3 px-5 font-black text-[11px] bg-jornal-dark text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Publicar</button>
-                <button type="button" onclick="alternarAbaAdmin('lista-noticias-container')" id="tab-btn-gerir" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Gerir Matérias</button>
-                <button type="button" onclick="alternarAbaAdmin('form-capa-container')" id="tab-btn-capa" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Layout Capa</button>
-                <button type="button" onclick="alternarAbaAdmin('form-logo-container')" id="tab-btn-logo" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">IA & Design</button>
-                <button type="button" onclick="alternarAbaAdmin('form-propaganda-container')" id="tab-btn-propaganda" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Anúncios</button>
-                <button type="button" onclick="alternarAbaAdmin('form-social-container')" id="tab-btn-social" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Redes Sociais</button>
-                <button type="button" onclick="alternarAbaAdmin('form-placar-container')" id="tab-btn-placar" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Placar</button>
-                <button type="button" onclick="alternarAbaAdmin('form-expediente-container')" id="tab-btn-expediente" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Expediente</button>
-                <button type="button" onclick="alternarAbaAdmin('form-usuarios-container')" id="tab-btn-usuarios" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Usuários</button>
+                <button type="button" onclick="alternarAbaConfig('form-capa-container')" id="tab-btn-capa" class="py-3 px-5 font-black text-[11px] bg-emerald-600 text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Layout Capa</button>
+                <button type="button" onclick="alternarAbaConfig('form-logo-container')" id="tab-btn-logo" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">IA & Design</button>
+                <button type="button" onclick="alternarAbaConfig('form-propaganda-container')" id="tab-btn-propaganda" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Anúncios</button>
+                <button type="button" onclick="alternarAbaConfig('form-social-container')" id="tab-btn-social" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Redes Sociais</button>
+                <button type="button" onclick="alternarAbaConfig('form-placar-container')" id="tab-btn-placar" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Placar</button>
+                <button type="button" onclick="alternarAbaConfig('form-expediente-container')" id="tab-btn-expediente" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Expediente</button>
+                <button type="button" onclick="alternarAbaConfig('form-usuarios-container')" id="tab-btn-usuarios" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Usuários</button>
                 
                 <a href="index.html" class="py-3 px-5 font-bold text-[11px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1 ml-auto">Ver Portal &raquo;</a>
             </div>
 
-            <!-- ========================================== -->
-            <!-- ABA 1: FORMULÁRIO DE NOTÍCIA               -->
-            <!-- ========================================== -->
-            <div id="form-noticia-container" class="bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
-                <div class="flex justify-between items-center mb-8 border-l-4 border-jornal-red pl-3">
-                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Redigir Matéria</h2>
-                </div>
-                
-                <!-- O input de ficheiro Global para Inserção de Imagens no Editor de Texto (Usado pelos dois editores) -->
-                <input type="file" id="upload-imagem-conteudo" accept="image/*" class="hidden" onchange="processarUploadImagemConteudo(this)" />
-
-                <form id="form-admin" class="space-y-6">
-                    <input type="hidden" id="admin-id-noticia" value="" />
-                    
-                    <div class="flex flex-col lg:flex-row gap-6">
-                        <div class="lg:w-2/3 flex flex-col gap-6">
-                            <div>
-                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Manchete</label>
-                                <input type="text" id="admin-titulo" oninput="atualizarPreviewURL()" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue font-serif font-bold text-lg text-jornal-dark rounded-sm" placeholder="O título da sua notícia..." />
-                                <p id="preview-url-noticia" class="text-[10px] text-gray-400 mt-2 hidden truncate">🔗 <span class="hidden sm:inline">Link da matéria: </span><span class="text-blue-500 font-medium tracking-wide"></span></p>
-                            </div>
-                            
-                            <div>
-                                <div class="flex justify-between items-end mb-2">
-                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-500">Linha Fina (Opcional - SEO)</label>
-                                    <button type="button" id="btn-ia-linhafina" onclick="gerarLinhaFinaIA()" class="text-[10px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 transition-colors">✨ Gerar com IA</button>
-                                </div>
-                                <input type="text" id="admin-linha-fina" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-medium text-gray-700 rounded-sm" placeholder="Breve resumo..." />
-                            </div>
-                        </div>
-                        
-                        <div class="lg:w-1/3">
-                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Editorias</label>
-                            <div class="p-4 bg-gray-50 border border-gray-300 rounded-sm">
-                                <div id="admin-categoria-checklist" class="max-h-[120px] overflow-y-auto custom-scrollbar flex flex-col gap-2"></div>
-                            </div>
-                            <button type="button" onclick="novaCategoria()" class="text-[10px] font-black text-jornal-red hover:opacity-80 mt-2 block">+ Nova Editoria</button>
-                        </div>
-                    </div>
-
-                    <div id="admin-cidade-container" class="hidden p-5 bg-blue-50 border border-blue-200 rounded-sm">
-                        <label for="admin-cidade" class="text-[11px] font-black uppercase tracking-widest text-jornal-blue mb-2 block">Cidade *</label>
-                        <input type="text" id="admin-cidade" placeholder="Informe a cidade da matéria" class="w-full px-4 py-3 bg-white border border-blue-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm" />
-                    </div>
-
-                    <div>
-                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Autor / Assinatura</label>
-                        <input type="text" id="admin-autor" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm" placeholder="Ex: João Silva (Vazio = 'da redação')" />
-                    </div>
-
-                    <!-- SUPER EDITOR DE TEXTO 1 -->
-                    <div>
-                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Conteúdo (Rich Text Avançado)</label>
-                        <div class="flex flex-wrap gap-1 p-2 bg-gray-100 border border-gray-300 border-b-0 rounded-t-sm items-center">
-                            <!-- BOTOES DESFAZER / REFAZER -->
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('undo')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded shadow-sm transition-colors" title="Desfazer">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
-                            </button>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('redo')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded shadow-sm transition-colors" title="Refazer">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"/></svg>
-                            </button>
-                            <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
-
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('bold')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm">B</button>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('italic')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm">I</button>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('underline')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs underline rounded shadow-sm">U</button>
-                            
-                            <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
-                            
-                            <!-- SELETOR DE FONTE COM ATUALIZAÇÃO AUTOMÁTICA -->
-                            <div class="relative flex items-center">
-                                <select onmousedown="event.preventDefault();" onchange="aplicarFonte(this.value);" class="fontFamilySelect px-1 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer w-[110px] truncate">
-                                    <option value="" disabled selected>Selecionar...</option>
-                                    <option value="Merriweather, serif">Serif (Jornal)</option>
-                                    <option value="Inter, sans-serif">Sans Serif</option>
-                                    <option value="Arial, sans-serif">Arial</option>
-                                    <option value="Courier New, monospace">Largura fixa</option>
-                                    <option value="Comic Sans MS">Comic Sans MS</option>
-                                    <option value="Garamond">Garamond</option>
-                                    <option value="Georgia">Georgia</option>
-                                    <option value="Tahoma">Tahoma</option>
-                                    <option value="Trebuchet MS">Trebuchet MS</option>
-                                    <option value="Verdana">Verdana</option>
-                                </select>
-                            </div>
-                            <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
-                            <div class="relative flex items-center">
-                                <span class="text-xs font-bold mr-1 text-gray-600 hidden sm:block">Tam.</span>
-                                <select onmousedown="event.preventDefault();" onchange="execCmd('fontSize', this.value);" class="fontSizeSelect px-2 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer">
-                                    <option value="" disabled selected>---</option>
-                                    <option value="1">Pequeno</option>
-                                    <option value="3">Normal</option>
-                                    <option value="5">Grande</option>
-                                    <option value="7">Enorme</option>
-                                </select>
-                            </div>
-                            
-                            <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('justifyLeft')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Esq</button>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('justifyCenter')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Cen</button>
-                            <span class="w-[1px] h-5 bg-gray-300 mx-1 hidden sm:block"></span>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('insertUnorderedList')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm hidden sm:block">UL</button>
-                            <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
-                            
-                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirLinkRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-blue-600 rounded font-semibold shadow-sm">🔗</button>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirImagemRichEditor(this)" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-emerald-600 rounded font-semibold shadow-sm">🖼️</button>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirVideoRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-purple-600 rounded font-semibold shadow-sm">📹</button>
-                            
-                            <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('formatBlock', 'H2')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm">H2</button>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('formatBlock', 'blockquote')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm">""</button>
-                            
-                            <!-- BOTÃO DE LIMPEZA PROFUNDA -->
-                            <button type="button" onmousedown="event.preventDefault();" onclick="limparFormatacao()" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-xs font-bold text-red-600 rounded shadow-sm ml-1" title="Limpar Formatação e Estilos Colados">Limpar</button>
-                            
-                            <button type="button" id="btn-ia-conteudo" onclick="gerarConteudoIA()" class="ml-auto px-4 py-1.5 bg-purple-100 hover:bg-purple-200 border border-purple-300 text-xs text-purple-800 font-bold tracking-wide rounded shadow-sm transition-colors flex items-center justify-center">✨ Escrever com IA</button>
-                        </div>
-                        <div id="admin-editor-rich" contenteditable="true" class="w-full px-6 py-6 bg-white border border-gray-300 rounded-b-sm min-h-[350px] max-h-[600px] overflow-y-auto focus:outline-none focus:ring-1 focus:ring-jornal-blue text-base leading-relaxed font-serif custom-scrollbar rich-editor"></div>
-                    </div>
-                    
-                    <!-- Upload de Foto e Datas -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-gray-50 border border-gray-200 rounded-sm">
-                        <div>
-                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3 block">Upload da Foto de Capa</label>
-                            <div class="relative">
-                                <input type="file" id="admin-arquivo-imagem" accept="image/*" class="w-full text-sm file:mr-3 file:py-2 file:px-4 file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-wider file:bg-jornal-dark file:text-white hover:file:opacity-90 cursor-pointer rounded-sm bg-white border border-gray-300" onchange="verificarUploadMedia(this)" />
-                            </div>
-                            <img id="preview-imagem" loading="lazy" src="" class="mt-4 w-full h-40 object-contain bg-gray-900 rounded-sm hidden shadow-inner" />
-                        </div>
-                        
-                        <div class="flex flex-col gap-6">
-                            <div>
-                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 block mb-2">Agendamento ou Publicação Retroativa</label>
-                                <input type="datetime-local" id="admin-agendamento" class="w-full px-4 py-2.5 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue text-xs font-bold text-jornal-dark rounded-sm shadow-sm" />
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-black uppercase tracking-widest text-rose-600 block mb-2">Fim do Evento (Se for Agenda)</label>
-                                <input type="datetime-local" id="admin-data-fim-evento" class="w-full px-4 py-2.5 bg-white border border-gray-300 focus:outline-none focus:border-rose-500 text-xs font-bold text-jornal-dark rounded-sm shadow-sm" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Metadados da Imagem -->
-                    <div id="admin-imagem-metadados" class="hidden p-6 bg-amber-50 border border-amber-200 rounded-sm">
-                        <h4 class="text-[11px] font-black text-amber-800 uppercase tracking-widest mb-4">⚠️ Créditos de Imagem Obrigatórios</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-2 block">Legenda (Opcional)</label>
-                                <input type="text" id="admin-legenda-imagem" class="w-full px-4 py-2 bg-white border border-gray-300 text-sm focus:outline-none rounded-sm" />
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-bold uppercase tracking-widest text-red-600 mb-2 block">Créditos / Fonte da Imagem *</label>
-                                <input type="text" id="admin-creditos-imagem" class="w-full px-4 py-2 bg-white border border-red-300 text-sm font-bold focus:outline-none rounded-sm" placeholder="Ex: João Silva / Agência Reuters" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Notícias Relacionadas -->
-                    <div class="p-6 bg-indigo-50 border border-indigo-100 rounded-sm">
-                        <label class="text-[11px] font-black uppercase tracking-widest text-indigo-800 mb-3 block">Notícias Relacionadas</label>
-                        <div class="flex gap-2">
-                            <input type="text" id="admin-busca-relacionada" placeholder="Pesquisar por título..." class="flex-grow px-4 py-3 border border-indigo-200 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400">
-                            <button type="button" onclick="buscarRelacionadas()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-sm text-xs font-bold uppercase tracking-widest transition-colors shadow-sm">Pesquisar</button>
-                        </div>
-                        <div id="lista-resultados-relacionadas" class="mt-4 space-y-2"></div>
-                        <div id="lista-selecionadas-relacionadas" class="mt-4 space-y-2"></div>
-                        <input type="hidden" id="admin-relacionadas-ids" value="">
-                    </div>
-
-                    <div class="p-5 bg-sky-50 border border-sky-100 rounded-sm">
-                        <label class="flex items-center gap-3 cursor-pointer">
-                            <input type="checkbox" id="admin-carrossel" class="w-5 h-5 text-jornal-blue border-gray-300 rounded focus:ring-jornal-blue" />
-                            <span class="text-sm font-black text-jornal-dark uppercase tracking-widest block">Adicionar ao Carrossel de Destaques</span>
-                        </label>
-                    </div>
-
-                    <!-- BOTÕES DE RASCUNHO E PUBLICAR -->
-                    <div class="pt-6 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
-                        <button type="button" onclick="limparFormNoticia()" class="text-xs font-black text-gray-500 hover:text-jornal-red uppercase tracking-widest w-full md:w-auto text-center md:text-left py-2 transition-colors">Limpar Form</button>
-                        <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                            <button type="button" id="btn-salvar-rascunho" onclick="salvarNoticia(event, 'Rascunho')" class="w-full sm:w-auto bg-gray-400 text-white font-black px-8 py-4 hover:bg-gray-500 transition-colors uppercase tracking-widest text-sm rounded-sm shadow-md">Salvar Rascunho</button>
-                            <button type="button" onclick="salvarNoticia(event, 'Ativa')" id="btn-salvar-noticia" class="w-full sm:w-auto bg-jornal-dark text-white font-black px-10 py-4 hover:opacity-90 transition-opacity uppercase tracking-widest text-sm rounded-sm shadow-xl">Publicar Matéria</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            <!-- ========================================== -->
-            <!-- ABA 2: LISTAGEM DE NOTÍCIAS ADMIN          -->
-            <!-- ========================================== -->
-            <div id="lista-noticias-container" class="hidden bg-white p-6 shadow-sm border border-gray-200 rounded-sm">
-                <div class="border-l-4 border-jornal-red pl-3 mb-6">
-                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Editar Publicações</h2>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 border border-gray-200 rounded-sm">
-                    <div>
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Filtrar por editoria</label>
-                        <select id="admin-filtro-editoria" onchange="carregarListaEdicao()" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm">
-                            <option value="todas">Todas as editorias</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Pesquisar matéria</label>
-                        <input type="search" id="admin-pesquisa-materia" oninput="carregarListaEdicao()" placeholder="Digite título ou conteúdo..." class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm text-jornal-dark rounded-sm" />
-                    </div>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm whitespace-nowrap">
-                        <thead class="bg-gray-100 border-b border-gray-300 text-[10px] uppercase tracking-widest text-gray-500">
-                            <tr>
-                                <th class="p-4">Data</th>
-                                <th class="p-4">Editorias</th>
-                                <th class="p-4">Manchete</th>
-                                <th class="p-4 text-center">Visões</th>
-                                <th class="p-4 text-center">Visibilidade</th>
-                                <th class="p-4 text-center">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="admin-tabela-noticias" class="divide-y divide-gray-200"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- ========================================== -->
-            <!-- ABA 3: LAYOUT CAPA                         -->
-            <!-- ========================================== -->
-            <div id="form-capa-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+            <!-- 1. LAYOUT CAPA -->
+            <div id="form-capa-container" class="bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-emerald-600 pl-3 mb-6">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Organizar Capa</h2>
                 </div>
@@ -398,9 +168,7 @@
                 </form>
             </div>
 
-            <!-- ========================================== -->
-            <!-- ABA 4: LOGÓTIPO & IA                       -->
-            <!-- ========================================== -->
+            <!-- 2. LOGÓTIPO & IA -->
             <div id="form-logo-container" class="hidden bg-white p-5 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-purple-600">
                 <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-8 border-l-4 border-purple-600 pl-3 gap-4">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Inteligência Artificial & Design</h2>
@@ -431,6 +199,7 @@
                         <button type="button" id="btn-salvar-design" onclick="salvarDesignTextos()" class="bg-jornal-dark text-white px-8 py-4 font-black hover:bg-gray-800 transition-colors uppercase text-[11px] tracking-widest rounded-sm shadow-md">Salvar Textos</button>
                         <button type="button" id="btn-gerar-logo" onclick="gerarLogoIA()" class="bg-purple-600 text-white px-8 py-4 font-black hover:bg-purple-700 transition-colors uppercase text-[11px] tracking-widest rounded-sm shadow-md">✨ Gerar com IA</button>
                     </div>
+                    
                     <div id="preview-logo-wrapper" class="mt-10 hidden border-t border-purple-200 pt-8">
                         <h4 class="text-[10px] font-black uppercase tracking-widest text-purple-600 mb-4 text-center">Pré-visualização</h4>
                         <div class="p-8 bg-gray-100 border border-gray-300 rounded-sm flex items-center justify-center min-h-[160px] shadow-inner"><div id="preview-logo-ia"></div></div>
@@ -441,9 +210,7 @@
                 </div>
             </div>
 
-            <!-- ========================================== -->
-            <!-- ABA 5: ANÚNCIOS                            -->
-            <!-- ========================================== -->
+            <!-- 3. ANÚNCIOS -->
             <div id="form-propaganda-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-jornal-red pl-3 mb-6">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Novo Anúncio</h2>
@@ -499,9 +266,7 @@
                 </form>
             </div>
 
-            <!-- ========================================== -->
-            <!-- ABA 6: REDES SOCIAIS                       -->
-            <!-- ========================================== -->
+            <!-- 4. REDES SOCIAIS -->
             <div id="form-social-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-jornal-red pl-3 mb-6">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Gestão de Redes Sociais</h2>
@@ -529,9 +294,7 @@
                 </form>
             </div>
 
-            <!-- ========================================== -->
-            <!-- ABA 7: PLACAR AO VIVO                      -->
-            <!-- ========================================== -->
+            <!-- 5. PLACAR AO VIVO -->
             <div id="form-placar-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-green-600 pl-3 mb-6">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Desporto ao Vivo</h2>
@@ -561,17 +324,16 @@
                 </form>
             </div>
 
-            <!-- ========================================== -->
-            <!-- ABA 8: EXPEDIENTE                          -->
-            <!-- ========================================== -->
+            <!-- 6. EXPEDIENTE -->
             <div id="form-expediente-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-blue-600 pl-3 mb-8">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Página do Expediente</h2>
                     <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Quem somos e equipa de redação</p>
                 </div>
 
-                <!-- SUPER EDITOR DE TEXTO 2 -->
+                <!-- Editor Rich Text do Expediente -->
                 <div>
+                    <input type="file" id="upload-imagem-expediente" accept="image/*" class="hidden" onchange="processarUploadImagemEditor(this, 'admin-editor-expediente')" />
                     <div class="flex flex-wrap gap-1 p-2 bg-gray-100 border border-gray-300 border-b-0 rounded-t-sm items-center">
                         <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('undo')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded shadow-sm transition-colors" title="Desfazer">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
@@ -600,7 +362,9 @@
                             <option value="Trebuchet MS">Trebuchet MS</option>
                             <option value="Verdana">Verdana</option>
                         </select>
+                        
                         <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
+                        
                         <select onmousedown="event.preventDefault();" onchange="execCmd('fontSize', this.value);" class="fontSizeSelect px-2 py-1.5 bg-white border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer">
                             <option value="" disabled selected>---</option>
                             <option value="1">Pequeno</option>
@@ -612,9 +376,10 @@
                         <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
                         <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('justifyLeft')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Esq</button>
                         <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('justifyCenter')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Cen</button>
-                        <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
                         
+                        <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
                         <button type="button" onmousedown="event.preventDefault();" onclick="inserirLinkRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-blue-600 rounded font-semibold shadow-sm">🔗</button>
+                        <button type="button" onmousedown="event.preventDefault();" onclick="document.getElementById('upload-imagem-expediente').click();" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-emerald-600 rounded font-semibold shadow-sm">🖼️</button>
                         
                         <button type="button" onmousedown="event.preventDefault();" onclick="limparFormatacao()" class="ml-auto px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-xs font-bold text-red-600 rounded shadow-sm">Limpar Formatação</button>
                     </div>
@@ -626,9 +391,7 @@
                 </div>
             </div>
 
-            <!-- ========================================== -->
-            <!-- ABA 9: USUÁRIOS                            -->
-            <!-- ========================================== -->
+            <!-- 7. USUÁRIOS -->
             <div id="form-usuarios-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-rose-500 pl-3 mb-8">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Gestão de Utilizadores</h2>
@@ -828,18 +591,19 @@
             if(targetEl) targetEl.classList.remove('hidden');
             
             var btnId = "";
-            if (abaId === 'form-noticia-container') btnId = 'tab-btn-publicar';
+            var classAtiva = "bg-jornal-dark text-white font-black";
+            if (abaId === 'form-noticia-container') { btnId = 'tab-btn-publicar'; classAtiva = "bg-jornal-blue text-white font-black"; }
             else if (abaId === 'lista-noticias-container') { btnId = 'tab-btn-gerir'; carregarListaEdicao(); }
-            else if (abaId === 'form-capa-container') btnId = 'tab-btn-capa';
-            else if (abaId === 'form-logo-container') btnId = 'tab-btn-logo';
-            else if (abaId === 'form-propaganda-container') btnId = 'tab-btn-propaganda';
-            else if (abaId === 'form-social-container') btnId = 'tab-btn-social';
-            else if (abaId === 'form-placar-container') btnId = 'tab-btn-placar';
-            else if (abaId === 'form-expediente-container') btnId = 'tab-btn-expediente';
-            else if (abaId === 'form-usuarios-container') btnId = 'tab-btn-usuarios';
+            else if (abaId === 'form-capa-container') { btnId = 'tab-btn-capa'; classAtiva = "bg-emerald-600 text-white font-black"; }
+            else if (abaId === 'form-logo-container') { btnId = 'tab-btn-logo'; classAtiva = "bg-purple-800 text-white font-black"; }
+            else if (abaId === 'form-propaganda-container') { btnId = 'tab-btn-propaganda'; }
+            else if (abaId === 'form-social-container') { btnId = 'tab-btn-social'; }
+            else if (abaId === 'form-placar-container') { btnId = 'tab-btn-placar'; classAtiva = "bg-green-700 text-white font-black"; }
+            else if (abaId === 'form-expediente-container') { btnId = 'tab-btn-expediente'; classAtiva = "bg-blue-600 text-white font-black"; }
+            else if (abaId === 'form-usuarios-container') { btnId = 'tab-btn-usuarios'; classAtiva = "bg-rose-600 text-white font-black"; }
             
             var btnEl = document.getElementById(btnId);
-            if(btnEl) btnEl.className = 'py-3 px-5 uppercase tracking-widest text-[11px] whitespace-nowrap rounded-t-sm transition-colors shadow-sm bg-jornal-dark text-white font-black';
+            if(btnEl) btnEl.className = 'py-3 px-5 uppercase tracking-widest text-[11px] whitespace-nowrap rounded-t-sm transition-colors shadow-sm ' + classAtiva;
         }
 
         function carregarNoticiasAdmin() {
@@ -887,11 +651,13 @@
         function inserirImagemRichEditor(btnElement) { 
             var container = btnElement.closest('div').parentElement;
             var editor = container.querySelector('.rich-editor');
-            window.targetEditorId = editor.id;
-            document.getElementById('upload-imagem-conteudo').click(); 
+            if (editor) {
+                window.targetEditorId = editor.id;
+                document.getElementById('upload-imagem-conteudo').click(); 
+            }
         }
-
-        function processarUploadImagemConteudo(input) {
+        
+        function processarUploadImagemEditor(input, idEditorDestino) {
             if (!input.files || !input.files[0]) return;
             var file = input.files[0];
             var legenda = prompt("Legenda para a imagem (opcional):") || "";
@@ -921,7 +687,7 @@
                                
                     htmlImg += '</figure><br><p>&#8203;</p>';
                     
-                    var targetEd = document.getElementById(window.targetEditorId);
+                    var targetEd = document.getElementById(idEditorDestino || window.targetEditorId);
                     if(targetEd) targetEd.focus();
                     document.execCommand('insertHTML', false, htmlImg);
                     input.value = '';
@@ -929,6 +695,10 @@
                 img.src = e.target.result;
             };
             reader.readAsDataURL(file);
+        }
+
+        function processarUploadImagemConteudo(input) {
+            processarUploadImagemEditor(input, 'admin-editor-rich');
         }
 
         function inserirVideoRichEditor() { 
