@@ -39,7 +39,10 @@
     
     <!-- Estilos Personalizados da Arte Gerada -->
     <style>
-        body { background-color: #f1f2f5; color: #111111; }
+        body { 
+            background-color: #f1f2f5; 
+            color: #111111; 
+        }
         
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -58,7 +61,7 @@
         .template-feed {
             width: 1080px;
             height: 1080px;
-            background-color: #3b82f6; /* Fallback caso não tenha cor customizada */
+            background-color: #3b82f6; /* Fallback */
             background-image: linear-gradient(to bottom right, #3b82f6, #34d399); 
             position: relative;
             font-family: 'Inter', sans-serif;
@@ -158,8 +161,20 @@
         }
 
         /* Limites de tamanho e linhas do título */
-        .template-feed .template-title { font-size: 60px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-        .template-story .template-title { font-size: 75px; display: -webkit-box; -webkit-line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden; }
+        .template-feed .template-title { 
+            font-size: 60px; 
+            display: -webkit-box; 
+            -webkit-line-clamp: 4; 
+            -webkit-box-orient: vertical; 
+            overflow: hidden; 
+        }
+        .template-story .template-title { 
+            font-size: 75px; 
+            display: -webkit-box; 
+            -webkit-line-clamp: 7; 
+            -webkit-box-orient: vertical; 
+            overflow: hidden; 
+        }
 
         /* O Resumo (Apenas no Feed) - ESCONDIDO PARA VISUAL MAIS LIMPO */
         .template-summary {
@@ -342,7 +357,7 @@
                     <div id="gerando-aviso" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-200 z-10">
                         <div class="w-10 h-10 border-4 border-gray-300 border-t-purple-500 rounded-full animate-spin mb-4"></div>
                         <p class="text-xs font-black text-gray-500 uppercase tracking-widest animate-pulse mt-4">A Desenhar Arte...</p>
-                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-center px-4">A alinhar fotografia e textos...</p>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-center px-4">A alinhar fotografia e aplicar as suas cores...</p>
                     </div>
 
                     <img id="preview-final-img" src="" class="max-w-full h-auto max-h-full object-contain shadow-2xl hidden" alt="Preview da Arte">
@@ -373,11 +388,11 @@
     </div>
 
     <script>
-        // ATENÇÃO: Link NOVO do Google Apps Script
+        // ATENÇÃO: Link do Google Apps Script ATUALIZADO
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxCrcbl9TyjKJdfUmxFZyvhkB85Kkselz1Amw0K5ewRrQhBwCN7VQ8ph0Ei7BNqmxfg/exec";
         
         let noticiasGlobais = [];
-        let configuracoesGlobais = {}; // Variável para armazenar as configurações geradas pela IA
+        let configuracoesGlobais = {};
         
         let urlAtualBaixar = "";
         let nomeAtualBaixar = "";
@@ -415,7 +430,7 @@
                     configuracoesGlobais = payload.config || {};
                     
                     preencherFiltroEditorias(payload.categorias || []);
-                    aplicarEstiloArtes(); // INJETA A COR DA IA NA BORDA DA ARTE
+                    aplicarEstiloEspecialArtes(); // INJETA A COR NA BORDA
                     filtrarTabela(); 
                 } else {
                     alert("Erro ao ler dados da base.");
@@ -427,26 +442,80 @@
                 console.error(err);
             });
         }
-        
-        // A MÁGICA DO ESTILO: Lê a variável da IA e aplica à borda
-        function aplicarEstiloArtes() {
-            if (configuracoesGlobais['CorLogo']) {
-                let cor = configuracoesGlobais['CorLogo'];
-                
-                // Remove as propriedades de texto para o Tailwind assumir isto como fundo
-                cor = cor.replace(/bg-clip-text/g, '').replace(/text-transparent/g, '').trim();
 
-                const templateFeed = document.getElementById('template-feed');
-                if (templateFeed && cor) {
-                    // Remove o estilo engessado para libertar o Tailwind
-                    templateFeed.style.background = 'none';
-                    templateFeed.style.backgroundColor = 'transparent';
-                    templateFeed.style.backgroundImage = 'none';
-                    
-                    // Adiciona as classes Tailwind do seu CSS inteligente
-                    templateFeed.className = 'template-feed ' + cor;
-                }
+        // =========================================================================
+        // O CONVERSOR MÁGICO: Converte as classes Tailwind em CSS puro para a Arte
+        // =========================================================================
+        function aplicarEstiloEspecialArtes() {
+            if (!configuracoesGlobais['CorLogo']) return;
+            
+            // Removemos as classes que estragam o background no html2canvas
+            let classesOriginais = configuracoesGlobais['CorLogo'].replace(/bg-clip-text/gi, '').replace(/text-transparent/gi, '').trim();
+
+            // Descodificamos a direção do gradiente gerado pela IA
+            let direcao = "to right";
+            if (classesOriginais.includes("bg-gradient-to-t")) direcao = "to top";
+            else if (classesOriginais.includes("bg-gradient-to-tr")) direcao = "to top right";
+            else if (classesOriginais.includes("bg-gradient-to-br")) direcao = "to bottom right";
+            else if (classesOriginais.includes("bg-gradient-to-b")) direcao = "to bottom";
+            else if (classesOriginais.includes("bg-gradient-to-bl")) direcao = "to bottom left";
+            else if (classesOriginais.includes("bg-gradient-to-l")) direcao = "to left";
+            else if (classesOriginais.includes("bg-gradient-to-tl")) direcao = "to top left";
+
+            // Capturamos os passos do gradiente
+            let fromMatch = classesOriginais.match(/from-([a-z0-9\-]+)/);
+            let viaMatch = classesOriginais.match(/via-([a-z0-9\-]+)/);
+            let toMatch = classesOriginais.match(/to-([a-z0-9\-]+)/);
+
+            // Criamos uma div escondida para forçar o browser a computar os códigos RGB das cores Tailwind
+            let tempDiv = document.createElement("div");
+            tempDiv.style.display = "none";
+            document.body.appendChild(tempDiv);
+
+            function addColorSpan(match) {
+                if (!match) return null;
+                let span = document.createElement("span");
+                span.className = `text-${match[1]}`; // Converte a cor de background para cor de texto para facilitar extração
+                tempDiv.appendChild(span);
+                return span;
             }
+
+            let spanFrom = addColorSpan(fromMatch);
+            let spanVia = addColorSpan(viaMatch);
+            let spanTo = addColorSpan(toMatch);
+
+            // Damos 800ms para que o Tailwind CDN aplique as cores antes de ler e remover
+            setTimeout(() => {
+                let fromColor = spanFrom ? getComputedStyle(spanFrom).color : null;
+                let viaColor = spanVia ? getComputedStyle(spanVia).color : null;
+                let toColor = spanTo ? getComputedStyle(spanTo).color : null;
+                
+                document.body.removeChild(tempDiv);
+
+                if (fromColor) {
+                    // Monta a string do CSS
+                    let gradientStr = `linear-gradient(${direcao}, ${fromColor}`;
+                    if (viaColor && viaColor !== 'rgba(0, 0, 0, 0)') gradientStr += `, ${viaColor}`;
+                    if (toColor && toColor !== 'rgba(0, 0, 0, 0)') gradientStr += `, ${toColor}`;
+                    else if (fromColor && (!toColor || toColor === 'rgba(0, 0, 0, 0)')) gradientStr += `, ${fromColor}`; // Fallback sólido
+                    gradientStr += `)`;
+
+                    // APLICA O CSS PURO NA BORDA (FEED) E NAS DECORAÇÕES
+                    const templateFeed = document.getElementById('template-feed');
+                    if (templateFeed) {
+                        templateFeed.style.background = 'none';
+                        templateFeed.style.backgroundColor = 'transparent';
+                        templateFeed.style.backgroundImage = gradientStr;
+                    }
+
+                    const elementosDecorativos = document.querySelectorAll('.template-badge, .template-footer-line');
+                    elementosDecorativos.forEach(el => {
+                        el.style.background = 'none';
+                        el.style.backgroundColor = 'transparent';
+                        el.style.backgroundImage = gradientStr;
+                    });
+                }
+            }, 800); 
         }
 
         function preencherFiltroEditorias(categorias) {
@@ -470,7 +539,7 @@
             tbody.innerHTML = '';
 
             const filtradas = noticiasGlobais.filter(n => {
-                // EXCLUSIVIDADE: Só mostra matérias que estão publicadas (Ativa) no site
+                // FILTRO DE SEGURANÇA: Só mostra matérias que estão como 'Ativa' (exclui Rascunho, Agendada, Inativa)
                 if (String(n.status).toLowerCase() !== 'ativa') return false;
 
                 const matchTermo = (n.titulo.toLowerCase().includes(termo) || n.categoria.toLowerCase().includes(termo));
@@ -629,12 +698,12 @@
 
                 setTimeout(() => {
                     html2canvas(alvoElemento, {
-                        scale: 2,
-                        width: 1080,
-                        height: tipo === 'feed' ? 1080 : 1920,
+                        scale: 2, 
+                        width: 1080, 
+                        height: tipo === 'feed' ? 1080 : 1920, 
                         useCORS: true,
                         allowTaint: false, 
-                        backgroundColor: null // <-- Permite que as cores Tailwind da sua IA funcionem no render!
+                        backgroundColor: null // O FUNDO PRECISA ESTAR NULO PARA LER A BORDA
                     }).then(canvasResult => {
                         const finalJpg = canvasResult.toDataURL("image/jpeg", 0.9);
                         const prevImg = document.getElementById('preview-final-img');
@@ -649,7 +718,7 @@
                         alert("Ocorreu um erro a processar a arte.");
                         fecharModalArte();
                     });
-                }, 150); 
+                }, 800); // 800ms de delay para garantir que a cor e as fontes foram desenhadas
             });
         }
 
