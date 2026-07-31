@@ -24,7 +24,8 @@
 
         const apiFunctions = [
             'getHomeData', 'verificarLogin', 'salvarConfiguracaoHTMLCustom', 
-            'salvarPropagandaNoSheets', 'chamarGeminiImagemBackend', 'adicionarUsuario'
+            'salvarPropagandaNoSheets', 'chamarGeminiImagemBackend', 
+            'adicionarUsuario', 'alterarSenhaUsuario', 'adicionarCategoriaNoSheets'
         ];
 
         apiFunctions.forEach(function(funcName) {
@@ -37,7 +38,8 @@
                 fetch(GAS_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: funcName, args: argsArray })
+                    body: JSON.stringify({ action: funcName, args: argsArray }),
+                    redirect: 'follow'
                 })
                 .then(function(res) { return res.json(); })
                 .then(function(result) {
@@ -51,11 +53,6 @@
                 })
                 .catch(function(err) {
                     if (failureCb) failureCb(err);
-                    else {
-                        console.error("API Error:", err);
-                        var loader = document.getElementById('loading-global');
-                        if(loader) loader.classList.add('hidden');
-                    }
                 });
             };
         });
@@ -66,7 +63,7 @@
                 theme: {
                     extend: {
                         fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] },
-                        colors: { jornal: { blue: '#0F172A', red: '#E11D48', dark: '#020617' } }
+                        colors: { jornal: { blue: '#0F172A', red: '#E11D48', dark: '#020617', gray: '#F8FAFC' } }
                     }
                 }
             };
@@ -112,21 +109,39 @@
         <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Configurações...</p>
     </div>
 
+    <!-- MODAL DE LOGIN -->
     <div id="modalLogin" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md"></div>
         <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
             <div class="mb-6 text-center">
                 <h2 class="font-sans text-xl font-black uppercase text-jornal-dark tracking-tighter">Segurança</h2>
-                <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Acesso restrito a administradores</p>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Acesso restrito</p>
             </div>
             <form onsubmit="fazerLogin(event)" class="space-y-4">
-                <input type="text" id="login-user" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Usuário (Ex: admin)" />
+                <input type="text" id="login-user" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Usuário" />
                 <input type="password" id="login-pass" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Senha" />
-                <button type="submit" id="btn-fazer-login" class="w-full bg-jornal-blue text-white font-black py-3 hover:opacity-90 transition-colors text-xs uppercase tracking-widest rounded-sm mt-4">Acessar Painel</button>
+                <button type="submit" id="btn-fazer-login" class="w-full bg-jornal-blue text-white font-black py-3 hover:opacity-90 transition-colors text-xs uppercase tracking-widest rounded-sm mt-4">Entrar no Painel</button>
             </form>
         </div>
     </div>
 
+    <!-- MODAL DE MUDANÇA DE SENHA OBRIGATÓRIA -->
+    <div id="modalMudarSenha" class="fixed inset-0 z-[10000] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md"></div>
+        <div class="bg-white w-full max-w-md p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
+            <div class="mb-6 text-center">
+                <h2 class="font-sans text-xl font-black uppercase text-jornal-dark tracking-tighter">Bem-vindo(a)!</h2>
+                <p class="text-xs text-gray-500 font-medium mt-2">Como é o seu primeiro acesso, por favor crie uma nova senha segura e pessoal para poder utilizar o sistema.</p>
+            </div>
+            <form onsubmit="salvarNovaSenha(event)" class="space-y-4">
+                <input type="password" id="nova-senha-1" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Escreva a sua nova Senha" />
+                <input type="password" id="nova-senha-2" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Confirme a nova Senha" />
+                <button type="submit" id="btn-salvar-nova-senha" class="w-full bg-jornal-blue text-white font-black py-3 hover:opacity-90 transition-colors text-xs uppercase tracking-widest rounded-sm mt-4">Guardar e Acessar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PAINEL DE CONFIGURAÇÕES -->
     <div id="view-config" class="hidden min-h-screen flex flex-col bg-gray-100 text-slate-800">
         
         <header class="bg-jornal-dark text-white border-b border-gray-800 sticky top-0 z-40 shadow-sm">
@@ -135,29 +150,29 @@
                     <span class="font-sans font-black tracking-tighter text-lg uppercase text-slate-100 flex items-center gap-2">⚙️ Configurações</span>
                 </div>
                 <div class="flex items-center gap-4">
-                    <a href="admin.html" class="text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-white transition-colors hidden md:block">✏️ Redação</a>
-                    <a href="instagram.html" class="text-[10px] font-black uppercase tracking-widest text-purple-400 hover:text-purple-300 transition-colors hidden md:block">📸 Estúdio IG</a>
+                    <a href="admin.html" id="link-redacao" class="text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-white transition-colors hidden md:block">✏️ Redação</a>
+                    <a href="instagram.html" id="link-estudio-ig" class="text-[10px] font-black uppercase tracking-widest text-purple-400 hover:text-purple-300 transition-colors hidden md:block">📸 Estúdio IG</a>
                     <button type="button" onclick="encerrarSessao()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm ml-4">Sair</button>
                 </div>
             </div>
         </header>
 
         <main class="max-w-[1200px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
-            <!-- ABAS DE NAVEGAÇÃO CONFIGURAÇÕES -->
-            <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar pb-1">
-                <button type="button" onclick="alternarAbaConfig('form-capa-container')" id="tab-btn-capa" class="py-3 px-5 font-black text-[11px] bg-emerald-600 text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Layout Capa</button>
-                <button type="button" onclick="alternarAbaConfig('form-logo-container')" id="tab-btn-logo" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">IA & Design</button>
-                <button type="button" onclick="alternarAbaConfig('form-propaganda-container')" id="tab-btn-propaganda" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Anúncios</button>
-                <button type="button" onclick="alternarAbaConfig('form-social-container')" id="tab-btn-social" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Redes Sociais</button>
-                <button type="button" onclick="alternarAbaConfig('form-placar-container')" id="tab-btn-placar" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Placar Ao Vivo</button>
-                <button type="button" onclick="alternarAbaConfig('form-expediente-container')" id="tab-btn-expediente" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Expediente</button>
-                <button type="button" onclick="alternarAbaConfig('form-usuarios-container')" id="tab-btn-usuarios" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Usuários</button>
+            <!-- ABAS DE NAVEGAÇÃO -->
+            <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar pb-1" id="nav-abas-config">
+                <button type="button" onclick="alternarAbaConfig('form-capa-container')" id="tab-btn-capa" class="tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm hidden">Layout Capa</button>
+                <button type="button" onclick="alternarAbaConfig('form-logo-container')" id="tab-btn-logo" class="tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm hidden">IA & Design</button>
+                <button type="button" onclick="alternarAbaConfig('form-propaganda-container')" id="tab-btn-propaganda" class="tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm hidden">Anúncios</button>
+                <button type="button" onclick="alternarAbaConfig('form-social-container')" id="tab-btn-social" class="tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm hidden">Redes Sociais</button>
+                <button type="button" onclick="alternarAbaConfig('form-placar-container')" id="tab-btn-placar" class="tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm hidden">Placar</button>
+                <button type="button" onclick="alternarAbaConfig('form-expediente-container')" id="tab-btn-expediente" class="tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm hidden">Expediente</button>
+                <button type="button" onclick="alternarAbaConfig('form-usuarios-container')" id="tab-btn-usuarios" class="tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm hidden">Gestão Equipa</button>
                 
                 <a href="index.html" class="py-3 px-5 font-bold text-[11px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1 ml-auto">Ver Portal &raquo;</a>
             </div>
 
             <!-- 1. LAYOUT CAPA -->
-            <div id="form-capa-container" class="bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+            <div id="form-capa-container" class="config-panel-section hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-emerald-600 pl-3 mb-6">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Organizar Capa</h2>
                 </div>
@@ -170,57 +185,60 @@
                 </form>
             </div>
 
-            <!-- 2. LOGÓTIPO & IA -->
-            <div id="form-logo-container" class="hidden bg-white p-5 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-purple-600">
-                <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-8 border-l-4 border-purple-600 pl-3 gap-4">
-                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Inteligência Artificial & Design</h2>
+            <!-- 2. LOGÓTIPO & IA (LAYOUT FIEL À IMAGEM) -->
+            <div id="form-logo-container" class="config-panel-section hidden bg-white p-5 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-purple-600">
+                
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <div class="border-l-4 border-purple-600 pl-3">
+                        <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Inteligência Artificial & Design</h2>
+                    </div>
+                    
+                    <div class="border border-dashed border-purple-300 bg-purple-50/50 p-4 rounded-sm text-center cursor-pointer hover:bg-purple-50 transition-colors w-full md:w-auto" onclick="document.getElementById('upload-logo-imagem').click()">
+                        <div class="text-[11px] font-bold text-purple-700 uppercase tracking-widest mb-1 flex items-center justify-center gap-1">
+                            <span class="text-lg leading-none">+</span> FAZER UPLOAD DE ÍCONE (LOGO)
+                        </div>
+                        <p class="text-[9px] text-gray-400">Recomendado: Imagem PNG ou SVG com<br>fundo transparente.</p>
+                        <input type="file" id="upload-logo-imagem" accept="image/*" class="hidden" onchange="processarLogoImagemLocal(this)">
+                    </div>
                 </div>
                 
                 <!-- CHAVE IA -->
-                <div class="mb-8 p-6 bg-purple-50 border border-purple-200 rounded-sm">
-                    <h3 class="font-black text-sm uppercase tracking-widest text-purple-800 mb-2">Chave de Acesso da IA (API Key)</h3>
-                    <p class="text-xs text-gray-600 mb-4 font-medium">Insira a sua chave do Google Studio para ativar o motor Gemini no seu jornal.</p>
+                <div class="mb-8 p-6 bg-purple-50/30 border border-purple-100 rounded-sm">
+                    <h3 class="font-bold text-sm uppercase tracking-widest text-purple-800 mb-2">CHAVE DE ACESSO DA IA (API KEY)</h3>
+                    <p class="text-xs text-gray-500 mb-4 font-medium">Insira a sua chave do Google Studio para ativar a IA.</p>
                     <div class="flex flex-col md:flex-row gap-4 md:items-center">
                         <input type="password" id="config-chave-ia" class="flex-grow px-5 py-3 border border-gray-300 focus:border-purple-500 focus:outline-none text-sm font-mono rounded-sm shadow-sm min-w-0" placeholder="Ex: AIzaSy..." />
-                        <button type="button" onclick="salvarChaveIA()" id="btn-salvar-chave" class="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 font-black uppercase text-[11px] tracking-widest rounded-sm whitespace-nowrap transition-colors shrink-0 shadow-sm">Guardar Chave</button>
+                        <button type="button" onclick="salvarChaveIA()" id="btn-salvar-chave" class="bg-purple-500 hover:bg-purple-600 text-white px-8 py-3 font-black uppercase text-[11px] tracking-widest rounded-sm whitespace-nowrap transition-colors shrink-0 shadow-sm">GUARDAR CHAVE</button>
                     </div>
                 </div>
                 
                 <!-- DESIGN E LOGO -->
-                <div class="space-y-6 bg-purple-50/50 p-6 md:p-8 border border-purple-100 rounded-sm">
+                <div class="space-y-6 bg-white p-6 md:p-8 border border-gray-100 rounded-sm shadow-sm">
+                    <div>
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">LOGO EM TEXTO (HTML)</label>
+                        <input type="text" id="cfg-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm" placeholder='Ex: <div class="flex items-center gap-3">...' />
+                    </div>
                     
                     <div>
-                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Logo em Texto (HTML)</label>
-                        <input type="text" id="cfg-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm" placeholder='Ex: Notícias<span class="text-rose-600">Avulsas</span>' />
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">CORES DO LOGO (TAILWIND CLASSES)</label>
+                        <input type="text" id="cfg-cor-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm" placeholder="Ex: bg-gradient-to-r from-blue-500 to-green-500" />
                     </div>
                     
-                    <div>
-                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Cores do Logo (Tailwind Classes)</label>
-                        <input type="text" id="cfg-cor-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm" placeholder="Ex: from-blue-500 to-emerald-400" />
-                    </div>
-                    
-                    <hr class="border-purple-200 my-4">
-                    
-                    <!-- UPLOAD MANUAL DA IMAGEM DO LOGOTIPO -->
-                    <div class="p-4 border border-dashed border-purple-400 bg-white rounded-sm mb-4">
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-purple-600 mb-2 block">Upload do Logótipo (Imagem PNG/JPG)</label>
-                        <input type="file" id="upload-logo-imagem" accept="image/*" onchange="processarLogoImagemLocal(this)" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:border-0 file:bg-purple-600 file:text-white cursor-pointer rounded-sm" />
-                        <p class="text-xs text-gray-500 mt-2">Escolha uma imagem do seu computador para usar como logo.</p>
-                    </div>
+                    <hr class="border-gray-100 my-4">
 
                     <div>
-                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Descrição da Marca (Para Gerar Logo em Imagem com IA)</label>
-                        <input type="text" id="prompt-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm" placeholder="Ex: Logótipo elegante azul e vermelho" />
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">DESCRIÇÃO DA MARCA (PARA GERAR LOGO EM IMAGEM COM IA)</label>
+                        <input type="text" id="prompt-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm mb-4" placeholder="Ex: logo em rosa, vermelho e roxo gradiente..." />
+                        
+                        <div class="flex gap-4">
+                            <button type="button" id="btn-salvar-design" onclick="salvarDesignTextos()" class="bg-jornal-dark text-white px-8 py-4 font-black hover:bg-gray-800 transition-colors uppercase text-[11px] tracking-widest rounded-sm shadow-md">SALVAR TEXTOS</button>
+                            <button type="button" id="btn-gerar-logo" onclick="gerarLogoIA()" class="bg-purple-500 hover:bg-purple-600 text-white px-8 py-4 font-black transition-colors uppercase text-[11px] tracking-widest rounded-sm shadow-sm flex items-center justify-center gap-2">✨ GERAR COM IA</button>
+                        </div>
                     </div>
                     
-                    <div class="flex gap-4">
-                        <button type="button" id="btn-salvar-design" onclick="salvarDesignTextos()" class="bg-jornal-dark text-white px-8 py-4 font-black hover:bg-gray-800 transition-colors uppercase text-[11px] tracking-widest rounded-sm shadow-md">Salvar Textos</button>
-                        <button type="button" id="btn-gerar-logo" onclick="gerarLogoIA()" class="bg-purple-600 text-white px-8 py-4 font-black hover:bg-purple-700 transition-colors uppercase text-[11px] tracking-widest rounded-sm shadow-md">✨ Gerar com IA</button>
-                    </div>
-                    
-                    <!-- PREVIEW DA IMAGEM (Manual ou IA) -->
-                    <div id="preview-logo-wrapper" class="mt-10 hidden border-t border-purple-200 pt-8">
-                        <h4 class="text-[10px] font-black uppercase tracking-widest text-purple-600 mb-4 text-center">Pré-visualização do Logótipo em Imagem</h4>
+                    <!-- PREVIEW DA IMAGEM -->
+                    <div id="preview-logo-wrapper" class="mt-8 hidden border-t border-purple-100 pt-6">
+                        <h4 class="text-[10px] font-black uppercase tracking-widest text-purple-600 mb-4 text-center">PRÉ-VISUALIZAÇÃO DO LOGÓTIPO</h4>
                         <div class="p-8 bg-gray-100 border border-gray-300 rounded-sm flex items-center justify-center min-h-[160px] shadow-inner"><div id="preview-logo-ia"></div></div>
                         <div class="mt-6 flex justify-end">
                             <button type="button" id="btn-aplicar-logo" onclick="aplicarNovaLogo()" class="bg-jornal-dark text-white font-black w-full md:w-auto px-10 py-4 uppercase tracking-widest text-sm rounded-sm hover:bg-gray-800 transition-colors shadow-xl">Aplicar ao Site</button>
@@ -230,7 +248,7 @@
             </div>
 
             <!-- 3. ANÚNCIOS -->
-            <div id="form-propaganda-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+            <div id="form-propaganda-container" class="config-panel-section hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-jornal-red pl-3 mb-6">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Novo Anúncio</h2>
                 </div>
@@ -286,7 +304,7 @@
             </div>
 
             <!-- 4. REDES SOCIAIS -->
-            <div id="form-social-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+            <div id="form-social-container" class="config-panel-section hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-jornal-red pl-3 mb-6">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Gestão de Redes Sociais</h2>
                 </div>
@@ -314,7 +332,7 @@
             </div>
 
             <!-- 5. PLACAR AO VIVO -->
-            <div id="form-placar-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+            <div id="form-placar-container" class="config-panel-section hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-green-600 pl-3 mb-6">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Desporto ao Vivo</h2>
                 </div>
@@ -343,14 +361,13 @@
                 </form>
             </div>
 
-            <!-- 6. EXPEDIENTE -->
-            <div id="form-expediente-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+            <!-- 6. EXPEDIENTE (COM SUPER EDITOR) -->
+            <div id="form-expediente-container" class="config-panel-section hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-blue-600 pl-3 mb-8">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Página do Expediente</h2>
                     <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Quem somos e equipa de redação</p>
                 </div>
 
-                <!-- Editor Rich Text do Expediente -->
                 <div>
                     <input type="file" id="upload-imagem-expediente" accept="image/*" class="hidden" onchange="processarUploadImagemEditor(this, 'admin-editor-expediente')" />
                     <div class="flex flex-wrap gap-1 p-2 bg-gray-100 border border-gray-300 border-b-0 rounded-t-sm items-center">
@@ -410,38 +427,71 @@
                 </div>
             </div>
 
-            <!-- 7. USUÁRIOS (LAYOUT ORIGINAL) -->
-            <div id="form-usuarios-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+            <!-- 7. GESTÃO DE EQUIPA (NOVO LAYOUT MODULAR FIEL À IMAGEM) -->
+            <div id="form-usuarios-container" class="config-panel-section hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-rose-600 pl-3 mb-8">
-                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Gestão de Utilizadores</h2>
+                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">GESTÃO DE UTILIZADORES</h2>
                     <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Criar novos acessos ao Painel Admin</p>
                 </div>
 
                 <div class="bg-rose-50 border border-rose-100 p-6 rounded-sm mb-8">
-                    <h3 class="text-xs font-black uppercase tracking-widest text-rose-800 mb-4">Adicionar Novo Utilizador</h3>
-                    <form id="form-novo-usuario" onsubmit="criarUsuario(event)" class="flex flex-col md:flex-row gap-4 items-end">
-                        <div class="w-full">
-                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-2 block">Nome de Utilizador</label>
-                            <input type="text" id="novo-user" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-rose-500 text-sm font-bold rounded-sm shadow-sm" placeholder="Ex: redator1" />
+                    <h3 class="text-[11px] font-black uppercase tracking-widest text-rose-800 mb-6 border-b border-rose-200 pb-2">ADICIONAR NOVO UTILIZADOR</h3>
+                    
+                    <form id="form-novo-usuario" onsubmit="criarUsuario(event)" class="space-y-6">
+                        <div class="flex flex-col md:flex-row gap-6">
+                            <div class="w-full">
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-2 block">NOME DE UTILIZADOR</label>
+                                <input type="text" id="novo-user" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-rose-500 text-sm font-bold rounded-sm shadow-sm" placeholder="Ex: redator1" />
+                            </div>
+                            <div class="w-full">
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-2 block">SENHA PROVISÓRIA</label>
+                                <input type="text" id="nova-senha" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-rose-500 text-sm font-bold rounded-sm shadow-sm" placeholder="Ex: SenhaForte123" />
+                            </div>
+                            <div class="w-full md:w-auto flex items-end">
+                                <button type="submit" id="btn-criar-usuario" class="w-full md:w-auto bg-rose-600 text-white font-black px-10 py-3 hover:bg-rose-700 transition-colors uppercase tracking-widest text-[11px] rounded-sm shadow-md whitespace-nowrap h-[46px]">CRIAR ACESSO</button>
+                            </div>
                         </div>
-                        <div class="w-full">
-                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-2 block">Senha</label>
-                            <input type="password" id="nova-senha" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-rose-500 text-sm font-bold rounded-sm shadow-sm" placeholder="Ex: SenhaForte123" />
+                        
+                        <!-- PERMISSÕES MODULARES -->
+                        <div class="bg-white p-5 border border-rose-200 rounded-sm mt-4">
+                            <label class="text-[10px] font-bold uppercase tracking-widest text-rose-600 mb-4 block border-b border-rose-100 pb-2">Permissões de Acesso (Que secções este utilizador pode ver?)</label>
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <!-- Opções do admin.html -->
+                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-noticia" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500" checked> Publicar Matérias</label>
+                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-lista" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500" checked> Gerir Matérias</label>
+                                
+                                <!-- Opções do config.html -->
+                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-capa" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Layout Capa</label>
+                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-logo" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> IA & Design</label>
+                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-propaganda" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Anúncios</label>
+                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-social" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Redes Sociais</label>
+                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-placar" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Placar Ao Vivo</label>
+                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-expediente" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Expediente</label>
+                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-usuarios" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Gestão Equipa</label>
+                                
+                                <!-- Outros apps -->
+                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-estudio" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Estúdio IG</label>
+                            </div>
+                            
+                            <div class="mt-6 pt-4 border-t border-rose-100 flex items-center gap-3">
+                                <input type="checkbox" id="req-pass" class="w-4 h-4 text-rose-600 rounded focus:ring-rose-500" checked>
+                                <label for="req-pass" class="text-[11px] font-black uppercase tracking-widest text-rose-800 cursor-pointer">Obrigar utilizador a mudar a senha no seu primeiro acesso</label>
+                            </div>
                         </div>
-                        <button type="submit" id="btn-criar-usuario" class="w-full md:w-auto bg-rose-600 text-white font-black px-8 py-3 hover:bg-rose-700 transition-colors uppercase tracking-widest text-xs rounded-sm shadow-md whitespace-nowrap h-[46px]">Criar Acesso</button>
                     </form>
                 </div>
 
-                <div class="mt-8 border-t border-gray-100 pt-6">
-                    <h3 class="text-xs font-black uppercase tracking-widest text-gray-800 mb-4">Utilizadores Existentes (Visualização via Google Sheets)</h3>
-                    <p class="text-xs text-gray-500 italic font-medium">Por questões de segurança, a listagem e exclusão de utilizadores deve ser feita diretamente na aba "Usuários" da sua Base de Dados Google (Google Sheets).</p>
+                <div class="mt-8 pt-6">
+                    <h3 class="text-[11px] font-black uppercase tracking-widest text-gray-800 mb-3">UTILIZADORES EXISTENTES (VISUALIZAÇÃO VIA GOOGLE SHEETS)</h3>
+                    <p class="text-xs text-gray-500 italic font-medium">Por questões de segurança, a listagem e exclusão de utilizadores deve ser feita diretamente na aba "Admins" (ou "Usuários") da sua Base de Dados Google (Google Sheets).</p>
                 </div>
             </div>
 
         </main>
     </div>
 
-    <!-- SCRIPTS CONFIGURAÇÕES -->
+    <!-- SCRIPTS CORE E LÓGICA -->
     <script>
         var configuracoesGlobais = {};
         var listaCategoriasLocais = [];
@@ -467,7 +517,16 @@
             if (localStorage.getItem('admin_logado') === 'true') {
                 document.getElementById('modalLogin').classList.add('hidden');
                 document.getElementById('view-config').classList.remove('hidden');
-                carregarDados();
+                
+                // VERIFICA SE O UTILIZADOR TEM DE MUDAR A SENHA
+                var perms = localStorage.getItem('admin_perms') || '';
+                if(perms.indexOf('req_pass_change:true') !== -1) {
+                    var loader = document.getElementById('loading-global'); if(loader) loader.classList.add('hidden');
+                    document.getElementById('modalMudarSenha').classList.remove('hidden');
+                    document.getElementById('modalMudarSenha').classList.add('flex');
+                } else {
+                    carregarDados();
+                }
             } else {
                 var loader = document.getElementById('loading-global');
                 if(loader) loader.classList.add('hidden');
@@ -475,7 +534,6 @@
                 document.getElementById('modalLogin').classList.add('flex');
             }
 
-            // Ativa o leitor inteligente de fontes no Expediente
             var editores = document.querySelectorAll('.rich-editor');
             editores.forEach(function(editor) {
                 editor.addEventListener('keyup', atualizarBarraFerramentas);
@@ -507,12 +565,15 @@
                             if (isPercent && val > 100) val = 100;
                             img.style.width = val + (isPercent ? '%' : 'px');
                             img.style.maxWidth = '100%';
-                        } else { alert("Não foi possível localizar a imagem para ajustar."); }
+                        }
                     }
                 });
             });
         });
 
+        // ==========================================
+        // SISTEMA DE SEGURANÇA E LOGIN
+        // ==========================================
         function mostrarMensagem(mensagem, tipo) {
             if(tipo === undefined) tipo = 'sucesso';
             var toast = document.getElementById('toast');
@@ -525,18 +586,30 @@
 
         function fazerLogin(e) {
             e.preventDefault();
-            var u = document.getElementById('login-user').value;
-            var p = document.getElementById('login-pass').value;
+            var u = document.getElementById('login-user').value.trim();
+            var p = document.getElementById('login-pass').value.trim();
             var btn = document.getElementById('btn-fazer-login');
             btn.innerHTML = "A VERIFICAR..."; btn.disabled = true;
 
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
                     if (res && res.sucesso) {
-                        try { localStorage.setItem('admin_logado', 'true'); } catch(err) {}
+                        try { 
+                            localStorage.setItem('admin_logado', 'true'); 
+                            localStorage.setItem('admin_user', u);
+                            localStorage.setItem('admin_perms', res.permissoes || 'admin');
+                        } catch(err) {}
+                        
                         document.getElementById('modalLogin').classList.add('hidden');
                         document.getElementById('view-config').classList.remove('hidden');
-                        carregarDados();
+                        
+                        var permissoesStr = res.permissoes || '';
+                        if(permissoesStr.indexOf('req_pass_change:true') !== -1) {
+                            document.getElementById('modalMudarSenha').classList.remove('hidden');
+                            document.getElementById('modalMudarSenha').classList.add('flex');
+                        } else {
+                            carregarDados();
+                        }
                     } else {
                         mostrarMensagem(res ? res.erro : "Resposta inválida.", 'erro');
                     }
@@ -548,12 +621,101 @@
             }
         }
 
+        function salvarNovaSenha(e) {
+            e.preventDefault();
+            var p1 = document.getElementById('nova-senha-1').value.trim();
+            var p2 = document.getElementById('nova-senha-2').value.trim();
+            
+            if (p1 !== p2) { mostrarMensagem("As senhas não coincidem.", "erro"); return; }
+            if (p1.length < 5) { mostrarMensagem("A senha deve ter pelo menos 5 caracteres.", "erro"); return; }
+            
+            var btn = document.getElementById('btn-salvar-nova-senha');
+            var txt = btn.innerHTML; btn.innerHTML = "A GUARDAR..."; btn.disabled = true;
+            
+            var u = localStorage.getItem('admin_user');
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run && window.google.script.run.alterarSenhaUsuario) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if (res && res.sucesso) {
+                        mostrarMensagem("Senha atualizada com sucesso!");
+                        document.getElementById('modalMudarSenha').classList.add('hidden');
+                        document.getElementById('modalMudarSenha').classList.remove('flex');
+                        
+                        var oldPerms = localStorage.getItem('admin_perms') || '';
+                        var newPerms = oldPerms.replace('req_pass_change:true;', '').replace('req_pass_change:true', '');
+                        localStorage.setItem('admin_perms', newPerms);
+                        
+                        carregarDados();
+                    } else { mostrarMensagem("Erro ao atualizar senha no servidor.", "erro"); }
+                    btn.innerHTML = txt; btn.disabled = false;
+                }).withFailureHandler(function() {
+                    mostrarMensagem("Falha na rede. Tente novamente.", "erro");
+                    btn.innerHTML = txt; btn.disabled = false;
+                }).alterarSenhaUsuario(u, p1);
+            } else {
+                mostrarMensagem("Modo demonstração: Senha alterada (Função Backend pendente).");
+                document.getElementById('modalMudarSenha').classList.add('hidden');
+                document.getElementById('modalMudarSenha').classList.remove('flex');
+                var oldPerms = localStorage.getItem('admin_perms') || '';
+                localStorage.setItem('admin_perms', oldPerms.replace('req_pass_change:true;', '').replace('req_pass_change:true', ''));
+                carregarDados();
+                btn.innerHTML = txt; btn.disabled = false;
+            }
+        }
+
+        function aplicarPermissoesDeAcesso() {
+            var perms = localStorage.getItem('admin_perms') || 'admin';
+            var allBtns = document.querySelectorAll('.tab-nav-btn');
+            
+            var linkRedacao = document.getElementById('link-redacao');
+            var linkEstudio = document.getElementById('link-estudio-ig');
+            
+            if (perms === 'admin' || perms === '') {
+                allBtns.forEach(function(b) { b.classList.remove('hidden'); });
+                if(linkRedacao) linkRedacao.classList.remove('hidden');
+                if(linkEstudio) linkEstudio.classList.remove('hidden');
+                return;
+            }
+            
+            var match = perms.match(/tabs:([^;]+)/);
+            if (match) {
+                var allowed = match[1].split(',');
+                var temRedacao = false;
+                
+                allBtns.forEach(function(btn) {
+                    var t = btn.id.replace('tab-btn-', 'aba-');
+                    if (allowed.indexOf(t) !== -1) {
+                        btn.classList.remove('hidden');
+                    } else {
+                        btn.classList.add('hidden');
+                    }
+                });
+                
+                if(allowed.indexOf('aba-noticia') !== -1 || allowed.indexOf('aba-lista') !== -1) {
+                    if(linkRedacao) linkRedacao.classList.remove('hidden');
+                } else {
+                    if(linkRedacao) linkRedacao.classList.add('hidden');
+                }
+                
+                if(allowed.indexOf('aba-estudio') !== -1) {
+                    if(linkEstudio) linkEstudio.classList.remove('hidden');
+                } else {
+                    if(linkEstudio) linkEstudio.classList.add('hidden');
+                }
+            }
+        }
+
         function encerrarSessao() {
-            try { localStorage.removeItem('admin_logado'); } catch(err) {}
+            try { localStorage.removeItem('admin_logado'); localStorage.removeItem('admin_perms'); } catch(err) {}
             window.location.href = "index.html";
         }
 
+        // ==========================================
+        // GESTÃO DE ABAS E DADOS
+        // ==========================================
         function carregarDados() {
+            aplicarPermissoesDeAcesso();
+            
             var loader = document.getElementById('loading-global');
             if(loader) loader.classList.remove('hidden');
             
@@ -569,11 +731,8 @@
                         try { preencherFormPlacar(); } catch(e){}
                         try { preencherConfigsGerais(); } catch(e){}
                         
-                        // Garante que a primeira aba visível está correta ao carregar
-                        if(document.getElementById('form-capa-container').classList.contains('hidden') && 
-                           document.getElementById('form-logo-container').classList.contains('hidden')) {
-                            alternarAbaConfig('form-capa-container');
-                        }
+                        // Abre a primeira aba visível para o utilizador logado
+                        abrirPrimeiraAbaDisponivel();
                     }
                 }).withFailureHandler(function(err) {
                     if(loader) loader.classList.add('hidden');
@@ -581,6 +740,17 @@
                 }).getHomeData();
             } else {
                 if(loader) loader.classList.add('hidden');
+                abrirPrimeiraAbaDisponivel();
+            }
+        }
+
+        function abrirPrimeiraAbaDisponivel() {
+            var tabsVisiveis = document.querySelectorAll('.tab-nav-btn:not(.hidden)');
+            if(tabsVisiveis.length > 0) {
+                var firstId = tabsVisiveis[0].id.replace('tab-btn-', 'form-') + '-container';
+                alternarAbaConfig(firstId);
+            } else {
+                document.querySelectorAll('.config-panel-section').forEach(function(s){ s.classList.add('hidden'); });
             }
         }
 
@@ -595,7 +765,7 @@
             
             tabIds.forEach(function(id) { 
                 var el = document.getElementById(id); 
-                if(el) el.className = "py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm"; 
+                if(el && !el.classList.contains('hidden')) el.className = "tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm"; 
             });
             
             var targetEl = document.getElementById(abaId);
@@ -611,7 +781,7 @@
             else if (abaId === 'form-usuarios-container') { btnId = 'tab-btn-usuarios'; classAtiva = "bg-rose-600 text-white font-black"; }
             
             var btnEl = document.getElementById(btnId);
-            if(btnEl) btnEl.className = 'py-3 px-5 uppercase tracking-widest text-[11px] whitespace-nowrap rounded-t-sm transition-colors shadow-sm ' + classAtiva;
+            if(btnEl) btnEl.className = 'tab-nav-btn py-3 px-5 uppercase tracking-widest text-[11px] whitespace-nowrap rounded-t-sm transition-colors shadow-sm ' + classAtiva;
         }
 
         // ==========================================
@@ -732,6 +902,9 @@
             }
         }
 
+        // ==========================================
+        // CONFIGURAÇÕES GERAIS E INTEGRAÇÕES
+        // ==========================================
         function preencherConfigsGerais() {
             if (configuracoesGlobais['ChaveIA']) { var ic = document.getElementById('config-chave-ia'); if (ic) ic.value = configuracoesGlobais['ChaveIA']; }
             if (configuracoesGlobais['LogoHTML']) { var el = document.getElementById('cfg-logo'); if(el) el.value = configuracoesGlobais['LogoHTML']; }
@@ -852,7 +1025,6 @@
             var btn = document.getElementById('btn-gerar-logo'); var txt = btn.innerText; btn.innerText = "A CRIAR..."; btn.disabled = true;
             var promptFinal = "A highly professional, minimalist vector logo design for a digital news portal named 'Notícias Avulsas'. " + desc + ". Isolated on a clean white background, no text other than the brand name if strictly necessary, high resolution, corporate identity.";
             
-            // Tratamento de falha no caso do servidor ainda não suportar a função
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run && window.google.script.run.chamarGeminiImagemBackend) {
                 window.google.script.run.withSuccessHandler(function(res) {
                     if(res && res.sucesso && res.base64) {
@@ -860,9 +1032,9 @@
                         document.getElementById('preview-logo-ia').innerHTML = html; document.getElementById('preview-logo-wrapper').classList.remove('hidden'); window.novaLogoHtml = html; mostrarMensagem("Logótipo criado com sucesso!");
                     } else { mostrarMensagem("Erro na IA.", "erro"); }
                     btn.innerText = txt; btn.disabled = false;
-                }).withFailureHandler(function(error) { mostrarMensagem("Serviço IA indisponível no servidor.", "erro"); btn.innerText = "✨ Gerar com IA"; btn.disabled = false; }).chamarGeminiImagemBackend(promptFinal);
+                }).withFailureHandler(function(error) { mostrarMensagem("Serviço IA indisponível no servidor.", "erro"); btn.innerText = "✨ GERAR COM IA"; btn.disabled = false; }).chamarGeminiImagemBackend(promptFinal);
             } else {
-                mostrarMensagem("Serviço IA indisponível no servidor.", "erro"); btn.innerText = "✨ Gerar com IA"; btn.disabled = false;
+                mostrarMensagem("Serviço IA indisponível no servidor.", "erro"); btn.innerText = "✨ GERAR COM IA"; btn.disabled = false;
             }
         }
 
@@ -888,18 +1060,35 @@
             }
         }
 
+        // ==========================================
+        // GESTÃO DE EQUIPA (CRIAR ACESSO COM PERMISSÕES)
+        // ==========================================
         function criarUsuario(e) {
             e.preventDefault();
             var u = document.getElementById('novo-user').value.trim();
             var p = document.getElementById('nova-senha').value.trim();
             if(!u || !p) return;
+            
+            var chks = document.querySelectorAll('.perm-chk:checked');
+            var allowedTabs = Array.from(chks).map(function(c){ return c.value; }).join(',');
+            var passChange = document.getElementById('req-pass').checked ? "req_pass_change:true;" : "";
+            var finalPermsString = passChange + "tabs:" + allowedTabs;
+
             var btn = document.getElementById('btn-criar-usuario'); var txtOrig = btn.innerHTML; btn.innerHTML = "A CRIAR..."; btn.disabled = true;
+            
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
-                    if(res && res.sucesso) { mostrarMensagem("Usuário criado com sucesso!"); document.getElementById('form-novo-usuario').reset(); } 
+                    if(res && res.sucesso) { 
+                        mostrarMensagem("Acesso criado com as restrições selecionadas!"); 
+                        document.getElementById('form-novo-usuario').reset(); 
+                        document.querySelectorAll('.perm-chk').forEach(function(c){ c.checked = true; }); 
+                    } 
                     else { mostrarMensagem(res ? res.erro : "Erro ao criar.", "erro"); }
                     btn.innerHTML = txtOrig; btn.disabled = false;
-                }).withFailureHandler(function(err) { mostrarMensagem("Falha ao comunicar com o servidor.", "erro"); btn.innerHTML = txtOrig; btn.disabled = false; }).adicionarUsuario(u, p);
+                }).withFailureHandler(function(err) { 
+                    mostrarMensagem("Falha ao comunicar com o servidor.", "erro"); 
+                    btn.innerHTML = txtOrig; btn.disabled = false; 
+                }).adicionarUsuario(u, p, finalPermsString);
             }
         }
     </script>
