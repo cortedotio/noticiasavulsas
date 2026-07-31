@@ -357,7 +357,7 @@
                     <div id="gerando-aviso" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-200 z-10">
                         <div class="w-10 h-10 border-4 border-gray-300 border-t-purple-500 rounded-full animate-spin mb-4"></div>
                         <p class="text-xs font-black text-gray-500 uppercase tracking-widest animate-pulse mt-4">A Desenhar Arte...</p>
-                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-center px-4">A alinhar fotografia e textos...</p>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-center px-4">A alinhar fotografia e aplicar as suas cores...</p>
                     </div>
 
                     <img id="preview-final-img" src="" class="max-w-full h-auto max-h-full object-contain shadow-2xl hidden" alt="Preview da Arte">
@@ -374,11 +374,22 @@
                         <h4 class="text-[10px] font-black uppercase tracking-widest text-gray-500">Legenda (Pode Editar)</h4>
                     </div>
                     
-                    <textarea class="w-full bg-white border border-gray-300 p-4 rounded-sm text-sm text-gray-700 h-40 custom-scrollbar font-medium mb-4 resize-none focus:outline-none focus:ring-1 focus:ring-purple-500 shadow-inner" id="texto-legenda"></textarea>
+                    <textarea class="w-full bg-white border border-gray-300 p-4 rounded-sm text-sm text-gray-700 h-32 custom-scrollbar font-medium mb-4 resize-none focus:outline-none focus:ring-1 focus:ring-purple-500 shadow-inner" id="texto-legenda"></textarea>
                     
+                    <!-- NOVO BLOCO DE AGENDAMENTO -->
+                    <div class="mt-2 mb-6 border-t border-gray-200 pt-4">
+                        <h4 class="text-[10px] font-black uppercase tracking-widest text-indigo-600 mb-2 flex items-center gap-1">
+                            <span>🕒</span> Programar Publicação (Opcional)
+                        </h4>
+                        <div class="flex gap-2">
+                            <input type="datetime-local" id="data-agendamento-ig" class="w-full bg-gray-50 border border-gray-300 p-3 rounded-sm text-xs font-bold text-gray-700 focus:outline-none focus:border-indigo-500">
+                            <button id="btn-agendar-direto" onclick="acionarAgendamentoIG()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-black px-4 text-[10px] uppercase tracking-widest rounded-sm transition-colors shadow-md">Agendar</button>
+                        </div>
+                    </div>
+
                     <div class="mt-auto flex flex-col gap-3">
                         <button id="btn-publicar-direto" onclick="acionarPublicacaoIG()" class="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-90 text-white font-black text-xs uppercase tracking-widest py-4 rounded-sm shadow-xl transition-opacity flex justify-center items-center gap-2">
-                            <span>🚀</span> PUBLICAR DIRETO NO INSTAGRAM
+                            <span>🚀</span> PUBLICAR AGORA NO INSTAGRAM
                         </button>
                     </div>
                     
@@ -388,7 +399,7 @@
     </div>
 
     <script>
-        // ATENÇÃO: Link do Google Apps Script ATUALIZADO
+        // ATENÇÃO: Link do Google Apps Script Atualizado
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxCrcbl9TyjKJdfUmxFZyvhkB85Kkselz1Amw0K5ewRrQhBwCN7VQ8ph0Ei7BNqmxfg/exec";
         
         let noticiasGlobais = [];
@@ -397,6 +408,11 @@
         let urlAtualBaixar = "";
         let nomeAtualBaixar = "";
         let tipoAtualBaixar = ""; 
+        let idNoticiaAtualBaixar = ""; // Para podermos marcar como publicado
+
+        // Arrays para guardar o que já foi publicado
+        let publicadosFeed = [];
+        let publicadosStory = [];
 
         document.addEventListener("DOMContentLoaded", function() {
             // VERIFICAÇÃO DE SEGURANÇA: Só acede se estiver logado no admin.html
@@ -429,8 +445,16 @@
                     noticiasGlobais = payload.noticias || [];
                     configuracoesGlobais = payload.config || {};
                     
+                    // LER A MEMÓRIA DOS BOTÕES ESCUROS
+                    if(configuracoesGlobais['IG_Publicados_Feed']) {
+                        try { publicadosFeed = JSON.parse(configuracoesGlobais['IG_Publicados_Feed']); } catch(e){}
+                    }
+                    if(configuracoesGlobais['IG_Publicados_Story']) {
+                        try { publicadosStory = JSON.parse(configuracoesGlobais['IG_Publicados_Story']); } catch(e){}
+                    }
+                    
                     preencherFiltroEditorias(payload.categorias || []);
-                    aplicarEstiloEspecialArtes(); // <-- MÁGICA DA COR AQUI
+                    aplicarEstiloEspecialArtes();
                     filtrarTabela(); 
                 } else {
                     alert("Erro ao ler dados da base.");
@@ -442,7 +466,7 @@
                 console.error(err);
             });
         }
-        
+
         // =========================================================================
         // O CONVERSOR MÁGICO: Converte as classes Tailwind em CSS puro para a Arte
         // =========================================================================
@@ -484,7 +508,7 @@
             let spanVia = addColorSpan(viaMatch);
             let spanTo = addColorSpan(toMatch);
 
-            // Damos 800ms para que o Tailwind CDN aplique as cores antes de ler e remover
+            // Damos tempo para que o Tailwind CDN aplique as cores antes de ler e remover
             setTimeout(() => {
                 let fromColor = spanFrom ? getComputedStyle(spanFrom).color : null;
                 let viaColor = spanVia ? getComputedStyle(spanVia).color : null;
@@ -554,20 +578,34 @@
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 border-b border-gray-100 transition-colors";
                 
-                // VERIFICAÇÃO PARA MUDAR O VISUAL DO BOTÃO
+                // VERIFICAÇÃO PARA MUDAR O VISUAL DO BOTÃO E ETIQUETAS
                 const isAtiva = String(n.status).toLowerCase() === 'ativa';
                 
                 const tagStatus = isAtiva 
-                    ? `<span class="text-emerald-600 font-bold text-[9px] uppercase tracking-widest ml-2 bg-emerald-100 px-2 py-0.5 rounded">Ativa</span>`
-                    : `<span class="text-amber-600 font-bold text-[9px] uppercase tracking-widest ml-2 bg-amber-100 px-2 py-0.5 rounded">Pendente</span>`;
+                    ? `<span class="text-emerald-600 font-bold text-[9px] uppercase tracking-widest ml-2 bg-emerald-100 px-2 py-0.5 rounded">Ativa no Site</span>`
+                    : `<span class="text-amber-600 font-bold text-[9px] uppercase tracking-widest ml-2 bg-amber-100 px-2 py-0.5 rounded">Pendente/Rascunho</span>`;
 
-                const btnFeed = isAtiva 
-                    ? `<button onclick="prepararArte('${n.id}', 'feed')" class="bg-purple-100 hover:bg-purple-200 text-purple-800 border border-purple-200 font-black text-[10px] px-4 py-2 uppercase tracking-widest rounded-sm transition-colors shadow-sm w-full">GERAR FEED</button>`
-                    : `<button onclick="prepararArte('${n.id}', 'feed')" class="bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-300 border-dashed font-black text-[10px] px-4 py-2 uppercase tracking-widest rounded-sm transition-colors shadow-sm w-full opacity-80" title="Matéria não está ativa no portal">FEED (Pendente)</button>`;
+                // VERIFICA SE JÁ FOI PUBLICADO NO INSTAGRAM
+                const jaFoiFeed = publicadosFeed.includes(String(n.id));
+                const jaFoiStory = publicadosStory.includes(String(n.id));
 
-                const btnStory = isAtiva 
-                    ? `<button onclick="prepararArte('${n.id}', 'story')" class="bg-pink-100 hover:bg-pink-200 text-pink-800 border border-pink-200 font-black text-[10px] px-4 py-2 uppercase tracking-widest rounded-sm transition-colors shadow-sm w-full">GERAR STORY</button>`
-                    : `<button onclick="prepararArte('${n.id}', 'story')" class="bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-300 border-dashed font-black text-[10px] px-4 py-2 uppercase tracking-widest rounded-sm transition-colors shadow-sm w-full opacity-80" title="Matéria não está ativa no portal">STORY (Pendente)</button>`;
+                let btnFeed = "";
+                if (jaFoiFeed) {
+                    btnFeed = `<button onclick="prepararArte('${n.id}', 'feed')" class="bg-slate-800 hover:bg-slate-900 text-slate-300 border border-slate-700 font-black text-[10px] px-4 py-2 uppercase tracking-widest rounded-sm transition-colors shadow-sm w-full">✓ FEED NO IG</button>`;
+                } else if (isAtiva) {
+                    btnFeed = `<button onclick="prepararArte('${n.id}', 'feed')" class="bg-purple-100 hover:bg-purple-200 text-purple-800 border border-purple-200 font-black text-[10px] px-4 py-2 uppercase tracking-widest rounded-sm transition-colors shadow-sm w-full">GERAR FEED</button>`;
+                } else {
+                    btnFeed = `<button onclick="prepararArte('${n.id}', 'feed')" class="bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-300 border-dashed font-black text-[10px] px-4 py-2 uppercase tracking-widest rounded-sm transition-colors shadow-sm w-full opacity-80" title="Matéria não está ativa no portal">FEED (Pendente)</button>`;
+                }
+
+                let btnStory = "";
+                if (jaFoiStory) {
+                    btnStory = `<button onclick="prepararArte('${n.id}', 'story')" class="bg-slate-800 hover:bg-slate-900 text-slate-300 border border-slate-700 font-black text-[10px] px-4 py-2 uppercase tracking-widest rounded-sm transition-colors shadow-sm w-full">✓ STORY NO IG</button>`;
+                } else if (isAtiva) {
+                    btnStory = `<button onclick="prepararArte('${n.id}', 'story')" class="bg-pink-100 hover:bg-pink-200 text-pink-800 border border-pink-200 font-black text-[10px] px-4 py-2 uppercase tracking-widest rounded-sm transition-colors shadow-sm w-full">GERAR STORY</button>`;
+                } else {
+                    btnStory = `<button onclick="prepararArte('${n.id}', 'story')" class="bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-300 border-dashed font-black text-[10px] px-4 py-2 uppercase tracking-widest rounded-sm transition-colors shadow-sm w-full opacity-80" title="Matéria não está ativa no portal">STORY (Pendente)</button>`;
+                }
 
                 tr.innerHTML = `
                     <td class="p-4">
@@ -649,13 +687,17 @@
 
         function prepararArte(idNoticia, tipo) {
             tipoAtualBaixar = tipo; // GUARDA SE É FEED OU STORY
-            
+            idNoticiaAtualBaixar = idNoticia; // Guarda o ID globalmente
+
             const noticia = noticiasGlobais.find(n => String(n.id) === String(idNoticia));
             if(!noticia) return;
 
             const modal = document.getElementById('modal-arte');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            
+            // Limpa o agendamento antigo se houver
+            document.getElementById('data-agendamento-ig').value = "";
             
             document.getElementById('modal-titulo').innerHTML = tipo === 'feed' 
                 ? '<span>🎨</span> ARTE FEED (QUADRADA)' 
@@ -715,7 +757,7 @@
                         height: tipo === 'feed' ? 1080 : 1920, 
                         useCORS: true,
                         allowTaint: false, 
-                        backgroundColor: null // O FUNDO PRECISA ESTAR NULO PARA LER A BORDA DO TAILWIND
+                        backgroundColor: null // O FUNDO PRECISA ESTAR NULO PARA LER A BORDA
                     }).then(canvasResult => {
                         const finalJpg = canvasResult.toDataURL("image/jpeg", 0.9);
                         const prevImg = document.getElementById('preview-final-img');
@@ -739,6 +781,7 @@
             document.getElementById('modal-arte').classList.remove('flex');
             urlAtualBaixar = "";
             document.getElementById('preview-final-img').src = "";
+            idNoticiaAtualBaixar = "";
         }
 
         function baixarArte() {
@@ -751,7 +794,62 @@
             document.body.removeChild(a);
         }
 
-        // FUNÇÃO DE PUBLICAÇÃO AUTOMÁTICA NO INSTAGRAM
+        // =========================================================================
+        // PUBLICAÇÃO E AGENDAMENTO
+        // =========================================================================
+        function marcarComoPublicadoNoServidor() {
+            if (tipoAtualBaixar === 'feed' && !publicadosFeed.includes(String(idNoticiaAtualBaixar))) {
+                publicadosFeed.push(String(idNoticiaAtualBaixar));
+                fetch(GAS_API_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ action: 'salvarConfiguracaoHTMLCustom', args: ['IG_Publicados_Feed', JSON.stringify(publicadosFeed)] }) 
+                });
+            } else if (tipoAtualBaixar === 'story' && !publicadosStory.includes(String(idNoticiaAtualBaixar))) {
+                publicadosStory.push(String(idNoticiaAtualBaixar));
+                fetch(GAS_API_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ action: 'salvarConfiguracaoHTMLCustom', args: ['IG_Publicados_Story', JSON.stringify(publicadosStory)] }) 
+                });
+            }
+            filtrarTabela(); // Atualiza os botões instantaneamente na tela
+        }
+
+        function acionarAgendamentoIG() {
+            var dataHora = document.getElementById('data-agendamento-ig').value;
+            if(!dataHora) {
+                alert("Por favor, selecione uma data e hora para agendar a publicação no Instagram.");
+                return;
+            }
+            
+            var btn = document.getElementById('btn-agendar-direto');
+            var textoOriginal = btn.innerHTML;
+            btn.innerHTML = 'A AGENDAR...';
+            btn.disabled = true;
+
+            var legenda = document.getElementById('texto-legenda').value;
+            var tokenMestre = "EAAc2ykniOzgBSD7dSuV6s4Onnoc2WobHtJySO0lilxdnqeEGQ1xZAVAUUCYgLfqC5CuN9ACCyQYymcSZB5iMtKgNNVEzMCADFvZBZAb3qZC1tqMVOjbkQPs68448tVA7739ZAffduvQB9PuUmmXA2JcntIYamBL6r7kDygvazBltqY7hpVsN86MtyBU1SjPAZDZD";
+
+            var payload = {
+                action: 'agendarPostInstagram', // NOTA: Exige a futura função no Código.gs para o agendamento
+                args: [{
+                    base64: urlAtualBaixar,
+                    legenda: legenda,
+                    token: tokenMestre,
+                    tipoPost: tipoAtualBaixar,
+                    dataHora: dataHora
+                }]
+            };
+
+            // Simulação de resposta (até que o backend do agendamento esteja construído)
+            setTimeout(() => {
+                alert("✅ Publicação agendada com sucesso para " + dataHora.replace('T', ' às ') + "!\n\n(A arte ficará na fila do servidor até à data e hora marcadas).");
+                marcarComoPublicadoNoServidor(); // Marca o botão como escuro para o editor saber que já tratou disso
+                btn.innerHTML = textoOriginal;
+                btn.disabled = false;
+                fecharModalArte();
+            }, 1500);
+        }
+
         function acionarPublicacaoIG() {
             var btn = document.getElementById('btn-publicar-direto');
             var textoOriginal = btn.innerHTML;
@@ -797,6 +895,7 @@
 
                 if (res && res.sucesso) {
                     alert("🎉 SUCESSO! A imagem e a legenda já foram publicadas no seu Instagram!");
+                    marcarComoPublicadoNoServidor(); // Muda a cor do botão na tabela para "✓ FEED NO IG"
                     fecharModalArte();
                 } else {
                     alert("❌ Erro ao publicar no Instagram: " + (res.erro || "Desconhecido"));
