@@ -398,12 +398,14 @@
         </div>
     </div>
 
+    <!-- SCRIPTS LÓGICOS -->
     <script>
-        // ATENÇÃO: Link do Google Apps Script Atualizado
+        // ATENÇÃO: Link do Google Apps Script
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyy1AaTUn5LUOwQ6olef9PPg4sy6MBamx1rB2YvdSjY31yrk67_88q5ApMCUNm0Hay4/exec";
         
         let noticiasGlobais = [];
         let configuracoesGlobais = {};
+        let agendamentosGlobais = []; // Guarda os agendamentos do IG recebidos do servidor
         
         let urlAtualBaixar = "";
         let nomeAtualBaixar = "";
@@ -444,6 +446,7 @@
                 if (payload && payload.sucesso) {
                     noticiasGlobais = payload.noticias || [];
                     configuracoesGlobais = payload.config || {};
+                    agendamentosGlobais = payload.agendamentosIG || []; // Carrega do backend
                     
                     // LER A MEMÓRIA DOS BOTÕES ESCUROS
                     if(configuracoesGlobais['IG_Publicados_Feed']) {
@@ -471,7 +474,9 @@
         // O CONVERSOR MÁGICO: Converte as classes Tailwind em CSS puro para a Arte
         // =========================================================================
         function aplicarEstiloEspecialArtes() {
-            if (!configuracoesGlobais['CorLogo']) return;
+            if (!configuracoesGlobais['CorLogo']) {
+                return;
+            }
             
             // Removemos as classes que estragam o background no html2canvas
             let classesOriginais = configuracoesGlobais['CorLogo'].replace(/bg-clip-text/gi, '').replace(/text-transparent/gi, '').trim();
@@ -499,7 +504,8 @@
             function addColorSpan(match) {
                 if (!match) return null;
                 let span = document.createElement("span");
-                span.className = `text-${match[1]}`; // Converte a cor de background para cor de texto para facilitar extração
+                // Converte a cor de background para cor de texto para facilitar extração
+                span.className = `text-${match[1]}`; 
                 tempDiv.appendChild(span);
                 return span;
             }
@@ -519,9 +525,15 @@
                 if (fromColor) {
                     // Monta a string do CSS
                     let gradientStr = `linear-gradient(${direcao}, ${fromColor}`;
-                    if (viaColor && viaColor !== 'rgba(0, 0, 0, 0)') gradientStr += `, ${viaColor}`;
-                    if (toColor && toColor !== 'rgba(0, 0, 0, 0)') gradientStr += `, ${toColor}`;
-                    else if (fromColor && (!toColor || toColor === 'rgba(0, 0, 0, 0)')) gradientStr += `, ${fromColor}`; // Fallback sólido
+                    if (viaColor && viaColor !== 'rgba(0, 0, 0, 0)') {
+                        gradientStr += `, ${viaColor}`;
+                    }
+                    if (toColor && toColor !== 'rgba(0, 0, 0, 0)') {
+                        gradientStr += `, ${toColor}`;
+                    } else if (fromColor && (!toColor || toColor === 'rgba(0, 0, 0, 0)')) {
+                        // Fallback sólido se só tiver uma cor
+                        gradientStr += `, ${fromColor}`; 
+                    }
                     gradientStr += `)`;
 
                     // APLICA O CSS PURO NA BORDA (FEED) E NAS DECORAÇÕES
@@ -642,8 +654,12 @@
                 return canvas.toDataURL('image/jpeg', 0.8);
             };
 
-            if (!urlOriginal || urlOriginal.includes('placehold.co')) return gerarFallbackBase64();
-            if (urlOriginal.startsWith('data:image')) return urlOriginal;
+            if (!urlOriginal || urlOriginal.includes('placehold.co')) {
+                return gerarFallbackBase64();
+            }
+            if (urlOriginal.startsWith('data:image')) {
+                return urlOriginal;
+            }
 
             let idDrive = null;
             let urlTratada = urlOriginal;
@@ -696,8 +712,20 @@
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             
-            // Limpa o agendamento antigo se houver
+            // =========================================================
+            // VERIFICA SE EXISTE UM AGENDAMENTO E PREENCHE O INPUT COM SEGURANÇA
+            // =========================================================
             document.getElementById('data-agendamento-ig').value = "";
+            if (agendamentosGlobais.length > 0) {
+                let agendamentoPrevio = agendamentosGlobais.find(a => String(a.id) === String(idNoticia) && a.tipo === tipo);
+                if(agendamentoPrevio && agendamentoPrevio.dataHora) {
+                    try {
+                        let dHora = agendamentoPrevio.dataHora;
+                        // Garante que só os primeiros 16 caracteres são passados para o input formatar corretamente (ex: 2026-08-01T14:30)
+                        document.getElementById('data-agendamento-ig').value = dHora.substring(0, 16);
+                    } catch(e) {}
+                }
+            }
             
             document.getElementById('modal-titulo').innerHTML = tipo === 'feed' 
                 ? '<span>🎨</span> ARTE FEED (QUADRADA)' 
@@ -795,7 +823,7 @@
         }
 
         // =========================================================================
-        // PUBLICAÇÃO E AGENDAMENTO
+        // PUBLICAÇÃO E AGENDAMENTO REAIS
         // =========================================================================
         function marcarComoPublicadoNoServidor() {
             if (tipoAtualBaixar === 'feed' && !publicadosFeed.includes(String(idNoticiaAtualBaixar))) {
@@ -814,6 +842,7 @@
             filtrarTabela(); // Atualiza os botões instantaneamente na tela
         }
 
+        // ENVIA A DATA REALMENTE PARA O SERVIDOR
         function acionarAgendamentoIG() {
             var dataHora = document.getElementById('data-agendamento-ig').value;
             if(!dataHora) {
@@ -830,8 +859,9 @@
             var tokenMestre = "EAAc2ykniOzgBSD7dSuV6s4Onnoc2WobHtJySO0lilxdnqeEGQ1xZAVAUUCYgLfqC5CuN9ACCyQYymcSZB5iMtKgNNVEzMCADFvZBZAb3qZC1tqMVOjbkQPs68448tVA7739ZAffduvQB9PuUmmXA2JcntIYamBL6r7kDygvazBltqY7hpVsN86MtyBU1SjPAZDZD";
 
             var payload = {
-                action: 'agendarPostInstagram', // NOTA: Exige a futura função no Código.gs para o agendamento
+                action: 'agendarPostInstagram',
                 args: [{
+                    idNoticia: idNoticiaAtualBaixar,
                     base64: urlAtualBaixar,
                     legenda: legenda,
                     token: tokenMestre,
@@ -840,14 +870,36 @@
                 }]
             };
 
-            // Simulação de resposta (até que o backend do agendamento esteja construído)
-            setTimeout(() => {
-                alert("✅ Publicação agendada com sucesso para " + dataHora.replace('T', ' às ') + "!\n\n(A arte ficará na fila do servidor até à data e hora marcadas).");
-                marcarComoPublicadoNoServidor(); // Marca o botão como escuro para o editor saber que já tratou disso
+            fetch(GAS_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data && data.sucesso) {
+                    alert("✅ Publicação agendada com sucesso para " + dataHora.replace('T', ' às ') + "!\n\n(A arte ficará na fila do servidor).");
+                    marcarComoPublicadoNoServidor(); 
+                    
+                    // Adiciona localmente para se abrir de novo aparecer a data sem precisar recarregar
+                    agendamentosGlobais.push({
+                        id: idNoticiaAtualBaixar, 
+                        tipo: tipoAtualBaixar, 
+                        dataHora: dataHora
+                    });
+                    
+                    fecharModalArte();
+                } else {
+                    alert("❌ Erro ao agendar: " + (data.erro || "Desconhecido"));
+                }
                 btn.innerHTML = textoOriginal;
                 btn.disabled = false;
-                fecharModalArte();
-            }, 1500);
+            })
+            .catch(err => {
+                alert("Falha de rede ao agendar.");
+                btn.innerHTML = textoOriginal;
+                btn.disabled = false;
+            });
         }
 
         function acionarPublicacaoIG() {
@@ -895,7 +947,7 @@
 
                 if (res && res.sucesso) {
                     alert("🎉 SUCESSO! A imagem e a legenda já foram publicadas no seu Instagram!");
-                    marcarComoPublicadoNoServidor(); // Muda a cor do botão na tabela para "✓ FEED NO IG"
+                    marcarComoPublicadoNoServidor(); 
                     fecharModalArte();
                 } else {
                     alert("❌ Erro ao publicar no Instagram: " + (res.erro || "Desconhecido"));
