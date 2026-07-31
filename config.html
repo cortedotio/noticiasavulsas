@@ -77,7 +77,6 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
         .rich-editor { user-select: text !important; -webkit-user-select: text !important; }
         .rich-editor font[size="1"] { font-size: 0.75rem !important; line-height: 1.1rem !important; }
         .rich-editor font[size="2"] { font-size: 0.875rem !important; line-height: 1.25rem !important; }
@@ -86,7 +85,6 @@
         .rich-editor font[size="5"] { font-size: 1.5rem !important; line-height: 2rem !important; }
         .rich-editor font[size="6"] { font-size: 1.875rem !important; line-height: 2.25rem !important; }
         .rich-editor font[size="7"] { font-size: 2.25rem !important; line-height: 2.5rem !important; }
-        
         .rich-editor img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px auto; border: 1px solid #e2e8f0; display: block; }
         .rich-editor iframe, .rich-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; background: #000; }
         .rich-editor a { color: #2563eb; text-decoration: underline; font-weight: 500; }
@@ -109,7 +107,7 @@
         <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Configurações...</p>
     </div>
 
-    <!-- MODAL: LOGIN -->
+    <!-- MODAL DE LOGIN -->
     <div id="modalLogin" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md"></div>
         <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
@@ -125,7 +123,7 @@
         </div>
     </div>
 
-    <!-- MODAL: MUDANÇA DE SENHA (1º ACESSO) -->
+    <!-- MODAL DE MUDANÇA DE SENHA (1º ACESSO) -->
     <div id="modalMudarSenha" class="fixed inset-0 z-[10000] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md"></div>
         <div class="bg-white w-full max-w-md p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
@@ -157,7 +155,7 @@
         </header>
 
         <main class="max-w-[1200px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
-            <!-- ABAS DE NAVEGAÇÃO CONFIGURAÇÕES -->
+            <!-- ABAS DE NAVEGAÇÃO -->
             <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar pb-1" id="nav-abas-config">
                 <button type="button" onclick="alternarAbaConfig('form-capa-container')" id="tab-btn-capa" class="tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm hidden">Layout Capa</button>
                 <button type="button" onclick="alternarAbaConfig('form-logo-container')" id="tab-btn-logo" class="tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm hidden">IA & Design</button>
@@ -184,8 +182,9 @@
                 </form>
             </div>
 
-            <!-- 2. LOGÓTIPO & IA (LAYOUT FIEL À IMAGEM) -->
-            <div id="form-logo-container" class="config-panel-section hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-purple-600">
+            <!-- 2. LOGÓTIPO & IA (CORES VIA TAILWIND) -->
+            <div id="form-logo-container" class="config-panel-section hidden bg-white p-5 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-purple-600">
+                
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <div class="border-l-4 border-purple-600 pl-3">
                         <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">INTELIGÊNCIA ARTIFICIAL & DESIGN</h2>
@@ -216,6 +215,23 @@
                     <input type="text" id="prompt-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm mb-4" placeholder="Ex: deixe a logo com um azul e verde gradiente" />
                     
                     <button type="button" id="btn-gerar-logo" onclick="gerarEstiloIA()" class="bg-purple-500 hover:bg-purple-600 text-white px-8 py-3 font-black transition-colors uppercase text-[11px] tracking-widest rounded-sm shadow-sm flex items-center justify-center gap-2">✨ GERAR ESTILO COM IA</button>
+                </div>
+                
+                <!-- PREVIEW DO ESTILO (Apenas visível depois de pedir as cores) -->
+                <div id="preview-estilo-wrapper" class="mt-8 hidden border-t border-purple-100 pt-6">
+                    <h4 class="text-[10px] font-black uppercase tracking-widest text-purple-600 mb-4 text-center">PRÉ-VISUALIZAÇÃO DO NOVO ESTILO</h4>
+                    
+                    <!-- Aqui injetamos as novas classes Tailwind recebidas da IA -->
+                    <div class="p-8 bg-white border border-gray-300 rounded-sm flex items-center justify-center min-h-[160px] shadow-sm">
+                        <h1 id="preview-texto-estilo" class="text-4xl md:text-6xl font-black tracking-tighter uppercase text-center transition-all duration-500">
+                            NOTÍCIAS AVULSAS
+                        </h1>
+                    </div>
+                    
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" onclick="cancelarEstilo()" class="bg-gray-200 text-gray-600 font-black px-6 py-4 uppercase tracking-widest text-sm rounded-sm hover:bg-gray-300 transition-colors">Cancelar</button>
+                        <button type="button" id="btn-aplicar-estilo" onclick="aplicarNovoEstilo()" class="bg-jornal-dark text-white font-black px-10 py-4 uppercase tracking-widest text-sm rounded-sm hover:bg-gray-800 transition-colors shadow-xl">Aplicar ao Site</button>
+                    </div>
                 </div>
             </div>
 
@@ -399,9 +415,9 @@
                 </div>
             </div>
 
-            <!-- 7. GESTÃO DE EQUIPA (NOVO LAYOUT MODULAR FIEL À IMAGEM) -->
+            <!-- 7. GESTÃO DE EQUIPA -->
             <div id="form-usuarios-container" class="config-panel-section hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
-                <div class="border-l-4 border-jornal-dark pl-3 mb-8">
+                <div class="border-l-4 border-rose-600 pl-3 mb-8">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">GESTÃO DE UTILIZADORES</h2>
                     <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Criar novos acessos ao Painel Admin</p>
                 </div>
@@ -424,7 +440,6 @@
                             </div>
                         </div>
                         
-                        <!-- PERMISSÕES MODULARES -->
                         <div class="bg-white p-5 border border-rose-200 rounded-sm mt-4">
                             <label class="text-[10px] font-bold uppercase tracking-widest text-rose-600 mb-4 block border-b border-rose-100 pb-2">Permissões de Acesso (Que secções este utilizador pode ver?)</label>
                             
@@ -467,6 +482,9 @@
         var base64StringProp = ""; 
         var mimeStringProp = ""; 
         var nameStringProp = "";
+        
+        // Variável para guardar temporariamente as classes Tailwind geradas pela IA
+        var novaCorIA = "";
 
         document.addEventListener("DOMContentLoaded", function() {
             var propArquivoInput = document.getElementById('prop-arquivo');
@@ -486,7 +504,6 @@
                 document.getElementById('modalLogin').classList.add('hidden');
                 document.getElementById('view-config').classList.remove('hidden');
                 
-                // VERIFICA SE O UTILIZADOR TEM DE MUDAR A SENHA
                 var perms = localStorage.getItem('admin_perms') || '';
                 if(perms.indexOf('req_pass_change:true') !== -1) {
                     var loader = document.getElementById('loading-global'); if(loader) loader.classList.add('hidden');
@@ -496,7 +513,8 @@
                     carregarDados();
                 }
             } else {
-                var loader = document.getElementById('loading-global'); if(loader) loader.classList.add('hidden');
+                var loader = document.getElementById('loading-global');
+                if(loader) loader.classList.add('hidden');
                 document.getElementById('modalLogin').classList.remove('hidden');
                 document.getElementById('modalLogin').classList.add('flex');
             }
@@ -574,11 +592,16 @@
                         if(permissoesStr.indexOf('req_pass_change:true') !== -1) {
                             document.getElementById('modalMudarSenha').classList.remove('hidden');
                             document.getElementById('modalMudarSenha').classList.add('flex');
-                        } else { carregarDados(); }
-                    } else { mostrarMensagem(res ? res.erro : "Resposta inválida.", 'erro'); }
+                        } else {
+                            carregarDados();
+                        }
+                    } else {
+                        mostrarMensagem(res ? res.erro : "Resposta inválida.", 'erro');
+                    }
                     btn.innerHTML = "Acessar Painel"; btn.disabled = false;
                 }).withFailureHandler(function(erro) {
-                    mostrarMensagem("Falha na rede.", 'erro'); btn.innerHTML = "Acessar Painel"; btn.disabled = false;
+                    mostrarMensagem("Falha na rede.", 'erro');
+                    btn.innerHTML = "Acessar Painel"; btn.disabled = false;
                 }).verificarLogin(u, p);
             }
         }
@@ -658,7 +681,10 @@
                     if (res && res.sucesso) {
                         configuracoesGlobais = res.config || {};
                         if (res.categorias && res.categorias.length > 0) listaCategoriasLocais = res.categorias;
-                        try { preencherFormCapa(); } catch(e){} try { preencherFormPlacar(); } catch(e){} try { preencherConfigsGerais(); } catch(e){}
+                        
+                        try { preencherFormCapa(); } catch(e){}
+                        try { preencherFormPlacar(); } catch(e){}
+                        try { preencherConfigsGerais(); } catch(e){}
                         if (res.usuarios) renderizarUsuarios(res.usuarios);
                         
                         abrirPrimeiraAbaDisponivel();
@@ -754,16 +780,17 @@
         function preencherConfigsGerais() {
             if (configuracoesGlobais['ChaveIA']) { var ic = document.getElementById('config-chave-ia'); if (ic) ic.value = configuracoesGlobais['ChaveIA']; }
             if (configuracoesGlobais['ExpedienteHTML']) { var exp = document.getElementById('admin-editor-expediente'); if(exp) exp.innerHTML = configuracoesGlobais['ExpedienteHTML']; }
+            // Estes dois inputs são os originais antigos, para caso pretenda editar os estilos CSS manualmente sem usar a IA
+            if (configuracoesGlobais['LogoHTML']) { var lHtml = document.getElementById('cfg-logo'); if (lHtml) lHtml.value = configuracoesGlobais['LogoHTML']; }
+            if (configuracoesGlobais['CorLogo']) { var cLogo = document.getElementById('cfg-cor-logo'); if (cLogo) cLogo.value = configuracoesGlobais['CorLogo']; }
         }
 
         function preencherFormCapa() {
             var container = document.getElementById('selects-capa-container'); if(!container) return;
-            var html = ''; var ordemAtual = [];
-            if(configuracoesGlobais['CategoriasCapa']) { try { ordemAtual = JSON.parse(configuracoesGlobais['CategoriasCapa']); } catch(e){} }
+            var html = ''; var ordemAtual = []; if(configuracoesGlobais['CategoriasCapa']) { try { ordemAtual = JSON.parse(configuracoesGlobais['CategoriasCapa']); } catch(e){} }
             for(var i=1; i<=8; i++) {
                 var v = ordemAtual.length >= i ? ordemAtual[i-1] : '';
-                html += '<div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Posição ' + i + '</label>';
-                html += '<select id="capa-pos-' + i + '" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm font-bold text-gray-700 uppercase rounded-sm"><option value="">-- NENHUMA --</option>';
+                html += '<div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Posição ' + i + '</label><select id="capa-pos-' + i + '" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm font-bold text-gray-700 uppercase rounded-sm"><option value="">-- NENHUMA --</option>';
                 listaCategoriasLocais.forEach(function(c) { html += '<option value="' + c + '"' + (c === v ? ' selected' : '') + '>' + c + '</option>'; }); html += '</select></div>';
             }
             container.innerHTML = html;
@@ -798,12 +825,23 @@
         function salvarPropaganda(e) {
             e.preventDefault(); var btn = document.getElementById('btn-salvar-propaganda'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
             var payload = { empresa: document.getElementById('prop-empresa').value + '|||' + document.getElementById('prop-tempo').value, local: document.getElementById('prop-local').value, linkDestino: document.getElementById('prop-link').value };
-            if (base64StringProp) { payload.isUpload = true; payload.base64 = base64StringProp; payload.mimeType = mimeStringProp; payload.fileName = nameStringProp; payload.urlArquivo = ''; } 
-            else { payload.isUpload = false; payload.urlArquivo = document.getElementById('prop-imagem').value; payload.tipo = 'link'; }
+            if (base64StringProp) { payload.isUpload = true; payload.base64 = base64StringProp; payload.mimeType = mimeStringProp; payload.fileName = nameStringProp; payload.urlArquivo = ''; } else { payload.isUpload = false; payload.urlArquivo = document.getElementById('prop-imagem').value; payload.tipo = 'link'; }
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function() { 
                     mostrarMensagem('Anúncio no ar!'); document.getElementById('form-propaganda').reset(); base64StringProp = ""; btn.innerHTML = txt; btn.disabled = false; try { localStorage.removeItem('portal_data_cache'); } catch(e){}
                 }).salvarPropagandaNoSheets(payload);
+            }
+        }
+
+        function salvarRedesSociais(e) {
+            e.preventDefault(); var btn = document.getElementById('btn-salvar-sociais'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-inst-url', document.getElementById('soc-inst-url').value);
+                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-fb-url', document.getElementById('soc-fb-url').value);
+                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-x-url', document.getElementById('soc-x-url').value);
+                window.google.script.run.withSuccessHandler(function() { 
+                    mostrarMensagem("Redes sociais atualizadas!"); btn.innerHTML = txt; btn.disabled = false; try { localStorage.removeItem('portal_data_cache'); } catch(e){}
+                }).salvarConfiguracaoHTMLCustom('soc-yt-url', document.getElementById('soc-yt-url').value);
             }
         }
 
@@ -814,47 +852,95 @@
             }
         }
 
+        // ==========================================
+        // IA & DESIGN (ESTILISTA CSS)
+        // ==========================================
         function processarLogoImagemLocal(input) {
             if (!input.files || !input.files[0]) return;
-            var file = input.files[0];
-            var reader = new FileReader();
+            // Se o utilizador não quer usar a IA para texto, pode meter uma foto do logo local:
+            var file = input.files[0]; var reader = new FileReader();
             reader.onload = function(e) {
                 var base64 = e.target.result.split(',')[1];
-                var html = '<img src="data:' + file.type + ';base64,' + base64 + '" class="h-12 object-contain cursor-pointer" onclick="voltarCapa();"/>';
-                document.getElementById('preview-logo-ia').innerHTML = html; document.getElementById('preview-logo-wrapper').classList.remove('hidden'); window.novaLogoHtml = html;
+                var htmlLogo = '<img src="data:' + file.type + ';base64,' + base64 + '" class="h-12 object-contain cursor-pointer" onclick="voltarCapa();"/>';
+                document.getElementById('cfg-logo').value = htmlLogo;
+                mostrarMensagem('O código HTML da imagem foi gerado na caixa abaixo. Clique em "Salvar Textos" para aplicar no site.');
             }; reader.readAsDataURL(file);
         }
 
         function gerarEstiloIA() {
             var desc = document.getElementById('prompt-logo').value.trim(); 
             if(!desc) { mostrarMensagem("Escreva como quer as cores.", "erro"); document.getElementById('prompt-logo').focus(); return; }
+            
             var btn = document.getElementById('btn-gerar-logo'); var txt = btn.innerText; btn.innerText = "A PROCESSAR..."; btn.disabled = true;
             
-            var promptFinal = "Você é um especialista em TailwindCSS. O usuário quer estilizar a logo do site com as seguintes cores: '" + desc + "'. Responda APENAS com as classes Tailwind CSS necessárias para um texto ter esse gradiente/cor. Exemplo de formato de resposta exato: 'bg-gradient-to-r from-blue-500 to-green-500 bg-clip-text text-transparent'. Não adicione mais nenhuma palavra, aspas ou formatação Markdown.";
+            // O Prompt que obriga o Gemini a devolver um texto com classes Tailwind
+            var promptFinal = "Você é um especialista em TailwindCSS. O usuário quer estilizar a logo e as bordas de um site de notícias com as seguintes cores: '" + desc + "'. Responda APENAS com a string de classes Tailwind CSS necessárias para criar um gradiente de texto vibrante e moderno com essas cores. Exemplo exato do formato de resposta que quero de ti: bg-gradient-to-r from-blue-500 to-green-500 bg-clip-text text-transparent. Não adicione mais nenhuma palavra, não uses aspas nem formatação Markdown. APENAS a string de classes.";
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run && window.google.script.run.chamarGeminiBackend) {
                 window.google.script.run.withSuccessHandler(function(res) {
                     if(res && res.sucesso && res.texto) {
-                        var classes = res.texto.replace(/`/g, '').trim();
-                        window.google.script.run.withSuccessHandler(function() {
-                            mostrarMensagem("Estilo atualizado com IA! Recarregue a página inicial para ver."); btn.innerText = txt; btn.disabled = false;
-                        }).salvarConfiguracaoHTMLCustom('CorLogo', classes);
-                    } else { mostrarMensagem("Erro na IA.", "erro"); btn.innerText = txt; btn.disabled = false;}
+                        var classesDevolvidas = res.texto.replace(/`/g, '').replace(/"/g, '').replace(/'/g, '').trim();
+                        // Assegura que o texto tem os clips para funcionar em texto e para guardar na DB
+                        if(classesDevolvidas.indexOf('bg-clip-text') === -1) classesDevolvidas += " bg-clip-text text-transparent";
+                        
+                        window.novaCorIA = classesDevolvidas;
+                        
+                        // Aplica ao Preview Visível
+                        var previewH1 = document.getElementById('preview-texto-estilo');
+                        previewH1.className = "text-4xl md:text-6xl font-black tracking-tighter uppercase text-center transition-all duration-500 " + window.novaCorIA;
+                        
+                        document.getElementById('preview-estilo-wrapper').classList.remove('hidden');
+                        mostrarMensagem("Estilo gerado! Se gostar, clique em Aplicar ao Site.");
+                        btn.innerText = txt; btn.disabled = false;
+                        
+                    } else { mostrarMensagem("Erro na resposta da IA.", "erro"); btn.innerText = txt; btn.disabled = false;}
                 }).withFailureHandler(function(error) { 
-                    mostrarMensagem("Serviço IA indisponível.", "erro"); btn.innerText = txt; btn.disabled = false; 
+                    mostrarMensagem("A IA falhou em processar as cores.", "erro"); btn.innerText = txt; btn.disabled = false; 
                 }).chamarGeminiBackend(promptFinal);
             } else {
                 mostrarMensagem("Serviço IA não conectado.", "erro"); btn.innerText = txt; btn.disabled = false;
             }
         }
+        
+        function cancelarEstilo() {
+            window.novaCorIA = "";
+            document.getElementById('preview-estilo-wrapper').classList.add('hidden');
+            document.getElementById('prompt-logo').value = "";
+        }
 
-        function aplicarNovaLogo() {
-            if (!window.novaLogoHtml) return; 
-            var btn = document.getElementById('btn-aplicar-logo'); var txt = btn.innerText; btn.innerText = "A GUARDAR..."; btn.disabled = true;
+        function aplicarNovoEstilo() {
+            if (!window.novaCorIA) return; 
+            var btn = document.getElementById('btn-aplicar-estilo'); var txt = btn.innerText; btn.innerText = "A GUARDAR..."; btn.disabled = true;
+            
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
-                    mostrarMensagem('Logo atualizado no servidor!'); configuracoesGlobais['LogoHTML'] = window.novaLogoHtml; btn.innerText = txt; btn.disabled = false; try { localStorage.removeItem('portal_data_cache'); } catch(err){}
-                }).salvarConfiguracaoHTMLCustom('LogoHTML', window.novaLogoHtml);
+                    mostrarMensagem('Novo estilo de cores guardado com sucesso no servidor!'); 
+                    document.getElementById('cfg-cor-logo').value = window.novaCorIA;
+                    
+                    // Se o utilizador não configurou um HTML manual, damos-lhe um padrão com as novas cores
+                    var logoAtual = document.getElementById('cfg-logo').value.trim();
+                    if (!logoAtual || logoAtual === "") {
+                        var padraoH1 = '<h1 class="text-4xl md:text-5xl font-black tracking-tighter uppercase ' + window.novaCorIA + '">NOTÍCIAS AVULSAS</h1>';
+                        document.getElementById('cfg-logo').value = padraoH1;
+                        window.google.script.run.salvarConfiguracaoHTMLCustom('LogoHTML', padraoH1);
+                    }
+                    
+                    btn.innerText = txt; btn.disabled = false;
+                    document.getElementById('preview-estilo-wrapper').classList.add('hidden');
+                    try { localStorage.removeItem('portal_data_cache'); } catch(err){}
+                }).salvarConfiguracaoHTMLCustom('CorLogo', window.novaCorIA);
+            }
+        }
+        
+        // Salvaguarda manual dos Textos
+        function salvarDesignTextos() {
+            var btn = document.getElementById('btn-salvar-design'); var txtOrig = btn.innerText; btn.innerText = "A GUARDAR..."; btn.disabled = true;
+            var cLogo = document.getElementById('cfg-cor-logo').value;
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.salvarConfiguracaoHTMLCustom('CorLogo', cLogo);
+                window.google.script.run.withSuccessHandler(function() {
+                    mostrarMensagem("Textos do design salvos manualmente!"); btn.innerText = txtOrig; btn.disabled = false; try { localStorage.removeItem('portal_data_cache'); } catch(err){}
+                }).salvarConfiguracaoHTMLCustom('LogoHTML', document.getElementById('cfg-logo').value);
             }
         }
 
@@ -869,7 +955,7 @@
         }
 
         // ==========================================
-        // GESTÃO DE EQUIPA 
+        // GESTÃO DE EQUIPA (COM LISTAGEM)
         // ==========================================
         function renderizarUsuarios(usuarios) {
             var container = document.getElementById('lista-usuarios-existentes');
@@ -877,15 +963,16 @@
             container.innerHTML = '';
             
             if (!usuarios || usuarios.length === 0) {
-                container.innerHTML = '<p class="text-xs text-gray-500 italic">Nenhum utilizador encontrado.</p>';
+                container.innerHTML = '<p class="text-xs text-gray-500 italic">Nenhum utilizador encontrado na base de dados.</p>';
                 return;
             }
 
             var html = '<div class="space-y-3">';
             usuarios.forEach(function(u) {
+                // Adaptamos isto caso o backend devolva objetos ou arrays
                 var nome = u.user || u.usuario || u[0] || 'Desconhecido';
                 var perms = String(u.perms || u.permissoes || u[2] || '');
-                if (nome === 'Desconhecido' || !nome.trim()) return;
+                if (nome === 'Desconhecido' || !nome.trim() || nome.toLowerCase() === 'usuario') return;
                 
                 var tags = '';
                 if (perms.indexOf('admin') !== -1 || perms === '') { 
@@ -900,10 +987,10 @@
                 }
 
                 html += '<div class="flex justify-between items-center bg-gray-50 p-4 border border-gray-200 rounded-sm">';
-                html += '<div><div class="text-sm font-black text-jornal-dark">' + nome + '</div><div class="mt-2 flex flex-wrap gap-1">' + tags + '</div></div>';
-                // Adicionamos botão de excluir se o backend suportar removerUsuario
+                html += '<div class="flex flex-col gap-2"><div class="text-sm font-black text-jornal-dark">' + nome + '</div><div class="flex flex-wrap gap-1">' + tags + '</div></div>';
+                
                 if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run && window.google.script.run.removerUsuario) {
-                    html += '<button type="button" onclick="removerUsuarioAdmin(\'' + nome + '\')" class="text-[10px] font-black uppercase text-red-600 hover:text-red-800 transition-colors bg-white px-3 py-1.5 border border-red-200 rounded-sm shadow-sm">Excluir</button>';
+                    html += '<button type="button" onclick="removerUsuarioAdmin(\'' + nome + '\')" class="text-[10px] font-black uppercase text-red-600 hover:text-white transition-colors hover:bg-red-600 px-4 py-2 border border-red-200 rounded-sm shadow-sm shrink-0">Excluir Conta</button>';
                 }
                 html += '</div>';
             });
@@ -912,10 +999,10 @@
         }
 
         function removerUsuarioAdmin(nome) {
-            if(!confirm("Atenção: Tem a certeza que deseja excluir o utilizador '" + nome + "'?")) return;
+            if(!confirm("Atenção: Tem a certeza que deseja excluir o acesso do utilizador '" + nome + "'?")) return;
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
-                    if (res && res.sucesso) { mostrarMensagem("Utilizador removido!"); carregarDados(); } 
+                    if (res && res.sucesso) { mostrarMensagem("Utilizador removido permanentemente!"); carregarDados(); } 
                     else { mostrarMensagem(res ? res.erro : "Erro ao remover.", "erro"); }
                 }).removerUsuario(nome);
             }
@@ -940,7 +1027,7 @@
                         mostrarMensagem("Acesso criado com as restrições selecionadas!"); 
                         document.getElementById('form-novo-usuario').reset(); 
                         document.querySelectorAll('.perm-chk').forEach(function(c){ c.checked = true; }); 
-                        carregarDados(); // Recarrega a lista de utilizadores
+                        carregarDados(); // Recarrega a lista
                     } 
                     else { mostrarMensagem(res ? res.erro : "Erro ao criar.", "erro"); }
                     btn.innerHTML = txtOrig; btn.disabled = false;
