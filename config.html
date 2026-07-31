@@ -24,8 +24,8 @@
 
         const apiFunctions = [
             'getHomeData', 'verificarLogin', 'salvarConfiguracaoHTMLCustom', 
-            'salvarPropagandaNoSheets', 'chamarGeminiImagemBackend', 
-            'adicionarUsuario', 'alterarSenhaUsuario', 'adicionarCategoriaNoSheets'
+            'salvarPropagandaNoSheets', 'chamarGeminiBackend', 
+            'adicionarUsuario', 'removerUsuario', 'alterarSenhaUsuario'
         ];
 
         apiFunctions.forEach(function(funcName) {
@@ -109,7 +109,7 @@
         <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Configurações...</p>
     </div>
 
-    <!-- MODAL DE LOGIN -->
+    <!-- MODAL: LOGIN -->
     <div id="modalLogin" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md"></div>
         <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
@@ -120,12 +120,12 @@
             <form onsubmit="fazerLogin(event)" class="space-y-4">
                 <input type="text" id="login-user" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Usuário" />
                 <input type="password" id="login-pass" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Senha" />
-                <button type="submit" id="btn-fazer-login" class="w-full bg-jornal-blue text-white font-black py-3 hover:opacity-90 transition-colors text-xs uppercase tracking-widest rounded-sm mt-4">Entrar no Painel</button>
+                <button type="submit" id="btn-fazer-login" class="w-full bg-jornal-blue text-white font-black py-3 hover:opacity-90 transition-colors text-xs uppercase tracking-widest rounded-sm mt-4">Acessar Painel</button>
             </form>
         </div>
     </div>
 
-    <!-- MODAL DE MUDANÇA DE SENHA OBRIGATÓRIA -->
+    <!-- MODAL: MUDANÇA DE SENHA (1º ACESSO) -->
     <div id="modalMudarSenha" class="fixed inset-0 z-[10000] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md"></div>
         <div class="bg-white w-full max-w-md p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
@@ -141,7 +141,6 @@
         </div>
     </div>
 
-    <!-- PAINEL DE CONFIGURAÇÕES -->
     <div id="view-config" class="hidden min-h-screen flex flex-col bg-gray-100 text-slate-800">
         
         <header class="bg-jornal-dark text-white border-b border-gray-800 sticky top-0 z-40 shadow-sm">
@@ -158,13 +157,13 @@
         </header>
 
         <main class="max-w-[1200px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
-            <!-- ABAS DE NAVEGAÇÃO -->
+            <!-- ABAS DE NAVEGAÇÃO CONFIGURAÇÕES -->
             <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar pb-1" id="nav-abas-config">
                 <button type="button" onclick="alternarAbaConfig('form-capa-container')" id="tab-btn-capa" class="tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm hidden">Layout Capa</button>
                 <button type="button" onclick="alternarAbaConfig('form-logo-container')" id="tab-btn-logo" class="tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm hidden">IA & Design</button>
                 <button type="button" onclick="alternarAbaConfig('form-propaganda-container')" id="tab-btn-propaganda" class="tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm hidden">Anúncios</button>
                 <button type="button" onclick="alternarAbaConfig('form-social-container')" id="tab-btn-social" class="tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm hidden">Redes Sociais</button>
-                <button type="button" onclick="alternarAbaConfig('form-placar-container')" id="tab-btn-placar" class="tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm hidden">Placar</button>
+                <button type="button" onclick="alternarAbaConfig('form-placar-container')" id="tab-btn-placar" class="tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm hidden">Placar Ao Vivo</button>
                 <button type="button" onclick="alternarAbaConfig('form-expediente-container')" id="tab-btn-expediente" class="tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm hidden">Expediente</button>
                 <button type="button" onclick="alternarAbaConfig('form-usuarios-container')" id="tab-btn-usuarios" class="tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm hidden">Gestão Equipa</button>
                 
@@ -186,14 +185,13 @@
             </div>
 
             <!-- 2. LOGÓTIPO & IA (LAYOUT FIEL À IMAGEM) -->
-            <div id="form-logo-container" class="config-panel-section hidden bg-white p-5 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-purple-600">
-                
+            <div id="form-logo-container" class="config-panel-section hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-purple-600">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <div class="border-l-4 border-purple-600 pl-3">
-                        <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Inteligência Artificial & Design</h2>
+                        <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">INTELIGÊNCIA ARTIFICIAL & DESIGN</h2>
                     </div>
                     
-                    <div class="border border-dashed border-purple-300 bg-purple-50/50 p-4 rounded-sm text-center cursor-pointer hover:bg-purple-50 transition-colors w-full md:w-auto" onclick="document.getElementById('upload-logo-imagem').click()">
+                    <div class="border border-dashed border-purple-300 bg-purple-50 p-4 rounded-sm text-center cursor-pointer hover:bg-purple-100 transition-colors w-full md:w-auto" onclick="document.getElementById('upload-logo-imagem').click()">
                         <div class="text-[11px] font-bold text-purple-700 uppercase tracking-widest mb-1 flex items-center justify-center gap-1">
                             <span class="text-lg leading-none">+</span> FAZER UPLOAD DE ÍCONE (LOGO)
                         </div>
@@ -203,47 +201,21 @@
                 </div>
                 
                 <!-- CHAVE IA -->
-                <div class="mb-8 p-6 bg-purple-50/30 border border-purple-100 rounded-sm">
-                    <h3 class="font-bold text-sm uppercase tracking-widest text-purple-800 mb-2">CHAVE DE ACESSO DA IA (API KEY)</h3>
-                    <p class="text-xs text-gray-500 mb-4 font-medium">Insira a sua chave do Google Studio para ativar a IA.</p>
+                <div class="mb-8 p-6 bg-purple-50/50 border border-purple-100 rounded-sm">
+                    <h3 class="font-black text-sm uppercase tracking-widest text-purple-800 mb-2">CHAVE DE ACESSO DA IA (API KEY)</h3>
+                    <p class="text-xs text-gray-600 mb-4 font-medium">Insira a sua chave do Google Studio para ativar a IA.</p>
                     <div class="flex flex-col md:flex-row gap-4 md:items-center">
-                        <input type="password" id="config-chave-ia" class="flex-grow px-5 py-3 border border-gray-300 focus:border-purple-500 focus:outline-none text-sm font-mono rounded-sm shadow-sm min-w-0" placeholder="Ex: AIzaSy..." />
+                        <input type="password" id="config-chave-ia" class="flex-grow px-5 py-3 bg-white border border-gray-300 focus:border-purple-500 focus:outline-none text-sm font-mono rounded-sm shadow-sm min-w-0" placeholder="Ex: AIzaSy..." />
                         <button type="button" onclick="salvarChaveIA()" id="btn-salvar-chave" class="bg-purple-500 hover:bg-purple-600 text-white px-8 py-3 font-black uppercase text-[11px] tracking-widest rounded-sm whitespace-nowrap transition-colors shrink-0 shadow-sm">GUARDAR CHAVE</button>
                     </div>
                 </div>
                 
-                <!-- DESIGN E LOGO -->
-                <div class="space-y-6 bg-white p-6 md:p-8 border border-gray-100 rounded-sm shadow-sm">
-                    <div>
-                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">LOGO EM TEXTO (HTML)</label>
-                        <input type="text" id="cfg-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm" placeholder='Ex: <div class="flex items-center gap-3">...' />
-                    </div>
+                <!-- PROMPT IA PARA CORES -->
+                <div class="p-6 bg-white border border-gray-200 rounded-sm shadow-sm">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">DESCRIÇÃO (PROMPT PARA A IA)</label>
+                    <input type="text" id="prompt-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm mb-4" placeholder="Ex: deixe a logo com um azul e verde gradiente" />
                     
-                    <div>
-                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">CORES DO LOGO (TAILWIND CLASSES)</label>
-                        <input type="text" id="cfg-cor-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm" placeholder="Ex: bg-gradient-to-r from-blue-500 to-green-500" />
-                    </div>
-                    
-                    <hr class="border-gray-100 my-4">
-
-                    <div>
-                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">DESCRIÇÃO DA MARCA (PARA GERAR LOGO EM IMAGEM COM IA)</label>
-                        <input type="text" id="prompt-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm mb-4" placeholder="Ex: logo em rosa, vermelho e roxo gradiente..." />
-                        
-                        <div class="flex gap-4">
-                            <button type="button" id="btn-salvar-design" onclick="salvarDesignTextos()" class="bg-jornal-dark text-white px-8 py-4 font-black hover:bg-gray-800 transition-colors uppercase text-[11px] tracking-widest rounded-sm shadow-md">SALVAR TEXTOS</button>
-                            <button type="button" id="btn-gerar-logo" onclick="gerarLogoIA()" class="bg-purple-500 hover:bg-purple-600 text-white px-8 py-4 font-black transition-colors uppercase text-[11px] tracking-widest rounded-sm shadow-sm flex items-center justify-center gap-2">✨ GERAR COM IA</button>
-                        </div>
-                    </div>
-                    
-                    <!-- PREVIEW DA IMAGEM -->
-                    <div id="preview-logo-wrapper" class="mt-8 hidden border-t border-purple-100 pt-6">
-                        <h4 class="text-[10px] font-black uppercase tracking-widest text-purple-600 mb-4 text-center">PRÉ-VISUALIZAÇÃO DO LOGÓTIPO</h4>
-                        <div class="p-8 bg-gray-100 border border-gray-300 rounded-sm flex items-center justify-center min-h-[160px] shadow-inner"><div id="preview-logo-ia"></div></div>
-                        <div class="mt-6 flex justify-end">
-                            <button type="button" id="btn-aplicar-logo" onclick="aplicarNovaLogo()" class="bg-jornal-dark text-white font-black w-full md:w-auto px-10 py-4 uppercase tracking-widest text-sm rounded-sm hover:bg-gray-800 transition-colors shadow-xl">Aplicar ao Site</button>
-                        </div>
-                    </div>
+                    <button type="button" id="btn-gerar-logo" onclick="gerarEstiloIA()" class="bg-purple-500 hover:bg-purple-600 text-white px-8 py-3 font-black transition-colors uppercase text-[11px] tracking-widest rounded-sm shadow-sm flex items-center justify-center gap-2">✨ GERAR ESTILO COM IA</button>
                 </div>
             </div>
 
@@ -361,7 +333,7 @@
                 </form>
             </div>
 
-            <!-- 6. EXPEDIENTE (COM SUPER EDITOR) -->
+            <!-- 6. EXPEDIENTE -->
             <div id="form-expediente-container" class="config-panel-section hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-blue-600 pl-3 mb-8">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Página do Expediente</h2>
@@ -429,7 +401,7 @@
 
             <!-- 7. GESTÃO DE EQUIPA (NOVO LAYOUT MODULAR FIEL À IMAGEM) -->
             <div id="form-usuarios-container" class="config-panel-section hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
-                <div class="border-l-4 border-rose-600 pl-3 mb-8">
+                <div class="border-l-4 border-jornal-dark pl-3 mb-8">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">GESTÃO DE UTILIZADORES</h2>
                     <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Criar novos acessos ao Painel Admin</p>
                 </div>
@@ -457,11 +429,8 @@
                             <label class="text-[10px] font-bold uppercase tracking-widest text-rose-600 mb-4 block border-b border-rose-100 pb-2">Permissões de Acesso (Que secções este utilizador pode ver?)</label>
                             
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <!-- Opções do admin.html -->
                                 <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-noticia" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500" checked> Publicar Matérias</label>
                                 <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-lista" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500" checked> Gerir Matérias</label>
-                                
-                                <!-- Opções do config.html -->
                                 <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-capa" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Layout Capa</label>
                                 <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-logo" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> IA & Design</label>
                                 <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-propaganda" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Anúncios</label>
@@ -469,8 +438,6 @@
                                 <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-placar" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Placar Ao Vivo</label>
                                 <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-expediente" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Expediente</label>
                                 <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-usuarios" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Gestão Equipa</label>
-                                
-                                <!-- Outros apps -->
                                 <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-estudio" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Estúdio IG</label>
                             </div>
                             
@@ -483,8 +450,10 @@
                 </div>
 
                 <div class="mt-8 pt-6">
-                    <h3 class="text-[11px] font-black uppercase tracking-widest text-gray-800 mb-3">UTILIZADORES EXISTENTES (VISUALIZAÇÃO VIA GOOGLE SHEETS)</h3>
-                    <p class="text-xs text-gray-500 italic font-medium">Por questões de segurança, a listagem e exclusão de utilizadores deve ser feita diretamente na aba "Admins" (ou "Usuários") da sua Base de Dados Google (Google Sheets).</p>
+                    <h3 class="text-[11px] font-black uppercase tracking-widest text-gray-800 mb-6">UTILIZADORES EXISTENTES</h3>
+                    <div id="lista-usuarios-existentes">
+                        <p class="text-xs text-gray-500 italic">A carregar utilizadores...</p>
+                    </div>
                 </div>
             </div>
 
@@ -498,7 +467,6 @@
         var base64StringProp = ""; 
         var mimeStringProp = ""; 
         var nameStringProp = "";
-        var novaLogoHtml = "";
 
         document.addEventListener("DOMContentLoaded", function() {
             var propArquivoInput = document.getElementById('prop-arquivo');
@@ -528,8 +496,7 @@
                     carregarDados();
                 }
             } else {
-                var loader = document.getElementById('loading-global');
-                if(loader) loader.classList.add('hidden');
+                var loader = document.getElementById('loading-global'); if(loader) loader.classList.add('hidden');
                 document.getElementById('modalLogin').classList.remove('hidden');
                 document.getElementById('modalLogin').classList.add('flex');
             }
@@ -607,16 +574,11 @@
                         if(permissoesStr.indexOf('req_pass_change:true') !== -1) {
                             document.getElementById('modalMudarSenha').classList.remove('hidden');
                             document.getElementById('modalMudarSenha').classList.add('flex');
-                        } else {
-                            carregarDados();
-                        }
-                    } else {
-                        mostrarMensagem(res ? res.erro : "Resposta inválida.", 'erro');
-                    }
+                        } else { carregarDados(); }
+                    } else { mostrarMensagem(res ? res.erro : "Resposta inválida.", 'erro'); }
                     btn.innerHTML = "Acessar Painel"; btn.disabled = false;
                 }).withFailureHandler(function(erro) {
-                    mostrarMensagem("Falha na rede.", 'erro');
-                    btn.innerHTML = "Acessar Painel"; btn.disabled = false;
+                    mostrarMensagem("Falha na rede.", 'erro'); btn.innerHTML = "Acessar Painel"; btn.disabled = false;
                 }).verificarLogin(u, p);
             }
         }
@@ -625,83 +587,56 @@
             e.preventDefault();
             var p1 = document.getElementById('nova-senha-1').value.trim();
             var p2 = document.getElementById('nova-senha-2').value.trim();
-            
             if (p1 !== p2) { mostrarMensagem("As senhas não coincidem.", "erro"); return; }
             if (p1.length < 5) { mostrarMensagem("A senha deve ter pelo menos 5 caracteres.", "erro"); return; }
             
-            var btn = document.getElementById('btn-salvar-nova-senha');
-            var txt = btn.innerHTML; btn.innerHTML = "A GUARDAR..."; btn.disabled = true;
-            
+            var btn = document.getElementById('btn-salvar-nova-senha'); var txt = btn.innerHTML; btn.innerHTML = "A GUARDAR..."; btn.disabled = true;
             var u = localStorage.getItem('admin_user');
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run && window.google.script.run.alterarSenhaUsuario) {
                 window.google.script.run.withSuccessHandler(function(res) {
                     if (res && res.sucesso) {
                         mostrarMensagem("Senha atualizada com sucesso!");
-                        document.getElementById('modalMudarSenha').classList.add('hidden');
-                        document.getElementById('modalMudarSenha').classList.remove('flex');
-                        
+                        document.getElementById('modalMudarSenha').classList.add('hidden'); document.getElementById('modalMudarSenha').classList.remove('flex');
                         var oldPerms = localStorage.getItem('admin_perms') || '';
                         var newPerms = oldPerms.replace('req_pass_change:true;', '').replace('req_pass_change:true', '');
                         localStorage.setItem('admin_perms', newPerms);
-                        
                         carregarDados();
                     } else { mostrarMensagem("Erro ao atualizar senha no servidor.", "erro"); }
                     btn.innerHTML = txt; btn.disabled = false;
                 }).withFailureHandler(function() {
-                    mostrarMensagem("Falha na rede. Tente novamente.", "erro");
-                    btn.innerHTML = txt; btn.disabled = false;
+                    mostrarMensagem("Falha na rede. Tente novamente.", "erro"); btn.innerHTML = txt; btn.disabled = false;
                 }).alterarSenhaUsuario(u, p1);
             } else {
                 mostrarMensagem("Modo demonstração: Senha alterada (Função Backend pendente).");
-                document.getElementById('modalMudarSenha').classList.add('hidden');
-                document.getElementById('modalMudarSenha').classList.remove('flex');
-                var oldPerms = localStorage.getItem('admin_perms') || '';
-                localStorage.setItem('admin_perms', oldPerms.replace('req_pass_change:true;', '').replace('req_pass_change:true', ''));
-                carregarDados();
-                btn.innerHTML = txt; btn.disabled = false;
+                document.getElementById('modalMudarSenha').classList.add('hidden'); document.getElementById('modalMudarSenha').classList.remove('flex');
+                var oldPerms = localStorage.getItem('admin_perms') || ''; localStorage.setItem('admin_perms', oldPerms.replace('req_pass_change:true;', '').replace('req_pass_change:true', ''));
+                carregarDados(); btn.innerHTML = txt; btn.disabled = false;
             }
         }
 
         function aplicarPermissoesDeAcesso() {
             var perms = localStorage.getItem('admin_perms') || 'admin';
             var allBtns = document.querySelectorAll('.tab-nav-btn');
-            
             var linkRedacao = document.getElementById('link-redacao');
             var linkEstudio = document.getElementById('link-estudio-ig');
             
             if (perms === 'admin' || perms === '') {
                 allBtns.forEach(function(b) { b.classList.remove('hidden'); });
-                if(linkRedacao) linkRedacao.classList.remove('hidden');
-                if(linkEstudio) linkEstudio.classList.remove('hidden');
+                if(linkRedacao) linkRedacao.classList.remove('hidden'); if(linkEstudio) linkEstudio.classList.remove('hidden');
                 return;
             }
             
             var match = perms.match(/tabs:([^;]+)/);
             if (match) {
                 var allowed = match[1].split(',');
-                var temRedacao = false;
-                
                 allBtns.forEach(function(btn) {
                     var t = btn.id.replace('tab-btn-', 'aba-');
-                    if (allowed.indexOf(t) !== -1) {
-                        btn.classList.remove('hidden');
-                    } else {
-                        btn.classList.add('hidden');
-                    }
+                    if (allowed.indexOf(t) !== -1) { btn.classList.remove('hidden'); } else { btn.classList.add('hidden'); }
                 });
                 
-                if(allowed.indexOf('aba-noticia') !== -1 || allowed.indexOf('aba-lista') !== -1) {
-                    if(linkRedacao) linkRedacao.classList.remove('hidden');
-                } else {
-                    if(linkRedacao) linkRedacao.classList.add('hidden');
-                }
-                
-                if(allowed.indexOf('aba-estudio') !== -1) {
-                    if(linkEstudio) linkEstudio.classList.remove('hidden');
-                } else {
-                    if(linkEstudio) linkEstudio.classList.add('hidden');
-                }
+                if(allowed.indexOf('aba-noticia') !== -1 || allowed.indexOf('aba-lista') !== -1) { if(linkRedacao) linkRedacao.classList.remove('hidden'); } else { if(linkRedacao) linkRedacao.classList.add('hidden'); }
+                if(allowed.indexOf('aba-estudio') !== -1) { if(linkEstudio) linkEstudio.classList.remove('hidden'); } else { if(linkEstudio) linkEstudio.classList.add('hidden'); }
             }
         }
 
@@ -715,61 +650,40 @@
         // ==========================================
         function carregarDados() {
             aplicarPermissoesDeAcesso();
-            
-            var loader = document.getElementById('loading-global');
-            if(loader) loader.classList.remove('hidden');
+            var loader = document.getElementById('loading-global'); if(loader) loader.classList.remove('hidden');
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
                     if(loader) loader.classList.add('hidden');
                     if (res && res.sucesso) {
                         configuracoesGlobais = res.config || {};
-                        if (res.categorias && res.categorias.length > 0) {
-                            listaCategoriasLocais = res.categorias;
-                        }
-                        try { preencherFormCapa(); } catch(e){}
-                        try { preencherFormPlacar(); } catch(e){}
-                        try { preencherConfigsGerais(); } catch(e){}
+                        if (res.categorias && res.categorias.length > 0) listaCategoriasLocais = res.categorias;
+                        try { preencherFormCapa(); } catch(e){} try { preencherFormPlacar(); } catch(e){} try { preencherConfigsGerais(); } catch(e){}
+                        if (res.usuarios) renderizarUsuarios(res.usuarios);
                         
-                        // Abre a primeira aba visível para o utilizador logado
                         abrirPrimeiraAbaDisponivel();
                     }
                 }).withFailureHandler(function(err) {
-                    if(loader) loader.classList.add('hidden');
-                    mostrarMensagem("Falha de Servidor.", 'erro');
+                    if(loader) loader.classList.add('hidden'); mostrarMensagem("Falha de Servidor.", 'erro');
                 }).getHomeData();
             } else {
-                if(loader) loader.classList.add('hidden');
-                abrirPrimeiraAbaDisponivel();
+                if(loader) loader.classList.add('hidden'); abrirPrimeiraAbaDisponivel();
             }
         }
 
         function abrirPrimeiraAbaDisponivel() {
             var tabsVisiveis = document.querySelectorAll('.tab-nav-btn:not(.hidden)');
             if(tabsVisiveis.length > 0) {
-                var firstId = tabsVisiveis[0].id.replace('tab-btn-', 'form-') + '-container';
-                alternarAbaConfig(firstId);
-            } else {
-                document.querySelectorAll('.config-panel-section').forEach(function(s){ s.classList.add('hidden'); });
-            }
+                var firstId = tabsVisiveis[0].id.replace('tab-btn-', 'form-') + '-container'; alternarAbaConfig(firstId);
+            } else { document.querySelectorAll('.config-panel-section').forEach(function(s){ s.classList.add('hidden'); }); }
         }
 
         function alternarAbaConfig(abaId) {
             var contentIds = ['form-capa-container', 'form-logo-container', 'form-propaganda-container', 'form-social-container', 'form-placar-container', 'form-expediente-container', 'form-usuarios-container'];
             var tabIds = ['tab-btn-capa', 'tab-btn-logo', 'tab-btn-propaganda', 'tab-btn-social', 'tab-btn-placar', 'tab-btn-expediente', 'tab-btn-usuarios'];
-            
-            contentIds.forEach(function(id) { 
-                var el = document.getElementById(id); 
-                if(el) el.classList.add('hidden'); 
-            });
-            
-            tabIds.forEach(function(id) { 
-                var el = document.getElementById(id); 
-                if(el && !el.classList.contains('hidden')) el.className = "tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm"; 
-            });
-            
-            var targetEl = document.getElementById(abaId);
-            if(targetEl) targetEl.classList.remove('hidden');
+            contentIds.forEach(function(id) { var el = document.getElementById(id); if(el) el.classList.add('hidden'); });
+            tabIds.forEach(function(id) { var el = document.getElementById(id); if(el && !el.classList.contains('hidden')) el.className = "tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm"; });
+            var targetEl = document.getElementById(abaId); if(targetEl) targetEl.classList.remove('hidden');
             
             var btnId = ""; var classAtiva = "bg-jornal-dark text-white font-black";
             if (abaId === 'form-capa-container') { btnId = 'tab-btn-capa'; classAtiva = "bg-emerald-600 text-white font-black"; }
@@ -780,124 +694,56 @@
             else if (abaId === 'form-expediente-container') { btnId = 'tab-btn-expediente'; classAtiva = "bg-blue-600 text-white font-black"; }
             else if (abaId === 'form-usuarios-container') { btnId = 'tab-btn-usuarios'; classAtiva = "bg-rose-600 text-white font-black"; }
             
-            var btnEl = document.getElementById(btnId);
-            if(btnEl) btnEl.className = 'tab-nav-btn py-3 px-5 uppercase tracking-widest text-[11px] whitespace-nowrap rounded-t-sm transition-colors shadow-sm ' + classAtiva;
+            var btnEl = document.getElementById(btnId); if(btnEl) btnEl.className = 'tab-nav-btn py-3 px-5 uppercase tracking-widest text-[11px] whitespace-nowrap rounded-t-sm transition-colors shadow-sm ' + classAtiva;
         }
 
         // ==========================================
-        // EDITORES RICH TEXT (FUNÇÕES)
+        // EDITORES RICH TEXT
         // ==========================================
-        function execCmd(command, arg) { 
-            if(arg === undefined) arg = null; 
-            document.execCommand(command, false, arg); 
-        }
-        
-        function aplicarFonte(valor) { 
-            if (!valor) return; 
-            document.execCommand('fontName', false, valor); 
-        }
-
-        function inserirLinkRichEditor() { 
-            var url = prompt("Insira a URL completa do hiperlink:"); 
-            if (url) execCmd('createLink', url); 
-        }
+        function execCmd(command, arg) { if(arg === undefined) arg = null; document.execCommand(command, false, arg); }
+        function aplicarFonte(valor) { if (!valor) return; document.execCommand('fontName', false, valor); }
+        function inserirLinkRichEditor() { var url = prompt("Insira a URL completa do hiperlink:"); if (url) execCmd('createLink', url); }
 
         function processarUploadImagemEditor(input, idEditorDestino) {
-            if (!input.files || !input.files[0]) return;
-            var file = input.files[0];
-            var legenda = prompt("Legenda para a imagem (opcional):") || "";
-            var creditos = prompt("Créditos da foto:") || "";
+            if (!input.files || !input.files[0]) return; var file = input.files[0];
             var reader = new FileReader();
             reader.onload = function(e) {
                 var img = new Image();
                 img.onload = function() {
                     var canvas = document.createElement('canvas'); var ctx = canvas.getContext('2d'); var maxWidth = 800; var scale = 1;
-                    if (img.width > maxWidth) scale = maxWidth / img.width;
-                    canvas.width = img.width * scale; canvas.height = img.height * scale;
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    var base64Resized = canvas.toDataURL('image/jpeg', 0.8);
+                    if (img.width > maxWidth) scale = maxWidth / img.width; canvas.width = img.width * scale; canvas.height = img.height * scale;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height); var base64Resized = canvas.toDataURL('image/jpeg', 0.8);
                     
-                    var htmlImg = '<br><figure style="margin: 16px auto; text-align: center; max-width: 100%; display: block;">' +
-                                  '<img src="' + base64Resized + '" style="max-width: 100%; height: auto; border-radius: 8px; display: inline-block; margin: 0 auto; border: 1px solid #e2e8f0;" />';
-                    if (legenda || creditos) {
-                        var credTexto = creditos ? 'Foto: ' + creditos : ''; var sep = (legenda && creditos) ? ' - ' : '';
-                        htmlImg += '<figcaption style="font-size: 12px; color: #64748b; margin-top: 8px; font-style: italic; text-align: center;">' + legenda + sep + credTexto + '</figcaption>';
-                    }
-                    
+                    var htmlImg = '<br><figure style="margin: 16px auto; text-align: center; max-width: 100%; display: block;"><img src="' + base64Resized + '" style="max-width: 100%; height: auto; border-radius: 8px; display: inline-block; margin: 0 auto; border: 1px solid #e2e8f0;" />';
                     htmlImg += '<div contenteditable="false" style="margin-top: 10px; text-align: center; user-select: none;">' +
-                               '<button type="button" class="btn-diminuir-img" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; margin-right: 8px;" title="Diminuir Imagem">-</button>' +
-                               '<button type="button" class="btn-aumentar-img" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer;" title="Aumentar Imagem">+</button>' +
-                               '</div>';
-                               
-                    htmlImg += '</figure><br><p>&#8203;</p>';
-                    
-                    var targetEd = document.getElementById(idEditorDestino);
-                    if(targetEd) targetEd.focus();
-                    document.execCommand('insertHTML', false, htmlImg);
-                    input.value = '';
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
+                               '<button type="button" class="btn-diminuir-img" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; margin-right: 8px;">-</button>' +
+                               '<button type="button" class="btn-aumentar-img" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer;">+</button></div></figure><br><p>&#8203;</p>';
+                    var targetEd = document.getElementById(idEditorDestino); if(targetEd) targetEd.focus();
+                    document.execCommand('insertHTML', false, htmlImg); input.value = '';
+                }; img.src = e.target.result;
+            }; reader.readAsDataURL(file);
         }
 
         function atualizarBarraFerramentas() {
-            var editorAtivo = document.activeElement;
-            if (!editorAtivo || !editorAtivo.classList.contains('rich-editor')) return;
-            
-            var fontNode = document.queryCommandValue('fontName');
-            var sizeNode = document.queryCommandValue('fontSize');
-            
-            var parentDiv = editorAtivo.parentElement; 
-            var selFont = parentDiv.querySelector('.fontFamilySelect');
-            var selSize = parentDiv.querySelector('.fontSizeSelect');
-            
-            if (fontNode && selFont) {
-                var fontL = fontNode.replace(/['"]/g, '').toLowerCase().split(',')[0];
-                for(var i=0; i<selFont.options.length; i++) {
-                    if(selFont.options[i].value.toLowerCase().includes(fontL)) { selFont.selectedIndex = i; break; }
-                }
-            }
-            if (sizeNode && selSize) {
-                for(var j=0; j<selSize.options.length; j++) {
-                    if(selSize.options[j].value === sizeNode.toString()) { selSize.selectedIndex = j; break; }
-                }
-            }
+            var editorAtivo = document.activeElement; if (!editorAtivo || !editorAtivo.classList.contains('rich-editor')) return;
+            var fontNode = document.queryCommandValue('fontName'); var sizeNode = document.queryCommandValue('fontSize');
+            var parentDiv = editorAtivo.parentElement; var selFont = parentDiv.querySelector('.fontFamilySelect'); var selSize = parentDiv.querySelector('.fontSizeSelect');
+            if (fontNode && selFont) { var fontL = fontNode.replace(/['"]/g, '').toLowerCase().split(',')[0]; for(var i=0; i<selFont.options.length; i++) { if(selFont.options[i].value.toLowerCase().includes(fontL)) { selFont.selectedIndex = i; break; } } }
+            if (sizeNode && selSize) { for(var j=0; j<selSize.options.length; j++) { if(selSize.options[j].value === sizeNode.toString()) { selSize.selectedIndex = j; break; } } }
         }
 
         function limparFormatacao(btnElement) {
-            document.execCommand('removeFormat', false, null);
-            document.execCommand('unlink', false, null);
+            document.execCommand('removeFormat', false, null); document.execCommand('unlink', false, null);
             var sel = window.getSelection();
             if (!sel.isCollapsed) {
-                var range = sel.getRangeAt(0);
-                var container = range.commonAncestorContainer;
-                if (container.nodeType === 3) container = container.parentNode;
-                
-                var editor = container.closest('.rich-editor');
-                if (!editor && btnElement) {
-                    editor = btnElement.closest('div').parentElement.querySelector('.rich-editor');
-                }
-                
+                var range = sel.getRangeAt(0); var container = range.commonAncestorContainer; if (container.nodeType === 3) container = container.parentNode;
+                var editor = container.closest('.rich-editor'); if (!editor && btnElement) { editor = btnElement.closest('div').parentElement.querySelector('.rich-editor'); }
                 if (editor) {
                     var elements = container.querySelectorAll('*');
-                    elements.forEach(function(el) {
-                        if (sel.containsNode(el, true)) {
-                            el.removeAttribute('style'); el.removeAttribute('face');
-                            el.removeAttribute('size'); el.removeAttribute('class'); el.removeAttribute('color');
-                        }
-                    });
-                    if (container !== editor) {
-                        container.removeAttribute('style'); container.removeAttribute('face');
-                        container.removeAttribute('size'); container.removeAttribute('class'); container.removeAttribute('color');
-                    }
-                    
-                    var parentDiv = editor.parentElement;
-                    var selFont = parentDiv.querySelector('.fontFamilySelect');
-                    var selSize = parentDiv.querySelector('.fontSizeSelect');
-                    if(selFont) selFont.selectedIndex = 0;
-                    if(selSize) selSize.selectedIndex = 0;
-                    editor.focus();
+                    elements.forEach(function(el) { if (sel.containsNode(el, true)) { el.removeAttribute('style'); el.removeAttribute('face'); el.removeAttribute('size'); el.removeAttribute('class'); el.removeAttribute('color'); } });
+                    if (container !== editor) { container.removeAttribute('style'); container.removeAttribute('face'); container.removeAttribute('size'); container.removeAttribute('class'); container.removeAttribute('color'); }
+                    var parentDiv = editor.parentElement; var selFont = parentDiv.querySelector('.fontFamilySelect'); var selSize = parentDiv.querySelector('.fontSizeSelect');
+                    if(selFont) selFont.selectedIndex = 0; if(selSize) selSize.selectedIndex = 0; editor.focus();
                 }
             }
         }
@@ -907,14 +753,6 @@
         // ==========================================
         function preencherConfigsGerais() {
             if (configuracoesGlobais['ChaveIA']) { var ic = document.getElementById('config-chave-ia'); if (ic) ic.value = configuracoesGlobais['ChaveIA']; }
-            if (configuracoesGlobais['LogoHTML']) { var el = document.getElementById('cfg-logo'); if(el) el.value = configuracoesGlobais['LogoHTML']; }
-            if (configuracoesGlobais['CorLogo']) { var el = document.getElementById('cfg-cor-logo'); if(el) el.value = configuracoesGlobais['CorLogo']; }
-            
-            if (configuracoesGlobais['soc-inst-url']) { var el = document.getElementById('soc-inst-url'); if(el) el.value = configuracoesGlobais['soc-inst-url']; }
-            if (configuracoesGlobais['soc-fb-url']) { var el = document.getElementById('soc-fb-url'); if(el) el.value = configuracoesGlobais['soc-fb-url']; }
-            if (configuracoesGlobais['soc-x-url']) { var el = document.getElementById('soc-x-url'); if(el) el.value = configuracoesGlobais['soc-x-url']; }
-            if (configuracoesGlobais['soc-yt-url']) { var el = document.getElementById('soc-yt-url'); if(el) el.value = configuracoesGlobais['soc-yt-url']; }
-            
             if (configuracoesGlobais['ExpedienteHTML']) { var exp = document.getElementById('admin-editor-expediente'); if(exp) exp.innerHTML = configuracoesGlobais['ExpedienteHTML']; }
         }
 
@@ -926,8 +764,7 @@
                 var v = ordemAtual.length >= i ? ordemAtual[i-1] : '';
                 html += '<div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Posição ' + i + '</label>';
                 html += '<select id="capa-pos-' + i + '" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm font-bold text-gray-700 uppercase rounded-sm"><option value="">-- NENHUMA --</option>';
-                listaCategoriasLocais.forEach(function(c) { html += '<option value="' + c + '"' + (c === v ? ' selected' : '') + '>' + c + '</option>'; });
-                html += '</select></div>';
+                listaCategoriasLocais.forEach(function(c) { html += '<option value="' + c + '"' + (c === v ? ' selected' : '') + '>' + c + '</option>'; }); html += '</select></div>';
             }
             container.innerHTML = html;
         }
@@ -938,8 +775,7 @@
             var jsonStr = JSON.stringify(sel);
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function() { 
-                    mostrarMensagem("Ordem da capa atualizada!"); configuracoesGlobais['CategoriasCapa'] = jsonStr; btn.innerHTML = txt; btn.disabled = false; 
-                    try { localStorage.removeItem('portal_data_cache'); } catch(e){}
+                    mostrarMensagem("Ordem da capa atualizada!"); configuracoesGlobais['CategoriasCapa'] = jsonStr; btn.innerHTML = txt; btn.disabled = false; try { localStorage.removeItem('portal_data_cache'); } catch(e){}
                 }).salvarConfiguracaoHTMLCustom('CategoriasCapa', jsonStr);
             }
         }
@@ -954,8 +790,7 @@
             var ligas = Array.from(document.querySelectorAll('input[name="liga-placar"]:checked')).map(function(cb){return cb.value;});
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function() { 
-                    mostrarMensagem("Placar atualizado!"); btn.innerText = "Salvar Ligas"; btn.disabled = false; configuracoesGlobais['LigasPlacar'] = JSON.stringify(ligas); 
-                    try { localStorage.removeItem('portal_data_cache'); } catch(e){}
+                    mostrarMensagem("Placar atualizado!"); btn.innerText = "Salvar Ligas"; btn.disabled = false; configuracoesGlobais['LigasPlacar'] = JSON.stringify(ligas); try { localStorage.removeItem('portal_data_cache'); } catch(e){}
                 }).salvarConfiguracaoHTMLCustom("LigasPlacar", JSON.stringify(ligas));
             }
         }
@@ -967,22 +802,8 @@
             else { payload.isUpload = false; payload.urlArquivo = document.getElementById('prop-imagem').value; payload.tipo = 'link'; }
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function() { 
-                    mostrarMensagem('Anúncio no ar!'); document.getElementById('form-propaganda').reset(); base64StringProp = ""; btn.innerHTML = txt; btn.disabled = false; 
-                    try { localStorage.removeItem('portal_data_cache'); } catch(e){}
+                    mostrarMensagem('Anúncio no ar!'); document.getElementById('form-propaganda').reset(); base64StringProp = ""; btn.innerHTML = txt; btn.disabled = false; try { localStorage.removeItem('portal_data_cache'); } catch(e){}
                 }).salvarPropagandaNoSheets(payload);
-            }
-        }
-
-        function salvarRedesSociais(e) {
-            e.preventDefault(); var btn = document.getElementById('btn-salvar-sociais'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-inst-url', document.getElementById('soc-inst-url').value);
-                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-fb-url', document.getElementById('soc-fb-url').value);
-                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-x-url', document.getElementById('soc-x-url').value);
-                window.google.script.run.withSuccessHandler(function() { 
-                    mostrarMensagem("Redes sociais atualizadas!"); btn.innerHTML = txt; btn.disabled = false; 
-                    try { localStorage.removeItem('portal_data_cache'); } catch(e){}
-                }).salvarConfiguracaoHTMLCustom('soc-yt-url', document.getElementById('soc-yt-url').value);
             }
         }
 
@@ -993,18 +814,6 @@
             }
         }
 
-        function salvarDesignTextos() {
-            var btn = document.getElementById('btn-salvar-design'); var txtOrig = btn.innerText; btn.innerText = "A GUARDAR..."; btn.disabled = true;
-            var cLogo = document.getElementById('cfg-cor-logo').value;
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.salvarConfiguracaoHTMLCustom('CorLogo', cLogo);
-                window.google.script.run.withSuccessHandler(function() {
-                    mostrarMensagem("Textos do design salvos!"); btn.innerText = txtOrig; btn.disabled = false;
-                    try { localStorage.removeItem('portal_data_cache'); } catch(err){}
-                }).salvarConfiguracaoHTMLCustom('LogoHTML', document.getElementById('cfg-logo').value);
-            }
-        }
-
         function processarLogoImagemLocal(input) {
             if (!input.files || !input.files[0]) return;
             var file = input.files[0];
@@ -1012,29 +821,30 @@
             reader.onload = function(e) {
                 var base64 = e.target.result.split(',')[1];
                 var html = '<img src="data:' + file.type + ';base64,' + base64 + '" class="h-12 object-contain cursor-pointer" onclick="voltarCapa();"/>';
-                document.getElementById('preview-logo-ia').innerHTML = html; 
-                document.getElementById('preview-logo-wrapper').classList.remove('hidden'); 
-                window.novaLogoHtml = html;
-            };
-            reader.readAsDataURL(file);
+                document.getElementById('preview-logo-ia').innerHTML = html; document.getElementById('preview-logo-wrapper').classList.remove('hidden'); window.novaLogoHtml = html;
+            }; reader.readAsDataURL(file);
         }
 
-        function gerarLogoIA() {
+        function gerarEstiloIA() {
             var desc = document.getElementById('prompt-logo').value.trim(); 
-            if(!desc) { mostrarMensagem("Descreva como quer o logótipo.", "erro"); document.getElementById('prompt-logo').focus(); return; }
-            var btn = document.getElementById('btn-gerar-logo'); var txt = btn.innerText; btn.innerText = "A CRIAR..."; btn.disabled = true;
-            var promptFinal = "A highly professional, minimalist vector logo design for a digital news portal named 'Notícias Avulsas'. " + desc + ". Isolated on a clean white background, no text other than the brand name if strictly necessary, high resolution, corporate identity.";
+            if(!desc) { mostrarMensagem("Escreva como quer as cores.", "erro"); document.getElementById('prompt-logo').focus(); return; }
+            var btn = document.getElementById('btn-gerar-logo'); var txt = btn.innerText; btn.innerText = "A PROCESSAR..."; btn.disabled = true;
             
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run && window.google.script.run.chamarGeminiImagemBackend) {
+            var promptFinal = "Você é um especialista em TailwindCSS. O usuário quer estilizar a logo do site com as seguintes cores: '" + desc + "'. Responda APENAS com as classes Tailwind CSS necessárias para um texto ter esse gradiente/cor. Exemplo de formato de resposta exato: 'bg-gradient-to-r from-blue-500 to-green-500 bg-clip-text text-transparent'. Não adicione mais nenhuma palavra, aspas ou formatação Markdown.";
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run && window.google.script.run.chamarGeminiBackend) {
                 window.google.script.run.withSuccessHandler(function(res) {
-                    if(res && res.sucesso && res.base64) {
-                        var html = '<img src="data:image/png;base64,' + res.base64 + '" class="h-12 object-contain cursor-pointer" onclick="voltarCapa();"/>';
-                        document.getElementById('preview-logo-ia').innerHTML = html; document.getElementById('preview-logo-wrapper').classList.remove('hidden'); window.novaLogoHtml = html; mostrarMensagem("Logótipo criado com sucesso!");
-                    } else { mostrarMensagem("Erro na IA.", "erro"); }
-                    btn.innerText = txt; btn.disabled = false;
-                }).withFailureHandler(function(error) { mostrarMensagem("Serviço IA indisponível no servidor.", "erro"); btn.innerText = "✨ GERAR COM IA"; btn.disabled = false; }).chamarGeminiImagemBackend(promptFinal);
+                    if(res && res.sucesso && res.texto) {
+                        var classes = res.texto.replace(/`/g, '').trim();
+                        window.google.script.run.withSuccessHandler(function() {
+                            mostrarMensagem("Estilo atualizado com IA! Recarregue a página inicial para ver."); btn.innerText = txt; btn.disabled = false;
+                        }).salvarConfiguracaoHTMLCustom('CorLogo', classes);
+                    } else { mostrarMensagem("Erro na IA.", "erro"); btn.innerText = txt; btn.disabled = false;}
+                }).withFailureHandler(function(error) { 
+                    mostrarMensagem("Serviço IA indisponível.", "erro"); btn.innerText = txt; btn.disabled = false; 
+                }).chamarGeminiBackend(promptFinal);
             } else {
-                mostrarMensagem("Serviço IA indisponível no servidor.", "erro"); btn.innerText = "✨ GERAR COM IA"; btn.disabled = false;
+                mostrarMensagem("Serviço IA não conectado.", "erro"); btn.innerText = txt; btn.disabled = false;
             }
         }
 
@@ -1043,8 +853,7 @@
             var btn = document.getElementById('btn-aplicar-logo'); var txt = btn.innerText; btn.innerText = "A GUARDAR..."; btn.disabled = true;
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
-                    mostrarMensagem('Logo atualizado no servidor!'); configuracoesGlobais['LogoHTML'] = window.novaLogoHtml; btn.innerText = txt; btn.disabled = false;
-                    try { localStorage.removeItem('portal_data_cache'); } catch(err){}
+                    mostrarMensagem('Logo atualizado no servidor!'); configuracoesGlobais['LogoHTML'] = window.novaLogoHtml; btn.innerText = txt; btn.disabled = false; try { localStorage.removeItem('portal_data_cache'); } catch(err){}
                 }).salvarConfiguracaoHTMLCustom('LogoHTML', window.novaLogoHtml);
             }
         }
@@ -1054,15 +863,64 @@
             var htmlExpediente = document.getElementById('admin-editor-expediente').innerHTML;
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
-                    mostrarMensagem("Expediente atualizado!"); btn.innerHTML = txtOrig; btn.disabled = false;
-                    try { localStorage.removeItem('portal_data_cache'); } catch(err){}
+                    mostrarMensagem("Expediente atualizado!"); btn.innerHTML = txtOrig; btn.disabled = false; try { localStorage.removeItem('portal_data_cache'); } catch(err){}
                 }).withFailureHandler(function(err) { mostrarMensagem("Falha ao salvar.", "erro"); btn.innerHTML = txtOrig; btn.disabled = false; }).salvarConfiguracaoHTMLCustom('ExpedienteHTML', htmlExpediente);
             }
         }
 
         // ==========================================
-        // GESTÃO DE EQUIPA (CRIAR ACESSO COM PERMISSÕES)
+        // GESTÃO DE EQUIPA 
         // ==========================================
+        function renderizarUsuarios(usuarios) {
+            var container = document.getElementById('lista-usuarios-existentes');
+            if(!container) return;
+            container.innerHTML = '';
+            
+            if (!usuarios || usuarios.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-500 italic">Nenhum utilizador encontrado.</p>';
+                return;
+            }
+
+            var html = '<div class="space-y-3">';
+            usuarios.forEach(function(u) {
+                var nome = u.user || u.usuario || u[0] || 'Desconhecido';
+                var perms = String(u.perms || u.permissoes || u[2] || '');
+                if (nome === 'Desconhecido' || !nome.trim()) return;
+                
+                var tags = '';
+                if (perms.indexOf('admin') !== -1 || perms === '') { 
+                    tags = '<span class="px-2 py-1 bg-gray-200 text-gray-700 text-[9px] font-bold rounded-sm">Acesso Total</span>'; 
+                } else {
+                    if (perms.indexOf('aba-noticia') !== -1) tags += '<span class="px-2 py-1 bg-blue-100 text-blue-700 text-[9px] font-bold rounded-sm mr-1">Publicar</span>';
+                    if (perms.indexOf('aba-lista') !== -1) tags += '<span class="px-2 py-1 bg-indigo-100 text-indigo-700 text-[9px] font-bold rounded-sm mr-1">Gerir Matérias</span>';
+                    if (perms.indexOf('aba-usuarios') !== -1) tags += '<span class="px-2 py-1 bg-rose-100 text-rose-700 text-[9px] font-bold rounded-sm mr-1">Equipa</span>';
+                    if (perms.indexOf('aba-capa') !== -1) tags += '<span class="px-2 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-bold rounded-sm mr-1">Capa</span>';
+                    if (perms.indexOf('req_pass_change:true') !== -1) tags += '<span class="px-2 py-1 bg-red-100 text-red-700 text-[9px] font-bold rounded-sm mr-1 border border-red-300">Nova Senha Pendente</span>';
+                    if(!tags) tags = '<span class="px-2 py-1 bg-gray-100 text-gray-500 text-[9px] font-bold rounded-sm">Acesso Restrito</span>';
+                }
+
+                html += '<div class="flex justify-between items-center bg-gray-50 p-4 border border-gray-200 rounded-sm">';
+                html += '<div><div class="text-sm font-black text-jornal-dark">' + nome + '</div><div class="mt-2 flex flex-wrap gap-1">' + tags + '</div></div>';
+                // Adicionamos botão de excluir se o backend suportar removerUsuario
+                if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run && window.google.script.run.removerUsuario) {
+                    html += '<button type="button" onclick="removerUsuarioAdmin(\'' + nome + '\')" class="text-[10px] font-black uppercase text-red-600 hover:text-red-800 transition-colors bg-white px-3 py-1.5 border border-red-200 rounded-sm shadow-sm">Excluir</button>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function removerUsuarioAdmin(nome) {
+            if(!confirm("Atenção: Tem a certeza que deseja excluir o utilizador '" + nome + "'?")) return;
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if (res && res.sucesso) { mostrarMensagem("Utilizador removido!"); carregarDados(); } 
+                    else { mostrarMensagem(res ? res.erro : "Erro ao remover.", "erro"); }
+                }).removerUsuario(nome);
+            }
+        }
+
         function criarUsuario(e) {
             e.preventDefault();
             var u = document.getElementById('novo-user').value.trim();
@@ -1082,12 +940,12 @@
                         mostrarMensagem("Acesso criado com as restrições selecionadas!"); 
                         document.getElementById('form-novo-usuario').reset(); 
                         document.querySelectorAll('.perm-chk').forEach(function(c){ c.checked = true; }); 
+                        carregarDados(); // Recarrega a lista de utilizadores
                     } 
                     else { mostrarMensagem(res ? res.erro : "Erro ao criar.", "erro"); }
                     btn.innerHTML = txtOrig; btn.disabled = false;
                 }).withFailureHandler(function(err) { 
-                    mostrarMensagem("Falha ao comunicar com o servidor.", "erro"); 
-                    btn.innerHTML = txtOrig; btn.disabled = false; 
+                    mostrarMensagem("Falha ao comunicar com o servidor.", "erro"); btn.innerHTML = txtOrig; btn.disabled = false; 
                 }).adicionarUsuario(u, p, finalPermsString);
             }
         }
