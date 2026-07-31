@@ -357,7 +357,7 @@
                     <div id="gerando-aviso" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-200 z-10">
                         <div class="w-10 h-10 border-4 border-gray-300 border-t-purple-500 rounded-full animate-spin mb-4"></div>
                         <p class="text-xs font-black text-gray-500 uppercase tracking-widest animate-pulse mt-4">A Desenhar Arte...</p>
-                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-center px-4">A alinhar fotografia e aplicar as suas cores...</p>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-center px-4">A alinhar fotografia e textos...</p>
                     </div>
 
                     <img id="preview-final-img" src="" class="max-w-full h-auto max-h-full object-contain shadow-2xl hidden" alt="Preview da Arte">
@@ -430,7 +430,7 @@
                     configuracoesGlobais = payload.config || {};
                     
                     preencherFiltroEditorias(payload.categorias || []);
-                    aplicarEstiloEspecialArtes(); // INJETA A COR NA BORDA
+                    aplicarEstiloEspecialArtes(); // <-- MÁGICA DA COR AQUI
                     filtrarTabela(); 
                 } else {
                     alert("Erro ao ler dados da base.");
@@ -442,7 +442,7 @@
                 console.error(err);
             });
         }
-
+        
         // =========================================================================
         // O CONVERSOR MÁGICO: Converte as classes Tailwind em CSS puro para a Arte
         // =========================================================================
@@ -539,9 +539,6 @@
             tbody.innerHTML = '';
 
             const filtradas = noticiasGlobais.filter(n => {
-                // FILTRO DE SEGURANÇA: Só mostra matérias que estão como 'Ativa' (exclui Rascunho, Agendada, Inativa)
-                if (String(n.status).toLowerCase() !== 'ativa') return false;
-
                 const matchTermo = (n.titulo.toLowerCase().includes(termo) || n.categoria.toLowerCase().includes(termo));
                 const matchEdit = (editoria === 'todas' || n.categoria.toLowerCase().includes(editoria));
                 
@@ -549,7 +546,7 @@
             });
 
             if(filtradas.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-xs font-bold text-gray-500 uppercase tracking-widest">Nenhuma matéria publicada encontrada.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-xs font-bold text-gray-500 uppercase tracking-widest">Nenhuma matéria encontrada.</td></tr>`;
                 return;
             }
 
@@ -557,6 +554,21 @@
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 border-b border-gray-100 transition-colors";
                 
+                // VERIFICAÇÃO PARA MUDAR O VISUAL DO BOTÃO
+                const isAtiva = String(n.status).toLowerCase() === 'ativa';
+                
+                const tagStatus = isAtiva 
+                    ? `<span class="text-emerald-600 font-bold text-[9px] uppercase tracking-widest ml-2 bg-emerald-100 px-2 py-0.5 rounded">Ativa</span>`
+                    : `<span class="text-amber-600 font-bold text-[9px] uppercase tracking-widest ml-2 bg-amber-100 px-2 py-0.5 rounded">Pendente</span>`;
+
+                const btnFeed = isAtiva 
+                    ? `<button onclick="prepararArte('${n.id}', 'feed')" class="bg-purple-100 hover:bg-purple-200 text-purple-800 border border-purple-200 font-black text-[10px] px-4 py-2 uppercase tracking-widest rounded-sm transition-colors shadow-sm w-full">GERAR FEED</button>`
+                    : `<button onclick="prepararArte('${n.id}', 'feed')" class="bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-300 border-dashed font-black text-[10px] px-4 py-2 uppercase tracking-widest rounded-sm transition-colors shadow-sm w-full opacity-80" title="Matéria não está ativa no portal">FEED (Pendente)</button>`;
+
+                const btnStory = isAtiva 
+                    ? `<button onclick="prepararArte('${n.id}', 'story')" class="bg-pink-100 hover:bg-pink-200 text-pink-800 border border-pink-200 font-black text-[10px] px-4 py-2 uppercase tracking-widest rounded-sm transition-colors shadow-sm w-full">GERAR STORY</button>`
+                    : `<button onclick="prepararArte('${n.id}', 'story')" class="bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-300 border-dashed font-black text-[10px] px-4 py-2 uppercase tracking-widest rounded-sm transition-colors shadow-sm w-full opacity-80" title="Matéria não está ativa no portal">STORY (Pendente)</button>`;
+
                 tr.innerHTML = `
                     <td class="p-4">
                         <span class="bg-gray-200 text-gray-700 px-2.5 py-1 rounded-sm text-[10px] uppercase font-black tracking-widest">
@@ -564,17 +576,13 @@
                         </span>
                     </td>
                     <td class="p-4 font-bold text-sm text-jornal-dark whitespace-normal break-words max-w-[300px]">
-                        ${n.titulo}
+                        ${n.titulo} ${tagStatus}
                     </td>
                     <td class="p-4 text-center">
-                        <button onclick="prepararArte('${n.id}', 'feed')" class="bg-purple-100 hover:bg-purple-200 text-purple-800 border border-purple-200 font-black text-[10px] px-4 py-2 uppercase tracking-widest rounded-sm transition-colors shadow-sm">
-                            GERAR FEED
-                        </button>
+                        ${btnFeed}
                     </td>
                     <td class="p-4 text-center">
-                        <button onclick="prepararArte('${n.id}', 'story')" class="bg-pink-100 hover:bg-pink-200 text-pink-800 border border-pink-200 font-black text-[10px] px-4 py-2 uppercase tracking-widest rounded-sm transition-colors shadow-sm">
-                            GERAR STORY
-                        </button>
+                        ${btnStory}
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -584,10 +592,14 @@
         async function obterImagemBase64Segura(urlOriginal) {
             const gerarFallbackBase64 = () => {
                 const canvas = document.createElement('canvas');
-                canvas.width = 1080; canvas.height = 1080;
+                canvas.width = 1080;
+                canvas.height = 1080;
                 const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#0F172A'; ctx.fillRect(0,0,1080,1080);
-                ctx.fillStyle = '#ffffff'; ctx.font = 'bold 70px Inter, sans-serif'; ctx.textAlign = 'center';
+                ctx.fillStyle = '#0F172A';
+                ctx.fillRect(0,0,1080,1080);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 70px Inter, sans-serif';
+                ctx.textAlign = 'center';
                 ctx.fillText('FOTO INDISPONÍVEL', 540, 500);
                 return canvas.toDataURL('image/jpeg', 0.8);
             };
@@ -703,7 +715,7 @@
                         height: tipo === 'feed' ? 1080 : 1920, 
                         useCORS: true,
                         allowTaint: false, 
-                        backgroundColor: null // O FUNDO PRECISA ESTAR NULO PARA LER A BORDA
+                        backgroundColor: null // O FUNDO PRECISA ESTAR NULO PARA LER A BORDA DO TAILWIND
                     }).then(canvasResult => {
                         const finalJpg = canvasResult.toDataURL("image/jpeg", 0.9);
                         const prevImg = document.getElementById('preview-final-img');
