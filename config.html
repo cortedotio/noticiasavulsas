@@ -11,7 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
     <script>
-        // O SEU LINK ORIGINAL (Funciona perfeitamente)
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyZD4KJlvhtMwxr8fToE7nT2ZUdVHNglay0Ynauk6ixmrc4nsYK93KenBcJJKG3psFa/exec";
         
         window.google = {
@@ -82,7 +81,6 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* Formatação Nativa do Editor Rich Text */
         .rich-editor { user-select: text !important; -webkit-user-select: text !important; }
         .rich-editor font[size="1"] { font-size: 0.75rem !important; line-height: 1.1rem !important; }
         .rich-editor font[size="2"] { font-size: 0.875rem !important; line-height: 1.25rem !important; }
@@ -131,7 +129,6 @@
 
     <div id="view-config" class="hidden min-h-screen flex flex-col bg-gray-100 text-slate-800">
         
-        <!-- CABEÇALHO -->
         <header class="bg-jornal-dark text-white border-b border-gray-800 sticky top-0 z-40 shadow-sm">
             <div class="max-w-[1200px] mx-auto flex justify-between items-center px-4 py-3">
                 <div class="flex items-center gap-3">
@@ -139,7 +136,6 @@
                 </div>
                 <div class="flex items-center gap-4">
                     <a href="admin.html" class="text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-white transition-colors hidden md:block">✏️ Redação</a>
-                    <!-- ESTÚDIO IG ABRINDO NA MESMA PÁGINA (SEM TARGET BLANK) -->
                     <a href="instagram.html" class="text-[10px] font-black uppercase tracking-widest text-purple-400 hover:text-purple-300 transition-colors hidden md:block">📸 Estúdio IG</a>
                     <button type="button" onclick="encerrarSessao()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm ml-4">Sair</button>
                 </div>
@@ -147,7 +143,7 @@
         </header>
 
         <main class="max-w-[1200px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
-            <!-- ABAS DE NAVEGAÇÃO -->
+            <!-- ABAS DE NAVEGAÇÃO CONFIGURAÇÕES -->
             <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar pb-1">
                 <button type="button" onclick="alternarAbaConfig('form-capa-container')" id="tab-btn-capa" class="py-3 px-5 font-black text-[11px] bg-emerald-600 text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Layout Capa</button>
                 <button type="button" onclick="alternarAbaConfig('form-logo-container')" id="tab-btn-logo" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">IA & Design</button>
@@ -179,6 +175,8 @@
                 <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-8 border-l-4 border-purple-600 pl-3 gap-4">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Inteligência Artificial & Design</h2>
                 </div>
+                
+                <!-- CHAVE IA -->
                 <div class="mb-8 p-6 bg-purple-50 border border-purple-200 rounded-sm">
                     <h3 class="font-black text-sm uppercase tracking-widest text-purple-800 mb-2">Chave de Acesso da IA (API Key)</h3>
                     <p class="text-xs text-gray-600 mb-4 font-medium">Insira a sua chave do Google Studio para ativar o motor Gemini no seu jornal.</p>
@@ -187,26 +185,42 @@
                         <button type="button" onclick="salvarChaveIA()" id="btn-salvar-chave" class="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 font-black uppercase text-[11px] tracking-widest rounded-sm whitespace-nowrap transition-colors shrink-0 shadow-sm">Guardar Chave</button>
                     </div>
                 </div>
+                
+                <!-- DESIGN E LOGO -->
                 <div class="space-y-6 bg-purple-50/50 p-6 md:p-8 border border-purple-100 rounded-sm">
+                    
                     <div>
                         <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Logo em Texto (HTML)</label>
                         <input type="text" id="cfg-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm" placeholder='Ex: Notícias<span class="text-rose-600">Avulsas</span>' />
                     </div>
+                    
                     <div>
                         <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Cores do Logo (Tailwind Classes)</label>
                         <input type="text" id="cfg-cor-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm" placeholder="Ex: from-blue-500 to-emerald-400" />
                     </div>
+                    
                     <hr class="border-purple-200 my-4">
+                    
+                    <!-- UPLOAD MANUAL DA IMAGEM DO LOGOTIPO -->
+                    <div class="p-4 border border-dashed border-purple-400 bg-white rounded-sm mb-4">
+                        <label class="text-[10px] font-bold uppercase tracking-widest text-purple-600 mb-2 block">Upload do Logótipo (Imagem PNG/JPG)</label>
+                        <input type="file" id="upload-logo-imagem" accept="image/*" onchange="processarLogoImagemLocal(this)" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:border-0 file:bg-purple-600 file:text-white cursor-pointer rounded-sm" />
+                        <p class="text-xs text-gray-500 mt-2">Escolha uma imagem do seu computador para usar como logo.</p>
+                    </div>
+
                     <div>
                         <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Descrição da Marca (Para Gerar Logo em Imagem com IA)</label>
                         <input type="text" id="prompt-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm" placeholder="Ex: Logótipo elegante azul e vermelho" />
                     </div>
+                    
                     <div class="flex gap-4">
                         <button type="button" id="btn-salvar-design" onclick="salvarDesignTextos()" class="bg-jornal-dark text-white px-8 py-4 font-black hover:bg-gray-800 transition-colors uppercase text-[11px] tracking-widest rounded-sm shadow-md">Salvar Textos</button>
                         <button type="button" id="btn-gerar-logo" onclick="gerarLogoIA()" class="bg-purple-600 text-white px-8 py-4 font-black hover:bg-purple-700 transition-colors uppercase text-[11px] tracking-widest rounded-sm shadow-md">✨ Gerar com IA</button>
                     </div>
+                    
+                    <!-- PREVIEW DA IMAGEM (Manual ou IA) -->
                     <div id="preview-logo-wrapper" class="mt-10 hidden border-t border-purple-200 pt-8">
-                        <h4 class="text-[10px] font-black uppercase tracking-widest text-purple-600 mb-4 text-center">Pré-visualização</h4>
+                        <h4 class="text-[10px] font-black uppercase tracking-widest text-purple-600 mb-4 text-center">Pré-visualização do Logótipo em Imagem</h4>
                         <div class="p-8 bg-gray-100 border border-gray-300 rounded-sm flex items-center justify-center min-h-[160px] shadow-inner"><div id="preview-logo-ia"></div></div>
                         <div class="mt-6 flex justify-end">
                             <button type="button" id="btn-aplicar-logo" onclick="aplicarNovaLogo()" class="bg-jornal-dark text-white font-black w-full md:w-auto px-10 py-4 uppercase tracking-widest text-sm rounded-sm hover:bg-gray-800 transition-colors shadow-xl">Aplicar ao Site</button>
@@ -329,13 +343,14 @@
                 </form>
             </div>
 
-            <!-- 6. EXPEDIENTE COM SUPER EDITOR -->
+            <!-- 6. EXPEDIENTE -->
             <div id="form-expediente-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-blue-600 pl-3 mb-8">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Página do Expediente</h2>
                     <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Quem somos e equipa de redação</p>
                 </div>
 
+                <!-- Editor Rich Text do Expediente -->
                 <div>
                     <input type="file" id="upload-imagem-expediente" accept="image/*" class="hidden" onchange="processarUploadImagemEditor(this, 'admin-editor-expediente')" />
                     <div class="flex flex-wrap gap-1 p-2 bg-gray-100 border border-gray-300 border-b-0 rounded-t-sm items-center">
@@ -385,7 +400,7 @@
                         <button type="button" onmousedown="event.preventDefault();" onclick="inserirLinkRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-blue-600 rounded font-semibold shadow-sm">🔗</button>
                         <button type="button" onmousedown="event.preventDefault();" onclick="document.getElementById('upload-imagem-expediente').click();" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-emerald-600 rounded font-semibold shadow-sm">🖼️</button>
                         
-                        <button type="button" onmousedown="event.preventDefault();" onclick="limparFormatacao(this)" class="ml-auto px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-xs font-bold text-red-600 rounded shadow-sm">Limpar</button>
+                        <button type="button" onmousedown="event.preventDefault();" onclick="limparFormatacao(this)" class="ml-auto px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-xs font-bold text-red-600 rounded shadow-sm">Limpar Formatação</button>
                     </div>
                     <div id="admin-editor-expediente" contenteditable="true" class="w-full px-6 py-6 bg-white border border-gray-300 rounded-b-sm min-h-[300px] overflow-y-auto focus:outline-none focus:ring-1 focus:ring-jornal-blue text-base leading-relaxed font-serif custom-scrollbar rich-editor"></div>
                 </div>
@@ -395,14 +410,14 @@
                 </div>
             </div>
 
-            <!-- 7. USUÁRIOS -->
+            <!-- 7. USUÁRIOS (LAYOUT ORIGINAL) -->
             <div id="form-usuarios-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
-                <div class="border-l-4 border-rose-500 pl-3 mb-8">
+                <div class="border-l-4 border-rose-600 pl-3 mb-8">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Gestão de Utilizadores</h2>
                     <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Criar novos acessos ao Painel Admin</p>
                 </div>
 
-                <div class="bg-rose-50 border border-rose-200 p-6 rounded-sm mb-8">
+                <div class="bg-rose-50 border border-rose-100 p-6 rounded-sm mb-8">
                     <h3 class="text-xs font-black uppercase tracking-widest text-rose-800 mb-4">Adicionar Novo Utilizador</h3>
                     <form id="form-novo-usuario" onsubmit="criarUsuario(event)" class="flex flex-col md:flex-row gap-4 items-end">
                         <div class="w-full">
@@ -411,14 +426,14 @@
                         </div>
                         <div class="w-full">
                             <label class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-2 block">Senha</label>
-                            <input type="text" id="nova-senha" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-rose-500 text-sm font-bold rounded-sm shadow-sm" placeholder="Ex: SenhaForte123" />
+                            <input type="password" id="nova-senha" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-rose-500 text-sm font-bold rounded-sm shadow-sm" placeholder="Ex: SenhaForte123" />
                         </div>
                         <button type="submit" id="btn-criar-usuario" class="w-full md:w-auto bg-rose-600 text-white font-black px-8 py-3 hover:bg-rose-700 transition-colors uppercase tracking-widest text-xs rounded-sm shadow-md whitespace-nowrap h-[46px]">Criar Acesso</button>
                     </form>
                 </div>
 
-                <div class="mt-8">
-                    <h3 class="text-xs font-black uppercase tracking-widest text-gray-600 mb-4">Utilizadores Existentes (Visualização via Google Sheets)</h3>
+                <div class="mt-8 border-t border-gray-100 pt-6">
+                    <h3 class="text-xs font-black uppercase tracking-widest text-gray-800 mb-4">Utilizadores Existentes (Visualização via Google Sheets)</h3>
                     <p class="text-xs text-gray-500 italic font-medium">Por questões de segurança, a listagem e exclusão de utilizadores deve ser feita diretamente na aba "Usuários" da sua Base de Dados Google (Google Sheets).</p>
                 </div>
             </div>
@@ -817,19 +832,37 @@
             }
         }
 
+        function processarLogoImagemLocal(input) {
+            if (!input.files || !input.files[0]) return;
+            var file = input.files[0];
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var base64 = e.target.result.split(',')[1];
+                var html = '<img src="data:' + file.type + ';base64,' + base64 + '" class="h-12 object-contain cursor-pointer" onclick="voltarCapa();"/>';
+                document.getElementById('preview-logo-ia').innerHTML = html; 
+                document.getElementById('preview-logo-wrapper').classList.remove('hidden'); 
+                window.novaLogoHtml = html;
+            };
+            reader.readAsDataURL(file);
+        }
+
         function gerarLogoIA() {
             var desc = document.getElementById('prompt-logo').value.trim(); 
             if(!desc) { mostrarMensagem("Descreva como quer o logótipo.", "erro"); document.getElementById('prompt-logo').focus(); return; }
             var btn = document.getElementById('btn-gerar-logo'); var txt = btn.innerText; btn.innerText = "A CRIAR..."; btn.disabled = true;
             var promptFinal = "A highly professional, minimalist vector logo design for a digital news portal named 'Notícias Avulsas'. " + desc + ". Isolated on a clean white background, no text other than the brand name if strictly necessary, high resolution, corporate identity.";
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+            
+            // Tratamento de falha no caso do servidor ainda não suportar a função
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run && window.google.script.run.chamarGeminiImagemBackend) {
                 window.google.script.run.withSuccessHandler(function(res) {
                     if(res && res.sucesso && res.base64) {
                         var html = '<img src="data:image/png;base64,' + res.base64 + '" class="h-12 object-contain cursor-pointer" onclick="voltarCapa();"/>';
                         document.getElementById('preview-logo-ia').innerHTML = html; document.getElementById('preview-logo-wrapper').classList.remove('hidden'); window.novaLogoHtml = html; mostrarMensagem("Logótipo criado com sucesso!");
                     } else { mostrarMensagem("Erro na IA.", "erro"); }
                     btn.innerText = txt; btn.disabled = false;
-                }).withFailureHandler(function(error) { mostrarMensagem("Falha na rede.", "erro"); btn.innerText = "✨ Gerar com IA"; btn.disabled = false; }).chamarGeminiImagemBackend(promptFinal);
+                }).withFailureHandler(function(error) { mostrarMensagem("Serviço IA indisponível no servidor.", "erro"); btn.innerText = "✨ Gerar com IA"; btn.disabled = false; }).chamarGeminiImagemBackend(promptFinal);
+            } else {
+                mostrarMensagem("Serviço IA indisponível no servidor.", "erro"); btn.innerText = "✨ Gerar com IA"; btn.disabled = false;
             }
         }
 
