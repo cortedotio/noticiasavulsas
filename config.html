@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configurações - Notícias Avulsas</title>
+    <title>Painel Completo - Notícias Avulsas</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
     <script>
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyZD4KJlvhtMwxr8fToE7nT2ZUdVHNglay0Ynauk6ixmrc4nsYK93KenBcJJKG3psFa/exec";
@@ -22,7 +22,12 @@
             }
         };
 
-        const apiFunctions = ['getHomeData', 'verificarLogin', 'salvarConfiguracaoHTMLCustom', 'salvarPropagandaNoSheets', 'chamarGeminiImagemBackend'];
+        const apiFunctions = [
+            'getHomeData', 'verificarLogin', 'salvarNoticiaNoSheets', 'alternarStatusNoticia', 
+            'excluirNoticia', 'adicionarCategoriaNoSheets', 'chamarGeminiBackend', 
+            'salvarConfiguracaoHTMLCustom', 'salvarPropagandaNoSheets', 'chamarGeminiImagemBackend', 
+            'adicionarUsuario'
+        ];
 
         apiFunctions.forEach(function(funcName) {
             window.google.script.run[funcName] = function() {
@@ -31,546 +36,12 @@
                 var failureCb = this._onFailure;
                 this._onSuccess = null; this._onFailure = null;
                 
+                // Fetch com blindagem e "redirect: follow" para iPhone/Safari
                 fetch(GAS_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: funcName, args: argsArray })
-                })
-                .then(function(res) { return res.json(); })
-                .then(function(result) {
-                    if (successCb) {
-                        var finalPayload = result;
-                        if (result && result.result !== undefined) {
-                            finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
-                        }
-                        successCb(finalPayload);
-                    }
-                })
-                .catch(function(err) {
-                    if (failureCb) failureCb(err);
-                });
-            };
-        });
-
-        var configureTailwind = function() {
-            if (typeof tailwind === 'undefined') { setTimeout(configureTailwind, 10); return; }
-            tailwind.config = {
-                theme: {
-                    extend: {
-                        fontFamily: { sans: ['Inter', 'sans-serif'] },
-                        colors: { jornal: { blue: '#0F172A', red: '#E11D48', dark: '#020617' } }
-                    }
-                }
-            };
-        };
-        configureTailwind();
-    </script>
-    
-    <style>
-        body { background-color: #f1f2f5; color: #111111; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-    </style>
-</head>
-<body class="antialiased min-h-screen flex flex-col relative selection:bg-jornal-red selection:text-white">
-
-    <div id="toast" class="hidden fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border rounded-sm">
-        <span id="toast-icon" class="text-xl"></span>
-        <span id="toast-msg" class="text-sm"></span>
-    </div>
-
-    <div id="loading-global" class="fixed inset-0 z-[99998] bg-jornal-dark flex flex-col items-center justify-center transition-opacity duration-500">
-        <div class="w-12 h-12 border-4 border-gray-700 border-t-jornal-red rounded-full animate-spin mb-4"></div>
-        <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Configurações...</p>
-    </div>
-
-    <div id="modalLogin" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
-        <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md"></div>
-        <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
-            <div class="mb-6 text-center">
-                <h2 class="font-sans text-xl font-black uppercase text-jornal-dark tracking-tighter">Segurança</h2>
-                <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Acesso restrito a administradores</p>
-            </div>
-            <form onsubmit="fazerLogin(event)" class="space-y-4">
-                <input type="text" id="login-user" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Usuário (Ex: admin)" />
-                <input type="password" id="login-pass" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Senha" />
-                <button type="submit" id="btn-fazer-login" class="w-full bg-jornal-blue text-white font-black py-3 hover:opacity-90 transition-colors text-xs uppercase tracking-widest rounded-sm mt-4">Acessar Painel</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="view-config" class="hidden min-h-screen flex flex-col bg-gray-100 text-slate-800">
-        
-        <header class="bg-jornal-dark text-white border-b border-gray-800 sticky top-0 z-40 shadow-sm">
-            <div class="max-w-[1200px] mx-auto flex justify-between items-center px-4 py-3">
-                <div class="flex items-center gap-3">
-                    <span class="font-sans font-black tracking-tighter text-lg uppercase text-slate-100 flex items-center gap-2">⚙️ Configurações</span>
-                </div>
-                <div class="flex items-center gap-4">
-                    <a href="admin.html" class="text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-white transition-colors hidden md:block">✏️ Redação</a>
-                    <a href="instagram.html" class="text-[10px] font-black uppercase tracking-widest text-purple-400 hover:text-purple-300 transition-colors hidden md:block">📸 Estúdio IG</a>
-                    <button type="button" onclick="encerrarSessao()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm ml-4">Sair</button>
-                </div>
-            </div>
-        </header>
-
-        <main class="max-w-[1200px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
-            <!-- ABAS DE CONFIGURAÇÃO -->
-            <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar">
-                <button type="button" onclick="alternarAbaConfig('form-capa-container')" id="aba-capa" class="py-3 px-5 font-black text-[11px] bg-emerald-600 text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Layout Capa</button>
-                <button type="button" onclick="alternarAbaConfig('form-logo-container')" id="aba-logo" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">IA & Design</button>
-                <button type="button" onclick="alternarAbaConfig('form-propaganda-container')" id="aba-propaganda" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Anúncios</button>
-                <button type="button" onclick="alternarAbaConfig('form-social-container')" id="aba-social" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Redes Sociais</button>
-                <button type="button" onclick="alternarAbaConfig('form-placar-container')" id="aba-placar" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Placar Ao Vivo</button>
-            </div>
-
-            <!-- 1. LAYOUT CAPA -->
-            <div id="form-capa-container" class="bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
-                <div class="border-l-4 border-emerald-600 pl-3 mb-6">
-                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Organizar Capa</h2>
-                </div>
-                <form onsubmit="salvarOrdemCapa(event)">
-                    <p class="text-xs text-gray-500 mb-6 font-medium">Escolha até 8 editorias que devem aparecer em destaque abaixo do carrossel principal e a ordem delas.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="selects-capa-container"></div>
-                    <div class="pt-6 border-t border-gray-200 flex justify-end">
-                        <button type="submit" id="btn-salvar-capa" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-black px-10 py-3.5 uppercase tracking-widest text-sm rounded-sm transition-colors shadow-md">Salvar Ordem</button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- 2. LOGÓTIPO & IA -->
-            <div id="form-logo-container" class="hidden bg-white p-5 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-purple-600">
-                <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-8 border-l-4 border-purple-600 pl-3 gap-4">
-                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Inteligência Artificial & Design</h2>
-                </div>
-                <div class="mb-8 p-6 bg-purple-50 border border-purple-200 rounded-sm">
-                    <h3 class="font-black text-sm uppercase tracking-widest text-purple-800 mb-2">Chave de Acesso da IA (API Key)</h3>
-                    <p class="text-xs text-gray-600 mb-4 font-medium">Insira a sua chave do Google Studio para ativar o motor Gemini no seu jornal.</p>
-                    <div class="flex flex-col md:flex-row gap-4 md:items-center">
-                        <input type="password" id="config-chave-ia" class="flex-grow px-5 py-3 border border-gray-300 focus:border-purple-500 focus:outline-none text-sm font-mono rounded-sm shadow-sm min-w-0" placeholder="Ex: AIzaSy..." />
-                        <button type="button" onclick="salvarChaveIA()" id="btn-salvar-chave" class="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 font-black uppercase text-[11px] tracking-widest rounded-sm whitespace-nowrap transition-colors shrink-0 shadow-sm">Guardar Chave</button>
-                    </div>
-                </div>
-                <div class="space-y-6 bg-purple-50/50 p-6 md:p-8 border border-purple-100 rounded-sm">
-                    <div>
-                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Descrição da Marca (Prompt para a IA)</label>
-                        <input type="text" id="prompt-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm" placeholder="Ex: Logótipo elegante azul e vermelho" />
-                    </div>
-                    <button type="button" id="btn-gerar-logo" onclick="gerarLogoIA()" class="bg-purple-600 text-white px-8 py-4 font-black hover:bg-purple-700 transition-colors uppercase text-[11px] tracking-widest rounded-sm flex items-center justify-center gap-2 w-full md:w-auto shadow-md">✨ Gerar Estilo com IA</button>
-                    <div id="preview-logo-wrapper" class="mt-10 hidden border-t border-purple-200 pt-8">
-                        <h4 class="text-[10px] font-black uppercase tracking-widest text-purple-600 mb-4 text-center">Pré-visualização</h4>
-                        <div class="p-8 bg-gray-100 border border-gray-300 rounded-sm flex items-center justify-center min-h-[160px] shadow-inner"><div id="preview-logo-ia"></div></div>
-                        <div class="mt-6 flex justify-end">
-                            <button type="button" id="btn-aplicar-logo" onclick="aplicarNovaLogo()" class="bg-jornal-dark text-white font-black w-full md:w-auto px-10 py-4 uppercase tracking-widest text-sm rounded-sm hover:bg-gray-800 transition-colors shadow-xl">Aplicar ao Site</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 3. ANÚNCIOS (SLOTS ATUALIZADOS) -->
-            <div id="form-propaganda-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
-                <div class="border-l-4 border-jornal-red pl-3 mb-6">
-                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Novo Anúncio</h2>
-                </div>
-                <form id="form-propaganda" onsubmit="salvarPropaganda(event)">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                        <div>
-                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Posição / Slot</label>
-                            <select id="prop-local" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm font-medium rounded-sm focus:outline-none focus:ring-1 focus:ring-jornal-blue" required>
-                                <option value="">Selecione o local</option>
-                                <option value="Topo">Topo do Feed</option>
-                                <optgroup label="Sidebar (Lateral)">
-                                    <option value="Sidebar 1">Sidebar 1</option>
-                                    <option value="Sidebar 2">Sidebar 2</option>
-                                    <option value="Sidebar 3">Sidebar 3</option>
-                                </optgroup>
-                                <optgroup label="Entre Editorias da Capa">
-                                    <option value="Slot 1">Slot 1 (Entre Editorias)</option>
-                                    <option value="Slot 2">Slot 2 (Entre Editorias)</option>
-                                    <option value="Slot 3">Slot 3 (Entre Editorias)</option>
-                                    <option value="Slot 4">Slot 4 (Entre Editorias)</option>
-                                    <option value="Slot 5">Slot 5 (Entre Editorias)</option>
-                                    <option value="Slot 6">Slot 6 (Entre Editorias)</option>
-                                    <option value="Slot 7">Slot 7 (Entre Editorias)</option>
-                                    <option value="Slot 8">Slot 8 (Entre Editorias)</option>
-                                </optgroup>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Empresa Anunciante</label>
-                            <input type="text" id="prop-empresa" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm font-medium rounded-sm focus:outline-none focus:ring-1 focus:ring-jornal-blue" required />
-                        </div>
-                    </div>
-                    <div class="mb-4">
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Tempo de Exibição no Carrossel (segundos)</label>
-                        <input type="number" id="prop-tempo" value="5" min="1" max="60" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm rounded-sm" required />
-                    </div>
-                    <div class="p-4 border border-dashed border-jornal-blue bg-blue-50/20 mb-4 rounded-sm">
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-jornal-blue mb-2 block">1. Imagem / Arquivo</label>
-                        <input type="file" id="prop-arquivo" accept="image/*,video/*" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:border-0 file:bg-jornal-blue file:text-white cursor-pointer rounded-sm" />
-                    </div>
-                    <div class="mb-4">
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">2. Link Direto (Opcional - Usado se não enviar arquivo)</label>
-                        <input type="url" id="prop-imagem" placeholder="Insira a URL do anúncio (imagem/gif/mp4)" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm rounded-sm" />
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Link Destino (Ação no Clique)</label>
-                        <input type="url" id="prop-link" placeholder="https://" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm rounded-sm" required />
-                    </div>
-                    <div class="pt-4 mt-6 border-t border-gray-200 flex justify-end">
-                        <button type="submit" id="btn-salvar-propaganda" class="w-full md:w-auto bg-jornal-blue text-white font-black px-10 py-4 uppercase text-sm rounded-sm hover:opacity-90 shadow-md">Ativar Anúncio</button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- 4. REDES SOCIAIS -->
-            <div id="form-social-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
-                <div class="border-l-4 border-jornal-red pl-3 mb-6">
-                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Gestão de Redes Sociais</h2>
-                </div>
-                <form id="form-sociais" onsubmit="salvarRedesSociais(event)">
-                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-5 border border-gray-100 bg-gray-50 rounded-sm mb-3">
-                        <div class="font-bold text-sm w-32 flex items-center gap-2"><span class="text-pink-600 text-lg">📷</span> Instagram</div>
-                        <input type="url" id="soc-inst-url" placeholder="https://instagram.com/..." class="w-full md:flex-grow px-4 py-2.5 border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-jornal-blue" />
-                    </div>
-                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-5 border border-gray-100 bg-gray-50 rounded-sm mb-3">
-                        <div class="font-bold text-sm w-32 flex items-center gap-2"><span class="text-blue-600 text-lg">📘</span> Facebook</div>
-                        <input type="url" id="soc-fb-url" placeholder="https://facebook.com/..." class="w-full md:flex-grow px-4 py-2.5 border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-jornal-blue" />
-                    </div>
-                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-5 border border-gray-100 bg-gray-50 rounded-sm mb-3">
-                        <div class="font-bold text-sm w-32 flex items-center gap-2"><span class="text-black text-lg">𝕏</span> X (Twitter)</div>
-                        <input type="url" id="soc-x-url" placeholder="https://x.com/..." class="w-full md:flex-grow px-4 py-2.5 border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-jornal-blue" />
-                    </div>
-                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-5 border border-gray-100 bg-gray-50 rounded-sm">
-                        <div class="font-bold text-sm w-32 flex items-center gap-2"><span class="text-red-600 text-lg">▶️</span> YouTube</div>
-                        <input type="url" id="soc-yt-url" placeholder="https://youtube.com/..." class="w-full md:flex-grow px-4 py-2.5 border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-jornal-blue" />
-                    </div>
-                    <div class="pt-6 border-t border-gray-200 flex justify-end mt-6">
-                        <button type="submit" id="btn-salvar-sociais" class="w-full md:w-auto bg-jornal-blue text-white font-black px-12 py-3.5 uppercase tracking-widest text-sm rounded-sm shadow-md hover:bg-gray-800 transition-colors">Salvar Redes Sociais</button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- 5. PLACAR AO VIVO -->
-            <div id="form-placar-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
-                <div class="border-l-4 border-green-600 pl-3 mb-6">
-                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Desporto ao Vivo</h2>
-                </div>
-                <form id="form-placar" onsubmit="salvarPlacarAoVivo(event)">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                        <div class="p-5 bg-gray-50 border border-gray-200 rounded-sm">
-                            <h3 class="text-[11px] font-black uppercase tracking-widest text-jornal-blue mb-4 border-b border-gray-200 pb-2">Futebol: Brasil</h3>
-                            <label class="flex items-center gap-3 mb-3 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/bra.1" class="w-4 h-4 text-jornal-blue rounded" /><span class="text-sm font-bold text-gray-700">Brasileirão Série A</span></label>
-                            <label class="flex items-center gap-3 mb-3 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/bra.2" class="w-4 h-4 text-jornal-blue rounded" /><span class="text-sm font-bold text-gray-700">Brasileirão Série B</span></label>
-                            <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/bra.copa_do_brasil" class="w-4 h-4 text-jornal-blue rounded" /><span class="text-sm font-bold text-gray-700">Copa do Brasil</span></label>
-                        </div>
-                        <div class="p-5 bg-gray-50 border border-gray-200 rounded-sm">
-                            <h3 class="text-[11px] font-black uppercase tracking-widest text-green-700 mb-4 border-b border-gray-200 pb-2">Futebol: Internacional</h3>
-                            <label class="flex items-center gap-3 mb-3 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/conmebol.libertadores" class="w-4 h-4 text-jornal-blue rounded" /><span class="text-sm font-bold text-gray-700">Copa Libertadores</span></label>
-                            <label class="flex items-center gap-3 mb-3 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/conmebol.sudamericana" class="w-4 h-4 text-jornal-blue rounded" /><span class="text-sm font-bold text-gray-700">Copa Sul-Americana</span></label>
-                            <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/uefa.champions" class="w-4 h-4 text-jornal-blue rounded" /><span class="text-sm font-bold text-gray-700">Champions League</span></label>
-                        </div>
-                        <div class="p-5 bg-gray-50 border border-gray-200 rounded-sm">
-                            <h3 class="text-[11px] font-black uppercase tracking-widest text-orange-600 mb-4 border-b border-gray-200 pb-2">Outros</h3>
-                            <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" name="liga-placar" value="basketball/nba" class="w-4 h-4 text-jornal-blue rounded" /><span class="text-sm font-bold text-gray-700">NBA (Basquete)</span></label>
-                        </div>
-                    </div>
-                    <div class="pt-6 border-t border-gray-200 flex justify-end">
-                        <button type="submit" id="btn-salvar-placar" class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-black px-12 py-3.5 uppercase tracking-widest text-sm rounded-sm shadow-md transition-colors">Salvar Ligas</button>
-                    </div>
-                </form>
-            </div>
-
-        </main>
-    </div>
-
-    <!-- SCRIPTS CONFIGURAÇÕES -->
-    <script>
-        var configuracoesGlobais = {};
-        var listaCategoriasLocais = [];
-        var base64StringProp = ""; 
-        var mimeStringProp = ""; 
-        var nameStringProp = "";
-        var novaLogoHtml = "";
-
-        document.addEventListener("DOMContentLoaded", function() {
-            var propArquivoInput = document.getElementById('prop-arquivo');
-            if (propArquivoInput) { 
-                propArquivoInput.addEventListener('change', function(e) { 
-                    var file = e.target.files[0]; 
-                    if (!file) return; 
-                    mimeStringProp = file.type; 
-                    nameStringProp = file.name; 
-                    var reader = new FileReader(); 
-                    reader.onload = function(evt) { base64StringProp = evt.target.result.split(',')[1]; }; 
-                    reader.readAsDataURL(file); 
-                }); 
-            }
-
-            if (localStorage.getItem('admin_logado') === 'true') {
-                document.getElementById('modalLogin').classList.add('hidden');
-                document.getElementById('view-config').classList.remove('hidden');
-                carregarDados();
-            } else {
-                document.getElementById('loading-global').classList.add('hidden');
-                document.getElementById('modalLogin').classList.remove('hidden');
-                document.getElementById('modalLogin').classList.add('flex');
-            }
-        });
-
-        function mostrarMensagem(mensagem, tipo) {
-            if(tipo === undefined) tipo = 'sucesso';
-            var toast = document.getElementById('toast');
-            document.getElementById('toast-msg').innerText = mensagem;
-            toast.className = tipo === 'erro' ? 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-white border-red-600 text-red-600 rounded-sm' : 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-jornal-dark border-jornal-dark text-white rounded-sm';
-            document.getElementById('toast-icon').innerHTML = tipo === 'erro' ? '⚠️' : '✓';
-            toast.classList.remove('hidden');
-            setTimeout(function() { toast.classList.add('hidden'); }, 4500);
-        }
-
-        function fazerLogin(e) {
-            e.preventDefault();
-            var u = document.getElementById('login-user').value;
-            var p = document.getElementById('login-pass').value;
-            var btn = document.getElementById('btn-fazer-login');
-            btn.innerHTML = "A VERIFICAR..."; btn.disabled = true;
-
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.withSuccessHandler(function(res) {
-                    if (res && res.sucesso) {
-                        try { localStorage.setItem('admin_logado', 'true'); } catch(err) {}
-                        document.getElementById('modalLogin').classList.add('hidden');
-                        document.getElementById('view-config').classList.remove('hidden');
-                        carregarDados();
-                    } else {
-                        mostrarMensagem(res ? res.erro : "Resposta inválida.", 'erro');
-                    }
-                    btn.innerHTML = "Acessar Painel"; btn.disabled = false;
-                }).withFailureHandler(function(erro) {
-                    mostrarMensagem("Falha na rede.", 'erro');
-                    btn.innerHTML = "Acessar Painel"; btn.disabled = false;
-                }).verificarLogin(u, p);
-            }
-        }
-
-        function encerrarSessao() {
-            try { localStorage.removeItem('admin_logado'); } catch(err) {}
-            window.location.href = "index.html";
-        }
-
-        function carregarDados() {
-            document.getElementById('loading-global').classList.remove('hidden');
-            
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.withSuccessHandler(function(res) {
-                    document.getElementById('loading-global').classList.add('hidden');
-                    if (res && res.sucesso) {
-                        configuracoesGlobais = res.config || {};
-                        if (res.categorias && res.categorias.length > 0) {
-                            listaCategoriasLocais = res.categorias;
-                        }
-                        preencherFormCapa();
-                        preencherFormPlacar();
-                        preencherConfigsGerais();
-                    }
-                }).withFailureHandler(function(err) {
-                    document.getElementById('loading-global').classList.add('hidden');
-                    mostrarMensagem("Falha de Servidor.", 'erro');
-                }).getHomeData();
-            }
-        }
-
-        function alternarAbaConfig(abaId) {
-            var contentIds = ['form-capa-container', 'form-logo-container', 'form-propaganda-container', 'form-social-container', 'form-placar-container'];
-            contentIds.forEach(function(id) { 
-                var el = document.getElementById(id); 
-                if(el) el.classList.add('hidden'); 
-            });
-            
-            var tabIds = ['aba-capa', 'aba-logo', 'aba-propaganda', 'aba-social', 'aba-placar'];
-            tabIds.forEach(function(id) { 
-                var el = document.getElementById(id); 
-                if(el) el.className = "py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors"; 
-            });
-            
-            var targetEl = document.getElementById(abaId);
-            if(targetEl) targetEl.classList.remove('hidden');
-            
-            var botaoId = ""; var classAtiva = "bg-jornal-dark text-white font-black";
-            if (abaId === 'form-capa-container') { botaoId = 'aba-capa'; classAtiva = "bg-emerald-600 text-white font-black"; }
-            else if (abaId === 'form-logo-container') { botaoId = 'aba-logo'; classAtiva = "bg-purple-800 text-white font-black"; }
-            else if (abaId === 'form-propaganda-container') { botaoId = 'aba-propaganda'; }
-            else if (abaId === 'form-social-container') { botaoId = 'aba-social'; }
-            else if (abaId === 'form-placar-container') { botaoId = 'aba-placar'; classAtiva = "bg-green-700 text-white font-black"; }
-            
-            var btnEl = document.getElementById(botaoId);
-            if(btnEl) btnEl.className = 'py-3 px-5 uppercase tracking-widest text-[11px] whitespace-nowrap rounded-t-sm transition-colors ' + classAtiva;
-        }
-
-        function preencherFormCapa() {
-            var container = document.getElementById('selects-capa-container'); if(!container) return;
-            var html = ''; var ordemAtual = [];
-            if(configuracoesGlobais['CategoriasCapa']) { try { ordemAtual = JSON.parse(configuracoesGlobais['CategoriasCapa']); } catch(e){} }
-            for(var i=1; i<=8; i++) {
-                var v = ordemAtual.length >= i ? ordemAtual[i-1] : '';
-                html += '<div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Posição ' + i + '</label>';
-                html += '<select id="capa-pos-' + i + '" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm font-bold text-gray-700 uppercase rounded-sm"><option value="">-- NENHUMA --</option>';
-                listaCategoriasLocais.forEach(function(c) { html += '<option value="' + c + '"' + (c === v ? ' selected' : '') + '>' + c + '</option>'; });
-                html += '</select></div>';
-            }
-            container.innerHTML = html;
-        }
-
-        function salvarOrdemCapa(e) {
-            e.preventDefault(); var btn = document.getElementById('btn-salvar-capa'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
-            var sel = []; for(var i=1; i<=8; i++) { var val = document.getElementById('capa-pos-' + i).value; if(val) sel.push(val); }
-            var jsonStr = JSON.stringify(sel);
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.withSuccessHandler(function() { mostrarMensagem("Ordem da capa atualizada!"); configuracoesGlobais['CategoriasCapa'] = jsonStr; btn.innerHTML = txt; btn.disabled = false; }).salvarConfiguracaoHTMLCustom('CategoriasCapa', jsonStr);
-            }
-        }
-
-        function preencherFormPlacar() {
-            var ligasAtivas = []; if (configuracoesGlobais['LigasPlacar']) { try { ligasAtivas = JSON.parse(configuracoesGlobais['LigasPlacar']); } catch(e){} }
-            document.querySelectorAll('input[name="liga-placar"]').forEach(function(cb) { cb.checked = ligasAtivas.indexOf(cb.value) !== -1; });
-        }
-
-        function salvarPlacarAoVivo(e) {
-            e.preventDefault(); var btn = document.getElementById('btn-salvar-placar'); btn.innerText = "A SALVAR..."; btn.disabled = true;
-            var ligas = Array.from(document.querySelectorAll('input[name="liga-placar"]:checked')).map(function(cb){return cb.value;});
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.withSuccessHandler(function() { mostrarMensagem("Placar atualizado!"); btn.innerText = "Salvar Ligas"; btn.disabled = false; configuracoesGlobais['LigasPlacar'] = JSON.stringify(ligas); }).salvarConfiguracaoHTMLCustom("LigasPlacar", JSON.stringify(ligas));
-            }
-        }
-
-        function salvarPropaganda(e) {
-            e.preventDefault(); var btn = document.getElementById('btn-salvar-propaganda'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
-            var payload = { empresa: document.getElementById('prop-empresa').value + '|||' + document.getElementById('prop-tempo').value, local: document.getElementById('prop-local').value, linkDestino: document.getElementById('prop-link').value };
-            if (base64StringProp) { payload.isUpload = true; payload.base64 = base64StringProp; payload.mimeType = mimeStringProp; payload.fileName = nameStringProp; payload.urlArquivo = ''; } 
-            else { payload.isUpload = false; payload.urlArquivo = document.getElementById('prop-imagem').value; payload.tipo = 'link'; }
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.withSuccessHandler(function() { 
-                    mostrarMensagem('Anúncio no ar!'); 
-                    document.getElementById('form-propaganda').reset(); 
-                    base64StringProp = ""; 
-                    btn.innerHTML = txt; 
-                    btn.disabled = false; 
-                }).salvarPropagandaNoSheets(payload);
-            }
-        }
-
-        function salvarRedesSociais(e) {
-            e.preventDefault(); var btn = document.getElementById('btn-salvar-sociais'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-inst-url', document.getElementById('soc-inst-url').value);
-                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-fb-url', document.getElementById('soc-fb-url').value);
-                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-x-url', document.getElementById('soc-x-url').value);
-                window.google.script.run.withSuccessHandler(function() { mostrarMensagem("Redes sociais atualizadas!"); btn.innerHTML = txt; btn.disabled = false; }).salvarConfiguracaoHTMLCustom('soc-yt-url', document.getElementById('soc-yt-url').value);
-            }
-        }
-        
-        function preencherConfigsGerais() {
-            if (configuracoesGlobais['ChaveIA']) { var ic = document.getElementById('config-chave-ia'); if (ic) ic.value = configuracoesGlobais['ChaveIA']; }
-            if (configuracoesGlobais['soc-inst-url']) { document.getElementById('soc-inst-url').value = configuracoesGlobais['soc-inst-url']; }
-            if (configuracoesGlobais['soc-fb-url']) { document.getElementById('soc-fb-url').value = configuracoesGlobais['soc-fb-url']; }
-            if (configuracoesGlobais['soc-x-url']) { document.getElementById('soc-x-url').value = configuracoesGlobais['soc-x-url']; }
-            if (configuracoesGlobais['soc-yt-url']) { document.getElementById('soc-yt-url').value = configuracoesGlobais['soc-yt-url']; }
-        }
-
-        function salvarChaveIA() {
-            var val = document.getElementById('config-chave-ia').value.trim(); var btn = document.getElementById('btn-salvar-chave'); var txt = btn.innerText; btn.innerText = 'A GUARDAR...'; btn.disabled = true;
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.withSuccessHandler(function() { mostrarMensagem('Chave da IA guardada com sucesso!'); configuracoesGlobais['ChaveIA'] = val; btn.innerText = txt; btn.disabled = false; }).salvarConfiguracaoHTMLCustom('ChaveIA', val);
-            }
-        }
-
-        function gerarLogoIA() {
-            var desc = document.getElementById('prompt-logo').value.trim(); 
-            if(!desc) { mostrarMensagem("Descreva como quer o logótipo.", "erro"); document.getElementById('prompt-logo').focus(); return; }
-            var btn = document.getElementById('btn-gerar-logo'); var txt = btn.innerText; btn.innerText = "A CRIAR..."; btn.disabled = true;
-            
-            var promptFinal = "A highly professional, minimalist vector logo design for a digital news portal named 'Notícias Avulsas'. " + desc + ". Isolated on a clean white background, no text other than the brand name if strictly necessary, high resolution, corporate identity.";
-            
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.withSuccessHandler(function(res) {
-                    if(res && res.sucesso && res.base64) {
-                        var html = '<img src="data:image/png;base64,' + res.base64 + '" class="h-12 object-contain cursor-pointer" onclick="voltarCapa();"/>';
-                        document.getElementById('preview-logo-ia').innerHTML = html; 
-                        document.getElementById('preview-logo-wrapper').classList.remove('hidden'); 
-                        window.novaLogoHtml = html; 
-                        mostrarMensagem("Logótipo criado com sucesso!");
-                    } else { mostrarMensagem("Erro na IA.", "erro"); }
-                    btn.innerText = txt; btn.disabled = false;
-                }).withFailureHandler(function(error) {
-                    mostrarMensagem("Falha na rede.", "erro"); btn.innerText = "✨ Gerar Estilo com IA"; btn.disabled = false;
-                }).chamarGeminiImagemBackend(promptFinal);
-            }
-        }
-
-        function aplicarNovaLogo() {
-            if (!window.novaLogoHtml) return; 
-            var btn = document.getElementById('btn-aplicar-logo'); var txt = btn.innerText; btn.innerText = "A GUARDAR..."; btn.disabled = true;
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.withSuccessHandler(function(res) {
-                    mostrarMensagem('Logo atualizado no servidor!'); 
-                    configuracoesGlobais['LogoHTML'] = window.novaLogoHtml; 
-                    btn.innerText = txt; btn.disabled = false;
-                }).salvarConfiguracaoHTMLCustom('LogoHTML', window.novaLogoHtml);
-            }
-        }
-    </script>
-</body>
-</html>
-```
-
-***
-
-### 2. Ficheiro de Administração da Redação (`admin.html`)
-
-Este ficheiro ficou liberto das abas de configuração, mantendo apenas a aba **Publicar**, a aba **Gerir Matérias** e os botões no topo da barra escura que atalham para as outras páginas. 
-
-Copie e substitua no seu ficheiro **`admin.html`**:
-
-```html:Painel da Redação:admin.html
-<!DOCTYPE html>
-<html lang="pt-PT" class="scroll-smooth">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redação - Notícias Avulsas</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
-    
-    <script>
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzXzUp9tCWPlk_an82HFMrvdccMYUlds22Bcz4Rr8vRaKwrOPNSo45dhD1p5-us4KQp/exec";
-        
-        window.google = {
-            script: {
-                run: {
-                    withSuccessHandler: function(cb) { this._onSuccess = cb; return this; },
-                    withFailureHandler: function(cb) { this._onFailure = cb; return this; }
-                }
-            }
-        };
-
-        const apiFunctions = ['getHomeData', 'verificarLogin', 'salvarNoticiaNoSheets', 'alternarStatusNoticia', 'excluirNoticia', 'adicionarCategoriaNoSheets', 'chamarGeminiBackend'];
-
-        apiFunctions.forEach(function(funcName) {
-            window.google.script.run[funcName] = function() {
-                var argsArray = Array.prototype.slice.call(arguments);
-                var successCb = this._onSuccess;
-                var failureCb = this._onFailure;
-                this._onSuccess = null; this._onFailure = null;
-                
-                fetch(GAS_API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: funcName, args: argsArray })
+                    body: JSON.stringify({ action: funcName, args: argsArray }),
+                    redirect: 'follow'
                 })
                 .then(function(res) { return res.json(); })
                 .then(function(result) {
@@ -594,7 +65,7 @@ Copie e substitua no seu ficheiro **`admin.html`**:
                 theme: {
                     extend: {
                         fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] },
-                        colors: { jornal: { blue: '#0F172A', red: '#E11D48', gray: '#F8FAFC', dark: '#020617' } }
+                        colors: { jornal: { blue: '#0F172A', red: '#E11D48', dark: '#020617', gray: '#F8FAFC' } }
                     }
                 }
             };
@@ -608,6 +79,18 @@ Copie e substitua no seu ficheiro **`admin.html`**:
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Força a seleção de texto no Editor (Resolve bloqueios) */
+        .rich-editor { user-select: text !important; -webkit-user-select: text !important; }
+        
+        /* Garante que os tamanhos de fonte do editor sejam visíveis, contornando o bloqueio do Tailwind */
+        .rich-editor font[size="1"] { font-size: 0.75rem !important; line-height: 1.1rem !important; }
+        .rich-editor font[size="2"] { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+        .rich-editor font[size="3"] { font-size: 1rem !important; line-height: 1.5rem !important; }
+        .rich-editor font[size="4"] { font-size: 1.125rem !important; line-height: 1.75rem !important; }
+        .rich-editor font[size="5"] { font-size: 1.5rem !important; line-height: 2rem !important; }
+        .rich-editor font[size="6"] { font-size: 1.875rem !important; line-height: 2.25rem !important; }
+        .rich-editor font[size="7"] { font-size: 2.25rem !important; line-height: 2.5rem !important; }
         
         .rich-editor img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px auto; border: 1px solid #e2e8f0; display: block; }
         .rich-editor iframe, .rich-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; background: #000; }
@@ -626,17 +109,22 @@ Copie e substitua no seu ficheiro **`admin.html`**:
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
+    <div id="loading-global" class="fixed inset-0 z-[99998] bg-jornal-dark flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="w-12 h-12 border-4 border-gray-700 border-t-jornal-red rounded-full animate-spin mb-4"></div>
+        <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Sistema...</p>
+    </div>
+
     <div id="modalLogin" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md"></div>
         <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
             <div class="mb-6 text-center">
-                <h2 class="font-sans text-xl font-black uppercase text-jornal-dark tracking-tighter">Painel de Redação</h2>
+                <h2 class="font-sans text-xl font-black uppercase text-jornal-dark tracking-tighter">Sistema Central</h2>
                 <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Acesso restrito a administradores</p>
             </div>
             <form onsubmit="fazerLogin(event)" class="space-y-4">
                 <input type="text" id="login-user" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Usuário (Ex: admin)" />
                 <input type="password" id="login-pass" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Senha" />
-                <button type="submit" id="btn-fazer-login" class="w-full bg-jornal-blue text-white font-black py-3 hover:opacity-90 transition-colors text-xs uppercase tracking-widest rounded-sm mt-4">Entrar na Redação</button>
+                <button type="submit" id="btn-fazer-login" class="w-full bg-jornal-blue text-white font-black py-3 hover:opacity-90 transition-colors text-xs uppercase tracking-widest rounded-sm mt-4">Entrar no Painel</button>
             </form>
         </div>
     </div>
@@ -646,35 +134,46 @@ Copie e substitua no seu ficheiro **`admin.html`**:
         <header class="bg-jornal-dark text-white border-b border-gray-800 sticky top-0 z-40 shadow-sm">
             <div class="max-w-[1200px] mx-auto flex justify-between items-center px-4 py-3">
                 <div class="flex items-center gap-3">
-                    <span class="font-sans font-black tracking-tighter text-lg uppercase text-slate-100 flex items-center gap-2">Painel<span class="text-rose-600">Redação</span></span>
+                    <span class="font-sans font-black tracking-tighter text-lg uppercase text-slate-100 flex items-center gap-2">Gestor<span class="text-rose-600">Avulsas</span></span>
                 </div>
                 <div class="flex items-center gap-4">
-                    <a href="config.html" class="text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-white transition-colors hidden md:block">⚙️ Configurações</a>
-                    <a href="instagram.html" class="text-[10px] font-black uppercase tracking-widest text-purple-400 hover:text-purple-300 transition-colors hidden md:block">📸 Estúdio IG</a>
+                    <a href="instagram.html" target="_blank" class="text-[10px] font-black uppercase tracking-widest text-purple-400 hover:text-purple-300 transition-colors hidden md:block">📸 Estúdio IG</a>
                     <button type="button" onclick="encerrarSessao()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm ml-4">Sair (Logout)</button>
                 </div>
             </div>
         </header>
 
         <main class="max-w-[1200px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
-            <!-- ABAS DO PAINEL REDUZIDO -->
-            <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar">
-                <button type="button" onclick="alternarAbaAdmin('form-noticia-container')" id="aba-noticia" class="py-3 px-5 font-black text-[11px] bg-jornal-blue text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Publicar</button>
-                <button type="button" onclick="alternarAbaAdmin('lista-noticias-container')" id="aba-lista" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Gerir Matérias</button>
+            <!-- ABAS DO PAINEL GIGANTE (TODAS AS FUNCIONALIDADES) -->
+            <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar pb-1">
+                <button type="button" onclick="alternarAbaAdmin('form-noticia-container')" id="tab-btn-publicar" class="py-3 px-5 font-black text-[11px] bg-jornal-dark text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Publicar</button>
+                <button type="button" onclick="alternarAbaAdmin('lista-noticias-container')" id="tab-btn-gerir" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Gerir Matérias</button>
+                <button type="button" onclick="alternarAbaAdmin('form-capa-container')" id="tab-btn-capa" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Layout Capa</button>
+                <button type="button" onclick="alternarAbaAdmin('form-logo-container')" id="tab-btn-logo" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">IA & Design</button>
+                <button type="button" onclick="alternarAbaAdmin('form-propaganda-container')" id="tab-btn-propaganda" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Anúncios</button>
+                <button type="button" onclick="alternarAbaAdmin('form-social-container')" id="tab-btn-social" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Redes Sociais</button>
+                <button type="button" onclick="alternarAbaAdmin('form-placar-container')" id="tab-btn-placar" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Placar</button>
+                <button type="button" onclick="alternarAbaAdmin('form-expediente-container')" id="tab-btn-expediente" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Expediente</button>
+                <button type="button" onclick="alternarAbaAdmin('form-usuarios-container')" id="tab-btn-usuarios" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">Usuários</button>
+                
                 <a href="index.html" class="py-3 px-5 font-bold text-[11px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1 ml-auto">Ver Portal &raquo;</a>
             </div>
 
-            <!-- 1. FORMULÁRIO DE NOTÍCIA -->
+            <!-- ========================================== -->
+            <!-- ABA 1: FORMULÁRIO DE NOTÍCIA               -->
+            <!-- ========================================== -->
             <div id="form-noticia-container" class="bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="flex justify-between items-center mb-8 border-l-4 border-jornal-red pl-3">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Redigir Matéria</h2>
                 </div>
                 
+                <!-- O input de ficheiro Global para Inserção de Imagens no Editor de Texto (Usado pelos dois editores) -->
+                <input type="file" id="upload-imagem-conteudo" accept="image/*" class="hidden" onchange="processarUploadImagemConteudo(this)" />
+
                 <form id="form-admin" class="space-y-6">
                     <input type="hidden" id="admin-id-noticia" value="" />
                     
                     <div class="flex flex-col lg:flex-row gap-6">
-                        <!-- Manchete e Resumo -->
                         <div class="lg:w-2/3 flex flex-col gap-6">
                             <div>
                                 <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Manchete</label>
@@ -691,7 +190,6 @@ Copie e substitua no seu ficheiro **`admin.html`**:
                             </div>
                         </div>
                         
-                        <!-- Editorias -->
                         <div class="lg:w-1/3">
                             <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Editorias</label>
                             <div class="p-4 bg-gray-50 border border-gray-300 rounded-sm">
@@ -701,7 +199,6 @@ Copie e substitua no seu ficheiro **`admin.html`**:
                         </div>
                     </div>
 
-                    <!-- Caixa Cidade -->
                     <div id="admin-cidade-container" class="hidden p-5 bg-blue-50 border border-blue-200 rounded-sm">
                         <label for="admin-cidade" class="text-[11px] font-black uppercase tracking-widest text-jornal-blue mb-2 block">Cidade *</label>
                         <input type="text" id="admin-cidade" placeholder="Informe a cidade da matéria" class="w-full px-4 py-3 bg-white border border-blue-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm" />
@@ -712,37 +209,70 @@ Copie e substitua no seu ficheiro **`admin.html`**:
                         <input type="text" id="admin-autor" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm" placeholder="Ex: João Silva (Vazio = 'da redação')" />
                     </div>
 
-                    <!-- Editor Rich Text -->
+                    <!-- SUPER EDITOR DE TEXTO 1 -->
                     <div>
                         <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Conteúdo (Rich Text Avançado)</label>
-                        <input type="file" id="upload-imagem-conteudo" accept="image/*" class="hidden" onchange="processarUploadImagemConteudo(this)" />
-                        
                         <div class="flex flex-wrap gap-1 p-2 bg-gray-100 border border-gray-300 border-b-0 rounded-t-sm items-center">
-                            <button type="button" onclick="execCmd('bold')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm">B</button>
-                            <button type="button" onclick="execCmd('italic')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm">I</button>
-                            <button type="button" onclick="execCmd('underline')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs underline rounded shadow-sm">U</button>
+                            <!-- BOTOES DESFAZER / REFAZER -->
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('undo')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded shadow-sm transition-colors" title="Desfazer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                            </button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('redo')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded shadow-sm transition-colors" title="Refazer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"/></svg>
+                            </button>
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
+
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('bold')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm">B</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('italic')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm">I</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('underline')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs underline rounded shadow-sm">U</button>
+                            
+                            <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
+                            
+                            <!-- SELETOR DE FONTE COM ATUALIZAÇÃO AUTOMÁTICA -->
                             <div class="relative flex items-center">
-                                <span class="text-xs font-bold mr-2 text-gray-600 hidden sm:block">TT</span>
-                                <select onchange="execCmd('fontSize', this.value); this.selectedIndex=1;" class="px-2 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer">
-                                    <option value="1">Pequeno</option><option value="3" selected>Normal</option><option value="5">Grande</option><option value="7">Enorme</option>
+                                <select onmousedown="event.preventDefault();" onchange="aplicarFonte(this.value);" class="fontFamilySelect px-1 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer w-[110px] truncate">
+                                    <option value="" disabled selected>Selecionar...</option>
+                                    <option value="Merriweather, serif">Serif (Jornal)</option>
+                                    <option value="Inter, sans-serif">Sans Serif</option>
+                                    <option value="Arial, sans-serif">Arial</option>
+                                    <option value="Courier New, monospace">Largura fixa</option>
+                                    <option value="Comic Sans MS">Comic Sans MS</option>
+                                    <option value="Garamond">Garamond</option>
+                                    <option value="Georgia">Georgia</option>
+                                    <option value="Tahoma">Tahoma</option>
+                                    <option value="Trebuchet MS">Trebuchet MS</option>
+                                    <option value="Verdana">Verdana</option>
                                 </select>
                             </div>
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
-                            <button type="button" onclick="execCmd('justifyLeft')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Esq</button>
-                            <button type="button" onclick="execCmd('justifyCenter')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Cen</button>
+                            <div class="relative flex items-center">
+                                <span class="text-xs font-bold mr-1 text-gray-600 hidden sm:block">Tam.</span>
+                                <select onmousedown="event.preventDefault();" onchange="execCmd('fontSize', this.value);" class="fontSizeSelect px-2 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer">
+                                    <option value="" disabled selected>---</option>
+                                    <option value="1">Pequeno</option>
+                                    <option value="3">Normal</option>
+                                    <option value="5">Grande</option>
+                                    <option value="7">Enorme</option>
+                                </select>
+                            </div>
+                            
+                            <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('justifyLeft')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Esq</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('justifyCenter')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Cen</button>
                             <span class="w-[1px] h-5 bg-gray-300 mx-1 hidden sm:block"></span>
-                            <button type="button" onclick="execCmd('insertUnorderedList')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm hidden sm:block">UL</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('insertUnorderedList')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm hidden sm:block">UL</button>
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
                             
-                            <button type="button" onclick="inserirLinkRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-blue-600 rounded font-semibold shadow-sm">🔗</button>
-                            <button type="button" onclick="inserirImagemRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-emerald-600 rounded font-semibold shadow-sm">🖼️</button>
-                            <button type="button" onclick="inserirVideoRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-purple-600 rounded font-semibold shadow-sm">📹</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirLinkRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-blue-600 rounded font-semibold shadow-sm">🔗</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirImagemRichEditor(this)" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-emerald-600 rounded font-semibold shadow-sm">🖼️</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirVideoRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-purple-600 rounded font-semibold shadow-sm">📹</button>
                             
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
-                            <button type="button" onclick="execCmd('formatBlock', 'H2')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm">H2</button>
-                            <button type="button" onclick="execCmd('formatBlock', 'blockquote')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm">""</button>
-                            <button type="button" onclick="execCmd('removeFormat')" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-xs font-bold text-red-600 rounded shadow-sm ml-1">Limpar</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('formatBlock', 'H2')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm">H2</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('formatBlock', 'blockquote')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm">""</button>
+                            
+                            <!-- BOTÃO DE LIMPEZA PROFUNDA -->
+                            <button type="button" onmousedown="event.preventDefault();" onclick="limparFormatacao()" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-xs font-bold text-red-600 rounded shadow-sm ml-1" title="Limpar Formatação e Estilos Colados">Limpar</button>
                             
                             <button type="button" id="btn-ia-conteudo" onclick="gerarConteudoIA()" class="ml-auto px-4 py-1.5 bg-purple-100 hover:bg-purple-200 border border-purple-300 text-xs text-purple-800 font-bold tracking-wide rounded shadow-sm transition-colors flex items-center justify-center">✨ Escrever com IA</button>
                         </div>
@@ -816,7 +346,9 @@ Copie e substitua no seu ficheiro **`admin.html`**:
                 </form>
             </div>
 
-            <!-- 2. LISTAGEM ADMIN -->
+            <!-- ========================================== -->
+            <!-- ABA 2: LISTAGEM DE NOTÍCIAS ADMIN          -->
+            <!-- ========================================== -->
             <div id="lista-noticias-container" class="hidden bg-white p-6 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-jornal-red pl-3 mb-6">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Editar Publicações</h2>
@@ -850,17 +382,298 @@ Copie e substitua no seu ficheiro **`admin.html`**:
                 </div>
             </div>
 
+            <!-- ========================================== -->
+            <!-- ABA 3: LAYOUT CAPA                         -->
+            <!-- ========================================== -->
+            <div id="form-capa-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+                <div class="border-l-4 border-emerald-600 pl-3 mb-6">
+                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Organizar Capa</h2>
+                </div>
+                <form onsubmit="salvarOrdemCapa(event)">
+                    <p class="text-xs text-gray-500 mb-6 font-medium">Escolha até 8 editorias que devem aparecer em destaque abaixo do carrossel principal e a ordem delas.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="selects-capa-container"></div>
+                    <div class="pt-6 border-t border-gray-200 flex justify-end">
+                        <button type="submit" id="btn-salvar-capa" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-black px-10 py-3.5 uppercase tracking-widest text-sm rounded-sm transition-colors shadow-md">Salvar Ordem</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- ABA 4: LOGÓTIPO & IA                       -->
+            <!-- ========================================== -->
+            <div id="form-logo-container" class="hidden bg-white p-5 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-purple-600">
+                <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-8 border-l-4 border-purple-600 pl-3 gap-4">
+                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Inteligência Artificial & Design</h2>
+                </div>
+                <div class="mb-8 p-6 bg-purple-50 border border-purple-200 rounded-sm">
+                    <h3 class="font-black text-sm uppercase tracking-widest text-purple-800 mb-2">Chave de Acesso da IA (API Key)</h3>
+                    <p class="text-xs text-gray-600 mb-4 font-medium">Insira a sua chave do Google Studio para ativar o motor Gemini no seu jornal.</p>
+                    <div class="flex flex-col md:flex-row gap-4 md:items-center">
+                        <input type="password" id="config-chave-ia" class="flex-grow px-5 py-3 border border-gray-300 focus:border-purple-500 focus:outline-none text-sm font-mono rounded-sm shadow-sm min-w-0" placeholder="Ex: AIzaSy..." />
+                        <button type="button" onclick="salvarChaveIA()" id="btn-salvar-chave" class="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 font-black uppercase text-[11px] tracking-widest rounded-sm whitespace-nowrap transition-colors shrink-0 shadow-sm">Guardar Chave</button>
+                    </div>
+                </div>
+                <div class="space-y-6 bg-purple-50/50 p-6 md:p-8 border border-purple-100 rounded-sm">
+                    <div>
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Logo em Texto (HTML)</label>
+                        <input type="text" id="cfg-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm" placeholder='Ex: Notícias<span class="text-rose-600">Avulsas</span>' />
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Cores do Logo (Tailwind Classes)</label>
+                        <input type="text" id="cfg-cor-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm" placeholder="Ex: from-blue-500 to-emerald-400" />
+                    </div>
+                    <hr class="border-purple-200 my-4">
+                    <div>
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Descrição da Marca (Para Gerar Logo em Imagem com IA)</label>
+                        <input type="text" id="prompt-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm" placeholder="Ex: Logótipo elegante azul e vermelho" />
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="button" id="btn-salvar-design" onclick="salvarDesignTextos()" class="bg-jornal-dark text-white px-8 py-4 font-black hover:bg-gray-800 transition-colors uppercase text-[11px] tracking-widest rounded-sm shadow-md">Salvar Textos</button>
+                        <button type="button" id="btn-gerar-logo" onclick="gerarLogoIA()" class="bg-purple-600 text-white px-8 py-4 font-black hover:bg-purple-700 transition-colors uppercase text-[11px] tracking-widest rounded-sm shadow-md">✨ Gerar com IA</button>
+                    </div>
+                    <div id="preview-logo-wrapper" class="mt-10 hidden border-t border-purple-200 pt-8">
+                        <h4 class="text-[10px] font-black uppercase tracking-widest text-purple-600 mb-4 text-center">Pré-visualização</h4>
+                        <div class="p-8 bg-gray-100 border border-gray-300 rounded-sm flex items-center justify-center min-h-[160px] shadow-inner"><div id="preview-logo-ia"></div></div>
+                        <div class="mt-6 flex justify-end">
+                            <button type="button" id="btn-aplicar-logo" onclick="aplicarNovaLogo()" class="bg-jornal-dark text-white font-black w-full md:w-auto px-10 py-4 uppercase tracking-widest text-sm rounded-sm hover:bg-gray-800 transition-colors shadow-xl">Aplicar ao Site</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- ABA 5: ANÚNCIOS                            -->
+            <!-- ========================================== -->
+            <div id="form-propaganda-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+                <div class="border-l-4 border-jornal-red pl-3 mb-6">
+                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Novo Anúncio</h2>
+                </div>
+                <form id="form-propaganda" onsubmit="salvarPropaganda(event)">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                        <div>
+                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Posição / Slot</label>
+                            <select id="prop-local" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm font-medium rounded-sm focus:outline-none focus:ring-1 focus:ring-jornal-blue" required>
+                                <option value="">Selecione o local</option>
+                                <option value="Topo">Topo do Feed</option>
+                                <optgroup label="Sidebar (Lateral)">
+                                    <option value="Sidebar 1">Sidebar 1</option>
+                                    <option value="Sidebar 2">Sidebar 2</option>
+                                    <option value="Sidebar 3">Sidebar 3</option>
+                                </optgroup>
+                                <optgroup label="Entre Editorias da Capa">
+                                    <option value="Slot 1">Slot 1 (Entre Editorias)</option>
+                                    <option value="Slot 2">Slot 2 (Entre Editorias)</option>
+                                    <option value="Slot 3">Slot 3 (Entre Editorias)</option>
+                                    <option value="Slot 4">Slot 4 (Entre Editorias)</option>
+                                    <option value="Slot 5">Slot 5 (Entre Editorias)</option>
+                                    <option value="Slot 6">Slot 6 (Entre Editorias)</option>
+                                    <option value="Slot 7">Slot 7 (Entre Editorias)</option>
+                                    <option value="Slot 8">Slot 8 (Entre Editorias)</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Empresa Anunciante</label>
+                            <input type="text" id="prop-empresa" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm font-medium rounded-sm focus:outline-none focus:ring-1 focus:ring-jornal-blue" required />
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Tempo de Exibição no Carrossel (segundos)</label>
+                        <input type="number" id="prop-tempo" value="5" min="1" max="60" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm rounded-sm" required />
+                    </div>
+                    <div class="p-4 border border-dashed border-jornal-blue bg-blue-50/20 mb-4 rounded-sm">
+                        <label class="text-[10px] font-bold uppercase tracking-widest text-jornal-blue mb-2 block">1. Imagem / Arquivo</label>
+                        <input type="file" id="prop-arquivo" accept="image/*,video/*" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:border-0 file:bg-jornal-blue file:text-white cursor-pointer rounded-sm" />
+                    </div>
+                    <div class="mb-4">
+                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">2. Link Direto (Opcional - Usado se não enviar arquivo)</label>
+                        <input type="url" id="prop-imagem" placeholder="Insira a URL do anúncio (imagem/gif/mp4)" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm rounded-sm" />
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Link Destino (Ação no Clique)</label>
+                        <input type="url" id="prop-link" placeholder="https://" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm rounded-sm" required />
+                    </div>
+                    <div class="pt-4 mt-6 border-t border-gray-200 flex justify-end">
+                        <button type="submit" id="btn-salvar-propaganda" class="w-full md:w-auto bg-jornal-blue text-white font-black px-10 py-4 uppercase text-sm rounded-sm hover:opacity-90 shadow-md">Ativar Anúncio</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- ABA 6: REDES SOCIAIS                       -->
+            <!-- ========================================== -->
+            <div id="form-social-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+                <div class="border-l-4 border-jornal-red pl-3 mb-6">
+                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Gestão de Redes Sociais</h2>
+                </div>
+                <form id="form-sociais" onsubmit="salvarRedesSociais(event)">
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-5 border border-gray-100 bg-gray-50 rounded-sm mb-3">
+                        <div class="font-bold text-sm w-32 flex items-center gap-2"><span class="text-pink-600 text-lg">📷</span> Instagram</div>
+                        <input type="url" id="soc-inst-url" placeholder="https://instagram.com/..." class="w-full md:flex-grow px-4 py-2.5 border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-jornal-blue" />
+                    </div>
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-5 border border-gray-100 bg-gray-50 rounded-sm mb-3">
+                        <div class="font-bold text-sm w-32 flex items-center gap-2"><span class="text-blue-600 text-lg">📘</span> Facebook</div>
+                        <input type="url" id="soc-fb-url" placeholder="https://facebook.com/..." class="w-full md:flex-grow px-4 py-2.5 border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-jornal-blue" />
+                    </div>
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-5 border border-gray-100 bg-gray-50 rounded-sm mb-3">
+                        <div class="font-bold text-sm w-32 flex items-center gap-2"><span class="text-black text-lg">𝕏</span> X (Twitter)</div>
+                        <input type="url" id="soc-x-url" placeholder="https://x.com/..." class="w-full md:flex-grow px-4 py-2.5 border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-jornal-blue" />
+                    </div>
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 p-5 border border-gray-100 bg-gray-50 rounded-sm">
+                        <div class="font-bold text-sm w-32 flex items-center gap-2"><span class="text-red-600 text-lg">▶️</span> YouTube</div>
+                        <input type="url" id="soc-yt-url" placeholder="https://youtube.com/..." class="w-full md:flex-grow px-4 py-2.5 border border-gray-300 text-sm rounded-sm focus:outline-none focus:border-jornal-blue" />
+                    </div>
+                    <div class="pt-6 border-t border-gray-200 flex justify-end mt-6">
+                        <button type="submit" id="btn-salvar-sociais" class="w-full md:w-auto bg-jornal-blue text-white font-black px-12 py-3.5 uppercase tracking-widest text-sm rounded-sm shadow-md hover:bg-gray-800 transition-colors">Salvar Redes Sociais</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- ABA 7: PLACAR AO VIVO                      -->
+            <!-- ========================================== -->
+            <div id="form-placar-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+                <div class="border-l-4 border-green-600 pl-3 mb-6">
+                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Desporto ao Vivo</h2>
+                </div>
+                <form id="form-placar" onsubmit="salvarPlacarAoVivo(event)">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        <div class="p-5 bg-gray-50 border border-gray-200 rounded-sm">
+                            <h3 class="text-[11px] font-black uppercase tracking-widest text-jornal-blue mb-4 border-b border-gray-200 pb-2">Futebol: Brasil</h3>
+                            <label class="flex items-center gap-3 mb-3 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/bra.1" class="w-4 h-4 text-jornal-blue rounded" /><span class="text-sm font-bold text-gray-700">Brasileirão Série A</span></label>
+                            <label class="flex items-center gap-3 mb-3 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/bra.2" class="w-4 h-4 text-jornal-blue rounded" /><span class="text-sm font-bold text-gray-700">Brasileirão Série B</span></label>
+                            <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/bra.copa_do_brasil" class="w-4 h-4 text-jornal-blue rounded" /><span class="text-sm font-bold text-gray-700">Copa do Brasil</span></label>
+                        </div>
+                        <div class="p-5 bg-gray-50 border border-gray-200 rounded-sm">
+                            <h3 class="text-[11px] font-black uppercase tracking-widest text-green-700 mb-4 border-b border-gray-200 pb-2">Futebol: Internacional</h3>
+                            <label class="flex items-center gap-3 mb-3 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/conmebol.libertadores" class="w-4 h-4 text-jornal-blue rounded" /><span class="text-sm font-bold text-gray-700">Copa Libertadores</span></label>
+                            <label class="flex items-center gap-3 mb-3 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/conmebol.sudamericana" class="w-4 h-4 text-jornal-blue rounded" /><span class="text-sm font-bold text-gray-700">Copa Sul-Americana</span></label>
+                            <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" name="liga-placar" value="soccer/uefa.champions" class="w-4 h-4 text-jornal-blue rounded" /><span class="text-sm font-bold text-gray-700">Champions League</span></label>
+                        </div>
+                        <div class="p-5 bg-gray-50 border border-gray-200 rounded-sm">
+                            <h3 class="text-[11px] font-black uppercase tracking-widest text-orange-600 mb-4 border-b border-gray-200 pb-2">Outros</h3>
+                            <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" name="liga-placar" value="basketball/nba" class="w-4 h-4 text-jornal-blue rounded" /><span class="text-sm font-bold text-gray-700">NBA (Basquete)</span></label>
+                        </div>
+                    </div>
+                    <div class="pt-6 border-t border-gray-200 flex justify-end">
+                        <button type="submit" id="btn-salvar-placar" class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-black px-12 py-3.5 uppercase tracking-widest text-sm rounded-sm shadow-md transition-colors">Salvar Ligas</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- ABA 8: EXPEDIENTE                          -->
+            <!-- ========================================== -->
+            <div id="form-expediente-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+                <div class="border-l-4 border-blue-600 pl-3 mb-8">
+                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Página do Expediente</h2>
+                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Quem somos e equipa de redação</p>
+                </div>
+
+                <!-- SUPER EDITOR DE TEXTO 2 -->
+                <div>
+                    <div class="flex flex-wrap gap-1 p-2 bg-gray-100 border border-gray-300 border-b-0 rounded-t-sm items-center">
+                        <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('undo')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded shadow-sm transition-colors" title="Desfazer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                        </button>
+                        <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('redo')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded shadow-sm transition-colors" title="Refazer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"/></svg>
+                        </button>
+                        <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
+
+                        <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('bold')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm">B</button>
+                        <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('italic')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm">I</button>
+                        <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('underline')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs underline rounded shadow-sm">U</button>
+                        
+                        <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
+                        
+                        <select onmousedown="event.preventDefault();" onchange="aplicarFonte(this.value);" class="fontFamilySelect px-1 py-1.5 bg-white border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer w-[110px] truncate">
+                            <option value="" disabled selected>Selecionar...</option>
+                            <option value="Merriweather, serif">Serif (Jornal)</option>
+                            <option value="Inter, sans-serif">Sans Serif</option>
+                            <option value="Arial, sans-serif">Arial</option>
+                            <option value="Courier New, monospace">Largura fixa</option>
+                            <option value="Comic Sans MS">Comic Sans MS</option>
+                            <option value="Garamond">Garamond</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Tahoma">Tahoma</option>
+                            <option value="Trebuchet MS">Trebuchet MS</option>
+                            <option value="Verdana">Verdana</option>
+                        </select>
+                        <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
+                        <select onmousedown="event.preventDefault();" onchange="execCmd('fontSize', this.value);" class="fontSizeSelect px-2 py-1.5 bg-white border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer">
+                            <option value="" disabled selected>---</option>
+                            <option value="1">Pequeno</option>
+                            <option value="3">Normal</option>
+                            <option value="5">Grande</option>
+                            <option value="7">Enorme</option>
+                        </select>
+
+                        <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
+                        <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('justifyLeft')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Esq</button>
+                        <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('justifyCenter')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Cen</button>
+                        <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
+                        
+                        <button type="button" onmousedown="event.preventDefault();" onclick="inserirLinkRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-blue-600 rounded font-semibold shadow-sm">🔗</button>
+                        
+                        <button type="button" onmousedown="event.preventDefault();" onclick="limparFormatacao()" class="ml-auto px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-xs font-bold text-red-600 rounded shadow-sm">Limpar Formatação</button>
+                    </div>
+                    <div id="admin-editor-expediente" contenteditable="true" class="w-full px-6 py-6 bg-white border border-gray-300 rounded-b-sm min-h-[300px] overflow-y-auto focus:outline-none focus:ring-1 focus:ring-jornal-blue text-base leading-relaxed font-serif custom-scrollbar rich-editor"></div>
+                </div>
+
+                <div class="pt-6 mt-6 border-t border-gray-100 text-right">
+                    <button type="button" id="btn-salvar-expediente" onclick="salvarExpediente()" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-10 py-4 uppercase tracking-widest text-sm rounded-sm shadow-xl transition-colors">Atualizar Expediente</button>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- ABA 9: USUÁRIOS                            -->
+            <!-- ========================================== -->
+            <div id="form-usuarios-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+                <div class="border-l-4 border-rose-500 pl-3 mb-8">
+                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Gestão de Utilizadores</h2>
+                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Criar novos acessos ao Painel Admin</p>
+                </div>
+
+                <div class="bg-rose-50 border border-rose-200 p-6 rounded-sm mb-8">
+                    <h3 class="text-xs font-black uppercase tracking-widest text-rose-800 mb-4">Adicionar Novo Utilizador</h3>
+                    <form id="form-novo-usuario" onsubmit="criarUsuario(event)" class="flex flex-col md:flex-row gap-4 items-end">
+                        <div class="w-full">
+                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-2 block">Nome de Utilizador</label>
+                            <input type="text" id="novo-user" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-rose-500 text-sm font-bold rounded-sm shadow-sm" placeholder="Ex: redator1" />
+                        </div>
+                        <div class="w-full">
+                            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-2 block">Senha</label>
+                            <input type="text" id="nova-senha" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-rose-500 text-sm font-bold rounded-sm shadow-sm" placeholder="Ex: SenhaForte123" />
+                        </div>
+                        <button type="submit" id="btn-criar-usuario" class="w-full md:w-auto bg-rose-600 text-white font-black px-8 py-3 hover:bg-rose-700 transition-colors uppercase tracking-widest text-xs rounded-sm shadow-md whitespace-nowrap h-[46px]">Criar Acesso</button>
+                    </form>
+                </div>
+
+                <div class="mt-8">
+                    <h3 class="text-xs font-black uppercase tracking-widest text-gray-600 mb-4">Utilizadores Existentes (Visualização via Google Sheets)</h3>
+                    <p class="text-xs text-gray-500 italic font-medium">Por questões de segurança, a listagem e exclusão de utilizadores deve ser feita diretamente na aba "Usuários" da sua Base de Dados Google (Google Sheets).</p>
+                </div>
+            </div>
+
         </main>
     </div>
 
-    <!-- SCRIPTS CORE REDAÇÃO -->
+    <!-- SCRIPTS CORE GIGANTES -->
     <script>
         var IMG_FALLBACK = 'https://placehold.co/600x400/e2e8f0/475569?text=Sem+Foto';
         var noticiasGlobais = [];
+        var configuracoesGlobais = {};
         var listaCategoriasLocais = ['Política', 'Economia', 'Cidades', 'Polícia', 'Justiça', 'Esportes', 'Brasil', 'Mundo'];
         var base64StringNoticia = ""; 
         var mimeStringNoticia = ""; 
         var nameStringNoticia = "";
+        
+        var base64StringProp = ""; 
+        var mimeStringProp = ""; 
+        var nameStringProp = "";
+        var novaLogoHtml = "";
+        
         window.relacionadasSelecionadas = [];
 
         document.addEventListener("DOMContentLoaded", function() {
@@ -872,32 +685,99 @@ Copie e substitua no seu ficheiro **`admin.html`**:
                 document.getElementById('modalLogin').classList.remove('hidden');
                 document.getElementById('modalLogin').classList.add('flex');
             }
+
+            // Ativa o leitor inteligente de fontes nos editores
+            var editores = document.querySelectorAll('.rich-editor');
+            editores.forEach(function(editor) {
+                editor.addEventListener('keyup', atualizarBarraFerramentas);
+                editor.addEventListener('mouseup', atualizarBarraFerramentas);
+                
+                // Botões Inteligentes de + e - para as imagens do editor
+                editor.addEventListener('click', function(e) {
+                    var el = e.target;
+                    if (el && (el.classList.contains('btn-diminuir-img') || el.classList.contains('btn-aumentar-img'))) {
+                        e.preventDefault(); e.stopPropagation();
+                        var img = null;
+                        var figure = el.closest('figure');
+                        if (figure) { img = figure.querySelector('img'); } 
+                        else {
+                            var prev = el.parentElement ? el.parentElement.previousElementSibling : el.previousElementSibling;
+                            while(prev) {
+                                if(prev.tagName === 'IMG') { img = prev; break; }
+                                if(prev.querySelector('img')) { img = prev.querySelector('img'); break; }
+                                prev = prev.previousElementSibling;
+                            }
+                        }
+                        if (img) {
+                            var currentWidthStr = img.style.width || img.width + 'px';
+                            var val = parseFloat(currentWidthStr);
+                            var isPercent = currentWidthStr.indexOf('%') !== -1;
+                            if (isNaN(val)) { val = 300; isPercent = false; }
+                            var step = isPercent ? 10 : 50; 
+                            if (el.classList.contains('btn-aumentar-img')) { val += step; } 
+                            else { val -= step; if(val < 50) val = 50; }
+                            if (isPercent && val > 100) val = 100;
+                            img.style.width = val + (isPercent ? '%' : 'px');
+                            img.style.maxWidth = '100%';
+                        } else { alert("Não foi possível localizar a imagem para ajustar."); }
+                    }
+                });
+            });
+
+            // Input Propagandas
+            var propArquivoInput = document.getElementById('prop-arquivo');
+            if (propArquivoInput) { 
+                propArquivoInput.addEventListener('change', function(e) { 
+                    var file = e.target.files[0]; 
+                    if (!file) return; 
+                    mimeStringProp = file.type; 
+                    nameStringProp = file.name; 
+                    var reader = new FileReader(); 
+                    reader.onload = function(evt) { base64StringProp = evt.target.result.split(',')[1]; }; 
+                    reader.readAsDataURL(file); 
+                }); 
+            }
+            
+            // Input Notícias
+            var adminArquivoInput = document.getElementById('admin-arquivo-imagem');
+            if(adminArquivoInput) {
+                adminArquivoInput.addEventListener('change', function(e) {
+                    var file = e.target.files[0];
+                    if (!file) { base64StringNoticia = ""; return; }
+                    mimeStringNoticia = file.type; nameStringNoticia = file.name;
+                    var reader = new FileReader();
+                    reader.onload = function(evt) { 
+                        var img = new Image();
+                        img.onload = function() {
+                            var canvas = document.createElement('canvas'); var ctx = canvas.getContext('2d');
+                            var MAX_WIDTH = 1200; var MAX_HEIGHT = 1200; var width = img.width; var height = img.height;
+                            if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
+                            else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
+                            canvas.width = width; canvas.height = height; ctx.drawImage(img, 0, 0, width, height);
+                            var compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                            base64StringNoticia = compressedDataUrl.split(',')[1];
+                            document.getElementById('preview-imagem').src = compressedDataUrl;
+                            document.getElementById('preview-imagem').classList.remove('hidden');
+                            verificarUploadMedia(e.target);
+                        };
+                        img.src = evt.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
         });
 
+        // ==========================================
+        // FUNÇÕES GLOBAIS
+        // ==========================================
         function normalizarTextoUrl(text) {
             if (!text) return 'geral';
             return String(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
                 .replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
         }
 
-        function atualizarPreviewURL() {
-            var titulo = document.getElementById('admin-titulo').value.trim();
-            var elPreview = document.getElementById('preview-url-noticia');
-            if(!titulo) { if(elPreview) elPreview.classList.add('hidden'); return; }
-            
-            var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
-            var cat = checkboxes.length > 0 ? checkboxes[0].value : "Geral";
-            
-            var slugTitulo = normalizarTextoUrl(titulo);
-            var slugCat = normalizarTextoUrl(cat);
-            var idAtual = document.getElementById('admin-id-noticia').value;
-            var fakeId = idAtual ? idAtual : "1710987654321";
-            var finalUrl = "https://noticiasavulsas.com.br/" + slugCat + '/' + slugTitulo + '/' + fakeId;
-            
-            if(elPreview) {
-                elPreview.querySelector('span').innerText = finalUrl;
-                elPreview.classList.remove('hidden');
-            }
+        function normalizarTexto(str) { 
+            return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); 
         }
 
         function mostrarMensagem(mensagem, tipo) {
@@ -925,9 +805,9 @@ Copie e substitua no seu ficheiro **`admin.html`**:
                         document.getElementById('view-admin').classList.remove('hidden');
                         carregarNoticiasAdmin();
                     } else { mostrarMensagem(res ? res.erro : "Resposta inválida.", 'erro'); }
-                    btn.innerHTML = "Entrar na Redação"; btn.disabled = false;
+                    btn.innerHTML = "Entrar no Painel"; btn.disabled = false;
                 }).withFailureHandler(function(erro) {
-                    mostrarMensagem("Falha na rede.", 'erro'); btn.innerHTML = "Entrar na Redação"; btn.disabled = false;
+                    mostrarMensagem("Falha na rede.", 'erro'); btn.innerHTML = "Entrar no Painel"; btn.disabled = false;
                 }).verificarLogin(u, p);
             }
         }
@@ -937,39 +817,203 @@ Copie e substitua no seu ficheiro **`admin.html`**:
             window.location.href = "index.html";
         }
 
-        function carregarNoticiasAdmin() {
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.withSuccessHandler(function(res) {
-                    if (res && res.sucesso) {
-                        noticiasGlobais = res.noticias || []; 
-                        if (res.categorias && res.categorias.length > 0) listaCategoriasLocais = res.categorias;
-                        renderizarChecklistCategoriasAdmin();
-                        if (!document.getElementById('lista-noticias-container').classList.contains('hidden')) carregarListaEdicao();
-                    }
-                }).getHomeData();
-            }
-        }
-
         function alternarAbaAdmin(abaId) {
-            var contentIds = ['form-noticia-container', 'lista-noticias-container'];
-            contentIds.forEach(function(id) { var el = document.getElementById(id); if(el) el.classList.add('hidden'); });
+            var contentIds = ['form-noticia-container', 'lista-noticias-container', 'form-capa-container', 'form-logo-container', 'form-propaganda-container', 'form-social-container', 'form-placar-container', 'form-expediente-container', 'form-usuarios-container'];
+            var tabIds = ['tab-btn-publicar', 'tab-btn-gerir', 'tab-btn-capa', 'tab-btn-logo', 'tab-btn-propaganda', 'tab-btn-social', 'tab-btn-placar', 'tab-btn-expediente', 'tab-btn-usuarios'];
             
-            var tabIds = ['aba-noticia', 'aba-lista'];
-            tabIds.forEach(function(id) { 
-                var el = document.getElementById(id); 
-                if(el) el.className = "py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors"; 
-            });
+            contentIds.forEach(function(id) { var el = document.getElementById(id); if(el) el.classList.add('hidden'); });
+            tabIds.forEach(function(id) { var el = document.getElementById(id); if(el) el.className = "py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm"; });
             
             var targetEl = document.getElementById(abaId);
             if(targetEl) targetEl.classList.remove('hidden');
             
-            var botaoId = abaId === 'form-noticia-container' ? 'aba-noticia' : 'aba-lista'; 
-            var classAtiva = abaId === 'form-noticia-container' ? "bg-jornal-blue text-white font-black" : "bg-jornal-dark text-white font-black";
+            var btnId = "";
+            if (abaId === 'form-noticia-container') btnId = 'tab-btn-publicar';
+            else if (abaId === 'lista-noticias-container') { btnId = 'tab-btn-gerir'; carregarListaEdicao(); }
+            else if (abaId === 'form-capa-container') btnId = 'tab-btn-capa';
+            else if (abaId === 'form-logo-container') btnId = 'tab-btn-logo';
+            else if (abaId === 'form-propaganda-container') btnId = 'tab-btn-propaganda';
+            else if (abaId === 'form-social-container') btnId = 'tab-btn-social';
+            else if (abaId === 'form-placar-container') btnId = 'tab-btn-placar';
+            else if (abaId === 'form-expediente-container') btnId = 'tab-btn-expediente';
+            else if (abaId === 'form-usuarios-container') btnId = 'tab-btn-usuarios';
             
-            var btnEl = document.getElementById(botaoId);
-            if(btnEl) btnEl.className = 'py-3 px-5 uppercase tracking-widest text-[11px] whitespace-nowrap rounded-t-sm transition-colors ' + classAtiva;
+            var btnEl = document.getElementById(btnId);
+            if(btnEl) btnEl.className = 'py-3 px-5 uppercase tracking-widest text-[11px] whitespace-nowrap rounded-t-sm transition-colors shadow-sm bg-jornal-dark text-white font-black';
+        }
+
+        function carregarNoticiasAdmin() {
+            document.getElementById('loading-global').classList.remove('hidden');
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    document.getElementById('loading-global').classList.add('hidden');
+                    if (res && res.sucesso) {
+                        noticiasGlobais = res.noticias || []; 
+                        configuracoesGlobais = res.config || {};
+                        if (res.categorias && res.categorias.length > 0) listaCategoriasLocais = res.categorias;
+                        
+                        renderizarChecklistCategoriasAdmin();
+                        preencherFormCapa();
+                        preencherFormPlacar();
+                        preencherConfigsGerais();
+                        
+                        if (!document.getElementById('lista-noticias-container').classList.contains('hidden')) carregarListaEdicao();
+                    }
+                }).withFailureHandler(function(e) {
+                    document.getElementById('loading-global').classList.add('hidden');
+                    mostrarMensagem('Erro de conexão.', 'erro');
+                }).getHomeData();
+            }
+        }
+
+        // ==========================================
+        // EDITORES RICH TEXT (FUNÇÕES)
+        // ==========================================
+        function execCmd(command, arg) { 
+            if(arg === undefined) arg = null; 
+            document.execCommand(command, false, arg); 
+        }
+        
+        function aplicarFonte(valor) { 
+            if (!valor) return; 
+            document.execCommand('fontName', false, valor); 
+        }
+
+        function inserirLinkRichEditor() { 
+            var url = prompt("Insira a URL completa do hiperlink:"); 
+            if (url) execCmd('createLink', url); 
+        }
+
+        function inserirImagemRichEditor(btnElement) { 
+            var container = btnElement.closest('div').parentElement;
+            var editor = container.querySelector('.rich-editor');
+            window.targetEditorId = editor.id;
+            document.getElementById('upload-imagem-conteudo').click(); 
+        }
+
+        function processarUploadImagemConteudo(input) {
+            if (!input.files || !input.files[0]) return;
+            var file = input.files[0];
+            var legenda = prompt("Legenda para a imagem (opcional):") || "";
+            var creditos = prompt("Créditos da foto:") || "";
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var img = new Image();
+                img.onload = function() {
+                    var canvas = document.createElement('canvas'); var ctx = canvas.getContext('2d'); var maxWidth = 800; var scale = 1;
+                    if (img.width > maxWidth) scale = maxWidth / img.width;
+                    canvas.width = img.width * scale; canvas.height = img.height * scale;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    var base64Resized = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    var htmlImg = '<br><figure style="margin: 16px auto; text-align: center; max-width: 100%; display: block;">' +
+                                  '<img src="' + base64Resized + '" style="max-width: 100%; height: auto; border-radius: 8px; display: inline-block; margin: 0 auto; border: 1px solid #e2e8f0;" />';
+                    if (legenda || creditos) {
+                        var credTexto = creditos ? 'Foto: ' + creditos : ''; var sep = (legenda && creditos) ? ' - ' : '';
+                        htmlImg += '<figcaption style="font-size: 12px; color: #64748b; margin-top: 8px; font-style: italic; text-align: center;">' + legenda + sep + credTexto + '</figcaption>';
+                    }
+                    
+                    // BOTÕES DE + E - PARA AJUSTAR O TAMANHO DIRETO NO EDITOR
+                    htmlImg += '<div contenteditable="false" style="margin-top: 10px; text-align: center; user-select: none;">' +
+                               '<button type="button" class="btn-diminuir-img" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; margin-right: 8px;" title="Diminuir Imagem">-</button>' +
+                               '<button type="button" class="btn-aumentar-img" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer;" title="Aumentar Imagem">+</button>' +
+                               '</div>';
+                               
+                    htmlImg += '</figure><br><p>&#8203;</p>';
+                    
+                    var targetEd = document.getElementById(window.targetEditorId);
+                    if(targetEd) targetEd.focus();
+                    document.execCommand('insertHTML', false, htmlImg);
+                    input.value = '';
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function inserirVideoRichEditor() { 
+            var url = prompt("Insira o link (YouTube, X, Insta, TikTok):"); 
+            if (url) execCmd('insertHTML', url + '<br><br>'); 
+        }
+
+        function atualizarBarraFerramentas() {
+            var editorAtivo = document.activeElement;
+            if (!editorAtivo || !editorAtivo.classList.contains('rich-editor')) return;
             
-            if (abaId === 'lista-noticias-container') carregarListaEdicao();
+            var fontNode = document.queryCommandValue('fontName');
+            var sizeNode = document.queryCommandValue('fontSize');
+            
+            var parentDiv = editorAtivo.parentElement; 
+            var selFont = parentDiv.querySelector('.fontFamilySelect');
+            var selSize = parentDiv.querySelector('.fontSizeSelect');
+            
+            if (fontNode && selFont) {
+                var fontL = fontNode.replace(/['"]/g, '').toLowerCase().split(',')[0];
+                for(var i=0; i<selFont.options.length; i++) {
+                    if(selFont.options[i].value.toLowerCase().includes(fontL)) { selFont.selectedIndex = i; break; }
+                }
+            }
+            if (sizeNode && selSize) {
+                for(var j=0; j<selSize.options.length; j++) {
+                    if(selSize.options[j].value === sizeNode.toString()) { selSize.selectedIndex = j; break; }
+                }
+            }
+        }
+
+        function limparFormatacao() {
+            document.execCommand('removeFormat', false, null);
+            document.execCommand('unlink', false, null);
+            var sel = window.getSelection();
+            if (!sel.isCollapsed) {
+                var range = sel.getRangeAt(0);
+                var container = range.commonAncestorContainer;
+                if (container.nodeType === 3) container = container.parentNode;
+                
+                var editor = container.closest('.rich-editor');
+                if (editor) {
+                    var elements = container.querySelectorAll('*');
+                    elements.forEach(function(el) {
+                        if (sel.containsNode(el, true)) {
+                            el.removeAttribute('style'); el.removeAttribute('face');
+                            el.removeAttribute('size'); el.removeAttribute('class'); el.removeAttribute('color');
+                        }
+                    });
+                    if (container !== editor) {
+                        container.removeAttribute('style'); container.removeAttribute('face');
+                        container.removeAttribute('size'); container.removeAttribute('class'); container.removeAttribute('color');
+                    }
+                    
+                    var parentDiv = editor.parentElement;
+                    var selFont = parentDiv.querySelector('.fontFamilySelect');
+                    var selSize = parentDiv.querySelector('.fontSizeSelect');
+                    if(selFont) selFont.selectedIndex = 0;
+                    if(selSize) selSize.selectedIndex = 0;
+                    editor.focus();
+                }
+            }
+        }
+
+        // ==========================================
+        // ABA: NOTÍCIAS 
+        // ==========================================
+        function atualizarPreviewURL() {
+            var titulo = document.getElementById('admin-titulo').value.trim();
+            var elPreview = document.getElementById('preview-url-noticia');
+            if(!titulo) { if(elPreview) elPreview.classList.add('hidden'); return; }
+            
+            var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
+            var cat = checkboxes.length > 0 ? checkboxes[0].value : "Geral";
+            
+            var slugTitulo = normalizarTextoUrl(titulo);
+            var slugCat = normalizarTextoUrl(cat);
+            var idAtual = document.getElementById('admin-id-noticia').value;
+            var fakeId = idAtual ? idAtual : "1710987654321";
+            var finalUrl = "https://noticiasavulsas.com.br/" + slugCat + '/' + slugTitulo + '/' + fakeId;
+            
+            if(elPreview) {
+                elPreview.querySelector('span:nth-of-type(2)').innerText = finalUrl;
+                elPreview.classList.remove('hidden');
+            }
         }
 
         function renderizarChecklistCategoriasAdmin() {
@@ -983,8 +1027,6 @@ Copie e substitua no seu ficheiro **`admin.html`**:
                 '</label>';
             });
         }
-
-        function normalizarTexto(str) { return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
 
         function atualizarCampoCidadeAdmin() {
             var selecionadas = Array.from(document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked'));
@@ -1047,41 +1089,6 @@ Copie e substitua no seu ficheiro **`admin.html`**:
             document.getElementById('admin-relacionadas-ids').value = window.relacionadasSelecionadas.map(function(r){return r.id;}).join(',');
         }
 
-        function execCmd(command, arg) { if(arg === undefined) arg = null; document.execCommand(command, false, arg); document.getElementById('admin-editor-rich').focus(); }
-        function inserirLinkRichEditor() { var url = prompt("Insira a URL completa do hiperlink:"); if (url) execCmd('createLink', url); }
-        function inserirImagemRichEditor() { document.getElementById('upload-imagem-conteudo').click(); }
-
-        function processarUploadImagemConteudo(input) {
-            if (!input.files || !input.files[0]) return;
-            var file = input.files[0];
-            var legenda = prompt("Legenda para a imagem (opcional):") || "";
-            var creditos = prompt("Créditos da foto:") || "";
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                var img = new Image();
-                img.onload = function() {
-                    var canvas = document.createElement('canvas'); var ctx = canvas.getContext('2d'); var maxWidth = 800; var scale = 1;
-                    if (img.width > maxWidth) scale = maxWidth / img.width;
-                    canvas.width = img.width * scale; canvas.height = img.height * scale;
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    var base64Resized = canvas.toDataURL('image/jpeg', 0.8);
-                    
-                    var htmlImg = '<br><figure style="margin: 16px auto; text-align: center; max-width: 100%; display: block;">' +
-                                  '<img src="' + base64Resized + '" style="max-width: 100%; height: auto; border-radius: 8px; display: inline-block; margin: 0 auto; border: 1px solid #e2e8f0;" />';
-                    if (legenda || creditos) {
-                        var credTexto = creditos ? 'Foto: ' + creditos : ''; var sep = (legenda && creditos) ? ' - ' : '';
-                        htmlImg += '<figcaption style="font-size: 12px; color: #64748b; margin-top: 8px; font-style: italic; text-align: center;">' + legenda + sep + credTexto + '</figcaption>';
-                    }
-                    htmlImg += '</figure><br><p>&#8203;</p>';
-                    execCmd('insertHTML', htmlImg); input.value = '';
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function inserirVideoRichEditor() { var url = prompt("Insira o link (YouTube, X, Insta, TikTok):"); if (url) execCmd('insertHTML', url + '<br><br>'); }
-
         function gerarLinhaFinaIA() {
             var t = document.getElementById('admin-titulo').value.trim();
             if(!t) { mostrarMensagem("Preencha a Manchete primeiro.", "erro"); return; }
@@ -1125,33 +1132,6 @@ Copie e substitua no seu ficheiro **`admin.html`**:
                     if (inputCreditos) inputCreditos.required = false;
                 }
             }
-        }
-
-        var adminArquivoInput = document.getElementById('admin-arquivo-imagem');
-        if(adminArquivoInput) {
-            adminArquivoInput.addEventListener('change', function(e) {
-                var file = e.target.files[0];
-                if (!file) { base64StringNoticia = ""; return; }
-                mimeStringNoticia = file.type; nameStringNoticia = file.name;
-                var reader = new FileReader();
-                reader.onload = function(evt) { 
-                    var img = new Image();
-                    img.onload = function() {
-                        var canvas = document.createElement('canvas'); var ctx = canvas.getContext('2d');
-                        var MAX_WIDTH = 1200; var MAX_HEIGHT = 1200; var width = img.width; var height = img.height;
-                        if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
-                        else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
-                        canvas.width = width; canvas.height = height; ctx.drawImage(img, 0, 0, width, height);
-                        var compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-                        base64StringNoticia = compressedDataUrl.split(',')[1];
-                        document.getElementById('preview-imagem').src = compressedDataUrl;
-                        document.getElementById('preview-imagem').classList.remove('hidden');
-                        verificarUploadMedia(e.target);
-                    };
-                    img.src = evt.target.result;
-                };
-                reader.readAsDataURL(file);
-            });
         }
 
         function limparFormNoticia() {
@@ -1225,6 +1205,7 @@ Copie e substitua no seu ficheiro **`admin.html`**:
                     btn.innerHTML = txtOriginal; btn.disabled = false;
                     if (res && res.sucesso) { 
                         mostrarMensagem(isRascunho ? 'Rascunho Guardado!' : 'Matéria Publicada!'); 
+                        try { localStorage.removeItem('portal_data_cache'); } catch(e){}
                         limparFormNoticia(); alternarAbaAdmin('lista-noticias-container'); window.scrollTo(0,0); carregarNoticiasAdmin(); 
                     } else { mostrarMensagem("Erro ao guardar", 'erro'); }
                 })
@@ -1235,6 +1216,9 @@ Copie e substitua no seu ficheiro **`admin.html`**:
             }
         }
 
+        // ==========================================
+        // ABA: LISTAGEM ADMIN
+        // ==========================================
         function atualizarFiltroEditoriasAdmin() {
             var select = document.getElementById('admin-filtro-editoria');
             if (!select) return;
@@ -1298,6 +1282,7 @@ Copie e substitua no seu ficheiro **`admin.html`**:
             var isAtivo = checkbox.checked; var labelSpan = checkbox.nextElementSibling.nextElementSibling;
             if (labelSpan) { labelSpan.innerText = isAtivo ? 'ATIVO' : 'INATIVO'; labelSpan.className = 'ml-2 text-[10px] font-black ' + (isAtivo ? 'text-gray-700' : 'text-gray-400') + ' select-none uppercase tracking-widest inline-block w-16 text-left'; }
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
+                try { localStorage.removeItem('portal_data_cache'); } catch(e){}
                 window.google.script.run.withSuccessHandler(function(res){ if(res && res.sucesso) carregarNoticiasAdmin(); }).alternarStatusNoticia(id); 
             }
         }
@@ -1305,6 +1290,7 @@ Copie e substitua no seu ficheiro **`admin.html`**:
         function apagarMateria(id) {
             if(!confirm("Atenção! Vai eliminar permanentemente.")) return;
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
+                try { localStorage.removeItem('portal_data_cache'); } catch(e){}
                 window.google.script.run.withSuccessHandler(function(res){ carregarNoticiasAdmin(); }).excluirNoticia(id); 
             }
         }
@@ -1355,14 +1341,162 @@ Copie e substitua no seu ficheiro **`admin.html`**:
             
             alternarAbaAdmin('form-noticia-container'); window.scrollTo(0,0); atualizarPreviewURL(); 
         }
+
+        // ==========================================
+        // CONFIGURAÇÕES (TODAS AS ABAS REUNIDAS)
+        // ==========================================
+        function preencherConfigsGerais() {
+            if (configuracoesGlobais['ChaveIA']) { var ic = document.getElementById('config-chave-ia'); if (ic) ic.value = configuracoesGlobais['ChaveIA']; }
+            if (configuracoesGlobais['LogoHTML']) { var el = document.getElementById('cfg-logo'); if(el) el.value = configuracoesGlobais['LogoHTML']; }
+            if (configuracoesGlobais['CorLogo']) { var el = document.getElementById('cfg-cor-logo'); if(el) el.value = configuracoesGlobais['CorLogo']; }
+            
+            if (configuracoesGlobais['soc-inst-url']) { var el = document.getElementById('soc-inst-url'); if(el) el.value = configuracoesGlobais['soc-inst-url']; }
+            if (configuracoesGlobais['soc-fb-url']) { var el = document.getElementById('soc-fb-url'); if(el) el.value = configuracoesGlobais['soc-fb-url']; }
+            if (configuracoesGlobais['soc-x-url']) { var el = document.getElementById('soc-x-url'); if(el) el.value = configuracoesGlobais['soc-x-url']; }
+            if (configuracoesGlobais['soc-yt-url']) { var el = document.getElementById('soc-yt-url'); if(el) el.value = configuracoesGlobais['soc-yt-url']; }
+            
+            if (configuracoesGlobais['ExpedienteHTML']) { var exp = document.getElementById('admin-editor-expediente'); if(exp) exp.innerHTML = configuracoesGlobais['ExpedienteHTML']; }
+        }
+
+        function preencherFormCapa() {
+            var container = document.getElementById('selects-capa-container'); if(!container) return;
+            var html = ''; var ordemAtual = [];
+            if(configuracoesGlobais['CategoriasCapa']) { try { ordemAtual = JSON.parse(configuracoesGlobais['CategoriasCapa']); } catch(e){} }
+            for(var i=1; i<=8; i++) {
+                var v = ordemAtual.length >= i ? ordemAtual[i-1] : '';
+                html += '<div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Posição ' + i + '</label>';
+                html += '<select id="capa-pos-' + i + '" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 text-sm font-bold text-gray-700 uppercase rounded-sm"><option value="">-- NENHUMA --</option>';
+                listaCategoriasLocais.forEach(function(c) { html += '<option value="' + c + '"' + (c === v ? ' selected' : '') + '>' + c + '</option>'; });
+                html += '</select></div>';
+            }
+            container.innerHTML = html;
+        }
+
+        function salvarOrdemCapa(e) {
+            e.preventDefault(); var btn = document.getElementById('btn-salvar-capa'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
+            var sel = []; for(var i=1; i<=8; i++) { var val = document.getElementById('capa-pos-' + i).value; if(val) sel.push(val); }
+            var jsonStr = JSON.stringify(sel);
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function() { 
+                    mostrarMensagem("Ordem da capa atualizada!"); configuracoesGlobais['CategoriasCapa'] = jsonStr; btn.innerHTML = txt; btn.disabled = false; 
+                    try { localStorage.removeItem('portal_data_cache'); } catch(e){}
+                }).salvarConfiguracaoHTMLCustom('CategoriasCapa', jsonStr);
+            }
+        }
+
+        function preencherFormPlacar() {
+            var ligasAtivas = []; if (configuracoesGlobais['LigasPlacar']) { try { ligasAtivas = JSON.parse(configuracoesGlobais['LigasPlacar']); } catch(e){} }
+            document.querySelectorAll('input[name="liga-placar"]').forEach(function(cb) { cb.checked = ligasAtivas.indexOf(cb.value) !== -1; });
+        }
+
+        function salvarPlacarAoVivo(e) {
+            e.preventDefault(); var btn = document.getElementById('btn-salvar-placar'); btn.innerText = "A SALVAR..."; btn.disabled = true;
+            var ligas = Array.from(document.querySelectorAll('input[name="liga-placar"]:checked')).map(function(cb){return cb.value;});
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function() { 
+                    mostrarMensagem("Placar atualizado!"); btn.innerText = "Salvar Ligas"; btn.disabled = false; configuracoesGlobais['LigasPlacar'] = JSON.stringify(ligas); 
+                    try { localStorage.removeItem('portal_data_cache'); } catch(e){}
+                }).salvarConfiguracaoHTMLCustom("LigasPlacar", JSON.stringify(ligas));
+            }
+        }
+
+        function salvarPropaganda(e) {
+            e.preventDefault(); var btn = document.getElementById('btn-salvar-propaganda'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
+            var payload = { empresa: document.getElementById('prop-empresa').value + '|||' + document.getElementById('prop-tempo').value, local: document.getElementById('prop-local').value, linkDestino: document.getElementById('prop-link').value };
+            if (base64StringProp) { payload.isUpload = true; payload.base64 = base64StringProp; payload.mimeType = mimeStringProp; payload.fileName = nameStringProp; payload.urlArquivo = ''; } 
+            else { payload.isUpload = false; payload.urlArquivo = document.getElementById('prop-imagem').value; payload.tipo = 'link'; }
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function() { 
+                    mostrarMensagem('Anúncio no ar!'); document.getElementById('form-propaganda').reset(); base64StringProp = ""; btn.innerHTML = txt; btn.disabled = false; 
+                    try { localStorage.removeItem('portal_data_cache'); } catch(e){}
+                }).salvarPropagandaNoSheets(payload);
+            }
+        }
+
+        function salvarRedesSociais(e) {
+            e.preventDefault(); var btn = document.getElementById('btn-salvar-sociais'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-inst-url', document.getElementById('soc-inst-url').value);
+                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-fb-url', document.getElementById('soc-fb-url').value);
+                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-x-url', document.getElementById('soc-x-url').value);
+                window.google.script.run.withSuccessHandler(function() { 
+                    mostrarMensagem("Redes sociais atualizadas!"); btn.innerHTML = txt; btn.disabled = false; 
+                    try { localStorage.removeItem('portal_data_cache'); } catch(e){}
+                }).salvarConfiguracaoHTMLCustom('soc-yt-url', document.getElementById('soc-yt-url').value);
+            }
+        }
+
+        function salvarChaveIA() {
+            var val = document.getElementById('config-chave-ia').value.trim(); var btn = document.getElementById('btn-salvar-chave'); var txt = btn.innerText; btn.innerText = 'A GUARDAR...'; btn.disabled = true;
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function() { mostrarMensagem('Chave da IA guardada com sucesso!'); configuracoesGlobais['ChaveIA'] = val; btn.innerText = txt; btn.disabled = false; }).salvarConfiguracaoHTMLCustom('ChaveIA', val);
+            }
+        }
+
+        function salvarDesignTextos() {
+            var btn = document.getElementById('btn-salvar-design'); var txtOrig = btn.innerText; btn.innerText = "A GUARDAR..."; btn.disabled = true;
+            var cLogo = document.getElementById('cfg-cor-logo').value;
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.salvarConfiguracaoHTMLCustom('CorLogo', cLogo);
+                window.google.script.run.withSuccessHandler(function() {
+                    mostrarMensagem("Textos do design salvos!"); btn.innerText = txtOrig; btn.disabled = false;
+                    try { localStorage.removeItem('portal_data_cache'); } catch(err){}
+                }).salvarConfiguracaoHTMLCustom('LogoHTML', document.getElementById('cfg-logo').value);
+            }
+        }
+
+        function gerarLogoIA() {
+            var desc = document.getElementById('prompt-logo').value.trim(); 
+            if(!desc) { mostrarMensagem("Descreva como quer o logótipo.", "erro"); document.getElementById('prompt-logo').focus(); return; }
+            var btn = document.getElementById('btn-gerar-logo'); var txt = btn.innerText; btn.innerText = "A CRIAR..."; btn.disabled = true;
+            var promptFinal = "A highly professional, minimalist vector logo design for a digital news portal named 'Notícias Avulsas'. " + desc + ". Isolated on a clean white background, no text other than the brand name if strictly necessary, high resolution, corporate identity.";
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if(res && res.sucesso && res.base64) {
+                        var html = '<img src="data:image/png;base64,' + res.base64 + '" class="h-12 object-contain cursor-pointer" onclick="voltarCapa();"/>';
+                        document.getElementById('preview-logo-ia').innerHTML = html; document.getElementById('preview-logo-wrapper').classList.remove('hidden'); window.novaLogoHtml = html; mostrarMensagem("Logótipo criado com sucesso!");
+                    } else { mostrarMensagem("Erro na IA.", "erro"); }
+                    btn.innerText = txt; btn.disabled = false;
+                }).withFailureHandler(function(error) { mostrarMensagem("Falha na rede.", "erro"); btn.innerText = "✨ Gerar com IA"; btn.disabled = false; }).chamarGeminiImagemBackend(promptFinal);
+            }
+        }
+
+        function aplicarNovaLogo() {
+            if (!window.novaLogoHtml) return; 
+            var btn = document.getElementById('btn-aplicar-logo'); var txt = btn.innerText; btn.innerText = "A GUARDAR..."; btn.disabled = true;
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    mostrarMensagem('Logo atualizado no servidor!'); configuracoesGlobais['LogoHTML'] = window.novaLogoHtml; btn.innerText = txt; btn.disabled = false;
+                    try { localStorage.removeItem('portal_data_cache'); } catch(err){}
+                }).salvarConfiguracaoHTMLCustom('LogoHTML', window.novaLogoHtml);
+            }
+        }
+
+        function salvarExpediente() {
+            var btn = document.getElementById('btn-salvar-expediente'); var txtOrig = btn.innerHTML; btn.innerHTML = "A GUARDAR..."; btn.disabled = true;
+            var htmlExpediente = document.getElementById('admin-editor-expediente').innerHTML;
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    mostrarMensagem("Expediente atualizado!"); btn.innerHTML = txtOrig; btn.disabled = false;
+                    try { localStorage.removeItem('portal_data_cache'); } catch(err){}
+                }).withFailureHandler(function(err) { mostrarMensagem("Falha ao salvar.", "erro"); btn.innerHTML = txtOrig; btn.disabled = false; }).salvarConfiguracaoHTMLCustom('ExpedienteHTML', htmlExpediente);
+            }
+        }
+
+        function criarUsuario(e) {
+            e.preventDefault();
+            var u = document.getElementById('novo-user').value.trim();
+            var p = document.getElementById('nova-senha').value.trim();
+            if(!u || !p) return;
+            var btn = document.getElementById('btn-criar-usuario'); var txtOrig = btn.innerHTML; btn.innerHTML = "A CRIAR..."; btn.disabled = true;
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if(res && res.sucesso) { mostrarMensagem("Usuário criado com sucesso!"); document.getElementById('form-novo-usuario').reset(); } 
+                    else { mostrarMensagem(res ? res.erro : "Erro ao criar.", "erro"); }
+                    btn.innerHTML = txtOrig; btn.disabled = false;
+                }).withFailureHandler(function(err) { mostrarMensagem("Falha ao comunicar com o servidor.", "erro"); btn.innerHTML = txtOrig; btn.disabled = false; }).adicionarUsuario(u, p);
+            }
+        }
     </script>
 </body>
 </html>
-```
-
-### O que acontece agora?
-O seu sistema ficou modular, seguro e limpo.
-* Se for à página `noticiasavulsas.com.br/admin.html`, o seu redator apenas verá as matérias, as ferramentas de texto (com a ajuda inteligente da IA) e os rascunhos.
-* Se for à página `noticiasavulsas.com.br/config.html`, você (o dono) pode decidir onde entra o Banner A, em que ordem ficam as capas e que desportos estão no placar!
-
-Pode testar este novo ecossistema e garantir que a sua redação vai adorar!
