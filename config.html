@@ -155,7 +155,7 @@
         </header>
 
         <main class="max-w-[1200px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
-            <!-- ABAS DE NAVEGAÇÃO -->
+            <!-- ABAS DE NAVEGAÇÃO CONFIGURAÇÕES -->
             <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar pb-1" id="nav-abas-config">
                 <button type="button" onclick="alternarAbaConfig('form-capa-container')" id="tab-btn-capa" class="tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm hidden">Layout Capa</button>
                 <button type="button" onclick="alternarAbaConfig('form-logo-container')" id="tab-btn-logo" class="tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm hidden">IA & Design</button>
@@ -233,6 +233,11 @@
                         <button type="button" id="btn-aplicar-estilo" onclick="aplicarNovoEstilo()" class="bg-jornal-dark text-white font-black px-10 py-4 uppercase tracking-widest text-sm rounded-sm hover:bg-gray-800 transition-colors shadow-xl">Aplicar ao Site</button>
                     </div>
                 </div>
+                
+                <!-- CAMPOS OCULTOS PARA GUARDAR OS VALORES -->
+                <input type="hidden" id="cfg-logo" />
+                <input type="hidden" id="cfg-cor-logo" />
+
             </div>
 
             <!-- 3. ANÚNCIOS -->
@@ -610,31 +615,41 @@
             e.preventDefault();
             var p1 = document.getElementById('nova-senha-1').value.trim();
             var p2 = document.getElementById('nova-senha-2').value.trim();
+            
             if (p1 !== p2) { mostrarMensagem("As senhas não coincidem.", "erro"); return; }
             if (p1.length < 5) { mostrarMensagem("A senha deve ter pelo menos 5 caracteres.", "erro"); return; }
             
-            var btn = document.getElementById('btn-salvar-nova-senha'); var txt = btn.innerHTML; btn.innerHTML = "A GUARDAR..."; btn.disabled = true;
+            var btn = document.getElementById('btn-salvar-nova-senha');
+            var txt = btn.innerHTML; btn.innerHTML = "A GUARDAR..."; btn.disabled = true;
+            
             var u = localStorage.getItem('admin_user');
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run && window.google.script.run.alterarSenhaUsuario) {
                 window.google.script.run.withSuccessHandler(function(res) {
                     if (res && res.sucesso) {
                         mostrarMensagem("Senha atualizada com sucesso!");
-                        document.getElementById('modalMudarSenha').classList.add('hidden'); document.getElementById('modalMudarSenha').classList.remove('flex');
+                        document.getElementById('modalMudarSenha').classList.add('hidden');
+                        document.getElementById('modalMudarSenha').classList.remove('flex');
+                        
                         var oldPerms = localStorage.getItem('admin_perms') || '';
                         var newPerms = oldPerms.replace('req_pass_change:true;', '').replace('req_pass_change:true', '');
                         localStorage.setItem('admin_perms', newPerms);
+                        
                         carregarDados();
                     } else { mostrarMensagem("Erro ao atualizar senha no servidor.", "erro"); }
                     btn.innerHTML = txt; btn.disabled = false;
                 }).withFailureHandler(function() {
-                    mostrarMensagem("Falha na rede. Tente novamente.", "erro"); btn.innerHTML = txt; btn.disabled = false;
+                    mostrarMensagem("Falha na rede. Tente novamente.", "erro");
+                    btn.innerHTML = txt; btn.disabled = false;
                 }).alterarSenhaUsuario(u, p1);
             } else {
                 mostrarMensagem("Modo demonstração: Senha alterada (Função Backend pendente).");
-                document.getElementById('modalMudarSenha').classList.add('hidden'); document.getElementById('modalMudarSenha').classList.remove('flex');
-                var oldPerms = localStorage.getItem('admin_perms') || ''; localStorage.setItem('admin_perms', oldPerms.replace('req_pass_change:true;', '').replace('req_pass_change:true', ''));
-                carregarDados(); btn.innerHTML = txt; btn.disabled = false;
+                document.getElementById('modalMudarSenha').classList.add('hidden');
+                document.getElementById('modalMudarSenha').classList.remove('flex');
+                var oldPerms = localStorage.getItem('admin_perms') || '';
+                localStorage.setItem('admin_perms', oldPerms.replace('req_pass_change:true;', '').replace('req_pass_change:true', ''));
+                carregarDados();
+                btn.innerHTML = txt; btn.disabled = false;
             }
         }
 
@@ -646,20 +661,36 @@
             
             if (perms === 'admin' || perms === '') {
                 allBtns.forEach(function(b) { b.classList.remove('hidden'); });
-                if(linkRedacao) linkRedacao.classList.remove('hidden'); if(linkEstudio) linkEstudio.classList.remove('hidden');
+                if(linkRedacao) linkRedacao.classList.remove('hidden');
+                if(linkEstudio) linkEstudio.classList.remove('hidden');
                 return;
             }
             
             var match = perms.match(/tabs:([^;]+)/);
             if (match) {
                 var allowed = match[1].split(',');
+                var temRedacao = false;
+                
                 allBtns.forEach(function(btn) {
                     var t = btn.id.replace('tab-btn-', 'aba-');
-                    if (allowed.indexOf(t) !== -1) { btn.classList.remove('hidden'); } else { btn.classList.add('hidden'); }
+                    if (allowed.indexOf(t) !== -1) {
+                        btn.classList.remove('hidden');
+                    } else {
+                        btn.classList.add('hidden');
+                    }
                 });
                 
-                if(allowed.indexOf('aba-noticia') !== -1 || allowed.indexOf('aba-lista') !== -1) { if(linkRedacao) linkRedacao.classList.remove('hidden'); } else { if(linkRedacao) linkRedacao.classList.add('hidden'); }
-                if(allowed.indexOf('aba-estudio') !== -1) { if(linkEstudio) linkEstudio.classList.remove('hidden'); } else { if(linkEstudio) linkEstudio.classList.add('hidden'); }
+                if(allowed.indexOf('aba-noticia') !== -1 || allowed.indexOf('aba-lista') !== -1) {
+                    if(linkRedacao) linkRedacao.classList.remove('hidden');
+                } else {
+                    if(linkRedacao) linkRedacao.classList.add('hidden');
+                }
+                
+                if(allowed.indexOf('aba-estudio') !== -1) {
+                    if(linkEstudio) linkEstudio.classList.remove('hidden');
+                } else {
+                    if(linkEstudio) linkEstudio.classList.add('hidden');
+                }
             }
         }
 
@@ -673,43 +704,62 @@
         // ==========================================
         function carregarDados() {
             aplicarPermissoesDeAcesso();
-            var loader = document.getElementById('loading-global'); if(loader) loader.classList.remove('hidden');
+            
+            var loader = document.getElementById('loading-global');
+            if(loader) loader.classList.remove('hidden');
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
                     if(loader) loader.classList.add('hidden');
                     if (res && res.sucesso) {
                         configuracoesGlobais = res.config || {};
-                        if (res.categorias && res.categorias.length > 0) listaCategoriasLocais = res.categorias;
-                        
+                        if (res.categorias && res.categorias.length > 0) {
+                            listaCategoriasLocais = res.categorias;
+                        }
                         try { preencherFormCapa(); } catch(e){}
                         try { preencherFormPlacar(); } catch(e){}
                         try { preencherConfigsGerais(); } catch(e){}
                         if (res.usuarios) renderizarUsuarios(res.usuarios);
                         
+                        // Abre a primeira aba visível para o utilizador logado
                         abrirPrimeiraAbaDisponivel();
                     }
                 }).withFailureHandler(function(err) {
-                    if(loader) loader.classList.add('hidden'); mostrarMensagem("Falha de Servidor.", 'erro');
+                    if(loader) loader.classList.add('hidden');
+                    mostrarMensagem("Falha de Servidor.", 'erro');
                 }).getHomeData();
             } else {
-                if(loader) loader.classList.add('hidden'); abrirPrimeiraAbaDisponivel();
+                if(loader) loader.classList.add('hidden');
+                abrirPrimeiraAbaDisponivel();
             }
         }
 
         function abrirPrimeiraAbaDisponivel() {
             var tabsVisiveis = document.querySelectorAll('.tab-nav-btn:not(.hidden)');
             if(tabsVisiveis.length > 0) {
-                var firstId = tabsVisiveis[0].id.replace('tab-btn-', 'form-') + '-container'; alternarAbaConfig(firstId);
-            } else { document.querySelectorAll('.config-panel-section').forEach(function(s){ s.classList.add('hidden'); }); }
+                var firstId = tabsVisiveis[0].id.replace('tab-btn-', 'form-') + '-container';
+                alternarAbaConfig(firstId);
+            } else {
+                document.querySelectorAll('.config-panel-section').forEach(function(s){ s.classList.add('hidden'); });
+            }
         }
 
         function alternarAbaConfig(abaId) {
             var contentIds = ['form-capa-container', 'form-logo-container', 'form-propaganda-container', 'form-social-container', 'form-placar-container', 'form-expediente-container', 'form-usuarios-container'];
             var tabIds = ['tab-btn-capa', 'tab-btn-logo', 'tab-btn-propaganda', 'tab-btn-social', 'tab-btn-placar', 'tab-btn-expediente', 'tab-btn-usuarios'];
-            contentIds.forEach(function(id) { var el = document.getElementById(id); if(el) el.classList.add('hidden'); });
-            tabIds.forEach(function(id) { var el = document.getElementById(id); if(el && !el.classList.contains('hidden')) el.className = "tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm"; });
-            var targetEl = document.getElementById(abaId); if(targetEl) targetEl.classList.remove('hidden');
+            
+            contentIds.forEach(function(id) { 
+                var el = document.getElementById(id); 
+                if(el) el.classList.add('hidden'); 
+            });
+            
+            tabIds.forEach(function(id) { 
+                var el = document.getElementById(id); 
+                if(el && !el.classList.contains('hidden')) el.className = "tab-nav-btn py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm"; 
+            });
+            
+            var targetEl = document.getElementById(abaId);
+            if(targetEl) targetEl.classList.remove('hidden');
             
             var btnId = ""; var classAtiva = "bg-jornal-dark text-white font-black";
             if (abaId === 'form-capa-container') { btnId = 'tab-btn-capa'; classAtiva = "bg-emerald-600 text-white font-black"; }
@@ -720,56 +770,124 @@
             else if (abaId === 'form-expediente-container') { btnId = 'tab-btn-expediente'; classAtiva = "bg-blue-600 text-white font-black"; }
             else if (abaId === 'form-usuarios-container') { btnId = 'tab-btn-usuarios'; classAtiva = "bg-rose-600 text-white font-black"; }
             
-            var btnEl = document.getElementById(btnId); if(btnEl) btnEl.className = 'tab-nav-btn py-3 px-5 uppercase tracking-widest text-[11px] whitespace-nowrap rounded-t-sm transition-colors shadow-sm ' + classAtiva;
+            var btnEl = document.getElementById(btnId);
+            if(btnEl) btnEl.className = 'tab-nav-btn py-3 px-5 uppercase tracking-widest text-[11px] whitespace-nowrap rounded-t-sm transition-colors shadow-sm ' + classAtiva;
         }
 
         // ==========================================
-        // EDITORES RICH TEXT
+        // EDITORES RICH TEXT (FUNÇÕES)
         // ==========================================
-        function execCmd(command, arg) { if(arg === undefined) arg = null; document.execCommand(command, false, arg); }
-        function aplicarFonte(valor) { if (!valor) return; document.execCommand('fontName', false, valor); }
-        function inserirLinkRichEditor() { var url = prompt("Insira a URL completa do hiperlink:"); if (url) execCmd('createLink', url); }
+        function execCmd(command, arg) { 
+            if(arg === undefined) arg = null; 
+            document.execCommand(command, false, arg); 
+        }
+        
+        function aplicarFonte(valor) { 
+            if (!valor) return; 
+            document.execCommand('fontName', false, valor); 
+        }
+
+        function inserirLinkRichEditor() { 
+            var url = prompt("Insira a URL completa do hiperlink:"); 
+            if (url) execCmd('createLink', url); 
+        }
 
         function processarUploadImagemEditor(input, idEditorDestino) {
-            if (!input.files || !input.files[0]) return; var file = input.files[0];
+            if (!input.files || !input.files[0]) return;
+            var file = input.files[0];
+            var legenda = prompt("Legenda para a imagem (opcional):") || "";
+            var creditos = prompt("Créditos da foto:") || "";
             var reader = new FileReader();
             reader.onload = function(e) {
                 var img = new Image();
                 img.onload = function() {
                     var canvas = document.createElement('canvas'); var ctx = canvas.getContext('2d'); var maxWidth = 800; var scale = 1;
-                    if (img.width > maxWidth) scale = maxWidth / img.width; canvas.width = img.width * scale; canvas.height = img.height * scale;
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height); var base64Resized = canvas.toDataURL('image/jpeg', 0.8);
+                    if (img.width > maxWidth) scale = maxWidth / img.width;
+                    canvas.width = img.width * scale; canvas.height = img.height * scale;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    var base64Resized = canvas.toDataURL('image/jpeg', 0.8);
                     
-                    var htmlImg = '<br><figure style="margin: 16px auto; text-align: center; max-width: 100%; display: block;"><img src="' + base64Resized + '" style="max-width: 100%; height: auto; border-radius: 8px; display: inline-block; margin: 0 auto; border: 1px solid #e2e8f0;" />';
+                    var htmlImg = '<br><figure style="margin: 16px auto; text-align: center; max-width: 100%; display: block;">' +
+                                  '<img src="' + base64Resized + '" style="max-width: 100%; height: auto; border-radius: 8px; display: inline-block; margin: 0 auto; border: 1px solid #e2e8f0;" />';
+                    if (legenda || creditos) {
+                        var credTexto = creditos ? 'Foto: ' + creditos : ''; var sep = (legenda && creditos) ? ' - ' : '';
+                        htmlImg += '<figcaption style="font-size: 12px; color: #64748b; margin-top: 8px; font-style: italic; text-align: center;">' + legenda + sep + credTexto + '</figcaption>';
+                    }
+                    
                     htmlImg += '<div contenteditable="false" style="margin-top: 10px; text-align: center; user-select: none;">' +
-                               '<button type="button" class="btn-diminuir-img" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; margin-right: 8px;">-</button>' +
-                               '<button type="button" class="btn-aumentar-img" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer;">+</button></div></figure><br><p>&#8203;</p>';
-                    var targetEd = document.getElementById(idEditorDestino); if(targetEd) targetEd.focus();
-                    document.execCommand('insertHTML', false, htmlImg); input.value = '';
-                }; img.src = e.target.result;
-            }; reader.readAsDataURL(file);
+                               '<button type="button" class="btn-diminuir-img" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; margin-right: 8px;" title="Diminuir Imagem">-</button>' +
+                               '<button type="button" class="btn-aumentar-img" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer;" title="Aumentar Imagem">+</button>' +
+                               '</div>';
+                               
+                    htmlImg += '</figure><br><p>&#8203;</p>';
+                    
+                    var targetEd = document.getElementById(idEditorDestino);
+                    if(targetEd) targetEd.focus();
+                    document.execCommand('insertHTML', false, htmlImg);
+                    input.value = '';
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
         }
 
         function atualizarBarraFerramentas() {
-            var editorAtivo = document.activeElement; if (!editorAtivo || !editorAtivo.classList.contains('rich-editor')) return;
-            var fontNode = document.queryCommandValue('fontName'); var sizeNode = document.queryCommandValue('fontSize');
-            var parentDiv = editorAtivo.parentElement; var selFont = parentDiv.querySelector('.fontFamilySelect'); var selSize = parentDiv.querySelector('.fontSizeSelect');
-            if (fontNode && selFont) { var fontL = fontNode.replace(/['"]/g, '').toLowerCase().split(',')[0]; for(var i=0; i<selFont.options.length; i++) { if(selFont.options[i].value.toLowerCase().includes(fontL)) { selFont.selectedIndex = i; break; } } }
-            if (sizeNode && selSize) { for(var j=0; j<selSize.options.length; j++) { if(selSize.options[j].value === sizeNode.toString()) { selSize.selectedIndex = j; break; } } }
+            var editorAtivo = document.activeElement;
+            if (!editorAtivo || !editorAtivo.classList.contains('rich-editor')) return;
+            
+            var fontNode = document.queryCommandValue('fontName');
+            var sizeNode = document.queryCommandValue('fontSize');
+            
+            var parentDiv = editorAtivo.parentElement; 
+            var selFont = parentDiv.querySelector('.fontFamilySelect');
+            var selSize = parentDiv.querySelector('.fontSizeSelect');
+            
+            if (fontNode && selFont) {
+                var fontL = fontNode.replace(/['"]/g, '').toLowerCase().split(',')[0];
+                for(var i=0; i<selFont.options.length; i++) {
+                    if(selFont.options[i].value.toLowerCase().includes(fontL)) { selFont.selectedIndex = i; break; }
+                }
+            }
+            if (sizeNode && selSize) {
+                for(var j=0; j<selSize.options.length; j++) {
+                    if(selSize.options[j].value === sizeNode.toString()) { selSize.selectedIndex = j; break; }
+                }
+            }
         }
 
         function limparFormatacao(btnElement) {
-            document.execCommand('removeFormat', false, null); document.execCommand('unlink', false, null);
+            document.execCommand('removeFormat', false, null);
+            document.execCommand('unlink', false, null);
             var sel = window.getSelection();
             if (!sel.isCollapsed) {
-                var range = sel.getRangeAt(0); var container = range.commonAncestorContainer; if (container.nodeType === 3) container = container.parentNode;
-                var editor = container.closest('.rich-editor'); if (!editor && btnElement) { editor = btnElement.closest('div').parentElement.querySelector('.rich-editor'); }
+                var range = sel.getRangeAt(0);
+                var container = range.commonAncestorContainer;
+                if (container.nodeType === 3) container = container.parentNode;
+                
+                var editor = container.closest('.rich-editor');
+                if (!editor && btnElement) {
+                    editor = btnElement.closest('div').parentElement.querySelector('.rich-editor');
+                }
+                
                 if (editor) {
                     var elements = container.querySelectorAll('*');
-                    elements.forEach(function(el) { if (sel.containsNode(el, true)) { el.removeAttribute('style'); el.removeAttribute('face'); el.removeAttribute('size'); el.removeAttribute('class'); el.removeAttribute('color'); } });
-                    if (container !== editor) { container.removeAttribute('style'); container.removeAttribute('face'); container.removeAttribute('size'); container.removeAttribute('class'); container.removeAttribute('color'); }
-                    var parentDiv = editor.parentElement; var selFont = parentDiv.querySelector('.fontFamilySelect'); var selSize = parentDiv.querySelector('.fontSizeSelect');
-                    if(selFont) selFont.selectedIndex = 0; if(selSize) selSize.selectedIndex = 0; editor.focus();
+                    elements.forEach(function(el) {
+                        if (sel.containsNode(el, true)) {
+                            el.removeAttribute('style'); el.removeAttribute('face');
+                            el.removeAttribute('size'); el.removeAttribute('class'); el.removeAttribute('color');
+                        }
+                    });
+                    if (container !== editor) {
+                        container.removeAttribute('style'); container.removeAttribute('face');
+                        container.removeAttribute('size'); container.removeAttribute('class'); container.removeAttribute('color');
+                    }
+                    
+                    var parentDiv = editor.parentElement;
+                    var selFont = parentDiv.querySelector('.fontFamilySelect');
+                    var selSize = parentDiv.querySelector('.fontSizeSelect');
+                    if(selFont) selFont.selectedIndex = 0;
+                    if(selSize) selSize.selectedIndex = 0;
+                    editor.focus();
                 }
             }
         }
