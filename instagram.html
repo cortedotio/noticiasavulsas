@@ -58,7 +58,7 @@
         .template-feed {
             width: 1080px;
             height: 1080px;
-            background-color: #3b82f6; /* Fallback */
+            background-color: #3b82f6; /* Fallback caso não tenha cor customizada */
             background-image: linear-gradient(to bottom right, #3b82f6, #34d399); 
             position: relative;
             font-family: 'Inter', sans-serif;
@@ -373,10 +373,12 @@
     </div>
 
     <script>
-        // ATENÇÃO: Link do Google Apps Script
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyZD4KJlvhtMwxr8fToE7nT2ZUdVHNglay0Ynauk6ixmrc4nsYK93KenBcJJKG3psFa/exec";
+        // ATENÇÃO: Link NOVO do Google Apps Script
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxCrcbl9TyjKJdfUmxFZyvhkB85Kkselz1Amw0K5ewRrQhBwCN7VQ8ph0Ei7BNqmxfg/exec";
         
         let noticiasGlobais = [];
+        let configuracoesGlobais = {}; // Variável para armazenar as configurações geradas pela IA
+        
         let urlAtualBaixar = "";
         let nomeAtualBaixar = "";
         let tipoAtualBaixar = ""; 
@@ -410,7 +412,10 @@
 
                 if (payload && payload.sucesso) {
                     noticiasGlobais = payload.noticias || [];
+                    configuracoesGlobais = payload.config || {};
+                    
                     preencherFiltroEditorias(payload.categorias || []);
+                    aplicarEstiloArtes(); // INJETA A COR DA IA NA BORDA DA ARTE
                     filtrarTabela(); 
                 } else {
                     alert("Erro ao ler dados da base.");
@@ -421,6 +426,27 @@
                 alert("Falha de rede. O Servidor não respondeu.");
                 console.error(err);
             });
+        }
+        
+        // A MÁGICA DO ESTILO: Lê a variável da IA e aplica à borda
+        function aplicarEstiloArtes() {
+            if (configuracoesGlobais['CorLogo']) {
+                let cor = configuracoesGlobais['CorLogo'];
+                
+                // Remove as propriedades de texto para o Tailwind assumir isto como fundo
+                cor = cor.replace(/bg-clip-text/g, '').replace(/text-transparent/g, '').trim();
+
+                const templateFeed = document.getElementById('template-feed');
+                if (templateFeed && cor) {
+                    // Remove o estilo engessado para libertar o Tailwind
+                    templateFeed.style.background = 'none';
+                    templateFeed.style.backgroundColor = 'transparent';
+                    templateFeed.style.backgroundImage = 'none';
+                    
+                    // Adiciona as classes Tailwind do seu CSS inteligente
+                    templateFeed.className = 'template-feed ' + cor;
+                }
+            }
         }
 
         function preencherFiltroEditorias(categorias) {
@@ -444,7 +470,8 @@
             tbody.innerHTML = '';
 
             const filtradas = noticiasGlobais.filter(n => {
-                if (String(n.status).toLowerCase() === 'inativa') return false;
+                // EXCLUSIVIDADE: Só mostra matérias que estão publicadas (Ativa) no site
+                if (String(n.status).toLowerCase() !== 'ativa') return false;
 
                 const matchTermo = (n.titulo.toLowerCase().includes(termo) || n.categoria.toLowerCase().includes(termo));
                 const matchEdit = (editoria === 'todas' || n.categoria.toLowerCase().includes(editoria));
@@ -453,7 +480,7 @@
             });
 
             if(filtradas.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-xs font-bold text-gray-500 uppercase tracking-widest">Nenhuma matéria encontrada.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-xs font-bold text-gray-500 uppercase tracking-widest">Nenhuma matéria publicada encontrada.</td></tr>`;
                 return;
             }
 
@@ -560,7 +587,7 @@
             const catUnica = noticia.categoria.split(',')[0];
             const hashtagEdit = "#" + catUnica.replace(/\s+/g, '');
             
-            // CONSTRUÇÃO DA URL AMIGÁVEL CORRIGIDA E COMPLETA
+            // CONSTRUÇÃO DA URL AMIGÁVEL
             const slugCat = normalizarTextoUrl(catUnica);
             const slugTitulo = normalizarTextoUrl(noticia.titulo);
             const linkPortal = `noticiasavulsas.com.br/${slugCat}/${slugTitulo}/${noticia.id}`;
@@ -602,12 +629,12 @@
 
                 setTimeout(() => {
                     html2canvas(alvoElemento, {
-                        scale: 2, // Aumenta a qualidade e REMOVE A LINHA BRANCA
-                        width: 1080, // Força a largura exata
-                        height: tipo === 'feed' ? 1080 : 1920, // Força a altura exata
+                        scale: 2,
+                        width: 1080,
+                        height: tipo === 'feed' ? 1080 : 1920,
                         useCORS: true,
                         allowTaint: false, 
-                        backgroundColor: tipo === 'feed' ? '#3b82f6' : '#0F172A' // Evita bordas vazias
+                        backgroundColor: null // <-- Permite que as cores Tailwind da sua IA funcionem no render!
                     }).then(canvasResult => {
                         const finalJpg = canvasResult.toDataURL("image/jpeg", 0.9);
                         const prevImg = document.getElementById('preview-final-img');
@@ -671,7 +698,7 @@
                     base64: imagemBase64,
                     legenda: legenda,
                     token: tokenMestre,
-                    tipoPost: tipoAtualBaixar // <-- AGORA ENVIAMOS O TIPO PARA O MOTOR
+                    tipoPost: tipoAtualBaixar // INFO VAI PARA O SERVIDOR PARA SEPARAR FEED E STORY
                 }]
             };
 
