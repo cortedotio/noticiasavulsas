@@ -1234,12 +1234,15 @@
                 .then(function(res) { return res.ok ? res.json() : null; })
                 .then(function(data) {
                     if (data && data.events && data.events.length > 0) {
-                        var nomeCompeticao = traduzirTermoPlacar(data.leagues && data.leagues[0] ? data.leagues[0].name : 'Competição');
+                        var nomeCompeticao = traduzirTermoPlacar(data.leagues && data.leagues.length > 0 ? data.leagues[0].name : 'Competição');
                         var matchesHtml = ''; 
                         var exibidos = 0;
                         
                         data.events.forEach(function(jogo) {
                             if (!jogo.date) return;
+                            
+                            // PROTEÇÃO NOVA: Se a ESPN não enviar dados das equipas, ignoramos este jogo e não crashamos
+                            if (!jogo.competitions || jogo.competitions.length === 0) return;
 
                             var dtJogo = criarDataSegura(jogo.date);
                             if (isNaN(dtJogo.getTime())) return;
