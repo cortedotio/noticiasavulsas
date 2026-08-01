@@ -14,7 +14,7 @@
         // LIGAÇÃO À SUA BASE DE DADOS GOOGLE
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyoHo_olvZbyvT-qfKBDAveq1-n1IHD_bLxf831i_bBrFJeSVTcc6RTfvdQ9QV25hTh/exec";
         
-        // Ponte de comunicação com o Backend
+        // Ponte de comunicação com o Backend (BLINDADA CONTRA ERROS DE CORS E TIMEOUT)
         window.google = {
             script: {
                 run: {
@@ -40,16 +40,26 @@
                 fetch(GAS_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: funcName, args: argsArray })
+                    body: JSON.stringify({ action: funcName, args: argsArray }),
+                    redirect: 'follow' // FORÇA O NAVEGADOR A SEGUIR A GOOGLE SEM CORTAR A LIGAÇÃO
                 })
-                .then(function(res) { return res.json(); })
-                .then(function(result) {
-                    if (successCb) {
-                        var finalPayload = result;
-                        if (result && result.result !== undefined) {
-                            finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
+                .then(function(res) { 
+                    if (!res.ok) throw new Error("Erro de HTTP: " + res.status);
+                    return res.text(); // Lemos como texto primeiro para evitar crash se a Google devolver HTML de erro
+                })
+                .then(function(text) {
+                    try {
+                        var result = JSON.parse(text);
+                        if (successCb) {
+                            var finalPayload = result;
+                            if (result && result.result !== undefined) {
+                                finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
+                            }
+                            successCb(finalPayload);
                         }
-                        successCb(finalPayload);
+                    } catch(e) {
+                        console.error("Resposta Inválida do Servidor Google (Pode ser Timeout ou Limite Excedido):", text);
+                        if (failureCb) failureCb(new Error("A Google bloqueou a gravação. Motivo oculto (Veja o Console - F12)."));
                     }
                 })
                 .catch(function(err) {
@@ -165,7 +175,7 @@
             <!-- ========================================================== -->
             <div id="form-noticia-container" class="bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="flex justify-between items-center mb-8 border-l-4 border-jornal-red pl-3">
-                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Redigir Matéria</h2>
+                    <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter" id="titulo-pagina-form">Redigir Matéria</h2>
                 </div>
                 
                 <form id="form-admin" class="space-y-6">
@@ -733,8 +743,16 @@
             if(targetEl) targetEl.classList.remove('hidden');
             
             var botaoId = ""; var classAtiva = "bg-jornal-dark text-white";
-            if (abaId === 'form-noticia-container') { botaoId = 'aba-noticia'; classAtiva = "bg-jornal-blue text-white font-black"; }
-            else if (abaId === 'lista-noticias-container') { botaoId = 'aba-lista'; classAtiva = "bg-jornal-dark text-white font-black"; carregarListaEdicao(); }
+            if (abaId === 'form-noticia-container') { 
+                botaoId = 'aba-noticia'; 
+                classAtiva = "bg-jornal-blue text-white font-black"; 
+                document.getElementById('titulo-pagina-form').innerText = "Redigir Matéria"; // Volta ao título original ao abrir a aba
+            }
+            else if (abaId === 'lista-noticias-container') { 
+                botaoId = 'aba-lista'; 
+                classAtiva = "bg-jornal-dark text-white font-black"; 
+                carregarListaEdicao(); 
+            }
             
             var btnEl = document.getElementById(botaoId);
             if(btnEl) btnEl.className = 'py-3 px-5 uppercase tracking-widest text-[11px] whitespace-nowrap rounded-t-sm transition-colors ' + classAtiva;
@@ -987,6 +1005,7 @@
             atualizarPreviewURL(); 
             atualizarRelacionadasAutomaticas(); 
             
+            document.getElementById('titulo-pagina-form').innerText = "Redigir Matéria";
             var btnSalvar = document.getElementById('btn-salvar-noticia'); 
             if (btnSalvar) btnSalvar.innerText = "Publicar Matéria";
             var btnRascunho = document.getElementById('btn-salvar-rascunho');
@@ -1091,13 +1110,13 @@
                         
                         carregarNoticiasAdmin(true); 
                     } else { 
-                        mostrarMensagem("Erro ao guardar", 'erro'); 
+                        mostrarMensagem("Erro do Servidor: " + (res.erro || "Falha ao guardar"), 'erro'); 
                     }
                 })
                 .withFailureHandler(function(err) {
                     btn.innerHTML = txtOriginal; 
                     btn.disabled = false;
-                    mostrarMensagem("Falha na comunicação com o servidor.", "erro");
+                    mostrarMensagem("Erro de Conexão: " + err.message, "erro");
                 })
                 .salvarNoticiaNoSheets(payload);
             }
@@ -1150,10 +1169,8 @@
                     '<td class="p-4 text-xs font-medium text-gray-500">' + (n.dataHora || '') + '</td>' +
                     '<td class="p-4"><span class="bg-gray-200 text-gray-800 px-2 py-1 rounded-sm text-[9px] uppercase font-black tracking-widest">' + (n.categoria || 'Geral') + '</span></td>' +
                     '<td class="p-4 font-bold text-sm text-jornal-dark truncate max-w-[250px]" title="'+n.titulo+'">' + (n.titulo || '') + '</td>' +
-                    // NOVAS COLUNAS: Autor e Publicador
                     '<td class="p-4 text-xs font-medium text-gray-600">' + (n.autor || 'da redação') + '</td>' +
                     '<td class="p-4 text-xs font-medium text-gray-600">' + (n.usuarioPublicador || '--') + '</td>' +
-                    // RESTO DAS COLUNAS
                     '<td class="p-4 text-center text-xs font-black text-jornal-blue">👁️ ' + (n.views || 0) + '</td>' +
                     '<td class="p-4 text-center"><div class="flex justify-center items-center"><label class="relative inline-flex items-center cursor-pointer select-none">' +
                     '<input type="checkbox" class="sr-only peer" ' + (isAtivo ? 'checked' : '') + ' onchange="alterarStatusRapido(\'' + n.id + '\', this)" />' +
@@ -1254,6 +1271,7 @@
                 atualizarRelacionadasAutomaticas();
             }
             
+            document.getElementById('titulo-pagina-form').innerText = "A Editar Matéria Existente";
             var btnSalvar = document.getElementById('btn-salvar-noticia'); 
             if(btnSalvar) { 
                 btnSalvar.innerText = "Salvar Alterações"; 
@@ -1261,7 +1279,7 @@
 
             var btnRascunho = document.getElementById('btn-salvar-rascunho');
             if(btnRascunho) {
-                btnRascunho.innerText = "Salvar Rascunho";
+                btnRascunho.innerText = "Salvar como Rascunho";
             }
             
             alternarAbaAdmin('form-noticia-container'); 
