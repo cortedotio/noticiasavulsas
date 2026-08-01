@@ -157,7 +157,7 @@
                 <button type="button" onclick="alternarAbaAdmin('lista-noticias-container')" id="aba-lista" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Gerir Matérias</button>
                 <a href="config.html" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1">⚙️ Configurações</a>
                 <a href="instagram.html" target="_blank" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-purple-600 hover:text-purple-800 hover:bg-purple-100 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1">📸 Estúdio IG</a>
-                <a href="index.html" class="py-3 px-5 font-bold text-[11px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1 ml-auto">Ver Portal &raquo;</a>
+                <a href="index.html" target="_blank" class="py-3 px-5 font-bold text-[11px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1 ml-auto">Ver Portal &raquo;</a>
             </div>
 
             <!-- ========================================================== -->
@@ -386,6 +386,9 @@
                                 <th class="p-4">Data</th>
                                 <th class="p-4">Editorias</th>
                                 <th class="p-4">Manchete</th>
+                                <!-- AS DUAS NOVAS COLUNAS ADICIONADAS AQUI -->
+                                <th class="p-4">Autor</th>
+                                <th class="p-4">Publicador</th>
                                 <th class="p-4 text-center">Visões</th>
                                 <th class="p-4 text-center">Visibilidade</th>
                                 <th class="p-4 text-center">Ações</th>
@@ -653,7 +656,11 @@
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
                     if (res && res.sucesso) {
-                        try { localStorage.setItem('admin_logado', 'true'); } catch(err) {}
+                        try { 
+                            localStorage.setItem('admin_logado', 'true'); 
+                            // GRAVA O USUÁRIO QUE ENTROU PARA ASSINAR O "PUBLICADOR"
+                            localStorage.setItem('admin_user', u);
+                        } catch(err) {}
                         document.getElementById('modalLogin').classList.add('hidden');
                         document.getElementById('view-admin').classList.remove('hidden');
                         carregarNoticiasAdmin(false);
@@ -669,7 +676,10 @@
         }
 
         function encerrarSessao() {
-            try { localStorage.removeItem('admin_logado'); } catch(err) {}
+            try { 
+                localStorage.removeItem('admin_logado'); 
+                localStorage.removeItem('admin_user'); 
+            } catch(err) {}
             window.location.href = "index.html";
         }
 
@@ -1035,6 +1045,9 @@
             var conteudoRich = document.getElementById('admin-editor-rich').innerHTML;
             var statusFinal = statusForcado || 'Ativa';
             
+            // Puxa o nome do utilizador logado para registar quem publicou
+            var usuPub = localStorage.getItem('admin_user') || 'Desconhecido';
+            
             var payload = { 
                 id: editandoID, 
                 titulo: tituloDigitado, 
@@ -1048,8 +1061,9 @@
                 noCarrossel: noCarrossel, 
                 legendaImagem: document.getElementById('admin-legenda-imagem').value, 
                 creditosImagem: creditos, 
-                relacionadas: document.getElementById('admin-relacionadas-ids').value,
-                statusForcado: statusFinal
+                relacionadas: document.getElementById('admin-relacionadas-ids').value, 
+                statusForcado: statusFinal,
+                usuarioPublicador: usuPub // Informação que vai preencher a nova coluna
             };
             
             if (base64StringNoticia) { 
@@ -1123,7 +1137,7 @@
                 return matchCat && matchTerm;
             });
             
-            if (filtradas.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-xs text-gray-500 font-bold">Nenhuma matéria encontrada.</td></tr>'; return; }
+            if (filtradas.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-xs text-gray-500 font-bold">Nenhuma matéria encontrada.</td></tr>'; return; }
             
             filtradas.forEach(function(n) {
                 var isAtivo = n.status.toLowerCase() === 'ativa'; var isAgendada = n.status.toLowerCase() === 'agendada';
@@ -1136,6 +1150,10 @@
                     '<td class="p-4 text-xs font-medium text-gray-500">' + (n.dataHora || '') + '</td>' +
                     '<td class="p-4"><span class="bg-gray-200 text-gray-800 px-2 py-1 rounded-sm text-[9px] uppercase font-black tracking-widest">' + (n.categoria || 'Geral') + '</span></td>' +
                     '<td class="p-4 font-bold text-sm text-jornal-dark truncate max-w-[250px]" title="'+n.titulo+'">' + (n.titulo || '') + '</td>' +
+                    // NOVAS COLUNAS: Autor e Publicador
+                    '<td class="p-4 text-xs font-medium text-gray-600">' + (n.autor || 'da redação') + '</td>' +
+                    '<td class="p-4 text-xs font-medium text-gray-600">' + (n.usuarioPublicador || '--') + '</td>' +
+                    // RESTO DAS COLUNAS
                     '<td class="p-4 text-center text-xs font-black text-jornal-blue">👁️ ' + (n.views || 0) + '</td>' +
                     '<td class="p-4 text-center"><div class="flex justify-center items-center"><label class="relative inline-flex items-center cursor-pointer select-none">' +
                     '<input type="checkbox" class="sr-only peer" ' + (isAtivo ? 'checked' : '') + ' onchange="alterarStatusRapido(\'' + n.id + '\', this)" />' +
