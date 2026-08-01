@@ -14,7 +14,7 @@
         // LIGAÇÃO À SUA BASE DE DADOS GOOGLE (Seu link exato)
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyoHo_olvZbyvT-qfKBDAveq1-n1IHD_bLxf831i_bBrFJeSVTcc6RTfvdQ9QV25hTh/exec";
         
-        // Ponte de comunicação com o Backend (SIMPLIFICADA PARA NÃO DAR "FAILED TO FETCH")
+        // Ponte de comunicação com o Backend
         window.google = {
             script: {
                 run: {
@@ -37,7 +37,6 @@
                 var failureCb = this._onFailure;
                 this._onSuccess = null; this._onFailure = null;
                 
-                // Fetch puro e simples. Sem headers ou redirecionamentos forçados que causam bloqueios de CORS.
                 fetch(GAS_API_URL, {
                     method: 'POST',
                     body: JSON.stringify({ action: funcName, args: argsArray })
@@ -176,7 +175,7 @@
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter" id="titulo-pagina-form">Redigir Matéria</h2>
                 </div>
                 
-                <form id="form-admin" class="space-y-6">
+                <form id="form-admin" class="space-y-6" onsubmit="event.preventDefault();">
                     <input type="hidden" id="admin-id-noticia" value="" />
                     
                     <div class="flex flex-col lg:flex-row gap-6">
@@ -522,7 +521,7 @@
             document.getElementById('admin-editor-rich').focus();
         }
 
-        // LIMPEZA PROFUNDA DE FORMATAÇÃO (Remove Fontes e Cores copiadas do Word/Sites)
+        // LIMPEZA PROFUNDA DE FORMATAÇÃO
         function limparFormatacao() {
             document.execCommand('removeFormat', false, null);
             document.execCommand('unlink', false, null);
@@ -556,7 +555,6 @@
                 }
             }
             
-            // Reseta a visualização das caixas
             document.getElementById('fontFamilySelect').selectedIndex = 0;
             document.getElementById('fontSizeSelect').selectedIndex = 0;
             document.getElementById('admin-editor-rich').focus();
@@ -575,13 +573,12 @@
 
         // --- SISTEMA AUTOMÁTICO DE NOTÍCIAS RELACIONADAS ---
         function atualizarRelacionadasAutomaticas() {
-            if (window.relacionadasEditadasManualmente) return; // Se o usuário modificou à mão, não subscrevemos
+            if (window.relacionadasEditadasManualmente) return; 
             
             var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
             var catsAtuais = Array.from(checkboxes).map(function(cb) { return normalizarTexto(cb.value); });
             var idAtual = document.getElementById('admin-id-noticia').value;
             
-            // Pega apenas as publicadas e exclui a que estamos a escrever
             var candidatas = noticiasGlobais.filter(function(n) {
                 if (String(n.status).toLowerCase() !== 'ativa') return false;
                 if (String(n.id) === String(idAtual)) return false;
@@ -590,7 +587,6 @@
             
             var recomendadas = [];
             
-            // Tenta priorizar a mesma categoria
             if (catsAtuais.length > 0) {
                 var daCategoria = candidatas.filter(function(n) {
                     var nCats = String(n.categoria || '').split(',').map(normalizarTexto);
@@ -599,7 +595,6 @@
                 recomendadas = daCategoria.slice(0, 3);
             }
             
-            // Completa com outras se não der 3 (para a caixa não ficar vazia)
             if (recomendadas.length < 3) {
                 var idsRecomendadas = recomendadas.map(function(r) { return r.id; });
                 var outras = candidatas.filter(function(n) { return idsRecomendadas.indexOf(n.id) === -1; });
@@ -616,7 +611,7 @@
         function atualizarPreviewURL() {
             var titulo = document.getElementById('admin-titulo').value.trim();
             var elPreview = document.getElementById('preview-url-noticia');
-            var elPreviewTexto = document.getElementById('preview-url-texto'); // SPAN AZUL ESPECÍFICO
+            var elPreviewTexto = document.getElementById('preview-url-texto'); 
             
             if(!titulo) {
                 if(elPreview) elPreview.classList.add('hidden');
@@ -632,7 +627,7 @@
             var slugTitulo = normalizarTextoUrl(titulo);
             var slugCat = normalizarTextoUrl(cat);
             var idAtual = document.getElementById('admin-id-noticia').value;
-            var fakeId = idAtual ? idAtual : "1710987654321"; // Exemplo visual de ID
+            var fakeId = idAtual ? idAtual : "1710987654321"; 
             
             var urlBase = "https://noticiasavulsas.com.br"; 
             var finalUrl = urlBase + '/' + slugCat + '/' + slugTitulo + '/' + fakeId;
@@ -665,7 +660,6 @@
                     if (res && res.sucesso) {
                         try { 
                             localStorage.setItem('admin_logado', 'true'); 
-                            // GRAVA O USUÁRIO QUE ENTROU PARA ASSINAR O "PUBLICADOR"
                             localStorage.setItem('admin_user', u);
                         } catch(err) {}
                         document.getElementById('modalLogin').classList.add('hidden');
@@ -743,7 +737,7 @@
             if (abaId === 'form-noticia-container') { 
                 botaoId = 'aba-noticia'; 
                 classAtiva = "bg-jornal-blue text-white font-black"; 
-                document.getElementById('titulo-pagina-form').innerText = "Redigir Matéria"; // Volta ao título original ao abrir a aba
+                document.getElementById('titulo-pagina-form').innerText = "Redigir Matéria"; 
             }
             else if (abaId === 'lista-noticias-container') { 
                 botaoId = 'aba-lista'; 
@@ -855,7 +849,7 @@
         function inserirLinkRichEditor() { var url = prompt("Insira a URL completa do hiperlink:"); if (url) execCmd('createLink', url); }
         function inserirImagemRichEditor() { document.getElementById('upload-imagem-conteudo').click(); }
 
-        // INJEÇÃO DA IMAGEM COM OS NOVOS BOTÕES + E -
+        // INJEÇÃO DA IMAGEM
         function processarUploadImagemConteudo(input) {
             if (!input.files || !input.files[0]) return;
             var file = input.files[0];
@@ -878,8 +872,7 @@
                         htmlImg += '<figcaption style="font-size: 12px; color: #64748b; margin-top: 8px; font-style: italic; text-align: center;">' + legenda + sep + credTexto + '</figcaption>';
                     }
                     
-                    // BOTÕES DE + E - PARA AJUSTAR O TAMANHO DIRETO NO EDITOR
-                    htmlImg += '<div contenteditable="false" style="margin-top: 10px; text-align: center; user-select: none;">' +
+                    htmlImg += '<div contenteditable="false" class="controles-imagem-admin" style="margin-top: 10px; text-align: center; user-select: none;">' +
                                '<button type="button" class="btn-diminuir-img" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; margin-right: 8px;" title="Diminuir Imagem">-</button>' +
                                '<button type="button" class="btn-aumentar-img" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer;" title="Aumentar Imagem">+</button>' +
                                '</div>';
@@ -1002,6 +995,7 @@
             atualizarPreviewURL(); 
             atualizarRelacionadasAutomaticas(); 
             
+            document.getElementById('titulo-pagina-form').innerText = "Redigir Matéria";
             var btnSalvar = document.getElementById('btn-salvar-noticia'); 
             if (btnSalvar) btnSalvar.innerText = "Publicar Matéria";
             var btnRascunho = document.getElementById('btn-salvar-rascunho');
@@ -1057,10 +1051,22 @@
             btn.innerHTML = 'A guardar...'; 
             btn.disabled = true;
             
-            var conteudoRich = document.getElementById('admin-editor-rich').innerHTML;
+            // LIMPEZA DOS BOTÕES DE IMAGEM ANTES DE ENVIAR
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = document.getElementById('admin-editor-rich').innerHTML;
+            
+            var botoesAdmin = tempDiv.querySelectorAll('.controles-imagem-admin, .btn-diminuir-img, .btn-aumentar-img');
+            botoesAdmin.forEach(function(btnRem) {
+                var pai = btnRem.parentElement;
+                btnRem.remove();
+                if (pai && pai.tagName !== 'FIGURE' && pai.innerHTML.trim() === '') {
+                    pai.remove();
+                }
+            });
+            
+            var conteudoLimpo = tempDiv.innerHTML;
             var statusFinal = statusForcado || 'Ativa';
             
-            // Puxa o nome do utilizador logado para registar quem publicou
             var usuPub = localStorage.getItem('admin_user') || 'Desconhecido';
             
             var payload = { 
@@ -1068,9 +1074,9 @@
                 titulo: tituloDigitado, 
                 categoria: categoriasSelecionadas, 
                 cidade: cidadeSelecionada, 
-                linhaFina: document.getElementById('admin-linha-fina').value, 
-                conteudo: conteudoRich, 
-                autor: document.getElementById('admin-autor').value, 
+                linhaFina: document.getElementById('admin-linha-fina').value.trim(), 
+                conteudo: conteudoLimpo, 
+                autor: document.getElementById('admin-autor').value.trim(), 
                 dataAgendamento: document.getElementById('admin-agendamento').value, 
                 dataFimEvento: document.getElementById('admin-data-fim-evento').value, 
                 noCarrossel: noCarrossel, 
@@ -1078,7 +1084,7 @@
                 creditosImagem: creditos, 
                 relacionadas: document.getElementById('admin-relacionadas-ids').value, 
                 statusForcado: statusFinal,
-                usuarioPublicador: usuPub // Informação que vai preencher a nova coluna
+                usuarioPublicador: usuPub
             };
             
             if (base64StringNoticia) { 
@@ -1112,7 +1118,7 @@
                 .withFailureHandler(function(err) {
                     btn.innerHTML = txtOriginal; 
                     btn.disabled = false;
-                    mostrarMensagem("Ocorreu um erro no servidor.", "erro");
+                    mostrarMensagem("Erro de Conexão: " + err.message, "erro");
                 })
                 .salvarNoticiaNoSheets(payload);
             }
