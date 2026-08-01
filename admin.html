@@ -11,10 +11,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
     <script>
-        // LIGAÇÃO À SUA BASE DE DADOS GOOGLE
+        // LIGAÇÃO À SUA BASE DE DADOS GOOGLE (Seu link exato)
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyoHo_olvZbyvT-qfKBDAveq1-n1IHD_bLxf831i_bBrFJeSVTcc6RTfvdQ9QV25hTh/exec";
         
-        // Ponte de comunicação com o Backend (BLINDADA CONTRA ERROS DE CORS E TIMEOUT)
+        // Ponte de comunicação com o Backend (SIMPLIFICADA PARA NÃO DAR "FAILED TO FETCH")
         window.google = {
             script: {
                 run: {
@@ -37,15 +37,13 @@
                 var failureCb = this._onFailure;
                 this._onSuccess = null; this._onFailure = null;
                 
+                // Fetch puro e simples. Sem headers ou redirecionamentos forçados que causam bloqueios de CORS.
                 fetch(GAS_API_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: funcName, args: argsArray }),
-                    redirect: 'follow' // FORÇA O NAVEGADOR A SEGUIR A GOOGLE SEM CORTAR A LIGAÇÃO
+                    body: JSON.stringify({ action: funcName, args: argsArray })
                 })
                 .then(function(res) { 
-                    if (!res.ok) throw new Error("Erro de HTTP: " + res.status);
-                    return res.text(); // Lemos como texto primeiro para evitar crash se a Google devolver HTML de erro
+                    return res.text(); 
                 })
                 .then(function(text) {
                     try {
@@ -58,8 +56,8 @@
                             successCb(finalPayload);
                         }
                     } catch(e) {
-                        console.error("Resposta Inválida do Servidor Google (Pode ser Timeout ou Limite Excedido):", text);
-                        if (failureCb) failureCb(new Error("A Google bloqueou a gravação. Motivo oculto (Veja o Console - F12)."));
+                        console.error("Resposta não é JSON:", text);
+                        if (failureCb) failureCb(new Error("O Google bloqueou o envio. Tente recarregar a página."));
                     }
                 })
                 .catch(function(err) {
@@ -396,7 +394,6 @@
                                 <th class="p-4">Data</th>
                                 <th class="p-4">Editorias</th>
                                 <th class="p-4">Manchete</th>
-                                <!-- AS DUAS NOVAS COLUNAS ADICIONADAS AQUI -->
                                 <th class="p-4">Autor</th>
                                 <th class="p-4">Publicador</th>
                                 <th class="p-4 text-center">Visões</th>
@@ -1005,7 +1002,6 @@
             atualizarPreviewURL(); 
             atualizarRelacionadasAutomaticas(); 
             
-            document.getElementById('titulo-pagina-form').innerText = "Redigir Matéria";
             var btnSalvar = document.getElementById('btn-salvar-noticia'); 
             if (btnSalvar) btnSalvar.innerText = "Publicar Matéria";
             var btnRascunho = document.getElementById('btn-salvar-rascunho');
@@ -1116,7 +1112,7 @@
                 .withFailureHandler(function(err) {
                     btn.innerHTML = txtOriginal; 
                     btn.disabled = false;
-                    mostrarMensagem("Erro de Conexão: " + err.message, "erro");
+                    mostrarMensagem("Ocorreu um erro no servidor.", "erro");
                 })
                 .salvarNoticiaNoSheets(payload);
             }
