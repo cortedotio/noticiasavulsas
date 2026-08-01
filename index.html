@@ -324,7 +324,7 @@
                         <div id="conteudo-opinioes" class="flex flex-col gap-5"></div>
                     </div>
 
-                    <!-- PLACAR AO VIVO (COM CORREÇÃO PARA OCULTAR O BLOCO INTEIRO SE VAZIO) -->
+                    <!-- PLACAR AO VIVO -->
                     <div id="container-placar-ao-vivo" class="hidden mb-10 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
                         <div class="flex items-center justify-between mb-5 border-b border-gray-100 pb-3">
                             <h2 class="text-[11px] font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
@@ -342,9 +342,7 @@
                             <h2 class="text-xs font-black uppercase tracking-widest text-sky-500">Clima Local</h2>
                             <span class="text-[9px] text-gray-400 uppercase font-bold tracking-widest hover:text-sky-500 transition-colors">Previsão &raquo;</span>
                         </div>
-                        <!-- Bloco Redesenhado -->
                         <div class="relative overflow-hidden bg-gradient-to-br from-sky-400 to-blue-600 rounded-b-sm shadow-inner py-8 px-4 text-white flex flex-col items-center">
-                            <!-- Fundo de nuvem gigante desfocado -->
                             <div class="absolute top-1/2 -translate-y-1/2 -right-10 text-[150px] opacity-10 select-none pointer-events-none" id="bg-icone-clima">☀️</div>
                             
                             <span class="text-[12px] font-black uppercase tracking-widest opacity-90 mb-4 relative z-10" id="desc-clima">CÉU LIMPO</span>
@@ -394,7 +392,6 @@
     <div id="modalClima" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/80 backdrop-blur-sm" onclick="fecharModalClima()"></div>
         <div class="bg-white w-full max-w-lg rounded-sm shadow-2xl relative z-10 overflow-hidden font-sans flex flex-col max-h-[90vh]">
-            <!-- Modal Redesenhado -->
             <div class="p-6 pb-0">
                 <div class="flex justify-between items-center mb-6">
                     <div class="flex items-center gap-2 text-sm text-sky-700 font-black uppercase tracking-widest">
@@ -427,20 +424,14 @@
             </div>
 
             <div class="overflow-y-auto custom-scrollbar p-6 pt-0">
-                <!-- Previsão Diária -->
                 <div class="mb-8">
                     <h3 class="text-xs font-black uppercase tracking-widest text-jornal-dark border-b-2 border-amber-500 pb-2 mb-4 inline-block">Previsão 7 Dias</h3>
-                    <div class="flex gap-3 overflow-x-auto custom-scrollbar pb-2" id="modal-clima-previsao">
-                        <!-- JS fills this -->
-                    </div>
+                    <div class="flex gap-3 overflow-x-auto custom-scrollbar pb-2" id="modal-clima-previsao"></div>
                 </div>
 
-                <!-- Previsão Horária com Gotas de Chuva -->
                 <div>
                     <h3 class="text-xs font-black uppercase tracking-widest text-gray-500 mb-4">Previsão por Hora</h3>
-                    <div class="flex gap-3 overflow-x-auto custom-scrollbar pb-2" id="horas-clima-container">
-                        <!-- JS fills this -->
-                    </div>
+                    <div class="flex gap-3 overflow-x-auto custom-scrollbar pb-2" id="horas-clima-container"></div>
                 </div>
             </div>
         </div>
@@ -471,28 +462,40 @@
             } catch(e) { return url; }
         }
 
-        // CORREÇÃO: Lógica robusta de datas
+        // ==========================================
+        // BLINDAGEM CONTRA O SAFARI / iPHONE (DATAS)
+        // ==========================================
+        function criarDataSegura(dataString) {
+            if (!dataString) return new Date();
+            var str = String(dataString).trim();
+            // Transforma dd/mm/yyyy hh:mm ou yyyy-mm-ddThh:mm num objeto nativo sem o Safari Crashar
+            var partesIso = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+            if (partesIso) {
+                return new Date(partesIso[1], parseInt(partesIso[2])-1, partesIso[3], partesIso[4], partesIso[5]);
+            }
+            var partesBarra = str.split(/[\/\s:\-T]/);
+            if (partesBarra.length >= 5) {
+                var ano, mes, dia, hora, min;
+                if (partesBarra[0].length === 4) { 
+                    ano = partesBarra[0]; mes = partesBarra[1]; dia = partesBarra[2]; hora = partesBarra[3]; min = partesBarra[4];
+                } else { 
+                    dia = partesBarra[0]; mes = partesBarra[1]; ano = partesBarra[2]; hora = partesBarra[3]; min = partesBarra[4];
+                }
+                return new Date(ano, parseInt(mes)-1, dia, hora, min);
+            }
+            return new Date(str); // Fallback extremo
+        }
+
         function isNoticiaPublicada(n) {
             try {
                 if (!n || !n.status) return false;
                 if (String(n.status).trim().toLowerCase() !== 'ativa') return false;
                 if (n.dataHora && String(n.dataHora).trim() !== '') {
-                    var pts = String(n.dataHora).trim().split(/[\/\s:\-T]/);
-                    if (pts.length >= 5) {
-                        var ano, mes, dia, hora, min;
-                        if (pts[0].length === 4) { 
-                            ano = pts[0]; mes = pts[1]; dia = pts[2]; hora = pts[3]; min = pts[4];
-                        } else { 
-                            dia = pts[0]; mes = pts[1]; ano = pts[2]; hora = pts[3]; min = pts[4];
-                        }
-                        var dtP = new Date(ano, mes-1, dia, hora, min);
-                        if (dtP > new Date()) return false;
-                    }
+                    var dtP = criarDataSegura(n.dataHora);
+                    if (!isNaN(dtP.getTime()) && dtP > new Date()) return false;
                 }
                 return true;
-            } catch(e) {
-                return false;
-            }
+            } catch(e) { return false; }
         }
 
         function normalizarTextoBusca(str) {
@@ -516,9 +519,7 @@
                 var pathnameOriginal = window.location.pathname;
                 
                 var pathNovo = '/';
-                if(pathnameOriginal.indexOf('/noticias') !== -1) {
-                    baseUrl += '/noticias';
-                }
+                if(pathnameOriginal.indexOf('/noticias') !== -1) { baseUrl += '/noticias'; }
                 
                 if (tipo === 'noticia' && noticiaObj) {
                     var cat = normalizarTextoUrl(noticiaObj.categoria.split(',')[0]);
@@ -531,9 +532,7 @@
                 }
                 
                 window.history.pushState({ path: baseUrl + pathNovo }, '', baseUrl + pathNovo);
-            } catch(e) {
-                console.warn("Navegação local bloqueada.");
-            }
+            } catch(e) { console.warn("Navegação local bloqueada."); }
         }
 
         window.categoriaAtual = 'Todas';
@@ -610,20 +609,13 @@
             }
         }
 
-        window.addEventListener('popstate', function(e) {
-            tratarRotasIniciais(false);
-        });
+        window.addEventListener('popstate', function(e) { tratarRotasIniciais(false); });
 
         function carregarNoticias(forcarUpdate) {
             var cacheAntigo = null;
-            try {
-                cacheAntigo = localStorage.getItem('portal_data_cache');
-            } catch(e) {
-                console.warn("LocalStorage bloqueado (iOS/Safari).");
-            }
+            try { cacheAntigo = localStorage.getItem('portal_data_cache'); } catch(e){}
             
             var usouCache = false;
-            
             if(cacheAntigo && !forcarUpdate) {
                 try {
                     var dadosCache = JSON.parse(cacheAntigo);
@@ -647,28 +639,17 @@
                     removerLoaderGlobal();
                     try {
                         if (res && res.sucesso) { 
-                            try {
-                                localStorage.setItem('portal_data_cache', JSON.stringify(res));
-                            } catch(err) {
-                                console.warn("Nao foi possivel salvar no cache.");
-                            }
-                            
+                            try { localStorage.setItem('portal_data_cache', JSON.stringify(res)); } catch(err){}
                             processarDadosHome(res); 
                             if (!forcarUpdate && !cacheAntigo) {
                                 tratarRotasIniciais(false);
                             } else if (forcarUpdate) { 
-                                if (noticiaAbertaId) {
-                                    abrirNoticia(noticiaAbertaId, false); 
-                                } else if(window.categoriaAtual === 'Pesquisa') {
-                                    pesquisarSite(new Event('submit')); 
-                                } else {
-                                    filtrarCategoria(window.categoriaAtual, false); 
-                                }
+                                if (noticiaAbertaId) { abrirNoticia(noticiaAbertaId, false); } 
+                                else if(window.categoriaAtual === 'Pesquisa') { pesquisarSite(new Event('submit')); } 
+                                else { filtrarCategoria(window.categoriaAtual, false); }
                             }
                         }
-                    } catch(e) { 
-                        console.error("Falha no JS Local: " + e.message); 
-                    }
+                    } catch(e) { console.error("Falha no JS Local: " + e.message); }
                 }).withFailureHandler(function(err) {
                     removerLoaderGlobal();
                     console.error("Falha de Servidor: " + err.message);
@@ -729,38 +710,21 @@
                     }
                     
                     var stickyText = document.getElementById('sticky-logo-text');
-                    if(stickyText) {
-                        stickyText.className = "font-black text-[15px] tracking-tighter uppercase " + textClasses;
-                    }
+                    if(stickyText) stickyText.className = "font-black text-[15px] tracking-tighter uppercase " + textClasses;
                     
                     var loadingText = document.getElementById('loading-logo-text');
-                    if(loadingText) {
-                        loadingText.className = "text-4xl md:text-5xl font-black tracking-tighter uppercase " + textClasses;
-                    }
-
+                    if(loadingText) loadingText.className = "text-4xl md:text-5xl font-black tracking-tighter uppercase " + textClasses;
                 } catch(e){}
             }
 
             var socFooter = document.getElementById('social-footer');
             if (socFooter) {
                 var sHtml = '';
-                if (configuracoesGlobais['soc-inst-url']) {
-                    sHtml += '<a href="' + configuracoesGlobais['soc-inst-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>';
-                }
-                if (configuracoesGlobais['soc-fb-url']) {
-                    sHtml += '<a href="' + configuracoesGlobais['soc-fb-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.312h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/></svg></a>';
-                }
-                if (configuracoesGlobais['soc-x-url']) {
-                    sHtml += '<a href="' + configuracoesGlobais['soc-x-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></a>';
-                }
-                if (configuracoesGlobais['soc-yt-url']) {
-                    sHtml += '<a href="' + configuracoesGlobais['soc-yt-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>';
-                }
-                
-                if (sHtml) { 
-                    socFooter.innerHTML = sHtml; 
-                    socFooter.classList.remove('hidden'); 
-                }
+                if (configuracoesGlobais['soc-inst-url']) { sHtml += '<a href="' + configuracoesGlobais['soc-inst-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>'; }
+                if (configuracoesGlobais['soc-fb-url']) { sHtml += '<a href="' + configuracoesGlobais['soc-fb-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.312h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/></svg></a>'; }
+                if (configuracoesGlobais['soc-x-url']) { sHtml += '<a href="' + configuracoesGlobais['soc-x-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></a>'; }
+                if (configuracoesGlobais['soc-yt-url']) { sHtml += '<a href="' + configuracoesGlobais['soc-yt-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>'; }
+                if (sHtml) { socFooter.innerHTML = sHtml; socFooter.classList.remove('hidden'); }
             }
 
             if (d.categorias && Array.isArray(d.categorias)) {
@@ -803,11 +767,7 @@
                     var partes = String(p.empresa || '').split('|||');
                     p.empresaReal = partes[0]; 
                     p.tempo = parseInt(partes[1]) || 5;
-                    if (p.local === 'Topo') {
-                        adsTopo.push(p); 
-                    } else {
-                        adsLateral.push(p); 
-                    }
+                    if (p.local === 'Topo') { adsTopo.push(p); } else { adsLateral.push(p); }
                 });
                 try { iniciarCarrosselAnuncios('ads-topo-container', adsTopo); } catch(e){}
                 try { iniciarCarrosselAnuncios('grid-propagandas-lateral', adsLateral); } catch(e){}
@@ -829,10 +789,8 @@
                 if(!isNoticiaPublicada(n)) return false;
                 var isAg = String(n.categoria).toLowerCase().indexOf('agenda') !== -1;
                 if(isAg && n.dataFimEvento && n.dataFimEvento.trim() !== '') {
-                    try { 
-                        var dtFim = new Date(n.dataFimEvento); 
-                        if(dtFim < agora) return false; 
-                    } catch(e){}
+                    var dtFim = criarDataSegura(n.dataFimEvento); 
+                    if(!isNaN(dtFim.getTime()) && dtFim < agora) return false; 
                 }
                 return isAg;
             });
@@ -861,11 +819,11 @@
                     var dataReferencia = (n.dataFimEvento && String(n.dataFimEvento).trim() !== '') ? String(n.dataFimEvento).trim() : (n.dataHora ? String(n.dataHora).trim() : "");
                     
                     if (dataReferencia !== '') {
-                        var dObj = new Date(dataReferencia);
+                        var dObj = criarDataSegura(dataReferencia);
                         var matchBarra = dataReferencia.match(/(\d{1,2})[\/\-](\d{1,2})/);
                         var matchTracoISO = dataReferencia.match(/(\d{4})-(\d{2})-(\d{2})/);
 
-                        if (!isNaN(dObj.getTime()) && dataReferencia.match(/[a-zA-Z]{3} [a-zA-Z]{3} \d{1,2}/)) {
+                        if (!isNaN(dObj.getTime())) {
                             var dia = String(dObj.getDate()).padStart(2, '0');
                             var mes = String(dObj.getMonth() + 1).padStart(2, '0');
                             txtBadge = "Até " + dia + "/" + mes;
@@ -879,7 +837,6 @@
                     }
                     
                     htmlAg += '                <span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">' + txtBadge + '</span>\n';
-                    
                     htmlAg += '                <h4 class="font-serif text-sm font-bold mb-1 leading-tight break-words line-clamp-3 text-white">' + n.titulo + '</h4>\n';
                     htmlAg += '            </div>\n';
                     htmlAg += '        </div>\n';
@@ -920,9 +877,7 @@
                 htmlCa += '    </div>\n';
                 htmlCa += '</article>\n';
                 contCa.innerHTML = htmlCa;
-            } else if(blocoCa) { 
-                blocoCa.classList.add('hidden'); 
-            }
+            } else if(blocoCa) { blocoCa.classList.add('hidden'); }
 
             var variedades = noticiasGlobais.filter(function(n) { return isNoticiaPublicada(n) && String(n.categoria).toLowerCase().indexOf('variedade') !== -1; });
             var blocoVa = document.getElementById('bloco-variedades');
@@ -940,9 +895,7 @@
                 htmlVa += '    </div>\n';
                 htmlVa += '</article>\n';
                 contVa.innerHTML = htmlVa;
-            } else if(blocoVa) { 
-                blocoVa.classList.add('hidden'); 
-            }
+            } else if(blocoVa) { blocoVa.classList.add('hidden'); }
         }
 
         function moverCarrosselAgenda(id, direcao, tamanho) {
@@ -957,9 +910,7 @@
             var container = document.getElementById(containerId);
             if (!container) return;
             
-            if(carrosselAdsTimers[containerId]) {
-                clearTimeout(carrosselAdsTimers[containerId]);
-            }
+            if(carrosselAdsTimers[containerId]) { clearTimeout(carrosselAdsTimers[containerId]); }
             
             if (anuncios.length === 0) { 
                 container.classList.add('hidden'); 
@@ -1145,7 +1096,6 @@
                         iconeClima = obterIconeClima(wCode);
                         descClima = wCode <= 2 ? 'CÉU LIMPO' : wCode <= 3 ? 'NUBLADO' : wCode <= 67 ? 'CHUVA' : 'TEMPESTADE';
 
-                        // Atualiza Widget Lateral
                         var elTemp = document.getElementById('temp-clima');
                         var elIcone = document.getElementById('icone-clima');
                         var elBgIcone = document.getElementById('bg-icone-clima');
@@ -1156,7 +1106,6 @@
                         if (elBgIcone) elBgIcone.innerText = iconeClima;
                         if (elDesc) elDesc.innerText = descClima;
 
-                        // Atualiza Modal
                         var mChuva = document.getElementById('modal-clima-chuva');
                         var mUmid = document.getElementById('modal-clima-umidade');
                         var mVento = document.getElementById('modal-clima-vento');
@@ -1292,7 +1241,9 @@
                         data.events.forEach(function(jogo) {
                             if (!jogo.date) return;
 
-                            var dtJogo = new Date(jogo.date);
+                            var dtJogo = criarDataSegura(jogo.date);
+                            if (isNaN(dtJogo.getTime())) return;
+                            
                             var dataJogoLocal = dtJogo.getFullYear() + '-' + String(dtJogo.getMonth() + 1).padStart(2, '0') + '-' + String(dtJogo.getDate()).padStart(2, '0');
 
                             if (dataJogoLocal !== dataHojeLocalStr) return;
