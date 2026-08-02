@@ -131,6 +131,7 @@
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
+    <!-- TELA DE CARREGAMENTO PRINCIPAL -->
     <div id="loading-noticias" class="fixed inset-0 z-[100000] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
         <div id="loading-logo-container" class="mb-6">
              <h1 id="loading-logo-text" class="text-4xl md:text-5xl font-black tracking-tighter uppercase bg-gradient-to-r from-blue-500 to-emerald-400 bg-clip-text text-transparent">
@@ -142,7 +143,6 @@
         <div id="debug-error-box" class="hidden mt-4 text-xs text-red-500 font-mono text-center p-4 bg-red-50 border border-red-200 rounded max-w-xl break-words w-full shadow-sm"></div>
     </div>
 
-    <!-- VIEW PORTAL PRINCIPAL -->
     <div id="view-portal" class="flex-grow flex flex-col relative min-w-0">
         
         <div id="ticker-noticias" class="bg-jornal-red text-white text-[10px] font-bold h-8 overflow-hidden flex items-center border-b border-red-800 sticky top-0 z-50 w-full shadow-sm min-w-0 transition-colors duration-500">
@@ -188,11 +188,9 @@
             </form>
         </header>
 
-        <!-- MENU DE NAVEGAÇÃO -->
         <nav class="border-y border-gray-200 border-b-4 border-b-jornal-blue sticky top-0 md:top-8 z-40 bg-white/95 backdrop-blur-sm w-full shadow-sm min-w-0" id="nav-categorias-publicas">
             <div id="nav-container-inner" class="max-w-[1200px] mx-auto px-4 flex items-center overflow-x-auto whitespace-nowrap text-[11px] md:text-sm font-black uppercase tracking-widest text-jornal-dark py-3 md:py-4 custom-scrollbar min-w-0">
                 
-                <!-- STICKY LOGO -->
                 <div id="sticky-logo-container" class="hidden shrink-0 items-center cursor-pointer mr-6 pr-6 border-r-2 border-gray-200 transition-all duration-300" onclick="voltarCapa()">
                     <span class="font-black text-[15px] tracking-tighter uppercase bg-gradient-to-r from-blue-500 to-emerald-400 bg-clip-text text-transparent" id="sticky-logo-text">NOTÍCIAS AVULSAS</span>
                 </div>
@@ -335,6 +333,7 @@
                         <div id="conteudo-opinioes" class="flex flex-col gap-5"></div>
                     </div>
 
+                    <!-- PLACAR AO VIVO -->
                     <div id="container-placar-ao-vivo" class="hidden mb-10 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
                         <div class="flex items-center justify-between mb-5 border-b border-gray-100 pb-3">
                             <h2 class="text-[11px] font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
@@ -346,6 +345,7 @@
                         </div>
                     </div>
 
+                    <!-- WIDGET CLIMA CLICÁVEL -->
                     <div class="mb-10 bg-white border border-gray-200 p-1 shadow-sm rounded-sm cursor-pointer hover:shadow-md transition-shadow" onclick="abrirModalClima()">
                         <div class="border-t-4 border-sky-400 pt-2 px-4 pb-2 flex justify-between items-center bg-white">
                             <h2 class="text-xs font-black uppercase tracking-widest text-sky-500">Clima Local</h2>
@@ -353,9 +353,7 @@
                         </div>
                         <div class="relative overflow-hidden bg-gradient-to-br from-sky-400 to-blue-600 rounded-b-sm shadow-inner py-8 px-4 text-white flex flex-col items-center">
                             <div class="absolute top-1/2 -translate-y-1/2 -right-10 text-[150px] opacity-10 select-none pointer-events-none" id="bg-icone-clima">☀️</div>
-                            
                             <span class="text-[12px] font-black uppercase tracking-widest opacity-90 mb-4 relative z-10" id="desc-clima">CÉU LIMPO</span>
-                            
                             <div class="flex items-center justify-center gap-6 relative z-10">
                                 <span class="text-7xl drop-shadow-md" id="icone-clima">☀️</span>
                                 <span class="text-7xl font-black drop-shadow-md tracking-tighter leading-none" id="temp-clima">--°</span>
@@ -367,8 +365,7 @@
                         <div class="border-b-4 border-jornal-blue pb-3 mb-5">
                             <h2 class="text-xs font-black uppercase tracking-widest text-jornal-blue">Top 10 Mais Lidas</h2>
                         </div>
-                        <ul id="lista-mais-lidas" class="space-y-4 divide-y divide-gray-100 min-w-0">
-                        </ul>
+                        <ul id="lista-mais-lidas" class="space-y-4 divide-y divide-gray-100 min-w-0"></ul>
                     </div>
 
                     <div class="border-t-4 border-jornal-red w-full pt-5 mb-6">
@@ -392,7 +389,6 @@
                     Ver Expediente
                 </button>
             </div>
-            
             <div id="social-footer" class="flex justify-center gap-4 mt-8 hidden"></div>
         </footer>
     </div>
@@ -474,7 +470,8 @@
         </div>
     </div>
 
-    <div id="view-admin" class="hidden min-h-screen flex flex-col bg-gray-100 text-slate-800">
+    <!-- PAINEL ADMIN PRINCIPAL DENTRO DO INDEX -->
+    <div id="view-admin" class="hidden min-h-screen flex flex-col bg-gray-100 text-slate-800 z-50 absolute top-0 left-0 w-full bg-gray-100">
         <header class="bg-jornal-dark text-white border-b border-gray-800 sticky top-0 z-40 shadow-sm">
             <div class="max-w-[1400px] mx-auto flex justify-between items-center px-4 py-3">
                 <div class="flex items-center gap-3">
@@ -488,10 +485,11 @@
         </header>
 
         <main class="max-w-[1400px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
+            <!-- ABAS DO PAINEL -->
             <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar">
                 <button type="button" onclick="alternarAbaAdmin('form-noticia-container')" id="aba-noticia" class="py-3 px-5 font-black text-[11px] bg-jornal-blue text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Publicar</button>
                 <button type="button" onclick="alternarAbaAdmin('lista-noticias-container')" id="aba-lista" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Gerir Matérias</button>
-                <a href="config.html" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1">⚙️ Configurações</a>
+                <a href="config.html" target="_blank" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1">⚙️ Configurações</a>
                 <a href="instagram.html" target="_blank" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-purple-600 hover:text-purple-800 hover:bg-purple-100 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1">📸 Estúdio IG</a>
                 <button type="button" onclick="irParaPortal()" class="py-3 px-5 font-bold text-[11px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1 ml-auto">Ver Portal &raquo;</button>
             </div>
@@ -698,6 +696,7 @@
         </main>
     </div>
 
+    <!-- SCRIPTS CORE -->
     <script>
         var IMG_FALLBACK = 'https://placehold.co/600x400/e2e8f0/475569?text=Sem+Foto';
         var noticiasGlobais = [];
@@ -711,16 +710,35 @@
         window.relacionadasEditadasManualmente = false;
 
         document.addEventListener("DOMContentLoaded", function() {
-            if (localStorage.getItem('admin_logado') === 'true') {
-                document.getElementById('modalLogin').classList.add('hidden');
-                document.getElementById('view-admin').classList.remove('hidden');
-                carregarNoticiasAdmin(false);
-            } else {
-                document.getElementById('loading-global').classList.add('hidden');
-                document.getElementById('modalLogin').classList.remove('hidden');
-                document.getElementById('modalLogin').classList.add('flex');
-            }
-            
+            // LIMPEZA DA TELA DE LOADING E LOGIN CHECK
+            setTimeout(function() {
+                var lg = document.getElementById('loading-noticias');
+                if (lg && !lg.classList.contains('hidden')) {
+                    lg.classList.add('hidden');
+                    var mw = document.getElementById('master-feed-wrapper');
+                    if (mw) mw.classList.remove('hidden');
+                }
+            }, 10000);
+
+            try {
+                if (localStorage.getItem('admin_logado') === 'true') {
+                    var ml = document.getElementById('modalLogin');
+                    if (ml) ml.classList.add('hidden');
+                    var va = document.getElementById('view-admin');
+                    if (va) va.classList.remove('hidden');
+                    carregarNoticiasAdmin(false);
+                } else {
+                    var lg = document.getElementById('loading-global');
+                    if (lg) lg.classList.add('hidden');
+                    var ml = document.getElementById('modalLogin');
+                    if (ml) {
+                        ml.classList.remove('hidden');
+                        ml.classList.add('flex');
+                    }
+                }
+            } catch(e){}
+
+            // INTELIGÊNCIA DO EDITOR RICH TEXT (+ / -)
             var editorRich = document.getElementById('admin-editor-rich');
             if (editorRich) {
                 editorRich.addEventListener('click', function(e) {
@@ -744,13 +762,10 @@
                             var isPercent = currentWidthStr.indexOf('%') !== -1;
                             if (isNaN(val)) { val = 300; isPercent = false; }
                             var step = isPercent ? 10 : 50; 
-                            
                             if (el.classList.contains('btn-aumentar-img')) { val += step; } 
                             else { val -= step; if(val < 50) val = 50; }
-                            
                             if (isPercent && val > 100) val = 100;
-                            img.style.width = val + (isPercent ? '%' : 'px');
-                            img.style.maxWidth = '100%';
+                            img.style.width = val + (isPercent ? '%' : 'px'); img.style.maxWidth = '100%';
                         } else { alert("Não foi possível localizar a imagem para ajustar."); }
                     }
                 });
@@ -760,9 +775,256 @@
             }
         });
 
-        // ==========================================
-        // Lógica do Painel de Redação
-        // ==========================================
+        // ---------------------------------------------------------
+        // FUNÇÕES PORTAL PÚBLICO
+        // ---------------------------------------------------------
+        function removerLoaderGlobal() {
+            var lg = document.getElementById('loading-noticias');
+            if (lg && !lg.classList.contains('hidden')) {
+                lg.classList.add('hidden');
+            }
+            var mw = document.getElementById('master-feed-wrapper');
+            if (mw) mw.classList.remove('hidden');
+        }
+
+        function tratarRotasIniciais(forcarUpdate) {
+            var pathname = window.location.pathname;
+            var p = new URLSearchParams(window.location.search);
+            var pathParts = pathname.split('/').filter(Boolean);
+            
+            if (p.get('noticia')) { abrirNoticia(p.get('noticia'), false); } 
+            else if (pathParts.length >= 3) { abrirNoticia(pathParts[pathParts.length - 1], false); } 
+            else if (pathParts.length === 2 && pathParts[0] === 'editoria') {
+                var requestedCat = pathParts[1];
+                var catName = 'Todas';
+                listaCategoriasLocais.forEach(function(c) {
+                    if (normalizarTextoUrl(c) === requestedCat) catName = c;
+                });
+                filtrarCategoria(catName, false);
+            } else if (pathParts.length === 2 && pathParts[0] === 'busca') {
+                var ip = document.getElementById('input-pesquisa');
+                if (ip) ip.value = decodeURIComponent(pathParts[1]);
+                pesquisarSite(new Event('submit'));
+            } else if (p.get('categoria')) {
+                filtrarCategoria(p.get('categoria'), false);
+            } else {
+                filtrarCategoria(window.categoriaAtual, false);
+            }
+        }
+
+        window.addEventListener('popstate', function(e) { tratarRotasIniciais(false); });
+
+        function carregarNoticias(forcarUpdate) {
+            var cacheAntigo = null;
+            try { cacheAntigo = localStorage.getItem('portal_data_cache'); } catch(e){}
+            
+            var usouCache = false;
+            if(cacheAntigo && !forcarUpdate) {
+                try {
+                    var dadosCache = JSON.parse(cacheAntigo);
+                    processarDadosHome(dadosCache);
+                    tratarRotasIniciais(false);
+                    usouCache = true;
+                    removerLoaderGlobal();
+                } catch(e){}
+            }
+
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                var dbg = document.getElementById('debug-error-box');
+                if(dbg) dbg.classList.add('hidden');
+                
+                if (!usouCache) {
+                    var lg = document.getElementById('loading-noticias');
+                    if(lg) lg.classList.remove('hidden');
+                }
+
+                window.google.script.run.withSuccessHandler(function(res) {
+                    removerLoaderGlobal();
+                    try {
+                        if (res && res.sucesso) { 
+                            try { localStorage.setItem('portal_data_cache', JSON.stringify(res)); } catch(err){}
+                            processarDadosHome(res); 
+                            if (!forcarUpdate && !cacheAntigo) {
+                                tratarRotasIniciais(false);
+                            } else if (forcarUpdate) { 
+                                if (noticiaAbertaId) { abrirNoticia(noticiaAbertaId, false); } 
+                                else if(window.categoriaAtual === 'Pesquisa') { pesquisarSite(new Event('submit')); } 
+                                else { filtrarCategoria(window.categoriaAtual, false); }
+                            }
+                        }
+                    } catch(e) { console.error("Falha no JS Local: " + e.message); }
+                }).withFailureHandler(function(err) {
+                    removerLoaderGlobal();
+                    console.error("Falha de Servidor: " + err.message);
+                }).getHomeData();
+            } else {
+                removerLoaderGlobal();
+            }
+        }
+
+        // DATAS BLINDADAS (iPHONE/SAFARI)
+        function criarDataSegura(dataString) {
+            if (!dataString) return new Date();
+            var str = String(dataString).trim();
+            var partesIso = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+            if (partesIso) {
+                return new Date(partesIso[1], parseInt(partesIso[2])-1, partesIso[3], partesIso[4], partesIso[5]);
+            }
+            var partesBarra = str.split(/[\/\s:\-T]/);
+            if (partesBarra.length >= 5) {
+                var ano, mes, dia, hora, min;
+                if (partesBarra[0].length === 4) { 
+                    ano = partesBarra[0]; mes = partesBarra[1]; dia = partesBarra[2]; hora = partesBarra[3]; min = partesBarra[4];
+                } else { 
+                    dia = partesBarra[0]; mes = partesBarra[1]; ano = partesBarra[2]; hora = partesBarra[3]; min = partesBarra[4];
+                }
+                return new Date(ano, parseInt(mes)-1, dia, hora, min);
+            }
+            return new Date(str); 
+        }
+
+        function isNoticiaPublicada(n) {
+            try {
+                if (!n || !n.status) return false;
+                if (String(n.status).trim().toLowerCase() !== 'ativa') return false;
+                if (n.dataHora && String(n.dataHora).trim() !== '') {
+                    var dtP = criarDataSegura(n.dataHora);
+                    if (!isNaN(dtP.getTime()) && dtP > new Date()) return false;
+                }
+                return true;
+            } catch(e) { return false; }
+        }
+
+        function normalizarTextoUrl(text) {
+            if (!text) return 'geral';
+            return String(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+                .replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
+        }
+        function normalizarTextoBusca(str) { return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
+        function normalizarTexto(str) { return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
+
+        // MÓDULO PLACAR (BLINDADO ESPN)
+        function traduzirTermoPlacar(termo) {
+            if(!termo) return '';
+            var t = termo.toLowerCase();
+            if(t.includes('half')) return 'Intervalo';
+            if(t.includes('final')) return 'Encerrado';
+            if(t.includes('canceled')) return 'Cancelado';
+            if(t.includes('postponed')) return 'Adiado';
+            return termo;
+        }
+
+        function renderizarPlacarAoVivo() {
+            var placar = document.getElementById('widget-placar'); 
+            var containerGeral = document.getElementById('container-placar-ao-vivo');
+            if(!placar) return;
+            
+            var ligasAtivas = ['soccer/bra.1']; 
+            if (configuracoesGlobais['LigasPlacar']) { 
+                try { 
+                    var prs = JSON.parse(configuracoesGlobais['LigasPlacar']);
+                    if(prs && prs.length > 0) ligasAtivas = prs; 
+                } catch(e){} 
+            }
+            
+            var hoje = new Date();
+            var dataHojeLocalStr = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
+
+            placar.innerHTML = '<div class="text-center text-xs text-gray-400 py-4 font-bold uppercase tracking-widest">A procurar jogos...</div>';
+            var htmlFinal = ''; 
+            var fetchesConcluidos = 0;
+
+            if (ligasAtivas.length === 0) {
+                if (containerGeral) containerGeral.classList.add('hidden');
+                return;
+            }
+
+            ligasAtivas.forEach(function(liga) {
+                fetch('https://site.api.espn.com/apis/site/v2/sports/' + liga + '/scoreboard?lang=pt&region=br')
+                .then(function(res) { return res.ok ? res.json() : null; })
+                .then(function(data) {
+                    if (data && data.events && data.events.length > 0) {
+                        var nomeCompeticao = traduzirTermoPlacar(data.leagues && data.leagues.length > 0 ? data.leagues[0].name : 'Competição');
+                        var matchesHtml = ''; 
+                        var exibidos = 0;
+                        
+                        data.events.forEach(function(jogo) {
+                            if (!jogo.date) return;
+                            // PROTEÇÃO ESPN NULL
+                            if (!jogo.competitions || jogo.competitions.length === 0) return;
+
+                            var dtJogo = criarDataSegura(jogo.date);
+                            if (isNaN(dtJogo.getTime())) return;
+                            
+                            var dataJogoLocal = dtJogo.getFullYear() + '-' + String(dtJogo.getMonth() + 1).padStart(2, '0') + '-' + String(dtJogo.getDate()).padStart(2, '0');
+
+                            if (dataJogoLocal !== dataHojeLocalStr) return;
+                            if (exibidos >= 4) return;
+                            
+                            var matchInfo = jogo.competitions[0];
+                            var casa = matchInfo.competitors.find(function(c) { return c.homeAway === 'home'; }) || matchInfo.competitors[0];
+                            var fora = matchInfo.competitors.find(function(c) { return c.homeAway === 'away'; }) || matchInfo.competitors[1];
+                            
+                            var logoCasa = casa.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=C'; 
+                            var logoFora = fora.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=F';
+                            var isAoVivo = jogo.status.type.state === 'in'; 
+                            var isEncerrado = jogo.status.type.state === 'post'; 
+                            var isAgendado = jogo.status.type.state === 'pre';
+                            
+                            var corEstado = 'text-gray-400'; 
+                            var bgPlacar = 'bg-jornal-dark text-white';
+
+                            if (isAoVivo) { corEstado = 'text-red-600 animate-pulse'; bgPlacar = 'bg-jornal-red text-white'; } 
+                            else if (isAgendado) { corEstado = 'text-emerald-600'; }
+                            
+                            var infoEstadoTexto = traduzirTermoPlacar(jogo.status.type.shortDetail);
+                            if (isAoVivo) { infoEstadoTexto = 'AO VIVO'; } 
+                            else if (isAgendado) { 
+                                var hrs = String(dtJogo.getHours()).padStart(2, '0');
+                                var mns = String(dtJogo.getMinutes()).padStart(2, '0');
+                                infoEstadoTexto = hrs + ':' + mns;
+                            } 
+                            else if (isEncerrado) { infoEstadoTexto = 'ENCERRADO'; }
+                            
+                            var h = '<div class="bg-white border border-gray-100 rounded-lg p-3 mb-3 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.1)] hover:shadow-md transition-shadow">\n';
+                            h += '    <div class="flex items-center justify-between w-full gap-2">\n';
+                            h += '        <div class="flex items-center justify-start gap-2 w-[40%] min-w-0">\n';
+                            h += '            <img src="' + logoCasa + '" class="w-6 h-6 sm:w-7 sm:h-7 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'">\n';
+                            h += '            <span class="font-bold text-gray-800 text-[11px] sm:text-xs text-left truncate w-full" title="' + traduzirTermoPlacar(casa.team.name) + '">' + traduzirTermoPlacar(casa.team.name) + '</span>\n';
+                            h += '        </div>\n';
+                            h += '        <div class="flex flex-col items-center justify-center shrink-0 w-[55px]">\n';
+                            h += '            <div class="' + bgPlacar + ' font-black text-[13px] w-full py-1.5 rounded flex items-center justify-center tracking-wider shadow-inner mb-1.5 leading-none">' + (casa.score || '0') + ' - ' + (fora.score || '0') + '</div>\n';
+                            h += '            <span class="text-[8px] uppercase tracking-widest font-bold ' + corEstado + ' text-center leading-none whitespace-nowrap">' + infoEstadoTexto + '</span>\n';
+                            h += '        </div>\n';
+                            h += '        <div class="flex items-center justify-end gap-2 w-[40%] min-w-0">\n';
+                            h += '            <span class="font-bold text-gray-800 text-[11px] sm:text-xs text-right truncate w-full" title="' + traduzirTermoPlacar(fora.team.name) + '">' + traduzirTermoPlacar(fora.team.name) + '</span>\n';
+                            h += '            <img src="' + logoFora + '" class="w-6 h-6 sm:w-7 sm:h-7 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'">\n';
+                            h += '        </div>\n';
+                            h += '    </div>\n';
+                            h += '</div>\n';
+                            matchesHtml += h; exibidos++;
+                        });
+
+                        if (matchesHtml !== '') {
+                            htmlFinal += '<h5 class="text-[10px] uppercase font-black tracking-widest text-slate-400 mt-4 mb-3 border-b border-gray-100 pb-1">' + nomeCompeticao + '</h5>\n' + matchesHtml; 
+                        }
+                    }
+                })
+                .catch(function(e){ console.warn("Aviso Placar:", e); })
+                .finally(function() {
+                    fetchesConcluidos++;
+                    if(fetchesConcluidos === ligasAtivas.length) {
+                        if(htmlFinal === '') { if(containerGeral) containerGeral.classList.add('hidden'); } 
+                        else { if(containerGeral) containerGeral.classList.remove('hidden'); placar.innerHTML = htmlFinal; }
+                    }
+                });
+            });
+        }
+
+
+        // ---------------------------------------------------------
+        // FUNÇÕES DO PAINEL DE REDAÇÃO (BLINDADAS)
+        // ---------------------------------------------------------
         function atualizarBarraFerramentas() {
             var fontNode = document.queryCommandValue('fontName');
             var sizeNode = document.queryCommandValue('fontSize');
@@ -792,33 +1054,22 @@
             document.execCommand('unlink', false, null);
             var sel = window.getSelection();
             if (!sel.isCollapsed) {
-                var range = sel.getRangeAt(0);
-                var container = range.commonAncestorContainer;
+                var range = sel.getRangeAt(0); var container = range.commonAncestorContainer;
                 if (container.nodeType === 3) container = container.parentNode;
                 var editor = document.getElementById('admin-editor-rich');
                 if (editor.contains(container)) {
                     var elements = container.querySelectorAll('*');
                     elements.forEach(function(el) {
                         if (sel.containsNode(el, true)) {
-                            el.removeAttribute('style'); el.removeAttribute('face'); el.removeAttribute('size');
-                            el.removeAttribute('class'); el.removeAttribute('color');
+                            el.removeAttribute('style'); el.removeAttribute('face'); el.removeAttribute('size'); el.removeAttribute('class'); el.removeAttribute('color');
                         }
                     });
                     if (container !== editor) {
-                        container.removeAttribute('style'); container.removeAttribute('face'); container.removeAttribute('size');
-                        container.removeAttribute('class'); container.removeAttribute('color');
+                        container.removeAttribute('style'); container.removeAttribute('face'); container.removeAttribute('size'); container.removeAttribute('class'); container.removeAttribute('color');
                     }
                 }
             }
-            document.getElementById('fontFamilySelect').selectedIndex = 0;
-            document.getElementById('fontSizeSelect').selectedIndex = 0;
-            document.getElementById('admin-editor-rich').focus();
-        }
-
-        function normalizarTextoUrl(text) {
-            if (!text) return 'geral';
-            return String(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-                .replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
+            document.getElementById('fontFamilySelect').selectedIndex = 0; document.getElementById('fontSizeSelect').selectedIndex = 0; document.getElementById('admin-editor-rich').focus();
         }
 
         function atualizarRelacionadasAutomaticas() {
@@ -826,13 +1077,9 @@
             var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
             var catsAtuais = Array.from(checkboxes).map(function(cb) { return normalizarTexto(cb.value); });
             var idAtual = document.getElementById('admin-id-noticia').value;
-            
-            var candidatas = noticiasGlobais.filter(function(n) {
-                if (String(n.status).toLowerCase() !== 'ativa') return false;
-                if (String(n.id) === String(idAtual)) return false;
-                return true;
-            });
+            var candidatas = noticiasGlobais.filter(function(n) { return String(n.status).toLowerCase() === 'ativa' && String(n.id) !== String(idAtual); });
             var recomendadas = [];
+            
             if (catsAtuais.length > 0) {
                 var daCategoria = candidatas.filter(function(n) {
                     var nCats = String(n.categoria || '').split(',').map(normalizarTexto);
@@ -851,44 +1098,44 @@
 
         function atualizarPreviewURL() {
             var titulo = document.getElementById('admin-titulo').value.trim();
-            var elPreview = document.getElementById('preview-url-noticia');
-            var elPreviewTexto = document.getElementById('preview-url-texto'); 
+            var elPreview = document.getElementById('preview-url-noticia'); var elPreviewTexto = document.getElementById('preview-url-texto'); 
             if(!titulo) { if(elPreview) elPreview.classList.add('hidden'); return; }
+            
             var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
             var cat = "Geral"; if (checkboxes.length > 0) { cat = checkboxes[0].value; }
             var slugTitulo = normalizarTextoUrl(titulo); var slugCat = normalizarTextoUrl(cat);
             var idAtual = document.getElementById('admin-id-noticia').value;
             var fakeId = idAtual ? idAtual : "1710987654321"; 
             var finalUrl = "https://noticiasavulsas.com.br/" + slugCat + '/' + slugTitulo + '/' + fakeId;
+            
             if(elPreviewTexto && elPreview) { elPreviewTexto.innerText = finalUrl; elPreview.classList.remove('hidden'); }
         }
 
         function mostrarMensagem(mensagem, tipo) {
             if(tipo === undefined) tipo = 'sucesso';
             var toast = document.getElementById('toast');
-            document.getElementById('toast-msg').innerText = mensagem;
-            toast.className = tipo === 'erro' ? 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-white border-red-600 text-red-600 rounded-sm' : 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-jornal-dark border-jornal-dark text-white rounded-sm';
-            document.getElementById('toast-icon').innerHTML = tipo === 'erro' ? '⚠️' : '✓';
-            toast.classList.remove('hidden');
-            setTimeout(function() { toast.classList.add('hidden'); }, 4500);
+            var tMsg = document.getElementById('toast-msg');
+            var tIco = document.getElementById('toast-icon');
+            if(tMsg) tMsg.innerText = mensagem;
+            if(toast) {
+                toast.className = tipo === 'erro' ? 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-white border-red-600 text-red-600 rounded-sm' : 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-jornal-dark border-jornal-dark text-white rounded-sm';
+                if(tIco) tIco.innerHTML = tipo === 'erro' ? '⚠️' : '✓';
+                toast.classList.remove('hidden');
+                setTimeout(function() { toast.classList.add('hidden'); }, 4500);
+            }
         }
 
         function fazerLogin(e) {
             e.preventDefault();
-            var u = document.getElementById('login-user').value;
-            var p = document.getElementById('login-pass').value;
-            var btn = document.getElementById('btn-fazer-login');
-            btn.innerHTML = "A VERIFICAR..."; btn.disabled = true;
+            var u = document.getElementById('login-user').value; var p = document.getElementById('login-pass').value;
+            var btn = document.getElementById('btn-fazer-login'); btn.innerHTML = "A VERIFICAR..."; btn.disabled = true;
 
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
                     if (res && res.sucesso) {
-                        try { 
-                            localStorage.setItem('admin_logado', 'true'); 
-                            localStorage.setItem('admin_user', u);
-                        } catch(err) {}
-                        document.getElementById('modalLogin').classList.add('hidden');
-                        document.getElementById('view-admin').classList.remove('hidden');
+                        try { localStorage.setItem('admin_logado', 'true'); localStorage.setItem('admin_user', u); } catch(err) {}
+                        var ml = document.getElementById('modalLogin'); if(ml) ml.classList.add('hidden');
+                        var va = document.getElementById('view-admin'); if(va) va.classList.remove('hidden');
                         carregarNoticiasAdmin(false);
                     } else { mostrarMensagem(res ? res.erro : "Resposta inválida.", 'erro'); }
                     btn.innerHTML = "Entrar no Painel"; btn.disabled = false;
@@ -899,34 +1146,39 @@
             }
         }
 
-        function encerrarSessao() { try { localStorage.removeItem('admin_logado'); localStorage.removeItem('admin_user'); } catch(err) {} window.location.href = "index.html"; }
-        function irParaPortal() { window.location.href = "index.html"; }
+        function encerrarSessao() {
+            try { localStorage.removeItem('admin_logado'); localStorage.removeItem('admin_user'); } catch(err) {}
+            window.location.href = "index.html";
+        }
 
         function carregarNoticiasAdmin(silencioso) {
-            if (!silencioso) { document.getElementById('loading-global').classList.remove('hidden'); }
+            var lg = document.getElementById('loading-global');
+            if (!silencioso && lg) lg.classList.remove('hidden');
+            
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
-                    if (!silencioso) { document.getElementById('loading-global').classList.add('hidden'); }
+                    if (!silencioso && lg) lg.classList.add('hidden');
                     if (res && res.sucesso) {
-                        noticiasGlobais = res.noticias || []; 
-                        configuracoesGlobais = res.config || {};
-                        if (res.categorias && res.categorias.length > 0) { listaCategoriasLocais = res.categorias; }
-                        renderizarChecklistCategoriasAdmin();
-                        atualizarRelacionadasAutomaticas();
-                        if (!document.getElementById('lista-noticias-container').classList.contains('hidden')) { carregarListaEdicao(); }
+                        noticiasGlobais = res.noticias || []; configuracoesGlobais = res.config || {};
+                        if (res.categorias && res.categorias.length > 0) listaCategoriasLocais = res.categorias;
+                        renderizarChecklistCategoriasAdmin(); atualizarRelacionadasAutomaticas();
+                        var lnc = document.getElementById('lista-noticias-container');
+                        if (lnc && !lnc.classList.contains('hidden')) carregarListaEdicao();
                     }
                 }).withFailureHandler(function(err) {
-                    if (!silencioso) { document.getElementById('loading-global').classList.add('hidden'); }
-                    mostrarMensagem("Falha na comunicação com o servidor.", 'erro');
+                    if (!silencioso && lg) lg.classList.add('hidden');
+                    mostrarMensagem("Falha de Servidor.", 'erro');
                 }).getHomeData();
             }
         }
 
         function alternarAbaAdmin(abaId) {
-            var contentIds = ['form-noticia-container', 'lista-noticias-container'];
-            contentIds.forEach(function(id) { var el = document.getElementById(id); if(el) el.classList.add('hidden'); });
-            var tabIds = ['aba-noticia', 'aba-lista'];
-            tabIds.forEach(function(id) { var el = document.getElementById(id); if(el) el.className = "py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors"; });
+            ['form-noticia-container', 'lista-noticias-container'].forEach(function(id) { 
+                var el = document.getElementById(id); if(el) el.classList.add('hidden'); 
+            });
+            ['aba-noticia', 'aba-lista'].forEach(function(id) { 
+                var el = document.getElementById(id); if(el) el.className = "py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors"; 
+            });
             
             var targetEl = document.getElementById(abaId);
             if(targetEl) targetEl.classList.remove('hidden');
@@ -934,12 +1186,10 @@
             var botaoId = ""; var classAtiva = "bg-jornal-dark text-white";
             if (abaId === 'form-noticia-container') { 
                 botaoId = 'aba-noticia'; classAtiva = "bg-jornal-blue text-white font-black"; 
-                document.getElementById('titulo-pagina-form').innerText = "Redigir Matéria"; 
+                var tpf = document.getElementById('titulo-pagina-form');
+                if(tpf) tpf.innerText = "Redigir Matéria"; 
             }
-            else if (abaId === 'lista-noticias-container') { 
-                botaoId = 'aba-lista'; classAtiva = "bg-jornal-dark text-white font-black"; 
-                carregarListaEdicao(); 
-            }
+            else if (abaId === 'lista-noticias-container') { botaoId = 'aba-lista'; classAtiva = "bg-jornal-dark text-white font-black"; carregarListaEdicao(); }
             
             var btnEl = document.getElementById(botaoId);
             if(btnEl) btnEl.className = 'py-3 px-5 uppercase tracking-widest text-[11px] whitespace-nowrap rounded-t-sm transition-colors ' + classAtiva;
@@ -957,8 +1207,6 @@
             });
         }
 
-        function normalizarTexto(str) { return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
-
         function atualizarCampoCidadeAdmin() {
             var selecionadas = Array.from(document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked'));
             var mostraCidade = selecionadas.some(function(cb) { return normalizarTexto(cb.value) === 'cidades'; });
@@ -971,7 +1219,11 @@
             if(!nome) return;
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
-                    if(res && res.sucesso) { mostrarMensagem("Editoria adicionada!"); if (listaCategoriasLocais.indexOf(nome) === -1) listaCategoriasLocais.push(nome); renderizarChecklistCategoriasAdmin(); }
+                    if(res && res.sucesso) { 
+                        mostrarMensagem("Editoria adicionada!"); 
+                        if (listaCategoriasLocais.indexOf(nome) === -1) listaCategoriasLocais.push(nome);
+                        renderizarChecklistCategoriasAdmin(); 
+                    }
                 }).adicionarCategoriaNoSheets({nome: nome});
             }
         }
@@ -980,11 +1232,13 @@
             var inputVal = normalizarTexto(document.getElementById('admin-busca-relacionada').value);
             var divResultados = document.getElementById('lista-resultados-relacionadas');
             if(!inputVal || inputVal.length < 2) { divResultados.innerHTML = '<div class="text-xs text-indigo-500 font-bold p-2">Digite pelo menos 2 letras.</div>'; return; }
+            
             var res = noticiasGlobais.filter(function(n) {
                 var isPub = String(n.status).toLowerCase() === 'ativa';
                 var txt = normalizarTexto([n.titulo, n.categoria, n.cidade].join(' '));
                 return isPub && txt.indexOf(inputVal) !== -1;
             }).slice(0, 5);
+            
             var html = '';
             if (res.length === 0) { html = '<div class="text-xs text-indigo-500 font-bold p-2">Nenhum resultado encontrado.</div>'; }
             else {
@@ -1004,7 +1258,8 @@
             window.relacionadasSelecionadas.push({id: id, titulo: titulo});
             window.relacionadasEditadasManualmente = true;
             atualizarUIListaRelacionadas();
-            document.getElementById('lista-resultados-relacionadas').innerHTML = ''; document.getElementById('admin-busca-relacionada').value = '';
+            var divRes = document.getElementById('lista-resultados-relacionadas'); if(divRes) divRes.innerHTML = '';
+            var iptBusca = document.getElementById('admin-busca-relacionada'); if(iptBusca) iptBusca.value = '';
         }
 
         function removerRelacionada(id) {
@@ -1020,15 +1275,17 @@
                     '<div class="flex-grow min-w-0 pr-2 truncate font-bold">' + r.titulo + '</div>' +
                     '<button type="button" onclick="removerRelacionada(\'' + r.id + '\')" class="text-red-300 hover:text-red-100 font-black px-2 py-1 text-[10px] uppercase">Remover</button></div>';
             });
-            document.getElementById('lista-selecionadas-relacionadas').innerHTML = html;
-            document.getElementById('admin-relacionadas-ids').value = window.relacionadasSelecionadas.map(function(r){return r.id;}).join(',');
+            var selIds = document.getElementById('lista-selecionadas-relacionadas'); if(selIds) selIds.innerHTML = html;
+            var inpIds = document.getElementById('admin-relacionadas-ids'); if(inpIds) inpIds.value = window.relacionadasSelecionadas.map(function(r){return r.id;}).join(',');
         }
 
-        function execCmd(command, arg) { if(arg === undefined) arg = null; document.execCommand(command, false, arg); document.getElementById('admin-editor-rich').focus(); }
+        function execCmd(command, arg) { if(arg === undefined) arg = null; document.execCommand(command, false, arg); var er = document.getElementById('admin-editor-rich'); if(er) er.focus(); }
         function inserirLinkRichEditor() { var url = prompt("Insira a URL completa do hiperlink:"); if (url) execCmd('createLink', url); }
-        function inserirImagemRichEditor() { document.getElementById('upload-imagem-conteudo').click(); }
+        function inserirImagemRichEditor() { var up = document.getElementById('upload-imagem-conteudo'); if(up) up.click(); }
 
-        // MÁGICA 1: UPLOAD IMGBB NA NUVEM PARA EVITAR FAILED TO FETCH POR CAUSA DE PESO (50.000 CARACTERES)
+        // =========================================================================================
+        // UPLOAD DE IMAGEM INLINE PARA A NUVEM (IMGBB) - EVITA O ERRO DE 50K CARACTERES
+        // =========================================================================================
         function processarUploadImagemConteudo(input) {
             if (!input.files || !input.files[0]) return;
             var file = input.files[0];
@@ -1036,7 +1293,7 @@
             var creditos = prompt("Créditos da foto (obrigatório se houver direitos):") || "";
             
             var tempId = "img-temp-" + new Date().getTime();
-            execCmd('insertHTML', '<div id="' + tempId + '" style="padding:20px; text-align:center; color:#E11D48; font-weight:bold; border: 2px dashed #E11D48; background:#fff1f2; margin:10px 0;">⏳ A carregar imagem para a nuvem... Aguarde.</div>');
+            execCmd('insertHTML', '<div id="' + tempId + '" style="padding:20px; text-align:center; color:#E11D48; font-weight:bold; border: 2px dashed #E11D48; background:#fff1f2; margin:10px 0;">⏳ A carregar imagem para o servidor... Aguarde.</div>');
             
             var reader = new FileReader();
             reader.onload = function(e) {
@@ -1052,11 +1309,10 @@
                     var formData = new FormData();
                     formData.append("image", rawBase64);
                     
-                    // Usa o ImgBB para a imagem não pesar na Base de Dados e evitar erro 400
                     var imgbbKey = configuracoesGlobais['ChaveImgBB'] || "81600134b976ae61b4aec6350b110764";
                     fetch("https://api.imgbb.com/1/upload?key=" + imgbbKey, { method: "POST", body: formData })
-                    .then(r => r.json())
-                    .then(data => {
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
                         var targetEl = document.getElementById(tempId);
                         if (!targetEl) return;
                         if (data && data.success && data.data && data.data.url) {
@@ -1074,7 +1330,7 @@
                             targetEl.outerHTML = htmlImg;
                         } else { targetEl.outerHTML = '<div style="color:red; font-weight:bold; padding:10px; border:1px solid red; margin:10px 0;">❌ Erro ao guardar a imagem. Tente de novo.</div><br>'; }
                     })
-                    .catch(err => {
+                    .catch(function(err) {
                         var targetEl = document.getElementById(tempId);
                         if (targetEl) targetEl.outerHTML = '<div style="color:red; font-weight:bold; padding:10px; border:1px solid red; margin:10px 0;">❌ Falha de rede ao enviar imagem para a nuvem.</div><br>';
                     });
@@ -1088,29 +1344,40 @@
         function inserirVideoRichEditor() { var url = prompt("Insira o link (YouTube, X, Insta, TikTok):"); if (url) execCmd('insertHTML', url + '<br><br>'); }
 
         function gerarLinhaFinaIA() {
-            var t = document.getElementById('admin-titulo').value.trim();
+            var iptTit = document.getElementById('admin-titulo');
+            if(!iptTit) return;
+            var t = iptTit.value.trim();
             if(!t) { mostrarMensagem("Preencha a Manchete primeiro.", "erro"); return; }
             var btn = document.getElementById('btn-ia-linhafina'); var txt = btn.innerText; btn.innerText = "...";
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
-                    if(res && res.sucesso && res.texto) { document.getElementById('admin-linha-fina').value = res.texto.trim(); mostrarMensagem("Linha fina gerada!"); }
+                    if(res && res.sucesso && res.texto) { 
+                        var iptLf = document.getElementById('admin-linha-fina'); 
+                        if(iptLf) iptLf.value = res.texto.trim(); 
+                        mostrarMensagem("Linha fina gerada!"); 
+                    }
                     btn.innerText = txt;
                 }).chamarGeminiBackend('Escreva uma linha fina curta (SEO) para o título: "' + t + '"');
             } else { btn.innerText = txt; }
         }
 
         function gerarConteudoIA() {
-            var t = document.getElementById('admin-titulo').value.trim();
+            var iptTit = document.getElementById('admin-titulo');
+            if(!iptTit) return;
+            var t = iptTit.value.trim();
             if(!t) { mostrarMensagem("Preencha a Manchete primeiro.", "erro"); return; }
             var btn = document.getElementById('btn-ia-conteudo'); var txt = btn.innerText; btn.innerText = "A escrever...";
-            var lf = document.getElementById('admin-linha-fina').value.trim();
+            var lfIpt = document.getElementById('admin-linha-fina');
+            var lf = lfIpt ? lfIpt.value.trim() : '';
             var promptStr = 'Escreva uma notícia completa em HTML (use apenas tags <p>, <h2>, <ul>). Manchete: "' + t + '". ' + (lf ? 'Linha Fina: "' + lf + '"' : '');
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
                     if(res && res.sucesso && res.texto) {
                         var cleanHtml = res.texto.replace(/(\`\`\`html|\`\`\`)/gi, '').trim();
-                        document.getElementById('admin-editor-rich').innerHTML = cleanHtml; mostrarMensagem("Texto gerado!");
+                        var rEd = document.getElementById('admin-editor-rich');
+                        if(rEd) rEd.innerHTML = cleanHtml; 
+                        mostrarMensagem("Texto gerado!");
                     }
                     btn.innerText = txt;
                 }).chamarGeminiBackend(promptStr);
@@ -1152,8 +1419,11 @@
                         canvas.width = width; canvas.height = height; ctx.drawImage(img, 0, 0, width, height);
                         var compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
                         base64StringNoticia = compressedDataUrl.split(',')[1];
-                        document.getElementById('preview-imagem').src = compressedDataUrl;
-                        document.getElementById('preview-imagem').classList.remove('hidden');
+                        var pImg = document.getElementById('preview-imagem');
+                        if(pImg) {
+                            pImg.src = compressedDataUrl;
+                            pImg.classList.remove('hidden');
+                        }
                         verificarUploadMedia(e.target);
                     };
                     img.src = evt.target.result;
@@ -1163,14 +1433,13 @@
         }
 
         function limparFormNoticia() {
-            document.getElementById('form-admin').reset();
-            document.getElementById('admin-id-noticia').value = "";
-            document.getElementById('preview-imagem').classList.add('hidden');
-            document.getElementById('preview-imagem').src = "";
-            document.getElementById('admin-carrossel').checked = false;
-            document.getElementById('admin-editor-rich').innerHTML = "";
-            document.getElementById('admin-imagem-metadados').classList.add('hidden');
-            document.getElementById('admin-creditos-imagem').required = false;
+            var frm = document.getElementById('form-admin'); if(frm) frm.reset();
+            var iId = document.getElementById('admin-id-noticia'); if(iId) iId.value = "";
+            var pImg = document.getElementById('preview-imagem'); if(pImg) { pImg.classList.add('hidden'); pImg.src = ""; }
+            var chkC = document.getElementById('admin-carrossel'); if(chkC) chkC.checked = false;
+            var aEr = document.getElementById('admin-editor-rich'); if(aEr) aEr.innerHTML = "";
+            var imM = document.getElementById('admin-imagem-metadados'); if(imM) imM.classList.add('hidden');
+            var aCr = document.getElementById('admin-creditos-imagem'); if(aCr) aCr.required = false;
             base64StringNoticia = "";
             document.querySelectorAll('input[name="admin-categorias-checkbox"]').forEach(function(cb) { cb.checked = false; });
             atualizarCampoCidadeAdmin();
@@ -1182,38 +1451,46 @@
             atualizarPreviewURL(); 
             atualizarRelacionadasAutomaticas(); 
             
-            document.getElementById('titulo-pagina-form').innerText = "Redigir Matéria";
-            var btnSalvar = document.getElementById('btn-salvar-noticia'); 
-            if (btnSalvar) btnSalvar.innerText = "Publicar Matéria";
-            var btnRascunho = document.getElementById('btn-salvar-rascunho');
-            if (btnRascunho) btnRascunho.innerText = "Salvar Rascunho";
+            var tpf = document.getElementById('titulo-pagina-form'); if(tpf) tpf.innerText = "Redigir Matéria";
+            var btnSalvar = document.getElementById('btn-salvar-noticia'); if (btnSalvar) btnSalvar.innerText = "Publicar Matéria";
+            var btnRascunho = document.getElementById('btn-salvar-rascunho'); if (btnRascunho) btnRascunho.innerText = "Salvar Rascunho";
         }
 
         function salvarNoticia(e, statusForcado) {
             if(e) e.preventDefault(); 
             
-            var editandoID = document.getElementById('admin-id-noticia').value; 
-            var noCarrossel = document.getElementById('admin-carrossel').checked; 
-            var prevSrc = document.getElementById('preview-imagem').src; 
+            var editandoID = document.getElementById('admin-id-noticia') ? document.getElementById('admin-id-noticia').value : ""; 
+            var noCarrossel = document.getElementById('admin-carrossel') ? document.getElementById('admin-carrossel').checked : false; 
+            var pImg = document.getElementById('preview-imagem');
+            var prevSrc = pImg ? pImg.src : ""; 
             var temImagemAnterior = prevSrc && (prevSrc.indexOf('http') !== -1 || prevSrc.indexOf('data:image') !== -1);
             
             var isRascunho = (statusForcado === 'Rascunho');
             var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked'); 
             
-            // FORÇA A CAPTURA COM O .trim() NA HORA EXATA DE SALVAR
-            var tituloDigitado = document.getElementById('admin-titulo').value.trim();
-            var creditos = document.getElementById('admin-creditos-imagem').value.trim();
-            var linhaFinaStr = document.getElementById('admin-linha-fina').value.trim();
-            var autorStr = document.getElementById('admin-autor').value.trim();
+            var aTit = document.getElementById('admin-titulo');
+            var tituloDigitado = aTit ? aTit.value.trim() : "";
+            
+            var aCrImg = document.getElementById('admin-creditos-imagem');
+            var creditos = aCrImg ? aCrImg.value.trim() : "";
+            
+            var aLf = document.getElementById('admin-linha-fina');
+            var linhaFinaStr = aLf ? aLf.value.trim() : "";
+            
+            var aAut = document.getElementById('admin-autor');
+            var autorStr = aAut ? aAut.value.trim() : "";
+            
             var campoCidade = document.getElementById('admin-cidade'); 
             var cidadeSelecionada = campoCidade ? campoCidade.value.trim() : ''; 
 
             if (!isRascunho) {
-                if (!tituloDigitado) { mostrarMensagem("A Manchete é obrigatória para publicar.", "erro"); document.getElementById('admin-titulo').focus(); return; }
+                if (!tituloDigitado) { mostrarMensagem("A Manchete é obrigatória para publicar.", "erro"); if(aTit) aTit.focus(); return; }
                 if (checkboxes.length === 0) { mostrarMensagem("Selecione ao menos 1 Editoria para publicar.", "erro"); return; }
-                if ((base64StringNoticia || temImagemAnterior) && !creditos) { mostrarMensagem("Crédito de imagem obrigatório para publicar.", "erro"); document.getElementById('admin-creditos-imagem').focus(); return; }
+                if ((base64StringNoticia || temImagemAnterior) && !creditos) { mostrarMensagem("Crédito de imagem obrigatório para publicar.", "erro"); if(aCrImg) aCrImg.focus(); return; }
                 var containerCidade = document.getElementById('admin-cidade-container');
-                if (campoCidade && containerCidade && !containerCidade.classList.contains('hidden') && !cidadeSelecionada) { mostrarMensagem("O campo Cidade é obrigatório para esta editoria.", "erro"); campoCidade.focus(); return; }
+                if (campoCidade && containerCidade && !containerCidade.classList.contains('hidden') && !cidadeSelecionada) {
+                    mostrarMensagem("O campo Cidade é obrigatório para esta editoria.", "erro"); campoCidade.focus(); return;
+                }
             } else {
                 if (!tituloDigitado) tituloDigitado = "Rascunho sem título";
             }
@@ -1222,13 +1499,13 @@
             var categoriasSelecionadas = categoriasSelecionadasArray.length > 0 ? categoriasSelecionadasArray.join(", ") : "Geral";
             
             var btn = document.getElementById(isRascunho ? 'btn-salvar-rascunho' : 'btn-salvar-noticia'); 
-            var txtOriginal = btn.innerHTML; 
-            btn.innerHTML = 'A guardar...'; 
-            btn.disabled = true;
+            var txtOriginal = btn ? btn.innerHTML : ""; 
+            if(btn) { btn.innerHTML = 'A guardar...'; btn.disabled = true; }
             
-            // MÁGICA 2: VASSOURA QUE APAGA OS BOTÕES DE "+" E "-" PARA NÃO IREM PARA A BASE DE DADOS
+            // VASSOURA: Limpeza dos Botões (+ e -) do texto antes de guardar
             var tempDiv = document.createElement('div');
-            tempDiv.innerHTML = document.getElementById('admin-editor-rich').innerHTML;
+            var rEd = document.getElementById('admin-editor-rich');
+            tempDiv.innerHTML = rEd ? rEd.innerHTML : "";
             var botoesAdmin = tempDiv.querySelectorAll('.controles-imagem-admin, .btn-diminuir-img, .btn-aumentar-img');
             botoesAdmin.forEach(function(btnRem) {
                 var pai = btnRem.parentElement;
@@ -1242,12 +1519,20 @@
             var statusFinal = statusForcado || 'Ativa';
             var usuPub = localStorage.getItem('admin_user') || 'Desconhecido';
             
+            var aAg = document.getElementById('admin-agendamento');
+            var aFim = document.getElementById('admin-data-fim-evento');
+            var aLegImg = document.getElementById('admin-legenda-imagem');
+            var aRelIds = document.getElementById('admin-relacionadas-ids');
+            
             var payload = { 
                 id: editandoID, titulo: tituloDigitado, categoria: categoriasSelecionadas, cidade: cidadeSelecionada, 
                 linhaFina: linhaFinaStr, conteudo: conteudoLimpo, autor: autorStr, 
-                dataAgendamento: document.getElementById('admin-agendamento').value, dataFimEvento: document.getElementById('admin-data-fim-evento').value, 
-                noCarrossel: noCarrossel, legendaImagem: document.getElementById('admin-legenda-imagem').value, 
-                creditosImagem: creditos, relacionadas: document.getElementById('admin-relacionadas-ids').value, 
+                dataAgendamento: aAg ? aAg.value : "", 
+                dataFimEvento: aFim ? aFim.value : "", 
+                noCarrossel: noCarrossel, 
+                legendaImagem: aLegImg ? aLegImg.value : "", 
+                creditosImagem: creditos, 
+                relacionadas: aRelIds ? aRelIds.value : "", 
                 statusForcado: statusFinal, usuarioPublicador: usuPub 
             };
             
@@ -1258,7 +1543,7 @@
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run
                 .withSuccessHandler(function(res) {
-                    btn.innerHTML = txtOriginal; btn.disabled = false;
+                    if(btn) { btn.innerHTML = txtOriginal; btn.disabled = false; }
                     if (res && res.sucesso) { 
                         mostrarMensagem(isRascunho ? 'Rascunho Guardado com Sucesso!' : 'Matéria Atualizada!'); 
                         localStorage.removeItem('admin_data_cache'); 
@@ -1267,8 +1552,8 @@
                     } else { mostrarMensagem("Erro do Servidor: " + (res.erro || "Falha ao guardar"), 'erro'); }
                 })
                 .withFailureHandler(function(err) {
-                    btn.innerHTML = txtOriginal; btn.disabled = false;
-                    mostrarMensagem("A Google falhou a ligação. Verifique se a matéria não está pesada demais.", "erro");
+                    if(btn) { btn.innerHTML = txtOriginal; btn.disabled = false; }
+                    mostrarMensagem("Erro de Conexão: " + err.message, "erro");
                 })
                 .salvarNoticiaNoSheets(payload);
             }
@@ -1365,20 +1650,24 @@
         function editarNoticia(id) {
             var noticia = noticiasGlobais.find(function(n) { return String(n.id) === String(id); }); if(!noticia) return;
             limparFormNoticia();
-            document.getElementById('admin-id-noticia').value = noticia.id;
+            var iptId = document.getElementById('admin-id-noticia'); if(iptId) iptId.value = noticia.id;
             
-            if (noticia.titulo !== "Rascunho sem título") { document.getElementById('admin-titulo').value = noticia.titulo || ''; }
+            var iptTit = document.getElementById('admin-titulo');
+            if (iptTit && noticia.titulo !== "Rascunho sem título") iptTit.value = noticia.titulo || '';
             
-            document.getElementById('admin-linha-fina').value = noticia.linhaFina || "";
-            document.getElementById('admin-editor-rich').innerHTML = noticia.conteudo || '';
-            document.getElementById('admin-autor').value = noticia.autor !== "da redação" ? (noticia.autor || '') : "";
-            document.getElementById('admin-carrossel').checked = (String(noticia.noCarrossel) === 'true');
+            var iptLf = document.getElementById('admin-linha-fina'); if(iptLf) iptLf.value = noticia.linhaFina || "";
+            var iptEd = document.getElementById('admin-editor-rich'); if(iptEd) iptEd.innerHTML = noticia.conteudo || '';
+            var iptAu = document.getElementById('admin-autor'); if(iptAu) iptAu.value = noticia.autor !== "da redação" ? (noticia.autor || '') : "";
+            var iptCar = document.getElementById('admin-carrossel'); if(iptCar) iptCar.checked = (String(noticia.noCarrossel) === 'true');
             
-            if (noticia.dataHora) {
+            var iptAg = document.getElementById('admin-agendamento');
+            if (noticia.dataHora && iptAg) {
                 var p = noticia.dataHora.split(/[\/\s:]/);
-                if (p.length >= 5) document.getElementById('admin-agendamento').value = p[2] + '-' + p[1] + '-' + p[0] + 'T' + p[3] + ':' + p[4];
+                if (p.length >= 5) iptAg.value = p[2] + '-' + p[1] + '-' + p[0] + 'T' + p[3] + ':' + p[4];
             }
-            if (noticia.dataFimEvento) { try { var dtFim = new Date(noticia.dataFimEvento); if(!isNaN(dtFim.getTime())) { document.getElementById('admin-data-fim-evento').value = dtFim.toISOString().slice(0,16); } } catch(e){} }
+            
+            var iptFim = document.getElementById('admin-data-fim-evento');
+            if (noticia.dataFimEvento && iptFim) { try { var dtFim = new Date(noticia.dataFimEvento); if(!isNaN(dtFim.getTime())) { iptFim.value = dtFim.toISOString().slice(0,16); } } catch(e){} }
             
             var cats = String(noticia.categoria).split(',').map(function(c) { return c.trim().toLowerCase(); });
             document.querySelectorAll('input[name="admin-categorias-checkbox"]').forEach(function(cb) { cb.checked = cats.indexOf(cb.value.toLowerCase()) !== -1; });
@@ -1386,12 +1675,13 @@
             if (campoCidade) campoCidade.value = noticia.cidade || '';
             atualizarCampoCidadeAdmin();
             
-            document.getElementById('admin-legenda-imagem').value = noticia.legendaImagem || '';
-            document.getElementById('admin-creditos-imagem').value = noticia.creditosImagem || '';
+            var iptLeg = document.getElementById('admin-legenda-imagem'); if(iptLeg) iptLeg.value = noticia.legendaImagem || '';
+            var iptCred = document.getElementById('admin-creditos-imagem'); if(iptCred) iptCred.value = noticia.creditosImagem || '';
 
             var prevImg = document.getElementById('preview-imagem');
+            var metaCont = document.getElementById('admin-imagem-metadados');
             if (prevImg) {
-                if(noticia.urlImagem) { prevImg.src = noticia.urlImagem; prevImg.classList.remove('hidden'); document.getElementById('admin-imagem-metadados').classList.remove('hidden'); }
+                if(noticia.urlImagem) { prevImg.src = noticia.urlImagem; prevImg.classList.remove('hidden'); if(metaCont) metaCont.classList.remove('hidden'); }
                 else { prevImg.classList.add('hidden'); }
             }
             
@@ -1406,11 +1696,9 @@
                 window.relacionadasEditadasManualmente = false; atualizarRelacionadasAutomaticas();
             }
             
-            document.getElementById('titulo-pagina-form').innerText = "A Editar Matéria Existente";
-            var btnSalvar = document.getElementById('btn-salvar-noticia'); 
-            if(btnSalvar) { btnSalvar.innerText = "Salvar Alterações"; }
-            var btnRascunho = document.getElementById('btn-salvar-rascunho');
-            if(btnRascunho) { btnRascunho.innerText = "Salvar como Rascunho"; }
+            var lblTit = document.getElementById('titulo-pagina-form'); if(lblTit) lblTit.innerText = "A Editar Matéria Existente";
+            var btnSalvar = document.getElementById('btn-salvar-noticia'); if(btnSalvar) btnSalvar.innerText = "Salvar Alterações"; 
+            var btnRascunho = document.getElementById('btn-salvar-rascunho'); if(btnRascunho) btnRascunho.innerText = "Salvar como Rascunho";
             
             alternarAbaAdmin('form-noticia-container'); window.scrollTo(0,0); atualizarPreviewURL();
         }
