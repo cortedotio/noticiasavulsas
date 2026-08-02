@@ -49,7 +49,7 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* A Área de Exportação fica fora da tela, MAS num espaço gigante para nunca espremer as margens! */
+        /* A Área de Exportação fica fora da tela, MAS num espaço gigante para nunca espremer as margens (Evita cortar as letras)! */
         #canvas-area-export {
             position: absolute;
             top: -9999px;
@@ -142,7 +142,7 @@
             bottom: 40px;
             left: 40px;
             width: calc(100% - 80px) !important;
-            padding: 60px 80px; /* 80px de respiro lateral para não cortar no Grid do IG */
+            padding: 60px 80px !important; /* 80px de respiro lateral para não cortar no Grid do IG */
             box-sizing: border-box !important;
         }
 
@@ -368,7 +368,7 @@
                     <div id="gerando-aviso" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-200 z-10">
                         <div class="w-10 h-10 border-4 border-gray-300 border-t-purple-500 rounded-full animate-spin mb-4"></div>
                         <p class="text-xs font-black text-gray-500 uppercase tracking-widest animate-pulse mt-4">A Desenhar Arte...</p>
-                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-center px-4">A alinhar fotografia e aplicar as suas cores...</p>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-center px-4">A alinhar fotografia e a calcular as cores da sua marca...</p>
                     </div>
 
                     <img id="preview-final-img" src="" class="max-w-full h-auto max-h-full object-contain shadow-2xl hidden" alt="Preview da Arte">
@@ -482,87 +482,117 @@
         }
 
         // =========================================================================
-        // O CONVERSOR MÁGICO: Converte as classes Tailwind em CSS puro para a Arte
+        // O EXTRATOR MÁGICO DE CORES: Lê a imagem da IA e pinta o Feed!
         // =========================================================================
         function aplicarEstiloEspecialArtes() {
-            if (!configuracoesGlobais['CorLogo']) {
-                return;
-            }
-            
-            // Removemos as classes que estragam o background no html2canvas
-            let classesOriginais = configuracoesGlobais['CorLogo'].replace(/bg-clip-text/gi, '').replace(/text-transparent/gi, '').trim();
-
-            // Descodificamos a direção do gradiente gerado pela IA
-            let direcao = "to right";
-            if (classesOriginais.includes("bg-gradient-to-t")) direcao = "to top";
-            else if (classesOriginais.includes("bg-gradient-to-tr")) direcao = "to top right";
-            else if (classesOriginais.includes("bg-gradient-to-br")) direcao = "to bottom right";
-            else if (classesOriginais.includes("bg-gradient-to-b")) direcao = "to bottom";
-            else if (classesOriginais.includes("bg-gradient-to-bl")) direcao = "to bottom left";
-            else if (classesOriginais.includes("bg-gradient-to-l")) direcao = "to left";
-            else if (classesOriginais.includes("bg-gradient-to-tl")) direcao = "to top left";
-
-            // Capturamos os passos do gradiente
-            let fromMatch = classesOriginais.match(/from-([a-z0-9\-]+)/);
-            let viaMatch = classesOriginais.match(/via-([a-z0-9\-]+)/);
-            let toMatch = classesOriginais.match(/to-([a-z0-9\-]+)/);
-
-            // Criamos uma div escondida para forçar o browser a computar os códigos RGB das cores Tailwind
-            let tempDiv = document.createElement("div");
-            tempDiv.style.display = "none";
-            document.body.appendChild(tempDiv);
-
-            function addColorSpan(match) {
-                if (!match) return null;
-                let span = document.createElement("span");
-                // Converte a cor de background para cor de texto para facilitar extração
-                span.className = `text-${match[1]}`; 
-                tempDiv.appendChild(span);
-                return span;
-            }
-
-            let spanFrom = addColorSpan(fromMatch);
-            let spanVia = addColorSpan(viaMatch);
-            let spanTo = addColorSpan(toMatch);
-
-            // Damos tempo para que o Tailwind CDN aplique as cores antes de ler e remover
-            setTimeout(() => {
-                let fromColor = spanFrom ? getComputedStyle(spanFrom).color : null;
-                let viaColor = spanVia ? getComputedStyle(spanVia).color : null;
-                let toColor = spanTo ? getComputedStyle(spanTo).color : null;
-                
-                document.body.removeChild(tempDiv);
-
-                if (fromColor) {
-                    // Monta a string do CSS
-                    let gradientStr = `linear-gradient(${direcao}, ${fromColor}`;
-                    if (viaColor && viaColor !== 'rgba(0, 0, 0, 0)') {
-                        gradientStr += `, ${viaColor}`;
-                    }
-                    if (toColor && toColor !== 'rgba(0, 0, 0, 0)') {
-                        gradientStr += `, ${toColor}`;
-                    } else if (fromColor && (!toColor || toColor === 'rgba(0, 0, 0, 0)')) {
-                        // Fallback sólido se só tiver uma cor
-                        gradientStr += `, ${fromColor}`; 
-                    }
-                    gradientStr += `)`;
-
-                    // APLICA O CSS PURO NA BORDA (FEED) E NAS DECORAÇÕES
-                    const templateFeed = document.getElementById('template-feed');
-                    if (templateFeed) {
-                        templateFeed.style.background = 'none';
-                        templateFeed.style.backgroundColor = 'transparent';
-                        templateFeed.style.backgroundImage = gradientStr;
-                    }
-
-                    const elementosDecorativos = document.querySelectorAll('.template-badge, .template-footer-line');
-                    elementosDecorativos.forEach(el => {
-                        el.style.background = 'none';
-                        el.style.backgroundColor = 'transparent';
-                        el.style.backgroundImage = gradientStr;
-                    });
+            // 1. TENTA LER A LOGO GERADA PELA IA E EXTRAIR A COR DOMINANTE
+            if (configuracoesGlobais['LogoHTML'] && configuracoesGlobais['LogoHTML'].includes('img')) {
+                let match = configuracoesGlobais['LogoHTML'].match(/src="([^"]+)"/);
+                if (match && match[1]) {
+                    let img = new Image();
+                    img.crossOrigin = "Anonymous";
+                    img.onload = function() {
+                        let canvas = document.createElement('canvas');
+                        let ctx = canvas.getContext('2d');
+                        // Reduz bastante a imagem para o processamento ser imediato
+                        canvas.width = 50; 
+                        canvas.height = 50;
+                        ctx.drawImage(img, 0, 0, 50, 50);
+                        
+                        let data = ctx.getImageData(0, 0, 50, 50).data;
+                        let r = 0, g = 0, b = 0, count = 0;
+                        
+                        // Faz um scan a todos os pixels para achar a cor mais "forte"
+                        for (let i = 0; i < data.length; i += 4) {
+                            if (data[i+3] > 128) { // Apenas pixels visíveis (não transparentes)
+                                // Ignora tons muito claros (branco do fundo) e muito escuros (pretos puros)
+                                if (!(data[i] > 230 && data[i+1] > 230 && data[i+2] > 230) &&
+                                    !(data[i] < 30 && data[i+1] < 30 && data[i+2] < 30)) {
+                                    r += data[i];
+                                    g += data[i+1];
+                                    b += data[i+2];
+                                    count++;
+                                }
+                            }
+                        }
+                        
+                        if (count > 0) {
+                            // Faz a média das cores principais encontradas na logo da IA
+                            r = Math.floor(r / count);
+                            g = Math.floor(g / count);
+                            b = Math.floor(b / count);
+                        } else {
+                            // Fallback caso a IA tenha gerado uma logo 100% preta ou branca (Usa o vermelho padrão)
+                            r = 225; g = 29; b = 72; // #E11D48
+                        }
+                        
+                        // Cria um tom ligeiramente mais escuro para fazer um degradê elegante
+                        let r2 = Math.max(0, r - 50);
+                        let g2 = Math.max(0, g - 50);
+                        let b2 = Math.max(0, b - 50);
+                        
+                        let corSolida = `rgb(${r}, ${g}, ${b})`;
+                        let gradiente = `linear-gradient(to bottom right, rgb(${r}, ${g}, ${b}), rgb(${r2}, ${g2}, ${b2}))`;
+                        
+                        aplicarCoresAoDOM(corSolida, gradiente);
+                    };
+                    img.src = match[1]; // Dispara o carregamento da imagem base64
+                    return; // Terminamos aqui, a logo assumiu o controlo!
                 }
-            }, 800); 
+            }
+
+            // 2. FALLBACK: Se não houver logo nova da IA, usa as classes Tailwind antigas (se existirem)
+            if (configuracoesGlobais['CorLogo']) {
+                let classesOriginais = configuracoesGlobais['CorLogo'].replace(/bg-clip-text/gi, '').replace(/text-transparent/gi, '').trim();
+                let direcao = "to right";
+                if (classesOriginais.includes("bg-gradient-to-br")) direcao = "to bottom right";
+                
+                let fromMatch = classesOriginais.match(/from-([a-z0-9\-]+)/);
+                let toMatch = classesOriginais.match(/to-([a-z0-9\-]+)/);
+
+                let tempDiv = document.createElement("div");
+                tempDiv.style.display = "none";
+                document.body.appendChild(tempDiv);
+
+                function addColorSpan(match) {
+                    if (!match) return null;
+                    let span = document.createElement("span");
+                    span.className = `text-${match[1]}`; 
+                    tempDiv.appendChild(span);
+                    return span;
+                }
+
+                let spanFrom = addColorSpan(fromMatch);
+                let spanTo = addColorSpan(toMatch);
+
+                setTimeout(() => {
+                    let fromColor = spanFrom ? getComputedStyle(spanFrom).color : null;
+                    let toColor = spanTo ? getComputedStyle(spanTo).color : null;
+                    document.body.removeChild(tempDiv);
+
+                    if (fromColor) {
+                        let gradientStr = `linear-gradient(${direcao}, ${fromColor}, ${toColor || fromColor})`;
+                        aplicarCoresAoDOM(fromColor, gradientStr);
+                    }
+                }, 800); 
+            }
+        }
+        
+        // Aplica o esquema de cores às bordas, às etiquetas vermelhas e à barrinha do rodapé!
+        function aplicarCoresAoDOM(corSolida, gradiente) {
+            const templateFeed = document.getElementById('template-feed');
+            if (templateFeed) {
+                templateFeed.style.background = 'none';
+                templateFeed.style.backgroundColor = corSolida;
+                templateFeed.style.backgroundImage = gradiente;
+            }
+
+            const elementosDecorativos = document.querySelectorAll('.template-badge, .template-footer-line');
+            elementosDecorativos.forEach(el => {
+                el.style.background = 'none';
+                el.style.backgroundColor = corSolida;
+                el.style.backgroundImage = gradiente;
+            });
         }
 
         function preencherFiltroEditorias(categorias) {
