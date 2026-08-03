@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notícias Avulsas - Portal de Informação</title>
     
+    <!-- Meta Tags Padrão para Redes Sociais (Fallback) -->
     <meta property="og:title" content="Notícias Avulsas - Portal de Informação">
     <meta property="og:description" content="Jornalismo sério, ético e independente. Acompanhe as últimas matérias.">
     <meta property="og:image" content="https://placehold.co/1200x630/0F172A/ffffff?text=Noticias+Avulsas">
@@ -22,6 +23,9 @@
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
     
     <script>
+        // ================================================================
+        // CONEXÃO INTELIGENTE BLINDADA (Preparada para o Safari/iPhone)
+        // ================================================================
         if (typeof google === 'undefined' || typeof google.script === 'undefined') {
             const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyoHo_olvZbyvT-qfKBDAveq1-n1IHD_bLxf831i_bBrFJeSVTcc6RTfvdQ9QV25hTh/exec";
             window.google = {
@@ -116,6 +120,7 @@
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
+    <!-- TELA DE CARREGAMENTO BRANCA E LIMPA -->
     <div id="loading-noticias" class="fixed inset-0 z-[100000] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
         <div id="loading-logo-container" class="mb-6">
              <h1 id="loading-logo-text" class="text-4xl md:text-5xl font-black tracking-tighter uppercase bg-gradient-to-r from-blue-500 to-emerald-400 bg-clip-text text-transparent">
@@ -127,6 +132,7 @@
         <div id="debug-error-box" class="hidden mt-4 text-xs text-red-500 font-mono text-center p-4 bg-red-50 border border-red-200 rounded max-w-xl break-words w-full shadow-sm"></div>
     </div>
 
+    <!-- VIEW PORTAL PRINCIPAL -->
     <div id="view-portal" class="flex-grow flex flex-col relative min-w-0">
         
         <div id="ticker-noticias" class="bg-jornal-red text-white text-[10px] font-bold h-8 overflow-hidden flex items-center border-b border-red-800 sticky top-0 z-50 w-full shadow-sm min-w-0 transition-colors duration-500">
@@ -170,9 +176,11 @@
             </form>
         </header>
 
+        <!-- MENU DE NAVEGAÇÃO -->
         <nav class="border-y border-gray-200 border-b-4 border-b-jornal-blue sticky top-0 md:top-8 z-40 bg-white/95 backdrop-blur-sm w-full shadow-sm min-w-0" id="nav-categorias-publicas">
             <div id="nav-container-inner" class="max-w-[1200px] mx-auto px-4 flex items-center overflow-x-auto whitespace-nowrap text-[11px] md:text-sm font-black uppercase tracking-widest text-jornal-dark py-3 md:py-4 custom-scrollbar min-w-0">
                 
+                <!-- STICKY LOGO -->
                 <div id="sticky-logo-container" class="hidden shrink-0 items-center cursor-pointer mr-6 pr-6 border-r-2 border-gray-200 transition-all duration-300" onclick="voltarCapa()">
                     <span class="font-black text-[15px] tracking-tighter uppercase bg-gradient-to-r from-blue-500 to-emerald-400 bg-clip-text text-transparent" id="sticky-logo-text">NOTÍCIAS AVULSAS</span>
                 </div>
@@ -186,6 +194,7 @@
 
             <div id="master-feed-wrapper" class="flex flex-col lg:flex-row gap-8 items-start hidden min-w-0">
                 
+                <!-- Coluna Esquerda: Notícias -->
                 <div class="lg:w-[72%] w-full flex flex-col gap-6 min-w-0">
                     
                     <div id="filtro-cidades-container" class="w-full mb-6 hidden bg-gray-50 p-5 border border-gray-200 rounded-sm shadow-sm">
@@ -198,6 +207,7 @@
                     </div>
 
                     <div id="home-feed-container" class="w-full min-w-0">
+                        <!-- O CARROSSEL REFEITO AQUI -->
                         <div id="carrossel-destaques" class="w-full mb-8 relative hidden overflow-hidden bg-gray-100 aspect-video shrink-0 rounded-sm shadow-md">
                             <div id="carrossel-inner" class="w-full h-full relative"></div>
                             <button onclick="moverCarrossel(-1)" class="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/50 text-white rounded-full p-3 z-20 backdrop-blur-sm transition-all shadow-lg">❮</button>
@@ -334,7 +344,9 @@
                         </div>
                         <div class="relative overflow-hidden bg-gradient-to-br from-sky-400 to-blue-600 rounded-b-sm shadow-inner py-8 px-4 text-white flex flex-col items-center">
                             <div class="absolute top-1/2 -translate-y-1/2 -right-10 text-[150px] opacity-10 select-none pointer-events-none" id="bg-icone-clima">☀️</div>
+                            
                             <span class="text-[12px] font-black uppercase tracking-widest opacity-90 mb-4 relative z-10" id="desc-clima">CÉU LIMPO</span>
+                            
                             <div class="flex items-center justify-center gap-6 relative z-10">
                                 <span class="text-7xl drop-shadow-md" id="icone-clima">☀️</span>
                                 <span class="text-7xl font-black drop-shadow-md tracking-tighter leading-none" id="temp-clima">--°</span>
@@ -346,7 +358,8 @@
                         <div class="border-b-4 border-jornal-blue pb-3 mb-5">
                             <h2 class="text-xs font-black uppercase tracking-widest text-jornal-blue">Top 10 Mais Lidas</h2>
                         </div>
-                        <ul id="lista-mais-lidas" class="space-y-4 divide-y divide-gray-100 min-w-0"></ul>
+                        <ul id="lista-mais-lidas" class="space-y-4 divide-y divide-gray-100 min-w-0">
+                        </ul>
                     </div>
 
                     <div class="border-t-4 border-jornal-red w-full pt-5 mb-6">
@@ -370,13 +383,75 @@
                     Ver Expediente
                 </button>
             </div>
+            
             <div id="social-footer" class="flex justify-center gap-4 mt-8 hidden"></div>
         </footer>
     </div>
 
+    <!-- Modais de Clima e Expediente -->
+    <div id="modalClima" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-jornal-dark/80 backdrop-blur-sm" onclick="fecharModalClima()"></div>
+        <div class="bg-white w-full max-w-lg rounded-sm shadow-2xl relative z-10 overflow-hidden font-sans flex flex-col max-h-[90vh]">
+            <div class="p-6 pb-0">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center gap-2 text-sm text-sky-700 font-black uppercase tracking-widest">
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                        <span>Cuiabá, Mato Grosso</span>
+                    </div>
+                    <button onclick="fecharModalClima()" class="text-gray-400 hover:text-red-500 font-black text-2xl leading-none">&times;</button>
+                </div>
+
+                <div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
+                    <div class="flex items-center gap-4">
+                        <span id="modal-clima-icone" class="text-7xl drop-shadow-sm">☀️</span>
+                        <div class="flex items-start">
+                            <span id="modal-clima-temp" class="text-7xl font-black text-gray-800 tracking-tighter leading-none">--</span>
+                            <span class="text-3xl text-gray-800 font-black mt-1">°C</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-6 items-center">
+                        <div class="text-[10px] font-black text-gray-500 flex flex-col gap-1.5 uppercase tracking-widest border-l-2 border-gray-100 pl-4">
+                            <span>Chuva: <span id="modal-clima-chuva" class="text-sky-600">--%</span></span>
+                            <span>Umidade: <span id="modal-clima-umidade" class="text-sky-600">--%</span></span>
+                            <span>Vento: <span id="modal-clima-vento" class="text-sky-600">-- km/h</span></span>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xl font-black text-jornal-dark uppercase leading-tight" id="modal-clima-desc">--</div>
+                            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Hoje</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-y-auto custom-scrollbar p-6 pt-0">
+                <div class="mb-8">
+                    <h3 class="text-xs font-black uppercase tracking-widest text-jornal-dark border-b-2 border-amber-500 pb-2 mb-4 inline-block">Previsão 7 Dias</h3>
+                    <div class="flex gap-3 overflow-x-auto custom-scrollbar pb-2" id="modal-clima-previsao"></div>
+                </div>
+
+                <div>
+                    <h3 class="text-xs font-black uppercase tracking-widest text-gray-500 mb-4">Previsão por Hora</h3>
+                    <div class="flex gap-3 overflow-x-auto custom-scrollbar pb-2" id="horas-clima-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalExpediente" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-jornal-dark/80 backdrop-blur-sm" onclick="fecharModalExpediente()"></div>
+        <div class="bg-white w-full max-w-2xl rounded-sm shadow-2xl relative z-10 overflow-hidden font-sans border-t-4 border-jornal-blue max-h-[90vh] flex flex-col">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
+                <h2 class="text-xl font-black uppercase tracking-tighter text-jornal-dark">EXPEDIENTE</h2>
+                <button onclick="fecharModalExpediente()" class="text-gray-400 hover:text-red-500 font-black text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-8 overflow-y-auto custom-scrollbar rich-editor text-base text-gray-800" id="conteudo-expediente">
+                <p class="text-gray-500 italic text-center font-medium">Expediente não configurado.</p>
+            </div>
+        </div>
+    </div>
+
     <script>
         var IMG_FALLBACK = 'https://placehold.co/600x400/e2e8f0/475569?text=Sem+Foto';
-        var ICON_HEART = '<svg class="w-3 h-3 fill-current inline" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
 
         function formatarUrlImagem(url) {
             if (!url) return '';
@@ -388,31 +463,26 @@
         }
 
         // ==========================================
-        // O NOVO TRADUTOR UNIVERSAL DE DATAS
-        // Resolve o bug da Expoagro e datas ISO vs BR
+        // BLINDAGEM CONTRA O SAFARI / iPHONE (DATAS)
         // ==========================================
         function criarDataSegura(dataString) {
             if (!dataString) return new Date();
             var str = String(dataString).trim();
-            
-            // Tenta o Date nativo primeiro (Ex: Sun Jul 20 ou 2026-07-20T03:59)
-            var nativo = new Date(str);
-            if (!isNaN(nativo.getTime())) {
-                return nativo;
+            // Transforma dd/mm/yyyy hh:mm ou yyyy-mm-ddThh:mm num objeto nativo sem o Safari Crashar
+            var partesIso = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+            if (partesIso) {
+                return new Date(partesIso[1], parseInt(partesIso[2])-1, partesIso[3], partesIso[4], partesIso[5]);
             }
-            
-            // Tratamento dd/mm/yyyy hh:mm (Formato PT/BR puro)
-            var partesBarra = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2}))?/);
-            if (partesBarra) {
-                return new Date(partesBarra[3], parseInt(partesBarra[2])-1, partesBarra[1], partesBarra[4]||0, partesBarra[5]||0);
+            var partesBarra = str.split(/[\/\s:\-T]/);
+            if (partesBarra.length >= 5) {
+                var ano, mes, dia, hora, min;
+                if (partesBarra[0].length === 4) { 
+                    ano = partesBarra[0]; mes = partesBarra[1]; dia = partesBarra[2]; hora = partesBarra[3]; min = partesBarra[4];
+                } else { 
+                    dia = partesBarra[0]; mes = partesBarra[1]; ano = partesBarra[2]; hora = partesBarra[3]; min = partesBarra[4];
+                }
+                return new Date(ano, parseInt(mes)-1, dia, hora, min);
             }
-            
-            // Tratamento yyyy/mm/dd hh:mm
-            var partesTraco = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})(?:[T\s](\d{1,2}):(\d{1,2}))?/);
-            if (partesTraco) {
-                return new Date(partesTraco[1], parseInt(partesTraco[2])-1, partesTraco[3], partesTraco[4]||0, partesTraco[5]||0);
-            }
-            
             return new Date(str); // Fallback extremo
         }
 
@@ -750,12 +820,19 @@
                     
                     if (dataReferencia !== '') {
                         var dObj = criarDataSegura(dataReferencia);
+                        var matchBarra = dataReferencia.match(/(\d{1,2})[\/\-](\d{1,2})/);
+                        var matchTracoISO = dataReferencia.match(/(\d{4})-(\d{2})-(\d{2})/);
+
                         if (!isNaN(dObj.getTime())) {
                             var dia = String(dObj.getDate()).padStart(2, '0');
                             var mes = String(dObj.getMonth() + 1).padStart(2, '0');
                             txtBadge = "Até " + dia + "/" + mes;
+                        } else if (matchTracoISO) {
+                            txtBadge = "Até " + matchTracoISO[3] + "/" + matchTracoISO[2];
+                        } else if (matchBarra) {
+                            txtBadge = "Até " + matchBarra[1] + "/" + matchBarra[2];
                         } else {
-                            txtBadge = "Agenda";
+                            txtBadge = "Até " + dataReferencia.substring(0, 5).trim();
                         }
                     }
                     
@@ -1510,7 +1587,7 @@
             var cHTML = '';
             cHTML += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 p-0 flex flex-col h-full hover:shadow-md transition-shadow rounded-sm w-full overflow-hidden min-w-0">\n';
             cHTML += '    <div class="relative w-full aspect-video bg-gray-100 border-b border-gray-200 shrink-0 overflow-hidden">\n';
-            cHTML += '        <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
+            cHTML += '        <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain group-hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
             cHTML += '    </div>\n';
             
             if (n.creditosImagem) {
@@ -1553,7 +1630,7 @@
             var cHTML = '';
             cHTML += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 flex flex-col md:flex-row h-full overflow-hidden hover:shadow-md transition-shadow rounded-sm w-full">\n';
             cHTML += '    <div class="md:w-[55%] w-full bg-gray-100 min-h-[350px] shrink-0 overflow-hidden relative">\n';
-            cHTML += '        <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700 min-h-[350px]" />\n';
+            cHTML += '        <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition duration-700 min-h-[350px]" />\n';
             
             if (n.creditosImagem) {
                 cHTML += '        <div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 rounded-tl">\n';
@@ -1638,7 +1715,7 @@
                     nCat.forEach(function(n) {
                         htmlFinal += '        <article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col h-full border border-gray-100 shadow-sm bg-white rounded-sm overflow-hidden min-w-0 hover:shadow-md transition-shadow">\n';
                         htmlFinal += '            <div class="relative w-full aspect-video bg-gray-100 shrink-0 overflow-hidden">\n';
-                        htmlFinal += '                <img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
+                        htmlFinal += '                <img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
                         htmlFinal += '            </div>\n';
                         htmlFinal += '            <div class="p-4 flex flex-col flex-grow min-w-0 bg-white relative z-10">\n';
                         htmlFinal += '                <h4 class="font-serif font-black text-sm leading-snug text-jornal-dark group-hover:text-jornal-red line-clamp-3 mb-3">' + n.titulo + '</h4>\n';
@@ -1654,6 +1731,159 @@
                 }
             });
             container.innerHTML = htmlFinal;
+        }
+
+        function montarCarrossel(itens) {
+            var inner = document.getElementById('carrossel-inner'); 
+            var ind = document.getElementById('carrossel-indicadores');
+            if(!inner || !ind) return;
+            
+            var htmlInner = '';
+            var htmlInd = '';
+            
+            itens.forEach(function(n, i) {
+                var credHtml = '';
+                if (n.creditosImagem) { 
+                    credHtml = '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 z-20">Foto: ' + n.creditosImagem + '</div>'; 
+                }
+                
+                htmlInner += '<div class="absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out cursor-pointer group carrossel-slide opacity-0 z-0 pointer-events-none" onclick="abrirNoticia(\'' + n.id + '\', true)">\n';
+                htmlInner += '    <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover bg-gray-100" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'"/>\n';
+                htmlInner += '    ' + credHtml + '\n';
+                htmlInner += '    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>\n';
+                htmlInner += '    <div class="absolute bottom-0 left-0 p-8 md:p-14 w-full text-white min-w-0 z-10 pointer-events-none">\n';
+                htmlInner += '        <span class="bg-jornal-red text-white text-[10px] font-black uppercase px-3 py-1.5 mb-4 inline-block rounded-sm truncate shadow-sm">\n';
+                htmlInner += '            ' + n.categoria + '\n';
+                htmlInner += '        </span>\n';
+                htmlInner += '        <h3 class="font-serif text-3xl md:text-5xl font-black mb-3 leading-tight break-words line-clamp-3 tracking-tighter drop-shadow-md">\n';
+                htmlInner += '            ' + n.titulo + '\n';
+                htmlInner += '        </h3>\n';
+                htmlInner += '    </div>\n';
+                htmlInner += '</div>\n';
+                
+                htmlInd += '<button onclick="irParaSlide(' + i + ')" class="w-3 h-3 rounded-full carrossel-indicador transition-colors bg-white/50"></button>\n';
+            });
+            
+            inner.innerHTML = htmlInner;
+            ind.innerHTML = htmlInd;
+            
+            slideIndex = 0; 
+            if(carrosselTimer) clearInterval(carrosselTimer);
+            carrosselTimer = setInterval(function() { moverCarrossel(1); }, 6000); 
+            atualizarCarrosselVisivel(); 
+        }
+
+        function moverCarrossel(d) { 
+            var s = document.getElementsByClassName('carrossel-slide'); 
+            if(s.length > 0) { 
+                slideIndex = (slideIndex + d + s.length) % s.length; 
+                atualizarCarrosselVisivel(); 
+            } 
+        }
+
+        function irParaSlide(idx) { 
+            slideIndex = idx; 
+            atualizarCarrosselVisivel(); 
+        }
+
+        function atualizarCarrosselVisivel() {
+            var slides = document.getElementsByClassName('carrossel-slide'); 
+            var indics = document.getElementsByClassName('carrossel-indicador');
+            for (var i = 0; i < slides.length; i++) {
+                if(slides[i]) { 
+                    if (i === slideIndex) {
+                        slides[i].classList.remove('opacity-0', 'z-0', 'pointer-events-none');
+                        slides[i].classList.add('opacity-100', 'z-10', 'pointer-events-auto');
+                    } else {
+                        slides[i].classList.remove('opacity-100', 'z-10', 'pointer-events-auto');
+                        slides[i].classList.add('opacity-0', 'z-0', 'pointer-events-none');
+                    }
+                }
+                if(indics[i]) { 
+                    indics[i].className = 'w-3 h-3 rounded-full carrossel-indicador transition-colors ' + (i === slideIndex ? 'bg-jornal-red' : 'bg-white/50'); 
+                }
+            }
+        }
+
+        function atualizarMetaTags(noticia) {
+            document.title = noticia.titulo + " - Notícias Avulsas";
+            
+            var metaOgTitle = document.querySelector('meta[property="og:title"]');
+            if (!metaOgTitle) {
+                metaOgTitle = document.createElement('meta');
+                metaOgTitle.setAttribute('property', 'og:title');
+                document.head.appendChild(metaOgTitle);
+            }
+            metaOgTitle.setAttribute('content', noticia.titulo);
+
+            var metaOgDesc = document.querySelector('meta[property="og:description"]');
+            if (!metaOgDesc) {
+                metaOgDesc = document.createElement('meta');
+                metaOgDesc.setAttribute('property', 'og:description');
+                document.head.appendChild(metaOgDesc);
+            }
+            var desc = noticia.linhaFina ? noticia.linhaFina : "Leia a matéria completa no Notícias Avulsas.";
+            metaOgDesc.setAttribute('content', desc);
+
+            var metaOgImage = document.querySelector('meta[property="og:image"]');
+            if (!metaOgImage) {
+                metaOgImage = document.createElement('meta');
+                metaOgImage.setAttribute('property', 'og:image');
+                document.head.appendChild(metaOgImage);
+            }
+            if (noticia.urlImagem) {
+                metaOgImage.setAttribute('content', noticia.urlImagem);
+            }
+            
+            var metaOgUrl = document.querySelector('meta[property="og:url"]');
+            if (!metaOgUrl) {
+                metaOgUrl = document.createElement('meta');
+                metaOgUrl.setAttribute('property', 'og:url');
+                document.head.appendChild(metaOgUrl);
+            }
+            metaOgUrl.setAttribute('content', window.location.href);
+        }
+
+        function focarPesquisaMobile() {
+            var f = document.getElementById('form-pesquisa-mobile'); 
+            var i = document.getElementById('input-pesquisa-mobile');
+            if(f && i) { 
+                f.classList.toggle('hidden'); 
+                if(!f.classList.contains('hidden')) i.focus(); 
+            }
+        }
+
+        function removerHTML(t) { 
+            return t ? String(t).replace(/<[^>]*>?/gm, '') : ''; 
+        }
+
+        function converterVideoUrlsParaPlayers(t) { 
+            if (!t) return ""; 
+            var strT = String(t);
+            strT = strT.replace(/<a[^>]*href="([^"]*(?:youtube\.com|youtu\.be)[^"]*)"[^>]*>.*?<\/a>/gi, '$1');
+            
+            var ytRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})[^\s<"]*/gi;
+            strT = strT.replace(ytRegex, function(match, id) { 
+                return '<div class="aspect-video w-full my-6 shadow-md rounded-sm overflow-hidden border border-gray-200"><iframe class="w-full h-full" src="https://www.youtube.com/embed/' + id + '" frameborder="0" allowfullscreen></iframe></div>'; 
+            });
+            
+            var igRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[a-zA-Z0-9_-]+)(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
+            strT = strT.replace(igRegex, function(match, url) { 
+                return '<blockquote class="instagram-media" data-instgrm-permalink="' + url + '/?utm_source=ig_embed" data-instgrm-version="14" style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px auto; max-width:540px; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);"></blockquote>'; 
+            });
+            
+            var tkRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?tiktok\.com\/@[a-zA-Z0-9_.-]+\/video\/([0-9]+))(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
+            strT = strT.replace(tkRegex, function(match, fullUrl, id) { 
+                return '<blockquote class="tiktok-embed" cite="' + fullUrl + '" data-video-id="' + id + '" style="max-width: 605px;min-width: 325px;" > <section> <a target="_blank" title="Video no TikTok" href="' + fullUrl + '">Assistir no TikTok</a> </section> </blockquote> <script async src="https://www.tiktok.com/embed.js"><\/scr' + 'ipt>'; 
+            });
+            
+            var twRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?(?:twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/status\/[0-9]+)(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
+            strT = strT.replace(twRegex, function(match, url) { 
+                var cleanUrl = url.replace('x.com', 'twitter.com'); 
+                return '<div class="my-6 overflow-hidden rounded-sm"><blockquote class="twitter-tweet" data-dnt="true"><a href="' + cleanUrl + '"></a></blockquote></div>'; 
+            });
+            
+            return strT;
         }
 
         function abrirNoticia(idNoticia, updateUrl) {
@@ -1687,16 +1917,16 @@
             
             var conteudoFormatado = converterVideoUrlsParaPlayers(noticia.conteudo || '');
             
-            // Remove Botões de Imagem da versão publicada caso tenham passado por falha de cache antigo
-            var tempDiv2 = document.createElement('div');
-            tempDiv2.innerHTML = conteudoFormatado;
-            var botoesDeletar2 = tempDiv2.querySelectorAll('.controles-imagem-admin, .btn-diminuir-img, .btn-aumentar-img');
-            botoesDeletar2.forEach(function(b) {
-                var pai2 = b.parentElement;
+            // Remove Botões de Imagem da versão publicada
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = conteudoFormatado;
+            var botoesDeletar = tempDiv.querySelectorAll('.btn-diminuir-img, .btn-aumentar-img');
+            botoesDeletar.forEach(function(b) {
+                var pai = b.parentElement;
                 b.remove();
-                if(pai2 && pai2.innerHTML.trim() === '') pai2.remove();
+                if(pai && pai.innerHTML.trim() === '') pai.remove();
             });
-            conteudoFormatado = tempDiv2.innerHTML;
+            conteudoFormatado = tempDiv.innerHTML;
 
             document.getElementById('nc-conteudo').innerHTML = conteudoFormatado || '<p class="text-gray-400 italic">Sem conteúdo disponível para esta matéria.</p>';
             
