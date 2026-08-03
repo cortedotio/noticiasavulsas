@@ -25,7 +25,7 @@
         const apiFunctions = [
             'getHomeData', 'verificarLogin', 'salvarConfiguracaoHTMLCustom', 
             'salvarPropagandaNoSheets', 'chamarGeminiBackend', 
-            'adicionarUsuario', 'removerUsuario', 'alterarSenhaUsuario'
+            'listarUsuarios', 'salvarUsuario', 'removerUsuario', 'alterarSenhaUsuario'
         ];
 
         apiFunctions.forEach(function(funcName) {
@@ -182,9 +182,8 @@
                 </form>
             </div>
 
-            <!-- 2. LOGÓTIPO & IA (CORES VIA TAILWIND) -->
+            <!-- 2. LOGÓTIPO & IA -->
             <div id="form-logo-container" class="config-panel-section hidden bg-white p-5 md:p-8 shadow-sm border border-gray-200 rounded-sm border-t-4 border-t-purple-600">
-                
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <div class="border-l-4 border-purple-600 pl-3">
                         <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">INTELIGÊNCIA ARTIFICIAL & DESIGN</h2>
@@ -199,7 +198,6 @@
                     </div>
                 </div>
                 
-                <!-- CHAVE IA -->
                 <div class="mb-8 p-6 bg-purple-50/50 border border-purple-100 rounded-sm">
                     <h3 class="font-black text-sm uppercase tracking-widest text-purple-800 mb-2">CHAVE DE ACESSO DA IA (API KEY)</h3>
                     <p class="text-xs text-gray-600 mb-4 font-medium">Insira a sua chave do Google Studio para ativar a IA.</p>
@@ -209,35 +207,25 @@
                     </div>
                 </div>
                 
-                <!-- PROMPT IA PARA CORES -->
                 <div class="p-6 bg-white border border-gray-200 rounded-sm shadow-sm">
                     <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">DESCRIÇÃO (PROMPT PARA A IA)</label>
                     <input type="text" id="prompt-logo" class="w-full px-5 py-4 bg-white border border-gray-300 focus:outline-none focus:border-purple-500 text-sm font-medium rounded-sm shadow-sm mb-4" placeholder="Ex: deixe a logo com um azul e verde gradiente" />
-                    
                     <button type="button" id="btn-gerar-logo" onclick="gerarEstiloIA()" class="bg-purple-500 hover:bg-purple-600 text-white px-8 py-3 font-black transition-colors uppercase text-[11px] tracking-widest rounded-sm shadow-sm flex items-center justify-center gap-2">✨ GERAR ESTILO COM IA</button>
                 </div>
                 
-                <!-- PREVIEW DO ESTILO (Apenas visível depois de pedir as cores) -->
                 <div id="preview-estilo-wrapper" class="mt-8 hidden border-t border-purple-100 pt-6">
                     <h4 class="text-[10px] font-black uppercase tracking-widest text-purple-600 mb-4 text-center">PRÉ-VISUALIZAÇÃO DO NOVO ESTILO</h4>
-                    
-                    <!-- Aqui injetamos as novas classes Tailwind recebidas da IA -->
                     <div class="p-8 bg-white border border-gray-300 rounded-sm flex items-center justify-center min-h-[160px] shadow-sm">
-                        <h1 id="preview-texto-estilo" class="text-4xl md:text-6xl font-black tracking-tighter uppercase text-center transition-all duration-500">
-                            NOTÍCIAS AVULSAS
-                        </h1>
+                        <h1 id="preview-texto-estilo" class="text-4xl md:text-6xl font-black tracking-tighter uppercase text-center transition-all duration-500">NOTÍCIAS AVULSAS</h1>
                     </div>
-                    
                     <div class="mt-6 flex justify-end gap-3">
                         <button type="button" onclick="cancelarEstilo()" class="bg-gray-200 text-gray-600 font-black px-6 py-4 uppercase tracking-widest text-sm rounded-sm hover:bg-gray-300 transition-colors">Cancelar</button>
                         <button type="button" id="btn-aplicar-estilo" onclick="aplicarNovoEstilo()" class="bg-jornal-dark text-white font-black px-10 py-4 uppercase tracking-widest text-sm rounded-sm hover:bg-gray-800 transition-colors shadow-xl">Aplicar ao Site</button>
                     </div>
                 </div>
                 
-                <!-- CAMPOS OCULTOS PARA GUARDAR OS VALORES -->
                 <input type="hidden" id="cfg-logo" />
                 <input type="hidden" id="cfg-cor-logo" />
-
             </div>
 
             <!-- 3. ANÚNCIOS -->
@@ -364,52 +352,22 @@
                 <div>
                     <input type="file" id="upload-imagem-expediente" accept="image/*" class="hidden" onchange="processarUploadImagemEditor(this, 'admin-editor-expediente')" />
                     <div class="flex flex-wrap gap-1 p-2 bg-gray-100 border border-gray-300 border-b-0 rounded-t-sm items-center">
-                        <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('undo')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded shadow-sm transition-colors" title="Desfazer">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
-                        </button>
-                        <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('redo')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded shadow-sm transition-colors" title="Refazer">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"/></svg>
-                        </button>
+                        <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('undo')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded shadow-sm transition-colors" title="Desfazer"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg></button>
+                        <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('redo')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded shadow-sm transition-colors" title="Refazer"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"/></svg></button>
                         <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
-
                         <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('bold')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm">B</button>
                         <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('italic')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm">I</button>
                         <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('underline')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs underline rounded shadow-sm">U</button>
-                        
                         <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
-                        
-                        <select onmousedown="event.preventDefault();" onchange="aplicarFonte(this.value);" class="fontFamilySelect px-1 py-1.5 bg-white border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer w-[110px] truncate">
-                            <option value="" disabled selected>Selecionar...</option>
-                            <option value="Merriweather, serif">Serif (Jornal)</option>
-                            <option value="Inter, sans-serif">Sans Serif</option>
-                            <option value="Arial, sans-serif">Arial</option>
-                            <option value="Courier New, monospace">Largura fixa</option>
-                            <option value="Comic Sans MS">Comic Sans MS</option>
-                            <option value="Garamond">Garamond</option>
-                            <option value="Georgia">Georgia</option>
-                            <option value="Tahoma">Tahoma</option>
-                            <option value="Trebuchet MS">Trebuchet MS</option>
-                            <option value="Verdana">Verdana</option>
-                        </select>
-                        
+                        <select onmousedown="event.preventDefault();" onchange="aplicarFonte(this.value);" class="fontFamilySelect px-1 py-1.5 bg-white border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer w-[110px] truncate"><option value="" disabled selected>Selecionar...</option><option value="Merriweather, serif">Serif (Jornal)</option><option value="Inter, sans-serif">Sans Serif</option><option value="Arial, sans-serif">Arial</option><option value="Courier New, monospace">Largura fixa</option></select>
                         <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
-                        
-                        <select onmousedown="event.preventDefault();" onchange="execCmd('fontSize', this.value);" class="fontSizeSelect px-2 py-1.5 bg-white border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer">
-                            <option value="" disabled selected>---</option>
-                            <option value="1">Pequeno</option>
-                            <option value="3">Normal</option>
-                            <option value="5">Grande</option>
-                            <option value="7">Enorme</option>
-                        </select>
-
+                        <select onmousedown="event.preventDefault();" onchange="execCmd('fontSize', this.value);" class="fontSizeSelect px-2 py-1.5 bg-white border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer"><option value="" disabled selected>---</option><option value="1">Pequeno</option><option value="3">Normal</option><option value="5">Grande</option><option value="7">Enorme</option></select>
                         <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
                         <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('justifyLeft')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Esq</button>
                         <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('justifyCenter')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Cen</button>
-                        
                         <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
                         <button type="button" onmousedown="event.preventDefault();" onclick="inserirLinkRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-blue-600 rounded font-semibold shadow-sm">🔗</button>
                         <button type="button" onmousedown="event.preventDefault();" onclick="document.getElementById('upload-imagem-expediente').click();" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-emerald-600 rounded font-semibold shadow-sm">🖼️</button>
-                        
                         <button type="button" onmousedown="event.preventDefault();" onclick="limparFormatacao(this)" class="ml-auto px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-xs font-bold text-red-600 rounded shadow-sm">Limpar Formatação</button>
                     </div>
                     <div id="admin-editor-expediente" contenteditable="true" class="w-full px-6 py-6 bg-white border border-gray-300 rounded-b-sm min-h-[300px] overflow-y-auto focus:outline-none focus:ring-1 focus:ring-jornal-blue text-base leading-relaxed font-serif custom-scrollbar rich-editor"></div>
@@ -428,48 +386,83 @@
                 </div>
 
                 <div class="bg-rose-50 border border-rose-100 p-6 rounded-sm mb-8">
-                    <h3 class="text-[11px] font-black uppercase tracking-widest text-rose-800 mb-6 border-b border-rose-200 pb-2">ADICIONAR NOVO UTILIZADOR</h3>
+                    <h3 class="text-[11px] font-black uppercase tracking-widest text-rose-800 mb-6 border-b border-rose-200 pb-2">ADICIONAR / EDITAR UTILIZADOR</h3>
                     
                     <form id="form-novo-usuario" onsubmit="criarUsuario(event)" class="space-y-6">
-                        <div class="flex flex-col md:flex-row gap-6">
-                            <div class="w-full">
-                                <label class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-2 block">NOME DE UTILIZADOR</label>
-                                <input type="text" id="novo-user" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-rose-500 text-sm font-bold rounded-sm shadow-sm" placeholder="Ex: redator1" />
+                        <input type="hidden" id="equipa-user-original" value="">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                            <div>
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-2 block">NOME DE UTILIZADOR *</label>
+                                <input type="text" id="equipa-user" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-rose-500 text-sm font-bold rounded-sm shadow-sm" placeholder="Ex: redator1" />
                             </div>
-                            <div class="w-full">
-                                <label class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-2 block">SENHA PROVISÓRIA</label>
-                                <input type="text" id="nova-senha" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-rose-500 text-sm font-bold rounded-sm shadow-sm" placeholder="Ex: SenhaForte123" />
-                            </div>
-                            <div class="w-full md:w-auto flex items-end">
-                                <button type="submit" id="btn-criar-usuario" class="w-full md:w-auto bg-rose-600 text-white font-black px-10 py-3 hover:bg-rose-700 transition-colors uppercase tracking-widest text-[11px] rounded-sm shadow-md whitespace-nowrap h-[46px]">CRIAR ACESSO</button>
+                            <div>
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-2 block">SENHA DE ACESSO</label>
+                                <input type="password" id="equipa-senha" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-rose-500 text-sm font-bold rounded-sm shadow-sm" placeholder="Deixe em branco para manter na edição" />
                             </div>
                         </div>
                         
-                        <div class="bg-white p-5 border border-rose-200 rounded-sm mt-4">
-                            <label class="text-[10px] font-bold uppercase tracking-widest text-rose-600 mb-4 block border-b border-rose-100 pb-2">Permissões de Acesso (Que secções este utilizador pode ver?)</label>
-                            
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-noticia" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500" checked> Publicar Matérias</label>
-                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-lista" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500" checked> Gerir Matérias</label>
-                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-capa" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Layout Capa</label>
-                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-logo" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> IA & Design</label>
-                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-propaganda" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Anúncios</label>
-                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-social" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Redes Sociais</label>
-                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-placar" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Placar Ao Vivo</label>
-                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-expediente" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Expediente</label>
-                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-usuarios" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Gestão Equipa</label>
-                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer hover:text-rose-600 transition-colors"><input type="checkbox" value="aba-estudio" class="perm-chk w-4 h-4 text-rose-600 rounded focus:ring-rose-500"> Estúdio IG</label>
+                        <div class="mb-6 bg-white p-4 border border-gray-200 rounded-sm">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" id="equipa-req-senha" checked class="w-5 h-5 text-jornal-blue border-gray-300 rounded focus:ring-jornal-blue" />
+                                <span class="text-[11px] font-black text-jornal-dark uppercase tracking-widest block">Exigir que o utilizador mude a senha no primeiro acesso</span>
+                            </label>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3 block">Permissões de Acesso (Assinale as abas permitidas)</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 bg-white p-5 border border-gray-200 rounded-sm">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" value="aba-noticia" class="chk-perm w-4 h-4 text-jornal-blue" checked> 
+                                    <span class="text-xs font-bold">Publicar Matéria</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" value="aba-lista" class="chk-perm w-4 h-4 text-jornal-blue" checked> 
+                                    <span class="text-xs font-bold">Gerir Matérias</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" value="aba-capa" class="chk-perm w-4 h-4 text-jornal-blue" checked> 
+                                    <span class="text-xs font-bold">Layout Capa</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" value="aba-logo" class="chk-perm w-4 h-4 text-jornal-blue" checked> 
+                                    <span class="text-xs font-bold">IA & Design</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" value="aba-propaganda" class="chk-perm w-4 h-4 text-jornal-blue" checked> 
+                                    <span class="text-xs font-bold">Anúncios</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" value="aba-social" class="chk-perm w-4 h-4 text-jornal-blue" checked> 
+                                    <span class="text-xs font-bold">Redes Sociais</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" value="aba-placar" class="chk-perm w-4 h-4 text-jornal-blue" checked> 
+                                    <span class="text-xs font-bold">Placar ao Vivo</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" value="aba-expediente" class="chk-perm w-4 h-4 text-jornal-blue" checked> 
+                                    <span class="text-xs font-bold">Expediente</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" value="aba-equipa" class="chk-perm w-4 h-4 text-jornal-dark"> 
+                                    <span class="text-xs font-bold">Gestão Equipa</span>
+                                </label>
                             </div>
-                            
-                            <div class="mt-6 pt-4 border-t border-rose-100 flex items-center gap-3">
-                                <input type="checkbox" id="req-pass" class="w-4 h-4 text-rose-600 rounded focus:ring-rose-500" checked>
-                                <label for="req-pass" class="text-[11px] font-black uppercase tracking-widest text-rose-800 cursor-pointer">Obrigar utilizador a mudar a senha no seu primeiro acesso</label>
-                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col md:flex-row gap-4 pt-4 border-t border-rose-200">
+                            <button type="submit" id="btn-salvar-membro" class="w-full md:w-auto bg-rose-600 hover:bg-rose-700 text-white font-black px-10 py-3.5 uppercase tracking-widest text-[11px] rounded-sm transition-colors shadow-md">
+                                CRIAR ACESSO
+                            </button>
+                            <button type="button" onclick="limparFormEquipa()" id="btn-cancelar-edicao" class="hidden w-full md:w-auto bg-white border border-gray-300 text-gray-600 font-bold px-10 py-3.5 uppercase tracking-widest text-[11px] rounded-sm hover:bg-gray-100 transition-colors">
+                                CANCELAR / LIMPAR
+                            </button>
                         </div>
                     </form>
                 </div>
 
-                <div class="mt-8 pt-6">
+                <div class="mt-8 pt-6 border-t border-gray-200">
                     <h3 class="text-[11px] font-black uppercase tracking-widest text-gray-800 mb-6">UTILIZADORES EXISTENTES</h3>
                     <div id="lista-usuarios-existentes">
                         <p class="text-xs text-gray-500 italic">A carregar utilizadores...</p>
@@ -480,15 +473,15 @@
         </main>
     </div>
 
-    <!-- SCRIPTS CORE E LÓGICA -->
+    <!-- SCRIPTS GLOBAIS BLINDADOS -->
     <script>
         var configuracoesGlobais = {};
         var listaCategoriasLocais = [];
+        var usuariosGlobais = [];
         var base64StringProp = ""; 
         var mimeStringProp = ""; 
         var nameStringProp = "";
         
-        // Variável para guardar temporariamente as classes Tailwind geradas pela IA
         var novaCorIA = "";
 
         document.addEventListener("DOMContentLoaded", function() {
@@ -642,14 +635,6 @@
                     mostrarMensagem("Falha na rede. Tente novamente.", "erro");
                     btn.innerHTML = txt; btn.disabled = false;
                 }).alterarSenhaUsuario(u, p1);
-            } else {
-                mostrarMensagem("Modo demonstração: Senha alterada (Função Backend pendente).");
-                document.getElementById('modalMudarSenha').classList.add('hidden');
-                document.getElementById('modalMudarSenha').classList.remove('flex');
-                var oldPerms = localStorage.getItem('admin_perms') || '';
-                localStorage.setItem('admin_perms', oldPerms.replace('req_pass_change:true;', '').replace('req_pass_change:true', ''));
-                carregarDados();
-                btn.innerHTML = txt; btn.disabled = false;
             }
         }
 
@@ -719,9 +704,8 @@
                         try { preencherFormCapa(); } catch(e){}
                         try { preencherFormPlacar(); } catch(e){}
                         try { preencherConfigsGerais(); } catch(e){}
-                        if (res.usuarios) renderizarUsuarios(res.usuarios);
                         
-                        // Abre a primeira aba visível para o utilizador logado
+                        carregarUsuarios(); // Chama função à parte para utilizadores
                         abrirPrimeiraAbaDisponivel();
                     }
                 }).withFailureHandler(function(err) {
@@ -731,6 +715,17 @@
             } else {
                 if(loader) loader.classList.add('hidden');
                 abrirPrimeiraAbaDisponivel();
+            }
+        }
+
+        function carregarUsuarios() {
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if (res && res.sucesso) {
+                        usuariosGlobais = res.usuarios || [];
+                        renderizarUsuarios(usuariosGlobais);
+                    }
+                }).listarUsuarios();
             }
         }
 
@@ -898,7 +893,6 @@
         function preencherConfigsGerais() {
             if (configuracoesGlobais['ChaveIA']) { var ic = document.getElementById('config-chave-ia'); if (ic) ic.value = configuracoesGlobais['ChaveIA']; }
             if (configuracoesGlobais['ExpedienteHTML']) { var exp = document.getElementById('admin-editor-expediente'); if(exp) exp.innerHTML = configuracoesGlobais['ExpedienteHTML']; }
-            // Estes dois inputs são os originais antigos, para caso pretenda editar os estilos CSS manualmente sem usar a IA
             if (configuracoesGlobais['LogoHTML']) { var lHtml = document.getElementById('cfg-logo'); if (lHtml) lHtml.value = configuracoesGlobais['LogoHTML']; }
             if (configuracoesGlobais['CorLogo']) { var cLogo = document.getElementById('cfg-cor-logo'); if (cLogo) cLogo.value = configuracoesGlobais['CorLogo']; }
         }
@@ -951,18 +945,6 @@
             }
         }
 
-        function salvarRedesSociais(e) {
-            e.preventDefault(); var btn = document.getElementById('btn-salvar-sociais'); var txt = btn.innerHTML; btn.innerHTML = "A SALVAR..."; btn.disabled = true;
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-inst-url', document.getElementById('soc-inst-url').value);
-                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-fb-url', document.getElementById('soc-fb-url').value);
-                window.google.script.run.salvarConfiguracaoHTMLCustom('soc-x-url', document.getElementById('soc-x-url').value);
-                window.google.script.run.withSuccessHandler(function() { 
-                    mostrarMensagem("Redes sociais atualizadas!"); btn.innerHTML = txt; btn.disabled = false; try { localStorage.removeItem('portal_data_cache'); } catch(e){}
-                }).salvarConfiguracaoHTMLCustom('soc-yt-url', document.getElementById('soc-yt-url').value);
-            }
-        }
-
         function salvarChaveIA() {
             var val = document.getElementById('config-chave-ia').value.trim(); var btn = document.getElementById('btn-salvar-chave'); var txt = btn.innerText; btn.innerText = 'A GUARDAR...'; btn.disabled = true;
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
@@ -975,13 +957,17 @@
         // ==========================================
         function processarLogoImagemLocal(input) {
             if (!input.files || !input.files[0]) return;
-            // Se o utilizador não quer usar a IA para texto, pode meter uma foto do logo local:
             var file = input.files[0]; var reader = new FileReader();
             reader.onload = function(e) {
                 var base64 = e.target.result.split(',')[1];
                 var htmlLogo = '<img src="data:' + file.type + ';base64,' + base64 + '" class="h-12 object-contain cursor-pointer" onclick="voltarCapa();"/>';
                 document.getElementById('cfg-logo').value = htmlLogo;
-                mostrarMensagem('O código HTML da imagem foi gerado na caixa abaixo. Clique em "Salvar Textos" para aplicar no site.');
+                mostrarMensagem('O código HTML da imagem foi gerado. Clique em "Aplicar ao Site" para salvar.');
+                
+                var previewH1 = document.getElementById('preview-texto-estilo');
+                previewH1.innerHTML = htmlLogo;
+                document.getElementById('preview-estilo-wrapper').classList.remove('hidden');
+                window.novaCorIA = htmlLogo;
             }; reader.readAsDataURL(file);
         }
 
@@ -991,32 +977,27 @@
             
             var btn = document.getElementById('btn-gerar-logo'); var txt = btn.innerText; btn.innerText = "A PROCESSAR..."; btn.disabled = true;
             
-            // O Prompt que obriga o Gemini a devolver um texto com classes Tailwind
             var promptFinal = "Você é um especialista em TailwindCSS. O usuário quer estilizar a logo e as bordas de um site de notícias com as seguintes cores: '" + desc + "'. Responda APENAS com a string de classes Tailwind CSS necessárias para criar um gradiente de texto vibrante e moderno com essas cores. Exemplo exato do formato de resposta que quero de ti: bg-gradient-to-r from-blue-500 to-green-500 bg-clip-text text-transparent. Não adicione mais nenhuma palavra, não uses aspas nem formatação Markdown. APENAS a string de classes.";
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run && window.google.script.run.chamarGeminiBackend) {
                 window.google.script.run.withSuccessHandler(function(res) {
                     if(res && res.sucesso && res.texto) {
                         var classesDevolvidas = res.texto.replace(/`/g, '').replace(/"/g, '').replace(/'/g, '').trim();
-                        // Assegura que o texto tem os clips para funcionar em texto e para guardar na DB
                         if(classesDevolvidas.indexOf('bg-clip-text') === -1) classesDevolvidas += " bg-clip-text text-transparent";
                         
                         window.novaCorIA = classesDevolvidas;
                         
-                        // Aplica ao Preview Visível
                         var previewH1 = document.getElementById('preview-texto-estilo');
+                        previewH1.innerHTML = "NOTÍCIAS AVULSAS";
                         previewH1.className = "text-4xl md:text-6xl font-black tracking-tighter uppercase text-center transition-all duration-500 " + window.novaCorIA;
                         
                         document.getElementById('preview-estilo-wrapper').classList.remove('hidden');
                         mostrarMensagem("Estilo gerado! Se gostar, clique em Aplicar ao Site.");
                         btn.innerText = txt; btn.disabled = false;
-                        
                     } else { mostrarMensagem("Erro na resposta da IA.", "erro"); btn.innerText = txt; btn.disabled = false;}
                 }).withFailureHandler(function(error) { 
                     mostrarMensagem("A IA falhou em processar as cores.", "erro"); btn.innerText = txt; btn.disabled = false; 
                 }).chamarGeminiBackend(promptFinal);
-            } else {
-                mostrarMensagem("Serviço IA não conectado.", "erro"); btn.innerText = txt; btn.disabled = false;
             }
         }
         
@@ -1032,12 +1013,14 @@
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
-                    mostrarMensagem('Novo estilo de cores guardado com sucesso no servidor!'); 
+                    mostrarMensagem('Novo estilo/logo guardado com sucesso!'); 
                     document.getElementById('cfg-cor-logo').value = window.novaCorIA;
                     
-                    // Se o utilizador não configurou um HTML manual, damos-lhe um padrão com as novas cores
-                    var logoAtual = document.getElementById('cfg-logo').value.trim();
-                    if (!logoAtual || logoAtual === "") {
+                    var isImg = window.novaCorIA.indexOf('<img') !== -1;
+                    if (isImg) {
+                        document.getElementById('cfg-logo').value = window.novaCorIA;
+                        window.google.script.run.salvarConfiguracaoHTMLCustom('LogoHTML', window.novaCorIA);
+                    } else {
                         var padraoH1 = '<h1 class="text-4xl md:text-5xl font-black tracking-tighter uppercase ' + window.novaCorIA + '">NOTÍCIAS AVULSAS</h1>';
                         document.getElementById('cfg-logo').value = padraoH1;
                         window.google.script.run.salvarConfiguracaoHTMLCustom('LogoHTML', padraoH1);
@@ -1047,18 +1030,6 @@
                     document.getElementById('preview-estilo-wrapper').classList.add('hidden');
                     try { localStorage.removeItem('portal_data_cache'); } catch(err){}
                 }).salvarConfiguracaoHTMLCustom('CorLogo', window.novaCorIA);
-            }
-        }
-        
-        // Salvaguarda manual dos Textos
-        function salvarDesignTextos() {
-            var btn = document.getElementById('btn-salvar-design'); var txtOrig = btn.innerText; btn.innerText = "A GUARDAR..."; btn.disabled = true;
-            var cLogo = document.getElementById('cfg-cor-logo').value;
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.salvarConfiguracaoHTMLCustom('CorLogo', cLogo);
-                window.google.script.run.withSuccessHandler(function() {
-                    mostrarMensagem("Textos do design salvos manualmente!"); btn.innerText = txtOrig; btn.disabled = false; try { localStorage.removeItem('portal_data_cache'); } catch(err){}
-                }).salvarConfiguracaoHTMLCustom('LogoHTML', document.getElementById('cfg-logo').value);
             }
         }
 
@@ -1073,7 +1044,7 @@
         }
 
         // ==========================================
-        // GESTÃO DE EQUIPA (COM LISTAGEM)
+        // GESTÃO DE EQUIPA (COM EDIÇÃO)
         // ==========================================
         function renderizarUsuarios(usuarios) {
             var container = document.getElementById('lista-usuarios-existentes');
@@ -1087,18 +1058,17 @@
 
             var html = '<div class="space-y-3">';
             usuarios.forEach(function(u) {
-                // Adaptamos isto caso o backend devolva objetos ou arrays
                 var nome = u.user || u.usuario || u[0] || 'Desconhecido';
-                var perms = String(u.perms || u.permissoes || u[2] || '');
+                var perms = String(u.role || u.perms || u.permissoes || u[2] || '');
                 if (nome === 'Desconhecido' || !nome.trim() || nome.toLowerCase() === 'usuario') return;
                 
                 var tags = '';
-                if (perms.indexOf('admin') !== -1 || perms === '') { 
+                if (perms === 'admin' || perms === 'administrador' || perms === '') { 
                     tags = '<span class="px-2 py-1 bg-gray-200 text-gray-700 text-[9px] font-bold rounded-sm">Acesso Total</span>'; 
                 } else {
                     if (perms.indexOf('aba-noticia') !== -1) tags += '<span class="px-2 py-1 bg-blue-100 text-blue-700 text-[9px] font-bold rounded-sm mr-1">Publicar</span>';
                     if (perms.indexOf('aba-lista') !== -1) tags += '<span class="px-2 py-1 bg-indigo-100 text-indigo-700 text-[9px] font-bold rounded-sm mr-1">Gerir Matérias</span>';
-                    if (perms.indexOf('aba-usuarios') !== -1) tags += '<span class="px-2 py-1 bg-rose-100 text-rose-700 text-[9px] font-bold rounded-sm mr-1">Equipa</span>';
+                    if (perms.indexOf('aba-usuarios') !== -1 || perms.indexOf('aba-equipa') !== -1) tags += '<span class="px-2 py-1 bg-rose-100 text-rose-700 text-[9px] font-bold rounded-sm mr-1">Equipa</span>';
                     if (perms.indexOf('aba-capa') !== -1) tags += '<span class="px-2 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-bold rounded-sm mr-1">Capa</span>';
                     if (perms.indexOf('req_pass_change:true') !== -1) tags += '<span class="px-2 py-1 bg-red-100 text-red-700 text-[9px] font-bold rounded-sm mr-1 border border-red-300">Nova Senha Pendente</span>';
                     if(!tags) tags = '<span class="px-2 py-1 bg-gray-100 text-gray-500 text-[9px] font-bold rounded-sm">Acesso Restrito</span>';
@@ -1107,51 +1077,110 @@
                 html += '<div class="flex justify-between items-center bg-gray-50 p-4 border border-gray-200 rounded-sm">';
                 html += '<div class="flex flex-col gap-2"><div class="text-sm font-black text-jornal-dark">' + nome + '</div><div class="flex flex-wrap gap-1">' + tags + '</div></div>';
                 
+                html += '<div class="flex gap-2 items-center">';
+                html += '<button type="button" onclick="editarUsuarioAdmin(\'' + nome + '\')" class="text-[10px] font-black uppercase text-blue-600 hover:text-white transition-colors hover:bg-blue-600 px-4 py-2 border border-blue-200 rounded-sm shadow-sm shrink-0">Editar</button>';
                 if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run && window.google.script.run.removerUsuario) {
-                    html += '<button type="button" onclick="removerUsuarioAdmin(\'' + nome + '\')" class="text-[10px] font-black uppercase text-red-600 hover:text-white transition-colors hover:bg-red-600 px-4 py-2 border border-red-200 rounded-sm shadow-sm shrink-0">Excluir Conta</button>';
+                    if(nome !== 'admin') {
+                        html += '<button type="button" onclick="removerUsuarioAdmin(\'' + nome + '\')" class="text-[10px] font-black uppercase text-red-600 hover:text-white transition-colors hover:bg-red-600 px-4 py-2 border border-red-200 rounded-sm shadow-sm shrink-0">Excluir</button>';
+                    }
                 }
-                html += '</div>';
+                html += '</div></div>';
             });
             html += '</div>';
             container.innerHTML = html;
+        }
+
+        function editarUsuarioAdmin(nome) {
+            var u = usuariosGlobais.find(function(x) { return (x.user || x.usuario || x[0]) === nome; });
+            if (!u) return;
+
+            document.getElementById('equipa-user-original').value = nome;
+            document.getElementById('equipa-user').value = nome;
+            document.getElementById('equipa-senha').value = ''; 
+            document.getElementById('equipa-senha').required = false; 
+
+            var perms = String(u.role || u.perms || u.permissoes || u[2] || '');
+            
+            document.getElementById('equipa-req-senha').checked = perms.indexOf('req_pass_change:true') !== -1;
+
+            var chks = document.querySelectorAll('.chk-perm');
+            if (perms === 'admin' || perms === 'administrador' || perms === '') {
+                chks.forEach(function(c) { c.checked = true; });
+            } else {
+                chks.forEach(function(c) { c.checked = false; });
+                var match = perms.match(/tabs:([^;]+)/);
+                if (match) {
+                    var allowed = match[1].split(',');
+                    chks.forEach(function(c) {
+                        if (allowed.indexOf(c.value) !== -1) c.checked = true;
+                    });
+                }
+            }
+
+            document.getElementById('btn-salvar-membro').innerText = "ATUALIZAR ACESSO";
+            document.getElementById('btn-cancelar-edicao').classList.remove('hidden');
+            window.scrollTo({ top: document.getElementById('form-usuarios-container').offsetTop - 100, behavior: 'smooth' });
         }
 
         function removerUsuarioAdmin(nome) {
             if(!confirm("Atenção: Tem a certeza que deseja excluir o acesso do utilizador '" + nome + "'?")) return;
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
-                    if (res && res.sucesso) { mostrarMensagem("Utilizador removido permanentemente!"); carregarDados(); } 
+                    if (res && res.sucesso) { mostrarMensagem("Utilizador removido permanentemente!"); carregarUsuarios(); } 
                     else { mostrarMensagem(res ? res.erro : "Erro ao remover.", "erro"); }
                 }).removerUsuario(nome);
             }
         }
 
+        function limparFormEquipa() { 
+            document.getElementById('form-novo-usuario').reset(); 
+            document.getElementById('equipa-user-original').value = ''; 
+            document.getElementById('equipa-senha').required = true;
+            document.querySelectorAll('.chk-perm').forEach(cb => cb.checked = true); 
+            document.getElementById('btn-salvar-membro').innerText = "CRIAR ACESSO";
+            document.getElementById('btn-cancelar-edicao').classList.add('hidden');
+        }
+
         function criarUsuario(e) {
             e.preventDefault();
-            var u = document.getElementById('novo-user').value.trim();
-            var p = document.getElementById('nova-senha').value.trim();
-            if(!u || !p) return;
+            var u = document.getElementById('equipa-user').value.trim();
+            var p = document.getElementById('equipa-senha').value.trim();
+            var orig = document.getElementById('equipa-user-original').value;
             
-            var chks = document.querySelectorAll('.perm-chk:checked');
+            if(!u) return;
+            if(!orig && !p) {
+                mostrarMensagem("A senha é obrigatória para novos acessos.", "erro");
+                return;
+            }
+            
+            var chks = document.querySelectorAll('.chk-perm:checked');
             var allowedTabs = Array.from(chks).map(function(c){ return c.value; }).join(',');
-            var passChange = document.getElementById('req-pass').checked ? "req_pass_change:true;" : "";
+            var passChange = document.getElementById('equipa-req-senha').checked ? "req_pass_change:true;" : "req_pass_change:false;";
+            
             var finalPermsString = passChange + "tabs:" + allowedTabs;
+            if (u === 'admin' || (allowedTabs.split(',').length >= 9)) {
+                finalPermsString = 'admin'; 
+            }
 
-            var btn = document.getElementById('btn-criar-usuario'); var txtOrig = btn.innerHTML; btn.innerHTML = "A CRIAR..."; btn.disabled = true;
+            var btn = document.getElementById('btn-salvar-membro'); var txtOrig = btn.innerText; btn.innerText = "A SALVAR..."; btn.disabled = true;
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
                     if(res && res.sucesso) { 
-                        mostrarMensagem("Acesso criado com as restrições selecionadas!"); 
-                        document.getElementById('form-novo-usuario').reset(); 
-                        document.querySelectorAll('.perm-chk').forEach(function(c){ c.checked = true; }); 
-                        carregarDados(); // Recarrega a lista
+                        mostrarMensagem(orig ? "Acesso atualizado com sucesso!" : "Acesso criado com sucesso!"); 
+                        limparFormEquipa(); 
+                        carregarUsuarios(); 
                     } 
-                    else { mostrarMensagem(res ? res.erro : "Erro ao criar.", "erro"); }
-                    btn.innerHTML = txtOrig; btn.disabled = false;
+                    else { mostrarMensagem(res ? res.erro : "Erro ao guardar.", "erro"); }
+                    btn.innerText = txtOrig; btn.disabled = false;
                 }).withFailureHandler(function(err) { 
-                    mostrarMensagem("Falha ao comunicar com o servidor.", "erro"); btn.innerHTML = txtOrig; btn.disabled = false; 
-                }).adicionarUsuario(u, p, finalPermsString);
+                    mostrarMensagem("Falha ao comunicar com o servidor.", "erro"); btn.innerText = txtOrig; btn.disabled = false; 
+                }).salvarUsuario({
+                    usuarioOriginal: orig,
+                    usuario: u,
+                    senha: p,
+                    role: finalPermsString
+                });
             }
         }
     </script>
