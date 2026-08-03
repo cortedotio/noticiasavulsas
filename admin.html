@@ -12,7 +12,7 @@
     
     <script>
         // =========================================================================
-        // LINK ATUALIZADO: Foi este o link que corrigiu o erro "Failed to fetch"
+        // LINK DA SUA BASE DE DADOS GOOGLE
         // =========================================================================
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyoHo_olvZbyvT-qfKBDAveq1-n1IHD_bLxf831i_bBrFJeSVTcc6RTfvdQ9QV25hTh/exec";
         
@@ -31,6 +31,7 @@
             'chamarGeminiBackend', 'chamarGeminiImagemBackend'
         ];
 
+        // NOVO MOTOR DE LEITURA (Idêntico ao index.html, mais rápido e seguro)
         apiFunctions.forEach(function(funcName) {
             window.google.script.run[funcName] = function() {
                 var argsArray = Array.prototype.slice.call(arguments);
@@ -43,33 +44,23 @@
                 fetch(GAS_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    redirect: 'follow',
-                    body: JSON.stringify({ action: funcName, args: argsArray })
+                    body: JSON.stringify({ action: funcName, args: argsArray }),
+                    redirect: 'follow'
                 })
                 .then(function(res) { 
                     if (!res.ok) throw new Error("Erro HTTP: " + res.status);
-                    return res.text(); 
+                    return res.json(); 
                 })
-                .then(function(text) {
-                    try {
-                        var result = JSON.parse(text); 
-                        if (successCb) {
-                            var finalPayload = result;
-                            if (result && result.result !== undefined) {
-                                finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
-                            }
-                            successCb(finalPayload);
+                .then(function(result) {
+                    if (successCb) {
+                        var finalPayload = result;
+                        if (result && result.result !== undefined) {
+                            finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
                         }
-                    } catch (e) {
-                        console.error("Erro a converter resposta: ", text);
-                        if (failureCb) failureCb(new Error("Resposta do Servidor não é JSON. O Script falhou."));
+                        successCb(finalPayload);
                     }
                 })
                 .catch(function(err) {
-                    // BLINDAGEM DE ERRO: Explica o "Failed to fetch" de forma inteligente
-                    if (err.message.includes('Failed to fetch')) {
-                        err = new Error("Link da Base de Dados desatualizado ou Erro de CORS. Atualize o GAS_API_URL.");
-                    }
                     if (failureCb) failureCb(err);
                     else console.error("API Error (" + funcName + "):", err);
                 });
@@ -554,13 +545,13 @@
                         if (document.getElementById('aba-lista').style.display !== 'none') {
                             carregarListaEdicao();
                         }
+                    } else {
+                        mostrarMensagem("Erro da Base de Dados: " + (res ? res.erro : "Desconhecido"), 'erro');
                     }
                 }).withFailureHandler(function(err) {
                     document.getElementById('loading-global').classList.add('hidden'); 
-                    // Se falhar e tiver cache, não avisa, pois a pessoa pode continuar a trabalhar
-                    if (!localStorage.getItem('admin_data_cache')) {
-                        mostrarMensagem("Falha de Servidor ao carregar dados.", 'erro');
-                    }
+                    // Mostra o erro EXATO para sabermos o que falhou!
+                    mostrarMensagem("Erro de Conexão: " + err.message + ". O link da Base de Dados pode estar errado.", 'erro');
                 }).getHomeData();
             }
         }
