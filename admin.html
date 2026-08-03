@@ -11,7 +11,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
     <script>
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyVroxyx_f70Q2KkcnfMWtt2vV8EzQRsPBhF9nNL4frnKhdhe7t-oahNoJo9SCLfAbE/exec";
+        // =========================================================================
+        // LINK ATUALIZADO: Foi este o link que corrigiu o erro "Failed to fetch"
+        // =========================================================================
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyoHo_olvZbyvT-qfKBDAveq1-n1IHD_bLxf831i_bBrFJeSVTcc6RTfvdQ9QV25hTh/exec";
         
         window.google = {
             script: {
@@ -63,6 +66,10 @@
                     }
                 })
                 .catch(function(err) {
+                    // BLINDAGEM DE ERRO: Explica o "Failed to fetch" de forma inteligente
+                    if (err.message.includes('Failed to fetch')) {
+                        err = new Error("Link da Base de Dados desatualizado ou Erro de CORS. Atualize o GAS_API_URL.");
+                    }
                     if (failureCb) failureCb(err);
                     else console.error("API Error (" + funcName + "):", err);
                 });
@@ -518,11 +525,27 @@
         }
 
         function carregarNoticiasAdmin() {
-            document.getElementById('loading-global').classList.remove('hidden');
+            // Se já tem cache guardada na memória, carrega a lista instantaneamente
+            var cacheLoc = localStorage.getItem('admin_data_cache');
+            if (cacheLoc) {
+                try {
+                    var cData = JSON.parse(cacheLoc);
+                    if (cData && cData.sucesso) {
+                        noticiasGlobais = cData.noticias || [];
+                        if (cData.categorias && cData.categorias.length > 0) listaCategoriasLocais = cData.categorias;
+                        renderizarChecklistCategoriasAdmin();
+                        if (document.getElementById('aba-lista').style.display !== 'none') carregarListaEdicao();
+                    }
+                } catch(e){}
+            } else {
+                document.getElementById('loading-global').classList.remove('hidden');
+            }
+
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
                     document.getElementById('loading-global').classList.add('hidden');
                     if (res && res.sucesso) {
+                        localStorage.setItem('admin_data_cache', JSON.stringify(res)); // Guarda o novo cache
                         noticiasGlobais = res.noticias || []; 
                         if (res.categorias && res.categorias.length > 0) {
                             listaCategoriasLocais = res.categorias;
@@ -534,7 +557,10 @@
                     }
                 }).withFailureHandler(function(err) {
                     document.getElementById('loading-global').classList.add('hidden'); 
-                    mostrarMensagem("Falha de Servidor ao carregar dados.", 'erro');
+                    // Se falhar e tiver cache, não avisa, pois a pessoa pode continuar a trabalhar
+                    if (!localStorage.getItem('admin_data_cache')) {
+                        mostrarMensagem("Falha de Servidor ao carregar dados.", 'erro');
+                    }
                 }).getHomeData();
             }
         }
@@ -842,6 +868,22 @@
             document.getElementById('titulo-pagina-form').innerText = "Redigir Matéria";
         }
 
+        function formatarDataParaInput(dataString) {
+            if (!dataString) return "";
+            var str = String(dataString).trim();
+            // Data vem no formato DD/MM/YYYY HH:mm
+            var partesBarra = str.split(/[\/\s:\-T]/);
+            if (partesBarra.length >= 5) {
+                var ano = partesBarra[2].length === 4 ? partesBarra[2] : partesBarra[0];
+                var dia = partesBarra[0].length <= 2 ? partesBarra[0] : partesBarra[2];
+                var mes = partesBarra[1];
+                var hora = partesBarra[3];
+                var min = partesBarra[4];
+                return `${ano}-${mes}-${dia}T${hora}:${min}`;
+            }
+            return "";
+        }
+
         function salvarNoticia(e, statusForcado) {
             if(e) e.preventDefault(); 
             
@@ -876,7 +918,7 @@
             var tempDiv = document.createElement('div');
             tempDiv.innerHTML = document.getElementById('admin-editor-rich').innerHTML;
             
-            // VERIFICA O PESO DA MATÉRIA PARA EVITAR A TAL FALHA DE REDE 413
+            // VERIFICA O PESO DA MATÉRIA PARA EVITAR A FALHA DE REDE 413
             var tamanhoMB = new Blob([tempDiv.innerHTML]).size / (1024 * 1024);
             if (tamanhoMB > 3.5) {
                 alert("⚠️ A SUA MATÉRIA ESTÁ DEMASIADO PESADA!\n\nTamanho estimado: " + tamanhoMB.toFixed(2) + " MB (Limite seguro: 3.5 MB).\n\nIsto acontece porque colou uma foto da internet para dentro do texto, em vez de usar o botão 🖼️.\n\nPor favor, apague a(s) fotografia(s) do texto e use o botão de upload.");
@@ -914,13 +956,14 @@
                     btn.innerHTML = txtOriginal; btn.disabled = false;
                     if (res && res.sucesso) { 
                         mostrarMensagem(isRascunho ? 'Rascunho Guardado!' : 'Matéria Publicada!'); 
+                        localStorage.removeItem('admin_data_cache'); // Força renovação da lista
                         limparFormNoticia(); 
                         carregarNoticiasAdmin(); 
                         setTimeout(function() { alternarAbaAdmin('lista-noticias-container'); window.scrollTo(0,0); }, 1500); 
                     } else { mostrarMensagem("Erro ao guardar", 'erro'); }
                 }).withFailureHandler(function(err) {
                     btn.innerHTML = txtOriginal; btn.disabled = false; 
-                    mostrarMensagem("Erro de Rede: " + err.message, "erro");
+                    mostrarMensagem("Falha na rede ou limite de peso excedido. " + err.message, "erro");
                 }).salvarNoticiaNoSheets(payload);
             }
         }
@@ -992,6 +1035,7 @@
             var isAtivo = checkbox.checked; var labelSpan = checkbox.nextElementSibling.nextElementSibling;
             if (labelSpan) { labelSpan.innerText = isAtivo ? 'ATIVO' : 'INATIVO'; labelSpan.className = `ml-2 text-[10px] font-black ${isAtivo ? 'text-gray-700' : 'text-gray-400'} select-none uppercase tracking-widest inline-block w-16 text-left`; }
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
+                localStorage.removeItem('admin_data_cache');
                 window.google.script.run.withSuccessHandler(function(res){ if(res && res.sucesso) carregarNoticiasAdmin(); }).alternarStatusNoticia(id); 
             }
         }
@@ -999,6 +1043,7 @@
         function apagarMateria(id) {
             if(!confirm("Eliminar permanentemente?")) return;
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
+                localStorage.removeItem('admin_data_cache');
                 window.google.script.run.withSuccessHandler(function(res){ carregarNoticiasAdmin(); }).excluirNoticia(id); 
             }
         }
@@ -1016,18 +1061,12 @@
             if (elCarrossel) elCarrossel.checked = (String(noticia.noCarrossel) === 'true');
             
             if (noticia.dataHora) { 
-                var parts = String(noticia.dataHora).split(/[\/\s:]/); 
-                if (parts.length >= 5) {
-                    var dataISO = parts[2] + '-' + parts[1] + '-' + parts[0] + 'T' + parts[3] + ':' + parts[4];
-                    document.getElementById('admin-agendamento').value = dataISO; 
-                }
+                var formatada = formatarDataParaInput(noticia.dataHora);
+                if(formatada) document.getElementById('admin-agendamento').value = formatada;
             }
             if (noticia.dataFimEvento) { 
-                var partsFim = String(noticia.dataFimEvento).split(/[\/\s:]/); 
-                if (partsFim.length >= 5) {
-                    var dataISOFim = partsFim[2] + '-' + partsFim[1] + '-' + partsFim[0] + 'T' + partsFim[3] + ':' + partsFim[4];
-                    document.getElementById('admin-data-fim-evento').value = dataISOFim; 
-                }
+                var formatadaFim = formatarDataParaInput(noticia.dataFimEvento);
+                if(formatadaFim) document.getElementById('admin-data-fim-evento').value = formatadaFim;
             }
             
             var cats = String(noticia.categoria).split(',').map(function(c) { return c.trim().toLowerCase(); }); 
