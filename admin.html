@@ -630,15 +630,15 @@
             var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
             var cat = checkboxes.length > 0 ? checkboxes[0].value : 'geral'; 
             var p = document.getElementById('preview-url-noticia');
+            var span = document.getElementById('preview-url-texto');
             
             if (titulo) { 
                 var slugCat = normalizarTextoUrl(cat); 
                 var slugTit = normalizarTextoUrl(titulo); 
-                var span = p.querySelector('span'); 
-                span.innerText = `https://noticiasavulsas.com.br/${slugCat}/${slugTit}/[ID]`; 
-                p.classList.remove('hidden'); 
+                if (span) span.innerText = `https://noticiasavulsas.com.br/${slugCat}/${slugTit}/[ID]`; 
+                if (p) p.classList.remove('hidden'); 
             } else { 
-                p.classList.add('hidden'); 
+                if (p) p.classList.add('hidden'); 
             }
         }
 
@@ -869,6 +869,22 @@
             });
         }
 
+        function formatarDataParaInput(dataString) {
+            if (!dataString) return "";
+            var str = String(dataString).trim();
+            // Data vem no formato DD/MM/YYYY HH:mm
+            var partesBarra = str.split(/[\/\s:\-T]/);
+            if (partesBarra.length >= 5) {
+                var ano = partesBarra[2].length === 4 ? partesBarra[2] : partesBarra[0];
+                var dia = partesBarra[0].length <= 2 ? partesBarra[0] : partesBarra[2];
+                var mes = partesBarra[1];
+                var hora = partesBarra[3];
+                var min = partesBarra[4];
+                return `${ano}-${mes}-${dia}T${hora}:${min}`;
+            }
+            return "";
+        }
+
         function limparFormNoticia() {
             document.getElementById('form-admin').reset(); 
             document.getElementById('admin-id-noticia').value = ""; 
@@ -877,6 +893,10 @@
             document.getElementById('admin-editor-rich').innerHTML = ""; 
             document.getElementById('admin-imagem-metadados').classList.add('hidden'); 
             document.getElementById('admin-creditos-imagem').required = false; 
+            
+            var elCarrossel = document.getElementById('admin-carrossel');
+            if (elCarrossel) elCarrossel.checked = false;
+
             base64StringNoticia = "";
             
             document.querySelectorAll('input[name="admin-categorias-checkbox"]').forEach(function(cb) { cb.checked = false; });
@@ -921,7 +941,6 @@
             var btn = document.getElementById(isRascunho ? 'btn-salvar-rascunho' : 'btn-salvar-noticia'); 
             var txtOriginal = btn.innerHTML; btn.innerHTML = 'A guardar...'; btn.disabled = true;
             
-            // LIMPEZA OBRIGATÓRIA ANTES DO ENVIO
             var tempDiv = document.createElement('div');
             tempDiv.innerHTML = document.getElementById('admin-editor-rich').innerHTML;
             var botoesAdmin = tempDiv.querySelectorAll('.controles-imagem-admin, .btn-diminuir-img, .btn-aumentar-img');
@@ -931,6 +950,8 @@
             });
             var conteudoLimpo = tempDiv.innerHTML;
             
+            var elCarrossel = document.getElementById('admin-carrossel');
+
             var payload = { 
                 id: editandoID, titulo: tituloDigitado, categoria: categoriasSelecionadas, cidade: cidadeSelecionada, 
                 linhaFina: document.getElementById('admin-linha-fina').value.trim(), conteudo: conteudoLimpo, 
@@ -940,7 +961,8 @@
                 legendaImagem: document.getElementById('admin-legenda-imagem').value, 
                 creditosImagem: creditos, relacionadas: document.getElementById('admin-relacionadas-ids').value, 
                 statusForcado: statusForcado || 'Ativa', 
-                usuarioPublicador: window.usuarioLogado 
+                usuarioPublicador: window.usuarioLogado,
+                noCarrossel: elCarrossel ? elCarrossel.checked : false
             };
             
             if (base64StringNoticia) { payload.isUpload = true; payload.base64 = base64StringNoticia; payload.mimeType = mimeStringNoticia; payload.fileName = nameStringNoticia; } 
@@ -1038,19 +1060,25 @@
 
         function editarNoticia(id) {
             var noticia = noticiasGlobais.find(function(n) { return String(n.id) === String(id); }); if(!noticia) return;
+            
             limparFormNoticia(); 
+            
             document.getElementById('admin-id-noticia').value = noticia.id; 
             document.getElementById('admin-titulo').value = noticia.titulo || ''; 
             document.getElementById('admin-linha-fina').value = noticia.linhaFina || ""; 
             document.getElementById('admin-editor-rich').innerHTML = noticia.conteudo || ''; 
             document.getElementById('admin-autor').value = noticia.autor !== "da redação" ? (noticia.autor || '') : ""; 
             
+            var elCarrossel = document.getElementById('admin-carrossel');
+            if (elCarrossel) elCarrossel.checked = (String(noticia.noCarrossel) === 'true');
+            
             if (noticia.dataHora) { 
-                var p = noticia.dataHora.split(/[\/\s:]/); 
-                if (p.length >= 5) { document.getElementById('admin-agendamento').value = `${p[2]}-${p[1]}-${p[0]}T${p[3]}:${p[4]}`; } 
+                var formatada = formatarDataParaInput(noticia.dataHora);
+                if(formatada) document.getElementById('admin-agendamento').value = formatada;
             }
             if (noticia.dataFimEvento) { 
-                try { var dtFim = new Date(noticia.dataFimEvento); if(!isNaN(dtFim.getTime())) { document.getElementById('admin-data-fim-evento').value = dtFim.toISOString().slice(0,16); } } catch(e){} 
+                var formatadaFim = formatarDataParaInput(noticia.dataFimEvento);
+                if(formatadaFim) document.getElementById('admin-data-fim-evento').value = formatadaFim;
             }
             
             var cats = String(noticia.categoria).split(',').map(function(c) { return c.trim().toLowerCase(); }); 
