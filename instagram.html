@@ -137,12 +137,12 @@
             box-sizing: border-box !important;
         }
 
-        /* Ajuste de margens do conteúdo no Feed (MUITO MAIS SEGURO) */
+        /* Ajuste de margens do conteúdo no Feed (MUITO MAIS SEGURO - Atualizado para Grade do IG) */
         .template-feed .template-content {
             bottom: 40px;
             left: 40px;
             width: calc(100% - 80px) !important;
-            padding: 60px 80px !important; /* 80px de respiro lateral para não cortar no Grid do IG */
+            padding: 60px 130px !important; /* 130px de respiro lateral para não cortar na Grade do IG */
             box-sizing: border-box !important;
         }
 
@@ -150,13 +150,13 @@
         .template-badge {
             background-color: #E11D48;
             color: white;
-            padding: 10px 20px;
-            font-size: 24px;
+            padding: 8px 16px;
+            font-size: 20px;
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 2px;
             display: inline-block;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         /* O Título Gigante da Notícia */
@@ -164,23 +164,23 @@
             font-family: 'Merriweather', serif;
             font-weight: 900;
             color: white;
-            line-height: 1.35; 
+            line-height: 1.4; 
             margin: 0 0 20px 0;
             text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
-            padding-bottom: 15px;
+            padding-bottom: 10px;
             word-wrap: break-word; /* Evita que uma palavra gigante quebre a linha para fora */
         }
 
         /* Limites de tamanho e linhas do título ajustados para caber perfeitamente */
         .template-feed .template-title { 
-            font-size: 52px; /* Reduzido de 60px para maior segurança */
+            font-size: 44px; /* Reduzido de 52px para não bater nas margens */
             display: -webkit-box; 
             -webkit-line-clamp: 4; 
             -webkit-box-orient: vertical; 
             overflow: hidden; 
         }
         .template-story .template-title { 
-            font-size: 65px; /* Reduzido de 75px para maior segurança */
+            font-size: 55px; /* Reduzido de 65px para maior segurança */
             display: -webkit-box; 
             -webkit-line-clamp: 6; 
             -webkit-box-orient: vertical; 
@@ -190,7 +190,7 @@
         /* O Resumo (Apenas no Feed) - ESCONDIDO PARA VISUAL MAIS LIMPO */
         .template-summary {
             font-family: 'Inter', sans-serif;
-            font-size: 30px;
+            font-size: 26px;
             color: #cbd5e1;
             font-weight: 400;
             line-height: 1.5;
@@ -209,10 +209,10 @@
             right: 40px;
             background-color: rgba(0,0,0,0.75);
             color: rgba(255,255,255,0.9);
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 8px 16px;
+            border-radius: 6px;
             font-family: 'Inter', sans-serif;
-            font-size: 20px; /* Ligeiramente menor */
+            font-size: 18px; 
             font-weight: 500;
             z-index: 10;
             max-width: 500px;
@@ -232,7 +232,7 @@
             display: flex;
             align-items: center;
             gap: 20px;
-            margin-top: 25px;
+            margin-top: 20px;
         }
         .template-footer-line {
             height: 6px;
@@ -240,13 +240,13 @@
             background-color: #E11D48;
         }
         .template-footer-text {
-            font-size: 22px; /* Reduzido de 26px */
+            font-size: 18px; 
             font-weight: 900;
             letter-spacing: 4px;
             text-transform: uppercase;
             color: white;
         }
-        .template-story .template-footer-text { font-size: 28px; }
+        .template-story .template-footer-text { font-size: 24px; }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col relative selection:bg-purple-500 selection:text-white">
