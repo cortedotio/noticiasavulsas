@@ -11,8 +11,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
     <script>
-        // O SEU LINK OFICIAL DA BASE DE DADOS
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyoHo_olvZbyvT-qfKBDAveq1-n1IHD_bLxf831i_bBrFJeSVTcc6RTfvdQ9QV25hTh/exec";
+        // O SEU LINK OFICIAL DA BASE DE DADOS (ATUALIZADO)
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyVroxyx_f70Q2KkcnfMWtt2vV8EzQRsPBhF9nNL4frnKhdhe7t-oahNoJo9SCLfAbE/exec";
         
         window.google = {
             script: {
@@ -45,7 +45,11 @@
                     body: JSON.stringify({ action: funcName, args: argsArray })
                 })
                 .then(function(res) { 
-                    if (!res.ok) throw new Error("Erro de Rede: Failed to fetch");
+                    if (!res.ok) {
+                        if (res.status === 500) throw new Error("A Base de Dados rejeitou a gravação. A matéria excede os limites de tamanho da Google Sheets.");
+                        if (res.status === 413) throw new Error("O ficheiro enviado é demasiado grande.");
+                        throw new Error("Erro de Servidor (Código " + res.status + ")");
+                    }
                     return res.text(); 
                 })
                 .then(function(text) {
@@ -255,7 +259,6 @@
                             </button>
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
 
-                            <!-- Fontes e Tamanhos Otimizados SEM PREVENT DEFAULT PARA ABRIR O MENU -->
                             <select onchange="restaurarSelecao(); aplicarFonte(this.value);" class="fontFamilySelect px-2 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer min-w-[100px]">
                                 <option value="" disabled selected>Sans Serif</option>
                                 <option value="Arial, sans-serif">Sans Serif</option>
@@ -639,7 +642,7 @@
             
             var usouCache = false;
             try {
-                var cache = localStorage.getItem('admin_data_cache');
+                var cache = localStorage.getItem('admin_data_cache_v2');
                 if(cache) {
                     var dados = JSON.parse(cache);
                     if (dados && dados.sucesso) {
@@ -664,7 +667,7 @@
                     document.getElementById('loading-global').classList.add('hidden');
                     if (res && res.sucesso) {
                         try { 
-                            localStorage.setItem('admin_data_cache', JSON.stringify(res)); 
+                            localStorage.setItem('admin_data_cache_v2', JSON.stringify(res)); 
                         } catch(e) {
                             console.warn("Navegador sem memória suficiente. Não foi possível guardar em cache.");
                         }
@@ -956,12 +959,13 @@
                 var img = new Image();
                 img.onload = function() {
                     var canvas = document.createElement('canvas'); var ctx = canvas.getContext('2d'); 
-                    var maxWidth = 800; var scale = 1;
+                    // Limite agressivo de compressão para evitar exceder 50.000 chars na base de dados
+                    var maxWidth = 500; var scale = 1;
                     if (img.width > maxWidth) scale = maxWidth / img.width;
                     
                     canvas.width = img.width * scale; canvas.height = img.height * scale; 
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    var base64Resized = canvas.toDataURL('image/jpeg', 0.8); 
+                    var base64Resized = canvas.toDataURL('image/jpeg', 0.6); 
                     
                     var htmlImg = `
                         <br>
@@ -1119,25 +1123,23 @@
             
             var btn = document.getElementById(isRascunho ? 'btn-salvar-rascunho' : 'btn-salvar-noticia'); 
             var txtOriginal = btn.innerHTML; btn.innerHTML = 'A gravar...'; btn.disabled = true;
-            
-            // DETETOR DE PESO DA MATÉRIA (Proteção contra Erro 413 do Google)
-            var conteudoRich = document.getElementById('admin-editor-rich').innerHTML;
-            var tamanhoEmBytes = new Blob([conteudoRich]).size;
-            if (tamanhoEmBytes > 4 * 1024 * 1024) { // Limite de 4MB
-                mostrarMensagem("Erro: A matéria está muito pesada (" + (tamanhoEmBytes / 1024 / 1024).toFixed(1) + "MB). Apague as imagens que colou no texto e use o botão 🖼️ para fazer o upload corretamente.", "erro");
-                btn.innerHTML = txtOriginal; btn.disabled = false;
-                return;
-            }
 
             // LIMPEZA DA MATÉRIA (Remove botões interativos do editor antes de salvar)
             var tempDiv = document.createElement('div');
-            tempDiv.innerHTML = conteudoRich;
+            tempDiv.innerHTML = document.getElementById('admin-editor-rich').innerHTML;
             var botoesAdmin = tempDiv.querySelectorAll('.controles-imagem-admin, .btn-diminuir-img, .btn-aumentar-img');
             botoesAdmin.forEach(function(btnRem) {
                 var pai = btnRem.parentElement; btnRem.remove();
                 if (pai && pai.tagName !== 'FIGURE' && pai.innerHTML.trim() === '') pai.remove();
             });
             var conteudoLimpo = tempDiv.innerHTML;
+
+            // DETETOR DE PESO DA MATÉRIA (Proteção contra Erro de 50.000 caracteres no Google Sheets)
+            if (conteudoLimpo.length > 48000) {
+                mostrarMensagem("Erro: A matéria excede o limite de tamanho do servidor (50.000 caracteres). Por favor, apague algumas imagens coladas no texto.", "erro");
+                btn.innerHTML = txtOriginal; btn.disabled = false;
+                return;
+            }
 
             var payload = { 
                 id: editandoID, titulo: tituloDigitado, categoria: categoriasSelecionadas, cidade: cidadeSelecionada, 
@@ -1160,13 +1162,13 @@
                     btn.innerHTML = txtOriginal; btn.disabled = false;
                     if (res && res.sucesso) { 
                         mostrarMensagem(isRascunho ? 'Rascunho Guardado!' : 'Matéria Publicada!'); 
-                        try { localStorage.removeItem('admin_data_cache'); } catch(e){}
+                        try { localStorage.removeItem('admin_data_cache_v2'); } catch(e){}
                         limparFormNoticia(); 
                         carregarNoticiasAdmin(); 
                         setTimeout(function() { alternarAbaAdmin('lista-noticias-container'); window.scrollTo(0,0); }, 1500); 
                     } else { mostrarMensagem(res ? res.erro : "Erro ao guardar", 'erro'); }
                 }).withFailureHandler(function(err) {
-                    btn.innerHTML = txtOriginal; btn.disabled = false; mostrarMensagem("Falha na rede: " + err.message, "erro");
+                    btn.innerHTML = txtOriginal; btn.disabled = false; mostrarMensagem(err.message, "erro");
                 }).salvarNoticiaNoSheets(payload);
             }
         }
@@ -1236,7 +1238,7 @@
             var isAtivo = checkbox.checked; var labelSpan = checkbox.nextElementSibling.nextElementSibling;
             if (labelSpan) { labelSpan.innerText = isAtivo ? 'ATIVO' : 'INATIVO'; labelSpan.className = `ml-2 text-[10px] font-black ${isAtivo ? 'text-gray-700' : 'text-gray-400'} select-none uppercase tracking-widest inline-block w-16 text-left`; }
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
-                try { localStorage.removeItem('admin_data_cache'); } catch(e){}
+                try { localStorage.removeItem('admin_data_cache_v2'); } catch(e){}
                 window.google.script.run.withSuccessHandler(function(res){ if(res && res.sucesso) carregarNoticiasAdmin(); }).alternarStatusNoticia(id); 
             }
         }
@@ -1244,7 +1246,7 @@
         function apagarMateria(id) {
             if(!confirm("Eliminar permanentemente?")) return;
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
-                try { localStorage.removeItem('admin_data_cache'); } catch(e){}
+                try { localStorage.removeItem('admin_data_cache_v2'); } catch(e){}
                 window.google.script.run.withSuccessHandler(function(res){ carregarNoticiasAdmin(); }).excluirNoticia(id); 
             }
         }
