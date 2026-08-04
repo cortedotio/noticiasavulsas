@@ -26,7 +26,7 @@
         const apiFunctions = [
             'getHomeData', 'verificarLogin', 'salvarNoticiaNoSheets', 
             'alternarStatusNoticia', 'excluirNoticia', 'adicionarCategoriaNoSheets', 
-            'chamarGeminiBackend'
+            'chamarGeminiBackend', 'salvarUsuario'
         ];
 
         apiFunctions.forEach(function(funcName) {
@@ -91,21 +91,23 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        .rich-editor { user-select: text !important; -webkit-user-select: text !important; }
-        /* Mapeamento dos tamanhos do editor para classes fixas */
-        .rich-editor font[size="1"] { font-size: 0.75rem !important; line-height: 1.1rem !important; }
-        .rich-editor font[size="2"] { font-size: 0.875rem !important; line-height: 1.25rem !important; }
-        .rich-editor font[size="3"] { font-size: 1.125rem !important; line-height: 1.75rem !important; } /* Normal */
-        .rich-editor font[size="4"] { font-size: 1.25rem !important; line-height: 1.8rem !important; }
-        .rich-editor font[size="5"] { font-size: 1.5rem !important; line-height: 2rem !important; } /* Grande */
-        .rich-editor font[size="6"] { font-size: 1.875rem !important; line-height: 2.25rem !important; }
-        .rich-editor font[size="7"] { font-size: 2.25rem !important; line-height: 2.5rem !important; } /* Enorme */
-        
+        .rich-editor { outline: none; }
         .rich-editor img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px auto; border: 1px solid #e2e8f0; display: block; }
         .rich-editor iframe, .rich-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; background: #000; }
         .rich-editor a { color: #2563eb; text-decoration: underline; font-weight: 500; }
-        .rich-editor h1 { font-size: 1.5em; font-weight: 900; margin: 16px 0 8px 0; font-family: 'Inter', sans-serif; }
-        .rich-editor h2 { font-size: 1.25em; font-weight: 800; margin: 12px 0 8px 0; font-family: 'Inter', sans-serif; }
+        
+        /* Regras para os tamanhos de fonte do execCommand('fontSize') */
+        .rich-editor font[size="1"] { font-size: 0.75rem !important; line-height: 1.1rem !important; }
+        .rich-editor font[size="2"] { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+        .rich-editor font[size="3"] { font-size: 1.125rem !important; line-height: 1.75rem !important; }
+        .rich-editor font[size="4"] { font-size: 1.25rem !important; line-height: 1.8rem !important; }
+        .rich-editor font[size="5"] { font-size: 1.5rem !important; line-height: 2rem !important; }
+        .rich-editor font[size="6"] { font-size: 1.875rem !important; line-height: 2.25rem !important; }
+        .rich-editor font[size="7"] { font-size: 2.25rem !important; line-height: 2.5rem !important; }
+        
+        .rich-editor h1, .rich-editor h2, .rich-editor h3 { font-family: 'Inter', sans-serif; color: #020617; }
+        .rich-editor h1 { font-size: 1.5em; font-weight: 900; margin: 16px 0 8px 0; }
+        .rich-editor h2 { font-size: 1.25em; font-weight: 800; margin: 12px 0 8px 0; }
         .rich-editor blockquote { border-left: 4px solid #E11D48; background: #f8fafc; padding: 12px 16px; color: #475569; font-style: italic; margin: 16px 0; border-radius: 0 8px 8px 0; }
         .rich-editor ul { list-style-type: disc; padding-left: 24px; margin-bottom: 12px; }
         .rich-editor ol { list-style-type: decimal; padding-left: 24px; margin-bottom: 12px; }
@@ -139,6 +141,28 @@
         </div>
     </div>
 
+    <!-- Modal Troca de Senha Obrigatória -->
+    <div id="modalTrocarSenha" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md"></div>
+        <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
+            <div class="mb-6 text-center">
+                <h2 class="font-sans text-xl font-black uppercase text-jornal-dark tracking-tighter">Bem-vindo(a)!</h2>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-2">Por segurança, é obrigatório criar a sua própria senha pessoal neste primeiro acesso.</p>
+            </div>
+            <form onsubmit="trocarSenhaPrimeiroAcesso(event)" class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Nova Senha Pessoal</label>
+                    <input type="password" id="nova-senha" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required minlength="6" placeholder="Mínimo 6 caracteres" />
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Confirmar Nova Senha</label>
+                    <input type="password" id="confirmar-nova-senha" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required minlength="6" placeholder="Repita a senha" />
+                </div>
+                <button type="submit" id="btn-trocar-senha" class="w-full bg-jornal-red text-white font-black py-4 hover:bg-red-700 transition-colors text-[11px] uppercase tracking-widest rounded-sm mt-2 shadow-md">Salvar Nova Senha e Entrar</button>
+            </form>
+        </div>
+    </div>
+
     <div id="view-admin" class="hidden min-h-screen flex flex-col bg-gray-100 text-slate-800">
         
         <header class="bg-jornal-dark text-white border-b border-gray-800 sticky top-0 z-40 shadow-sm">
@@ -162,7 +186,7 @@
                 <button type="button" onclick="alternarAbaAdmin('form-noticia-container')" id="aba-noticia" class="py-3 px-5 font-black text-[11px] bg-jornal-blue text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors hidden">Publicar</button>
                 <button type="button" onclick="alternarAbaAdmin('lista-noticias-container')" id="aba-lista" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors hidden">Gerir Matérias</button>
                 
-                <!-- Links na Mesma Aba (Abertura Direta) -->
+                <!-- Links na Mesma Aba -->
                 <a href="config.html" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1">⚙️ Configurações</a>
                 <a href="instagram.html" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-purple-600 hover:text-purple-800 hover:bg-purple-100 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1">📸 Estúdio IG</a>
                 
@@ -170,9 +194,6 @@
                 <a href="index.html" class="py-3 px-5 font-bold text-[11px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1 ml-auto">Ver Portal &raquo;</a>
             </div>
 
-            <!-- ========================================================= -->
-            <!-- ABA: FORMULÁRIO DE NOTÍCIA                                -->
-            <!-- ========================================================= -->
             <div id="form-noticia-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-jornal-red pl-3 mb-8">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter" id="titulo-pagina-form">Redigir Matéria</h2>
@@ -220,82 +241,68 @@
                         <input type="text" id="admin-autor" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm" placeholder="Ex: João Silva (Vazio = 'da redação')" />
                     </div>
 
-                    <!-- Editor Rich Text (NOVA BARRA OTIMIZADA) -->
                     <div>
                         <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Conteúdo (Rich Text Avançado)</label>
                         <input type="file" id="upload-imagem-conteudo" accept="image/*" class="hidden" onchange="processarUploadImagemConteudo(this)" />
                         
-                        <div class="flex flex-wrap gap-1.5 p-2 bg-gray-100 border border-gray-300 border-b-0 rounded-t-sm items-center">
-                            
-                            <!-- Undo / Redo -->
+                        <div class="flex flex-wrap gap-1 p-2 bg-gray-100 border border-gray-300 border-b-0 rounded-t-sm items-center">
+                            <!-- Botões de Desfazer / Refazer -->
                             <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('undo')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded shadow-sm transition-colors" title="Desfazer">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
                             </button>
                             <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('redo')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded shadow-sm transition-colors" title="Refazer">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"/></svg>
                             </button>
-                            
-                            <span class="w-[1px] h-6 bg-gray-300 mx-1"></span>
+                            <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
 
-                            <!-- Fonte (Font Family) -->
-                            <select onmousedown="event.preventDefault();" onchange="aplicarFonte(this.value);" class="fontFamilySelect px-2 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer">
+                            <!-- Fontes e Tamanhos Otimizados -->
+                            <select onmousedown="event.preventDefault();" onchange="aplicarFonte(this.value);" class="fontFamilySelect px-2 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer min-w-[100px]">
                                 <option value="" disabled selected>Sans Serif</option>
-                                <option value="Inter, sans-serif">Sans Serif</option>
+                                <option value="Arial, sans-serif">Sans Serif</option>
                                 <option value="Merriweather, serif">Serif</option>
                                 <option value="Courier New, monospace">Largura fixa</option>
-                                <option value="Arial Black, sans-serif">Largo</option>
-                                <option value="Arial Narrow, sans-serif">Estreito</option>
+                                <option value="Impact, fantasy">Largo</option>
                                 <option value="Comic Sans MS">Comic Sans MS</option>
-                                <option value="Garamond">Garamond</option>
-                                <option value="Georgia">Georgia</option>
-                                <option value="Tahoma">Tahoma</option>
-                                <option value="Trebuchet MS">Trebuchet MS</option>
-                                <option value="Verdana">Verdana</option>
+                                <option value="Garamond, serif">Garamond</option>
+                                <option value="Georgia, serif">Georgia</option>
+                                <option value="Tahoma, sans-serif">Tahoma</option>
+                                <option value="Trebuchet MS, sans-serif">Trebuchet MS</option>
+                                <option value="Verdana, sans-serif">Verdana</option>
                             </select>
-
-                            <!-- Tamanho (Font Size) -->
-                            <div class="relative flex items-center ml-1">
-                                <span class="text-xs font-bold mr-2 text-gray-600 hidden sm:block">TT</span>
-                                <select onmousedown="event.preventDefault();" onchange="execCmd('fontSize', this.value);" class="fontSizeSelect px-2 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer">
-                                    <option value="" disabled selected>Tamanho</option>
-                                    <option value="1">Pequeno</option>
-                                    <option value="3">Normal</option>
-                                    <option value="5">Grande</option>
-                                    <option value="7">Enorme</option>
-                                </select>
-                            </div>
                             
-                            <span class="w-[1px] h-6 bg-gray-300 mx-1"></span>
+                            <select onmousedown="event.preventDefault();" onchange="execCmd('fontSize', this.value);" class="fontSizeSelect px-2 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer ml-1">
+                                <option value="" disabled selected>Tamanho</option>
+                                <option value="1">Pequeno</option>
+                                <option value="3">Normal</option>
+                                <option value="5">Grande</option>
+                                <option value="7">Enorme</option>
+                            </select>
+                            
+                            <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
 
-                            <!-- Formatação Básica -->
                             <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('bold')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm transition-colors">B</button>
                             <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('italic')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm transition-colors">I</button>
                             <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('underline')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs underline rounded shadow-sm transition-colors">U</button>
                             
-                            <span class="w-[1px] h-6 bg-gray-300 mx-1"></span>
+                            <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('justifyLeft')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Esq</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('justifyCenter')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Cen</button>
+                            <span class="w-[1px] h-5 bg-gray-300 mx-1 hidden sm:block"></span>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('insertUnorderedList')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm hidden sm:block">UL</button>
+                            <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
                             
-                            <!-- Alinhamento e Listas -->
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('justifyLeft')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Esq</button>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('justifyCenter')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Cen</button>
-                            <span class="w-[1px] h-6 bg-gray-300 mx-1 hidden sm:block"></span>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('insertUnorderedList')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm hidden sm:block">UL</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirLinkRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-blue-600 rounded font-semibold shadow-sm" title="Inserir Link">🔗</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirImagemRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-emerald-600 rounded font-semibold shadow-sm" title="Upload Imagem">🖼️</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirVideoRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-purple-600 rounded font-semibold shadow-sm" title="Vídeo">📹</button>
                             
-                            <span class="w-[1px] h-6 bg-gray-300 mx-1"></span>
+                            <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('formatBlock', 'H2')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm">H2</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('formatBlock', 'blockquote')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm">""</button>
                             
-                            <!-- Multimédia -->
-                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirLinkRichEditor()" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-blue-600 rounded font-semibold shadow-sm" title="Inserir Link">🔗</button>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirImagemRichEditor()" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-emerald-600 rounded font-semibold shadow-sm" title="Upload Imagem">🖼️</button>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirVideoRichEditor()" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-purple-600 rounded font-semibold shadow-sm" title="Vídeo">📹</button>
-                            
-                            <span class="w-[1px] h-6 bg-gray-300 mx-1"></span>
-                            
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('formatBlock', 'H2')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm">H2</button>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('formatBlock', 'blockquote')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm">""</button>
-                            
-                            <!-- Limpar Formatação (A VASSOURA) -->
+                            <!-- Botão Limpar Formatação Atualizado -->
                             <button type="button" onmousedown="event.preventDefault();" onclick="limparFormatacao(this)" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-xs font-bold text-red-600 rounded shadow-sm ml-1">Limpar Formatação</button>
                             
-                            <button type="button" id="btn-ia-conteudo" onmousedown="event.preventDefault();" onclick="gerarConteudoIA()" class="ml-auto px-4 py-1.5 bg-purple-100 hover:bg-purple-200 border border-purple-300 text-xs text-purple-800 font-bold tracking-wide rounded shadow-sm transition-colors flex items-center justify-center">✨ Escrever com IA</button>
+                            <button type="button" onmousedown="event.preventDefault();" id="btn-ia-conteudo" onclick="gerarConteudoIA()" class="ml-auto px-4 py-1.5 bg-purple-100 hover:bg-purple-200 border border-purple-300 text-xs text-purple-800 font-bold tracking-wide rounded shadow-sm transition-colors flex items-center justify-center">✨ Escrever com IA</button>
                         </div>
                         <div id="admin-editor-rich" contenteditable="true" class="w-full px-6 py-6 bg-white border border-gray-300 rounded-b-sm min-h-[350px] max-h-[600px] overflow-y-auto focus:outline-none focus:ring-1 focus:ring-jornal-blue text-base leading-relaxed font-serif custom-scrollbar rich-editor"></div>
                     </div>
@@ -404,7 +411,6 @@
         </main>
     </div>
 
-    <!-- SCRIPTS CORE E LÓGICA -->
     <script>
         var noticiasGlobais = [];
         var listaCategoriasLocais = ['Política', 'Economia', 'Cidades', 'Polícia', 'Justiça', 'Esportes', 'Brasil', 'Mundo'];
@@ -434,10 +440,6 @@
             // Adicionar função de resize imagens dentro do rich text
             var editorRich = document.getElementById('admin-editor-rich');
             if (editorRich) {
-                // Atualizar barras de ferramentas quando clicar ou digitar
-                editorRich.addEventListener('keyup', atualizarBarraFerramentas);
-                editorRich.addEventListener('mouseup', atualizarBarraFerramentas);
-
                 editorRich.addEventListener('click', function(e) {
                     var el = e.target;
                     if (el && (el.classList.contains('btn-diminuir-img') || el.classList.contains('btn-aumentar-img'))) {
@@ -461,6 +463,10 @@
                         } else { alert("Não foi possível localizar a imagem para ajustar."); }
                     }
                 });
+                
+                // Monitorizar cliques no editor para atualizar a barra de ferramentas
+                editorRich.addEventListener('keyup', atualizarBarraFerramentas);
+                editorRich.addEventListener('mouseup', atualizarBarraFerramentas);
             }
         });
 
@@ -483,7 +489,6 @@
             var u = document.getElementById('login-user').value; 
             var p = document.getElementById('login-pass').value;
             var btn = document.getElementById('btn-fazer-login'); 
-            
             btn.innerHTML = "A VERIFICAR..."; btn.disabled = true;
 
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
@@ -510,6 +515,31 @@
             }
         }
 
+        function trocarSenhaPrimeiroAcesso(e) {
+            e.preventDefault(); 
+            const novaSenha = document.getElementById('nova-senha').value; 
+            const confSenha = document.getElementById('confirmar-nova-senha').value;
+            
+            if(novaSenha !== confSenha) { mostrarMensagem('As senhas não coincidem.', 'erro'); return; }
+            if(novaSenha.length < 6) { mostrarMensagem('Mínimo de 6 caracteres.', 'erro'); return; }
+            
+            const btn = document.getElementById('btn-trocar-senha'); 
+            btn.innerHTML = 'A ATUALIZAR...'; btn.disabled = true;
+            const novoRole = window.roleLogado.replace('req_pass_change:true', 'req_pass_change:false');
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if (res.sucesso) { 
+                        mostrarMensagem('Senha atualizada!'); 
+                        iniciarSessao(window.usuarioLogado, novoRole); 
+                    } else { 
+                        mostrarMensagem('Erro.', 'erro'); 
+                        btn.innerHTML = 'Salvar Nova Senha e Entrar'; btn.disabled = false; 
+                    }
+                }).salvarUsuario({ usuarioOriginal: window.usuarioLogado, usuario: window.usuarioLogado, senha: novaSenha, role: novoRole });
+            }
+        }
+
         function iniciarSessao(user, role) {
             try { 
                 localStorage.setItem('admin_logado', 'true'); 
@@ -517,6 +547,8 @@
                 localStorage.setItem('admin_role', role); 
             } catch(err) {}
             
+            document.getElementById('modalTrocarSenha').classList.add('hidden'); 
+            document.getElementById('modalTrocarSenha').classList.remove('flex');
             document.getElementById('modalLogin').classList.add('hidden'); 
             document.getElementById('view-admin').classList.remove('hidden');
             
@@ -590,9 +622,11 @@
         function carregarNoticiasAdmin() {
             document.getElementById('loading-global').classList.remove('hidden');
             
-            var cache = localStorage.getItem('admin_data_cache');
-            if(cache) {
-                try {
+            // Blindagem: Tenta usar a cache local primeiro, mas com TRY/CATCH para evitar estouro de limite.
+            var usouCache = false;
+            try {
+                var cache = localStorage.getItem('admin_data_cache');
+                if(cache) {
                     var dados = JSON.parse(cache);
                     if (dados && dados.sucesso) {
                         noticiasGlobais = dados.noticias || []; 
@@ -604,8 +638,11 @@
                         if (!document.getElementById('lista-noticias-container').classList.contains('hidden')) {
                             carregarListaEdicao();
                         }
+                        usouCache = true;
                     }
-                } catch(e){}
+                }
+            } catch(e){
+                console.warn("Memória cache cheia ou corrompida. Ignorando cache local.", e);
             }
 
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
@@ -615,8 +652,7 @@
                         try { 
                             localStorage.setItem('admin_data_cache', JSON.stringify(res)); 
                         } catch(e) {
-                            console.warn("Memória do navegador cheia. Cache ignorado.");
-                            localStorage.removeItem('admin_data_cache');
+                            console.warn("Navegador sem memória suficiente. Não foi possível guardar em cache.");
                         }
                         noticiasGlobais = res.noticias || []; 
                         if (res.categorias && res.categorias.length > 0) {
@@ -633,7 +669,16 @@
                 }).withFailureHandler(function(err) {
                     document.getElementById('loading-global').classList.add('hidden'); 
                     mostrarMensagem("Falha de rede. O Link da base de dados pode estar desatualizado.", 'erro');
+                    
+                    // ANTI-ECRÃ EM BRANCO: Se falhar a rede, carrega pelo menos as categorias locais para a pessoa continuar a trabalhar offline
+                    renderizarChecklistCategoriasAdmin();
+                    if (!document.getElementById('lista-noticias-container').classList.contains('hidden')) {
+                        carregarListaEdicao();
+                    }
                 }).getHomeData();
+            } else {
+                document.getElementById('loading-global').classList.add('hidden');
+                renderizarChecklistCategoriasAdmin();
             }
         }
 
@@ -641,12 +686,19 @@
             var checklistAdmin = document.getElementById('admin-categoria-checklist'); 
             if(!checklistAdmin) return;
             
+            // Garantia extra: Se vier vazio, coloca as categorias padrão
+            if (!listaCategoriasLocais || listaCategoriasLocais.length === 0) {
+                listaCategoriasLocais = ['Política', 'Economia', 'Cidades', 'Polícia', 'Justiça', 'Esportes', 'Brasil', 'Mundo'];
+            }
+            
             checklistAdmin.innerHTML = '';
             listaCategoriasLocais.forEach(function(c) {
+                if (!c) return;
+                var nomeCat = String(c).trim();
                 checklistAdmin.innerHTML += `
                     <label class="flex items-center gap-3 cursor-pointer text-xs font-bold text-slate-700 p-2 hover:bg-gray-100 rounded transition-colors">
-                        <input type="checkbox" name="admin-categorias-checkbox" value="${c}" onchange="atualizarCampoCidadeAdmin(); atualizarPreviewURL(); autoPreencherRelacionadas();" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-400" /> 
-                        ${c.toUpperCase()} 
+                        <input type="checkbox" name="admin-categorias-checkbox" value="${nomeCat}" onchange="atualizarCampoCidadeAdmin(); atualizarPreviewURL(); autoPreencherRelacionadas();" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-400" /> 
+                        ${nomeCat.toUpperCase()} 
                     </label>
                 `;
             });
@@ -797,77 +849,28 @@
             document.getElementById('admin-relacionadas-ids').value = window.relacionadasSelecionadas.map(function(r){ return r.id; }).join(',');
         }
 
-        // ==========================================
-        // EDITOR RICH TEXT 2.0 - COM VASSOURA E FONTES
-        // ==========================================
-
         function execCmd(command, arg) { 
             if(arg === undefined) arg = null; 
             document.execCommand(command, false, arg); 
             document.getElementById('admin-editor-rich').focus(); 
+            atualizarBarraFerramentas(); // Atualiza dropdowns
         }
-
+        
         function aplicarFonte(valor) { 
             if (!valor) return; 
-            document.execCommand('fontName', false, valor); 
-            document.getElementById('admin-editor-rich').focus();
+            execCmd('fontName', valor); 
         }
-
-        function limparFormatacao(btnElement) {
-            document.execCommand('removeFormat', false, null);
-            document.execCommand('unlink', false, null);
-            
-            // Deep clean on selection para remover fontes copiadas de outros sites
-            var sel = window.getSelection();
-            if (!sel.isCollapsed) {
-                var range = sel.getRangeAt(0);
-                var container = range.commonAncestorContainer;
-                if (container.nodeType === 3) container = container.parentNode;
-                
-                var editor = document.getElementById('admin-editor-rich');
-                if (editor && editor.contains(container)) {
-                    var elements = container.querySelectorAll('*');
-                    elements.forEach(function(el) {
-                        if (sel.containsNode(el, true)) {
-                            el.removeAttribute('style');
-                            el.removeAttribute('face');
-                            el.removeAttribute('size');
-                            el.removeAttribute('color');
-                            el.removeAttribute('class');
-                        }
-                    });
-                    
-                    if (container !== editor) {
-                        container.removeAttribute('style');
-                        container.removeAttribute('face');
-                        container.removeAttribute('size');
-                        container.removeAttribute('color');
-                        container.removeAttribute('class');
-                    }
-                    
-                    var parentDiv = editor.parentElement;
-                    var selFont = parentDiv.querySelector('.fontFamilySelect');
-                    var selSize = parentDiv.querySelector('.fontSizeSelect');
-                    if(selFont) selFont.selectedIndex = 0;
-                    if(selSize) selSize.selectedIndex = 0;
-                    
-                    editor.focus();
-                }
-            }
-        }
-
+        
+        // Verifica o estado atual do texto e atualiza os Selects de Letra e Tamanho
         function atualizarBarraFerramentas() {
-            var editorAtivo = document.activeElement;
-            if (!editorAtivo || !editorAtivo.classList.contains('rich-editor')) return;
+            var editorAtivo = document.getElementById('admin-editor-rich');
+            if (!editorAtivo) return;
             
             var fontNode = document.queryCommandValue('fontName');
             var sizeNode = document.queryCommandValue('fontSize');
             
-            var parentDiv = editorAtivo.parentElement; 
-            if (!parentDiv) return;
-            
-            var selFont = parentDiv.querySelector('.fontFamilySelect');
-            var selSize = parentDiv.querySelector('.fontSizeSelect');
+            var selFont = document.querySelector('.fontFamilySelect');
+            var selSize = document.querySelector('.fontSizeSelect');
             
             if (fontNode && selFont) {
                 var fontL = fontNode.replace(/['"]/g, '').toLowerCase().split(',')[0];
@@ -878,7 +881,6 @@
                     }
                 }
             }
-            
             if (sizeNode && selSize) {
                 for(var j=0; j<selSize.options.length; j++) {
                     if(selSize.options[j].value === sizeNode.toString()) { 
@@ -886,11 +888,43 @@
                         break; 
                     }
                 }
-            } else if (!sizeNode && selSize) {
-                selSize.selectedIndex = 0; // Volta para Normal se perder o formatação
             }
         }
         
+        // O "Super Aspirador" (Limpar Formatação Total)
+        function limparFormatacao(btnElement) {
+            document.execCommand('removeFormat', false, null);
+            document.execCommand('unlink', false, null);
+            var sel = window.getSelection();
+            if (!sel.isCollapsed) {
+                var range = sel.getRangeAt(0);
+                var container = range.commonAncestorContainer;
+                if (container.nodeType === 3) container = container.parentNode;
+                
+                var editor = document.getElementById('admin-editor-rich');
+                
+                if (editor) {
+                    var elements = container.querySelectorAll('*');
+                    elements.forEach(function(el) {
+                        if (sel.containsNode(el, true)) {
+                            el.removeAttribute('style'); el.removeAttribute('face');
+                            el.removeAttribute('size'); el.removeAttribute('class'); el.removeAttribute('color');
+                        }
+                    });
+                    if (container !== editor) {
+                        container.removeAttribute('style'); container.removeAttribute('face');
+                        container.removeAttribute('size'); container.removeAttribute('class'); container.removeAttribute('color');
+                    }
+                    
+                    var selFont = document.querySelector('.fontFamilySelect');
+                    var selSize = document.querySelector('.fontSizeSelect');
+                    if(selFont) selFont.selectedIndex = 0;
+                    if(selSize) selSize.selectedIndex = 0;
+                    editor.focus();
+                }
+            }
+        }
+
         function inserirLinkRichEditor() { 
             var url = prompt("Insira a URL completa do hiperlink:"); 
             if (url) execCmd('createLink', url); 
@@ -985,21 +1019,13 @@
             var inputCreditos = document.getElementById('admin-creditos-imagem');
             
             if (input && input.files && input.files[0]) { 
-                if (containerMetadados) {
-                    containerMetadados.classList.remove('hidden'); 
-                }
-                if (inputCreditos) {
-                    inputCreditos.required = true; 
-                }
+                if (containerMetadados) containerMetadados.classList.remove('hidden'); 
+                if (inputCreditos) inputCreditos.required = true; 
             } else { 
                 var prevSrc = document.getElementById('preview-imagem').src; 
                 if (!prevSrc || prevSrc === "" || prevSrc.indexOf('placehold.co') !== -1) { 
-                    if (containerMetadados) {
-                        containerMetadados.classList.add('hidden'); 
-                    }
-                    if (inputCreditos) {
-                        inputCreditos.required = false; 
-                    }
+                    if (containerMetadados) containerMetadados.classList.add('hidden'); 
+                    if (inputCreditos) inputCreditos.required = false; 
                 } 
             }
         }
@@ -1029,8 +1055,7 @@
             document.getElementById('admin-id-noticia').value = ""; 
             document.getElementById('preview-imagem').classList.add('hidden'); 
             document.getElementById('preview-imagem').src = ""; 
-            var elCarrossel = document.getElementById('admin-carrossel');
-            if (elCarrossel) elCarrossel.checked = false;
+            document.getElementById('admin-carrossel').checked = false; 
             document.getElementById('admin-editor-rich').innerHTML = ""; 
             document.getElementById('admin-imagem-metadados').classList.add('hidden'); 
             document.getElementById('admin-creditos-imagem').required = false; 
@@ -1080,12 +1105,12 @@
             var categoriasSelecionadas = categoriasSelecionadasArray.length > 0 ? categoriasSelecionadasArray.join(", ") : "Geral";
             
             var btn = document.getElementById(isRascunho ? 'btn-salvar-rascunho' : 'btn-salvar-noticia'); 
-            var txtOriginal = btn.innerHTML; btn.innerHTML = 'A guardar...'; btn.disabled = true;
+            var txtOriginal = btn.innerHTML; btn.innerHTML = 'A gravar...'; btn.disabled = true;
             
             // DETETOR DE PESO DA MATÉRIA (Proteção contra Erro 413 do Google)
             var conteudoRich = document.getElementById('admin-editor-rich').innerHTML;
             var tamanhoEmBytes = new Blob([conteudoRich]).size;
-            if (tamanhoEmBytes > 4 * 1024 * 1024) { // 4MB
+            if (tamanhoEmBytes > 4 * 1024 * 1024) { // Limite de 4MB
                 mostrarMensagem("Erro: A matéria está muito pesada (" + (tamanhoEmBytes / 1024 / 1024).toFixed(1) + "MB). Apague as imagens que colou no texto e use o botão 🖼️ para fazer o upload corretamente.", "erro");
                 btn.innerHTML = txtOriginal; btn.disabled = false;
                 return;
@@ -1126,7 +1151,7 @@
                         limparFormNoticia(); 
                         carregarNoticiasAdmin(); 
                         setTimeout(function() { alternarAbaAdmin('lista-noticias-container'); window.scrollTo(0,0); }, 1500); 
-                    } else { mostrarMensagem("Erro ao guardar", 'erro'); }
+                    } else { mostrarMensagem(res ? res.erro : "Erro ao guardar", 'erro'); }
                 }).withFailureHandler(function(err) {
                     btn.innerHTML = txtOriginal; btn.disabled = false; mostrarMensagem("Falha na rede: " + err.message, "erro");
                 }).salvarNoticiaNoSheets(payload);
@@ -1204,7 +1229,7 @@
         }
 
         function apagarMateria(id) {
-            if(!confirm("Atenção! Vai eliminar permanentemente.")) return;
+            if(!confirm("Eliminar permanentemente?")) return;
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
                 try { localStorage.removeItem('admin_data_cache'); } catch(e){}
                 window.google.script.run.withSuccessHandler(function(res){ carregarNoticiasAdmin(); }).excluirNoticia(id); 
@@ -1254,6 +1279,7 @@
             var btnSalvar = document.getElementById('btn-salvar-noticia'); if(btnSalvar) { btnSalvar.innerText = "SALVAR ALTERAÇÕES"; }
             document.getElementById('titulo-pagina-form').innerText = "Editar Matéria";
             alternarAbaAdmin('form-noticia-container'); window.scrollTo(0,0); atualizarPreviewURL();
+            atualizarBarraFerramentas();
         }
     </script>
 </body>
