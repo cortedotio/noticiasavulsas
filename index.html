@@ -62,9 +62,20 @@
             input, select, textarea {
                 font-size: 16px !important; /* Impede o auto-zoom destrutivo do iPhone nas barras de pesquisa */
             }
-            .pt-safe { padding-top: max(env(safe-area-inset-top), 0px); }
-            .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
         }
+        
+        /* CÁLCULO INTELIGENTE DO MENU E TICKER (APPLE DYNAMIC ISLAND) */
+        .ticker-safe {
+            height: 40px; /* Fallback PC */
+            height: calc(40px + env(safe-area-inset-top, 0px));
+            padding-top: env(safe-area-inset-top, 0px);
+        }
+        .nav-safe {
+            top: 40px; /* Fallback PC */
+            top: calc(40px + env(safe-area-inset-top, 0px));
+        }
+
+        .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
 
         body { background-color: #f1f2f5; color: #111111; overflow-x: hidden; }
         .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
@@ -107,10 +118,11 @@
         <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 animate-pulse">A CARREGAR O PORTAL...</p>
     </div>
 
-    <div id="view-portal" class="flex-grow flex flex-col relative min-w-0 w-full overflow-hidden">
+    <!-- REMOVIDO: overflow-hidden. ISTO É O QUE FAZIA O MENU SUMIR NO IPHONE E COMPUTADOR! -->
+    <div id="view-portal" class="flex-grow flex flex-col relative min-w-0 w-full">
         
-        <!-- TICKER COM SAFE-AREA TOP PARA IPHONE -->
-        <div id="ticker-noticias" class="bg-jornal-red text-white text-[10px] font-bold h-10 pt-safe overflow-hidden flex items-center border-b border-red-800 sticky top-0 z-50 w-full shadow-sm min-w-0 transition-colors duration-500">
+        <!-- TICKER BLINDADO PARA IPHONE (COM CORES DINÂMICAS) -->
+        <div id="ticker-noticias" class="bg-jornal-red border-red-800 text-white text-[10px] font-bold ticker-safe overflow-hidden flex items-center border-b sticky top-0 z-50 w-full shadow-sm min-w-0 transition-colors duration-500">
             <div class="overflow-hidden relative w-full flex-grow min-w-0 flex h-full items-center">
                 <div class="inline-block animate-marquee-slow whitespace-nowrap flex items-center gap-8 uppercase" id="ticker-content">
                     A carregar informações financeiras e matérias recentes...
@@ -149,7 +161,8 @@
             </form>
         </header>
 
-        <nav class="border-y border-gray-200 border-b-4 border-b-jornal-blue sticky top-[40px] md:top-10 z-40 bg-white/95 backdrop-blur-sm w-full shadow-sm min-w-0" id="nav-categorias-publicas">
+        <!-- MENU DE NAVEGAÇÃO BLINDADO (nav-safe) -->
+        <nav class="border-y border-gray-200 border-b-4 border-b-jornal-blue sticky nav-safe z-40 bg-white/95 backdrop-blur-sm w-full shadow-sm min-w-0" id="nav-categorias-publicas">
             <div id="nav-container-inner" class="max-w-[1200px] mx-auto px-4 flex items-center overflow-x-auto whitespace-nowrap text-[11px] md:text-sm font-black uppercase tracking-widest text-jornal-dark py-3 md:py-4 custom-scrollbar min-w-0">
                 <div id="sticky-logo-container" class="hidden shrink-0 items-center cursor-pointer mr-6 pr-6 border-r-2 border-gray-200 transition-all duration-300" onclick="voltarCapa()">
                     <span class="font-black text-[15px] tracking-tighter uppercase bg-gradient-to-r from-blue-500 to-emerald-400 bg-clip-text text-transparent" id="sticky-logo-text">NOTÍCIAS AVULSAS</span>
@@ -583,6 +596,30 @@
             var headerBranding = document.getElementById('header-branding'); var footerBranding = document.getElementById('footer-branding');
             if (configuracoesGlobais['LogoHTML']) { if(headerBranding) headerBranding.innerHTML = configuracoesGlobais['LogoHTML']; if(footerBranding) footerBranding.innerHTML = configuracoesGlobais['LogoHTML']; }
             if (configuracoesGlobais['ExpedienteHTML']) { var expContainer = document.getElementById('conteudo-expediente'); if(expContainer) expContainer.innerHTML = configuracoesGlobais['ExpedienteHTML']; }
+            
+            // SUBSTITUIÇÃO DINÂMICA DA COR DO TICKER PELA COR DO LOGO
+            if (configuracoesGlobais['CorLogo']) {
+                try {
+                    var rawClasses = String(configuracoesGlobais['CorLogo']).replace(/bg-clip-text/g, '').replace(/text-transparent/g, '').trim();
+                    var textClasses = "bg-clip-text text-transparent " + rawClasses;
+                    
+                    var ticker = document.getElementById('ticker-noticias');
+                    if (ticker && rawClasses) {
+                        ticker.classList.remove('bg-jornal-red', 'border-red-800');
+                        var classesArray = rawClasses.split(' ');
+                        for(var i=0; i<classesArray.length; i++) {
+                            if(classesArray[i]) ticker.classList.add(classesArray[i]);
+                        }
+                        ticker.classList.add('border-black/10');
+                    }
+                    
+                    var stickyText = document.getElementById('sticky-logo-text');
+                    if(stickyText) { stickyText.className = "font-black text-[15px] tracking-tighter uppercase " + textClasses; }
+                    
+                    var loadingText = document.getElementById('loading-logo-text');
+                    if(loadingText) { loadingText.className = "text-4xl md:text-5xl font-black tracking-tighter uppercase px-4 text-center " + textClasses; }
+                } catch(e){}
+            }
             
             var socFooter = document.getElementById('social-footer');
             if (socFooter) {
