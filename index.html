@@ -2,7 +2,6 @@
 <html lang="pt-PT" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <!-- Meta tag essencial para iPhone 14/15/16 respeitar o ecrã completo sem bordas brancas -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Notícias Avulsas - Portal de Informação</title>
     
@@ -21,7 +20,7 @@
     
     <script>
         if (typeof google === 'undefined' || typeof google.script === 'undefined') {
-            const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyVroxyx_f70Q2KkcnfMWtt2vV8EzQRsPBhF9nNL4frnKhdhe7t-oahNoJo9SCLfAbE/exec";
+            const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyoHo_olvZbyvT-qfKBDAveq1-n1IHD_bLxf831i_bBrFJeSVTcc6RTfvdQ9QV25hTh/exec";
             window.google = { script: { run: { withSuccessHandler: function(cb) { this._onSuccess = cb; return this; }, withFailureHandler: function(cb) { this._onFailure = cb; return this; } } } };
             const apiFunctions = ['getHomeData', 'incrementarView', 'salvarComentarioNoSheets', 'inscreverNewsletter'];
             apiFunctions.forEach(function(funcName) {
@@ -55,23 +54,19 @@
     </script>
     
     <style>
-        /* Otimizações Nativas para iPhone (iOS Safari) e Android */
         * { -webkit-tap-highlight-color: transparent; }
         
         @supports (-webkit-touch-callout: none) {
-            input, select, textarea {
-                font-size: 16px !important; /* Impede o auto-zoom destrutivo do iPhone nas barras de pesquisa */
-            }
+            input, select, textarea { font-size: 16px !important; }
         }
         
-        /* CÁLCULO INTELIGENTE DO MENU E TICKER (APPLE DYNAMIC ISLAND) */
         .ticker-safe {
-            height: 40px; /* Fallback PC */
+            height: 40px; 
             height: calc(40px + env(safe-area-inset-top, 0px));
             padding-top: env(safe-area-inset-top, 0px);
         }
         .nav-safe {
-            top: 40px; /* Fallback PC */
+            top: 40px; 
             top: calc(40px + env(safe-area-inset-top, 0px));
         }
 
@@ -109,7 +104,6 @@
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
-    <!-- TELA DE CARREGAMENTO -->
     <div id="loading-noticias" class="fixed inset-0 z-[100000] bg-white flex flex-col items-center justify-center transition-opacity duration-500 pt-safe">
         <div id="loading-logo-container" class="mb-6">
              <h1 id="loading-logo-text" class="text-4xl md:text-5xl font-black tracking-tighter uppercase bg-gradient-to-r from-blue-500 to-emerald-400 bg-clip-text text-transparent px-4 text-center">NOTÍCIAS AVULSAS</h1>
@@ -118,10 +112,8 @@
         <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 animate-pulse">A CARREGAR O PORTAL...</p>
     </div>
 
-    <!-- REMOVIDO: overflow-hidden. ISTO É O QUE FAZIA O MENU SUMIR NO IPHONE E COMPUTADOR! -->
     <div id="view-portal" class="flex-grow flex flex-col relative min-w-0 w-full">
         
-        <!-- TICKER BLINDADO PARA IPHONE (COM CORES DINÂMICAS) -->
         <div id="ticker-noticias" class="bg-jornal-red border-red-800 text-white text-[10px] font-bold ticker-safe overflow-hidden flex items-center border-b sticky top-0 z-50 w-full shadow-sm min-w-0 transition-colors duration-500">
             <div class="overflow-hidden relative w-full flex-grow min-w-0 flex h-full items-center">
                 <div class="inline-block animate-marquee-slow whitespace-nowrap flex items-center gap-8 uppercase" id="ticker-content">
@@ -161,7 +153,6 @@
             </form>
         </header>
 
-        <!-- MENU DE NAVEGAÇÃO BLINDADO (nav-safe) -->
         <nav class="border-y border-gray-200 border-b-4 border-b-jornal-blue sticky nav-safe z-40 bg-white/95 backdrop-blur-sm w-full shadow-sm min-w-0" id="nav-categorias-publicas">
             <div id="nav-container-inner" class="max-w-[1200px] mx-auto px-4 flex items-center overflow-x-auto whitespace-nowrap text-[11px] md:text-sm font-black uppercase tracking-widest text-jornal-dark py-3 md:py-4 custom-scrollbar min-w-0">
                 <div id="sticky-logo-container" class="hidden shrink-0 items-center cursor-pointer mr-6 pr-6 border-r-2 border-gray-200 transition-all duration-300" onclick="voltarCapa()">
@@ -176,7 +167,6 @@
 
             <div id="master-feed-wrapper" class="flex flex-col lg:flex-row gap-8 items-start hidden min-w-0">
                 
-                <!-- Coluna Esquerda: Notícias -->
                 <div class="lg:w-[72%] w-full flex flex-col gap-6 min-w-0">
                     
                     <div id="filtro-cidades-container" class="w-full mb-6 hidden bg-gray-50 p-5 border border-gray-200 rounded-sm shadow-sm">
@@ -303,7 +293,6 @@
                         <div id="conteudo-opinioes" class="flex flex-col gap-5"></div>
                     </div>
 
-                    <!-- PLACAR AO VIVO -->
                     <div id="container-placar-ao-vivo" class="hidden mb-10 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
                         <div class="flex items-center justify-between mb-5 border-b border-gray-100 pb-3">
                             <h2 class="text-[11px] font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
@@ -315,7 +304,6 @@
                         </div>
                     </div>
 
-                    <!-- WIDGET CLIMA CLICÁVEL -->
                     <div class="mb-10 bg-white border border-gray-200 p-1 shadow-sm rounded-sm cursor-pointer hover:shadow-md transition-shadow" onclick="abrirModalClima()">
                         <div class="border-t-4 border-sky-400 pt-2 px-4 pb-2 flex justify-between items-center bg-white">
                             <h2 class="text-xs font-black uppercase tracking-widest text-sky-500">Clima Local</h2>
@@ -362,7 +350,7 @@
         </footer>
     </div>
 
-    <!-- Modais -->
+    <!-- Modais Clima e Expediente -->
     <div id="modalClima" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/80 backdrop-blur-sm" onclick="fecharModalClima()"></div>
         <div class="bg-white w-full max-w-lg rounded-sm shadow-2xl relative z-10 overflow-hidden font-sans flex flex-col max-h-[90vh]">
@@ -433,20 +421,16 @@
             } catch(e) { return url; }
         }
 
-        // ==========================================
-        // BLINDAGEM MÁXIMA CONTRA SAFARI / iPHONE (DATAS)
-        // ==========================================
+        // Blindagem contra Bug do Safari: Parseia datas corretamente e evita Crashs
         function criarDataSegura(dataString) {
             if (!dataString) return new Date();
             var str = String(dataString).trim();
             
-            // 1. Formato de API Oficial com 'Z' ou 'T' (Safari lê isto muito bem nativamente)
             if (str.indexOf('T') !== -1 || str.endsWith('Z')) {
                 var n = new Date(str);
                 if (!isNaN(n.getTime())) return n;
             }
 
-            // 2. Formato PT/BR: DD/MM/AAAA HH:mm ou DD-MM-AAAA
             var isBr = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:[\sT](\d{1,2}):(\d{1,2}))?/);
             if (isBr) {
                 var hora = isBr[4] ? parseInt(isBr[4], 10) : 0;
@@ -454,11 +438,9 @@
                 return new Date(parseInt(isBr[3], 10), parseInt(isBr[2], 10)-1, parseInt(isBr[1], 10), hora, min);
             }
 
-            // 3. Formato ISO curto YYYY-MM-DD
             var isIsoCurto = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
             if (isIsoCurto) return new Date(parseInt(isIsoCurto[1], 10), parseInt(isIsoCurto[2], 10)-1, parseInt(isIsoCurto[3], 10));
 
-            // 4. Última esperança
             var dTeste = new Date(str);
             if (!isNaN(dTeste.getTime())) return dTeste;
 
@@ -481,6 +463,16 @@
         function normalizarTextoUrl(text) {
             if (!text) return 'geral';
             return String(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
+        }
+
+        // NOVO: Corta os textos de base64 antes de limpar as tags para não congelar o iPhone
+        function removerHTMLRápido(t) {
+            if (!t) return '';
+            var s = String(t);
+            s = s.replace(/<(img|iframe|video|audio|source)[^>]*>/gi, '');
+            s = s.replace(/<[^>]*>?/gm, '');
+            s = s.replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&quot;/gi, '"').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>');
+            return s.trim();
         }
 
         function atualizarURL(tipo, valor, noticiaObj) {
@@ -565,7 +557,6 @@
                 try { var dadosCache = JSON.parse(cacheAntigo); processarDadosHome(dadosCache); tratarRotasIniciais(false); usouCache = true; removerLoaderGlobal(); } catch(e){}
             }
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                var dbg = document.getElementById('debug-error-box'); if(dbg && dbg.classList) dbg.classList.add('hidden');
                 if (!usouCache) { var loaderGlobal = document.getElementById('loading-noticias'); if(loaderGlobal && loaderGlobal.classList) loaderGlobal.classList.remove('hidden'); }
                 window.google.script.run.withSuccessHandler(function(res) {
                     removerLoaderGlobal();
@@ -573,12 +564,11 @@
                         if (res && res.sucesso) { 
                             try { localStorage.setItem('portal_data_cache', JSON.stringify(res)); } catch(err){}
                             processarDadosHome(res); 
-                            if (!forcarUpdate && !cacheAntigo) { tratarRotasIniciais(false); } 
-                            else if (forcarUpdate) { 
-                                if (noticiaAbertaId) { abrirNoticia(noticiaAbertaId, false); } 
-                                else if(window.categoriaAtual === 'Pesquisa') { pesquisarSite(new Event('submit')); } 
-                                else { filtrarCategoria(window.categoriaAtual, false); }
-                            }
+                            
+                            // NOVO: Obriga o painel a redesenhar para que os artigos mais recentes apareçam SEMPRE!
+                            if (noticiaAbertaId) { /* Faz nada para não quebrar a leitura da pessoa */ } 
+                            else if(window.categoriaAtual === 'Pesquisa') { pesquisarSite(new Event('submit')); } 
+                            else { filtrarCategoria(window.categoriaAtual, false); }
                         }
                     } catch(e) { console.error("Falha no JS Local: " + e.message); }
                 }).withFailureHandler(function(err) { removerLoaderGlobal(); console.error("Falha de Servidor: " + err.message); }).getHomeData();
@@ -597,7 +587,6 @@
             if (configuracoesGlobais['LogoHTML']) { if(headerBranding) headerBranding.innerHTML = configuracoesGlobais['LogoHTML']; if(footerBranding) footerBranding.innerHTML = configuracoesGlobais['LogoHTML']; }
             if (configuracoesGlobais['ExpedienteHTML']) { var expContainer = document.getElementById('conteudo-expediente'); if(expContainer) expContainer.innerHTML = configuracoesGlobais['ExpedienteHTML']; }
             
-            // SUBSTITUIÇÃO DINÂMICA DA COR DO TICKER PELA COR DO LOGO
             if (configuracoesGlobais['CorLogo']) {
                 try {
                     var rawClasses = String(configuracoesGlobais['CorLogo']).replace(/bg-clip-text/g, '').replace(/text-transparent/g, '').trim();
@@ -758,7 +747,7 @@
             if (op.length === 0) { if(c) c.classList.add('hidden'); return; }
             if(c) c.classList.remove('hidden'); if(!c_in) return;
             var d = op[0]; var letraAutor = d.autor ? d.autor.charAt(0).toUpperCase() : 'O';
-            var html = '<article onclick="abrirNoticia(\'' + d.id + '\', true)" class="group cursor-pointer flex flex-col mb-4 bg-gray-50 p-5 border border-gray-100 rounded-sm hover:shadow-md transition-shadow">\n<div class="flex items-center gap-3 mb-4">\n<div class="w-10 h-10 rounded-full bg-jornal-dark flex items-center justify-center text-white font-black text-sm shrink-0 shadow-inner">' + letraAutor + '</div>\n<div class="flex flex-col min-w-0">\n<span class="text-[10px] font-black uppercase tracking-widest text-jornal-red">OPINIÃO</span>\n<span class="text-xs font-bold text-gray-700 truncate w-full">' + (d.autor || 'Editorial') + '</span>\n</div>\n</div>\n<div class="w-full aspect-video mb-4 overflow-hidden rounded-sm bg-gray-100 shrink-0 relative">\n<img src="' + (d.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n' + (d.creditosImagem ? '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded-tl">Foto: ' + d.creditosImagem + '</div>\n' : '') + '</div>\n<h3 class="font-serif font-black text-sm md:text-base leading-snug text-jornal-dark group-hover:text-jornal-blue line-clamp-3 mb-2">' + d.titulo + '</h3>\n<p class="text-xs text-gray-500 line-clamp-2 mb-3 italic font-medium">' + (d.linhaFina || removerHTML(d.conteudo)) + '</p>\n<div class="text-[9px] text-gray-400 font-black uppercase tracking-widest mt-auto">' + (d.dataHora ? String(d.dataHora).replace(' ', ' às ') : '') + '</div>\n</article>\n';
+            var html = '<article onclick="abrirNoticia(\'' + d.id + '\', true)" class="group cursor-pointer flex flex-col mb-4 bg-gray-50 p-5 border border-gray-100 rounded-sm hover:shadow-md transition-shadow">\n<div class="flex items-center gap-3 mb-4">\n<div class="w-10 h-10 rounded-full bg-jornal-dark flex items-center justify-center text-white font-black text-sm shrink-0 shadow-inner">' + letraAutor + '</div>\n<div class="flex flex-col min-w-0">\n<span class="text-[10px] font-black uppercase tracking-widest text-jornal-red">OPINIÃO</span>\n<span class="text-xs font-bold text-gray-700 truncate w-full">' + (d.autor || 'Editorial') + '</span>\n</div>\n</div>\n<div class="w-full aspect-video mb-4 overflow-hidden rounded-sm bg-gray-100 shrink-0 relative">\n<img src="' + (d.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n' + (d.creditosImagem ? '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded-tl">Foto: ' + d.creditosImagem + '</div>\n' : '') + '</div>\n<h3 class="font-serif font-black text-sm md:text-base leading-snug text-jornal-dark group-hover:text-jornal-blue line-clamp-3 mb-2">' + d.titulo + '</h3>\n<p class="text-xs text-gray-500 line-clamp-2 mb-3 italic font-medium">' + (d.linhaFina || removerHTMLRápido(d.conteudo).substring(0, 150)) + '</p>\n<div class="text-[9px] text-gray-400 font-black uppercase tracking-widest mt-auto">' + (d.dataHora ? String(d.dataHora).replace(' ', ' às ') : '') + '</div>\n</article>\n';
             if(op.length > 1) {
                 html += '<div class="flex flex-col gap-3 mt-2">\n';
                 for(var i=1; i<Math.min(op.length, 4); i++) {
@@ -969,22 +958,27 @@
         }
 
         function htmlCard(n) {
+            // CORTE IMEDIATO DE BASE64 E TEXTOS GIGANTES PARA PROTEGER O IPHONE
+            var resumoLimpo = n.linhaFina ? n.linhaFina : removerHTMLRápido(n.conteudo).substring(0, 180) + '...';
+            
             var cHTML = '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 p-0 flex flex-col h-full hover:shadow-md transition-shadow rounded-sm w-full overflow-hidden min-w-0">\n<div class="relative w-full aspect-video bg-gray-100 border-b border-gray-200 shrink-0 overflow-hidden">\n<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n</div>\n';
             if (n.creditosImagem) { cHTML += '<div class="text-[8px] text-gray-400 italic px-4 py-1.5 bg-gray-50 border-b border-gray-100 truncate text-right font-medium">Foto: ' + n.creditosImagem + '</div>\n'; }
             cHTML += '<div class="p-5 flex flex-col flex-grow w-full bg-white min-w-0">\n<span class="text-jornal-red text-[10px] font-black uppercase tracking-widest mb-3 block truncate">' + (n.categoria || 'Geral') + '</span>\n<h3 class="font-serif text-xl font-black mb-3 leading-snug text-jornal-dark group-hover:text-jornal-blue line-clamp-3 break-words tracking-tight">' + (n.titulo || '') + '</h3>\n';
-            if (n.linhaFina) { cHTML += '<p class="text-gray-500 text-xs font-medium mb-3 italic line-clamp-2 break-words">' + n.linhaFina + '</p>\n'; }
+            cHTML += '<p class="text-gray-500 text-xs font-medium mb-3 italic line-clamp-2 break-words">' + resumoLimpo + '</p>\n';
             var dataFormatada = String(n.dataHora || '').replace(' ', ' às ');
-            cHTML += '<div class="text-gray-600 text-xs line-clamp-2 leading-relaxed flex-grow font-serif break-words">' + removerHTML(n.conteudo) + '</div>\n<div class="pt-4 mt-4 border-t border-gray-100 flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest w-full min-w-0">\n<span class="truncate pr-2">' + dataFormatada + '</span>\n</div>\n</div>\n</article>\n';
+            cHTML += '<div class="pt-4 mt-auto border-t border-gray-100 flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest w-full min-w-0">\n<span class="truncate pr-2">' + dataFormatada + '</span>\n</div>\n</div>\n</article>\n';
             return cHTML;
         }
 
         function htmlHero(n) {
+            var resumoLimpo = n.linhaFina ? n.linhaFina : removerHTMLRápido(n.conteudo).substring(0, 240) + '...';
+            
             var cHTML = '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 flex flex-col md:flex-row h-full overflow-hidden hover:shadow-md transition-shadow rounded-sm w-full">\n<div class="md:w-[55%] w-full bg-gray-100 min-h-[350px] shrink-0 overflow-hidden relative">\n<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700 min-h-[350px]" />\n';
             if (n.creditosImagem) { cHTML += '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 rounded-tl">Foto: ' + n.creditosImagem + '</div>\n'; }
             var dataFormatada = String(n.dataHora || '').replace(' ', ' às ');
             cHTML += '</div>\n<div class="md:w-[45%] p-8 flex flex-col justify-center w-full min-w-0">\n<span class="text-jornal-red text-[10px] font-black uppercase tracking-widest mb-3 block w-full truncate">' + (n.categoria || 'Geral') + '</span>\n<h3 class="font-serif text-3xl md:text-4xl font-black mb-4 leading-tight text-jornal-dark group-hover:text-jornal-blue break-words line-clamp-4 tracking-tight">' + (n.titulo || '') + '</h3>\n';
-            if (n.linhaFina) { cHTML += '<p class="text-gray-500 text-sm font-medium mb-4 italic line-clamp-3 break-words">' + n.linhaFina + '</p>\n'; }
-            cHTML += '<div class="text-gray-600 text-sm line-clamp-4 leading-relaxed font-serif mb-6 break-words">' + removerHTML(n.conteudo) + '</div>\n<div class="mt-auto flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest w-full border-t border-gray-100 pt-4">\n<span>' + dataFormatada + '</span>\n</div>\n</div>\n</article>\n';
+            cHTML += '<p class="text-gray-500 text-sm font-medium mb-4 italic line-clamp-3 break-words">' + resumoLimpo + '</p>\n';
+            cHTML += '<div class="mt-auto flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest w-full border-t border-gray-100 pt-4">\n<span>' + dataFormatada + '</span>\n</div>\n</div>\n</article>\n';
             return cHTML;
         }
 
@@ -1031,17 +1025,6 @@
                 if(indics[i]) { indics[i].className = 'w-3 h-3 rounded-full carrossel-indicador transition-colors cursor-pointer ' + (i === slideIndex ? 'bg-jornal-red' : 'bg-white/50'); }
             }
         }
-
-        function atualizarMetaTags(noticia) {
-            document.title = noticia.titulo + " - Notícias Avulsas";
-            var metaOgTitle = document.querySelector('meta[property="og:title"]'); if (!metaOgTitle) { metaOgTitle = document.createElement('meta'); metaOgTitle.setAttribute('property', 'og:title'); document.head.appendChild(metaOgTitle); } metaOgTitle.setAttribute('content', noticia.titulo);
-            var metaOgDesc = document.querySelector('meta[property="og:description"]'); if (!metaOgDesc) { metaOgDesc = document.createElement('meta'); metaOgDesc.setAttribute('property', 'og:description'); document.head.appendChild(metaOgDesc); } metaOgDesc.setAttribute('content', noticia.linhaFina ? noticia.linhaFina : "Leia a matéria completa no Notícias Avulsas.");
-            var metaOgImage = document.querySelector('meta[property="og:image"]'); if (!metaOgImage) { metaOgImage = document.createElement('meta'); metaOgImage.setAttribute('property', 'og:image'); document.head.appendChild(metaOgImage); } if (noticia.urlImagem) { metaOgImage.setAttribute('content', noticia.urlImagem); }
-            var metaOgUrl = document.querySelector('meta[property="og:url"]'); if (!metaOgUrl) { metaOgUrl = document.createElement('meta'); metaOgUrl.setAttribute('property', 'og:url'); document.head.appendChild(metaOgUrl); } metaOgUrl.setAttribute('content', window.location.href);
-        }
-
-        function focarPesquisaMobile() { var f = document.getElementById('form-pesquisa-mobile'); var i = document.getElementById('input-pesquisa-mobile'); if(f && i) { f.classList.toggle('hidden'); if(!f.classList.contains('hidden')) i.focus(); } }
-        function removerHTML(t) { return t ? String(t).replace(/<[^>]*>?/gm, '') : ''; }
 
         function converterVideoUrlsParaPlayers(t) { 
             if (!t) return ""; var strT = String(t);
@@ -1096,6 +1079,14 @@
         function fecharNoticiaUI() { noticiaAbertaId = null; document.title = "Notícias Avulsas - Portal de Informação"; var ncContainer = document.getElementById('noticia-completa-container'); if(ncContainer && ncContainer.classList) ncContainer.classList.add('hidden'); var relCont = document.getElementById('nc-relacionadas-container'); if (relCont && relCont.classList) relCont.classList.add('hidden'); var masterWrap = document.getElementById('master-feed-wrapper'); if (masterWrap && !masterWrap.classList.contains('hidden')) { var hfContainer = document.getElementById('home-feed-container'); if(hfContainer && hfContainer.classList) hfContainer.classList.remove('hidden'); } window.scrollTo(0,0); }
         function fecharNoticia() { var url = window.location.origin; if(window.location.pathname.indexOf('/noticias') !== -1) { url += '/noticias'; } if (window.location.protocol !== 'file:') { window.history.pushState({path: url}, '', url); } fecharNoticiaUI(); }
         function voltarCapa() { fecharNoticia(); filtrarCategoria('Todas', true); var iPesq = document.getElementById('input-pesquisa'); if(iPesq) iPesq.value = ''; }
+
+        function atualizarMetaTags(noticia) {
+            document.title = noticia.titulo + " - Notícias Avulsas";
+            var metaOgTitle = document.querySelector('meta[property="og:title"]'); if (!metaOgTitle) { metaOgTitle = document.createElement('meta'); metaOgTitle.setAttribute('property', 'og:title'); document.head.appendChild(metaOgTitle); } metaOgTitle.setAttribute('content', noticia.titulo);
+            var metaOgDesc = document.querySelector('meta[property="og:description"]'); if (!metaOgDesc) { metaOgDesc = document.createElement('meta'); metaOgDesc.setAttribute('property', 'og:description'); document.head.appendChild(metaOgDesc); } metaOgDesc.setAttribute('content', noticia.linhaFina ? noticia.linhaFina : "Leia a matéria completa no Notícias Avulsas.");
+            var metaOgImage = document.querySelector('meta[property="og:image"]'); if (!metaOgImage) { metaOgImage = document.createElement('meta'); metaOgImage.setAttribute('property', 'og:image'); document.head.appendChild(metaOgImage); } if (noticia.urlImagem) { metaOgImage.setAttribute('content', noticia.urlImagem); }
+            var metaOgUrl = document.querySelector('meta[property="og:url"]'); if (!metaOgUrl) { metaOgUrl = document.createElement('meta'); metaOgUrl.setAttribute('property', 'og:url'); document.head.appendChild(metaOgUrl); } metaOgUrl.setAttribute('content', window.location.href);
+        }
 
         function enviarComentario(e) {
             e.preventDefault(); if(!noticiaAbertaId) return; var btn = document.getElementById('btn-enviar-comentario'); var txt = btn.innerHTML; btn.innerHTML = 'A enviar...'; btn.disabled = true;
