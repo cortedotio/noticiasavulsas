@@ -124,9 +124,21 @@
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
+    <!-- TELA DE CARREGAMENTO COM DETETOR DE DEMORA -->
     <div id="loading-global" class="fixed inset-0 z-[99998] bg-jornal-dark flex flex-col items-center justify-center transition-opacity duration-500">
-        <div class="w-12 h-12 border-4 border-gray-700 border-t-jornal-red rounded-full animate-spin mb-4"></div>
-        <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Sistema...</p>
+        <div id="loading-spinner" class="w-12 h-12 border-4 border-gray-700 border-t-jornal-red rounded-full animate-spin mb-4"></div>
+        <p id="loading-text" class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse text-center">Acessar Sistema...</p>
+        
+        <!-- NOVA CAIXA DE AVISO DE DEMORA -->
+        <div id="loading-error-box" class="hidden mt-8 flex flex-col items-center gap-4 bg-gray-900 p-6 rounded-sm border border-gray-700 max-w-sm mx-4 shadow-xl">
+            <span class="text-3xl mb-1">⚠️</span>
+            <p class="text-xs font-medium text-gray-300 text-center leading-relaxed">
+                A ligação está a demorar mais do que o esperado.<br>Isto pode acontecer se a sua internet estiver instável ou se o <span class="text-white font-bold">Link da Base de Dados</span> no código estiver desatualizado.
+            </p>
+            <button onclick="window.location.reload()" class="mt-3 px-6 py-3 bg-jornal-red text-white font-black text-[10px] uppercase tracking-widest rounded-sm hover:bg-red-700 transition-colors shadow-md w-full">
+                RECARREGAR PÁGINA
+            </button>
+        </div>
     </div>
 
     <!-- Modal de Login -->
@@ -190,7 +202,7 @@
                 <button type="button" onclick="alternarAbaAdmin('form-noticia-container')" id="aba-noticia" class="py-3 px-5 font-black text-[11px] bg-jornal-blue text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors hidden">Publicar</button>
                 <button type="button" onclick="alternarAbaAdmin('lista-noticias-container')" id="aba-lista" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors hidden">Gerir Matérias</button>
                 
-                <!-- Links na Mesma Aba -->
+                <!-- Links na Mesma Aba (Abertura Direta) -->
                 <a href="config.html" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1">⚙️ Configurações</a>
                 <a href="instagram.html" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-purple-600 hover:text-purple-800 hover:bg-purple-100 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1">📸 Estúdio IG</a>
                 
@@ -198,6 +210,9 @@
                 <a href="index.html" class="py-3 px-5 font-bold text-[11px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1 ml-auto">Ver Portal &raquo;</a>
             </div>
 
+            <!-- ========================================================= -->
+            <!-- ABA: FORMULÁRIO DE NOTÍCIA                                -->
+            <!-- ========================================================= -->
             <div id="form-noticia-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-jornal-red pl-3 mb-8">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter" id="titulo-pagina-form">Redigir Matéria</h2>
@@ -245,10 +260,10 @@
                         <input type="text" id="admin-autor" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm" placeholder="Ex: João Silva (Vazio = 'da redação')" />
                     </div>
 
+                    <!-- Editor Rich Text -->
                     <div>
                         <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Conteúdo (Rich Text Avançado)</label>
                         <input type="file" id="upload-imagem-conteudo" accept="image/*" class="hidden" onchange="processarUploadImagemConteudo(this)" />
-                        
                         <div class="flex flex-wrap gap-1 p-2 bg-gray-100 border border-gray-300 border-b-0 rounded-t-sm items-center">
                             <!-- Botões de Desfazer / Refazer -->
                             <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('undo')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded shadow-sm transition-colors" title="Desfazer">
@@ -373,6 +388,9 @@
                 </form>
             </div>
 
+            <!-- ========================================================= -->
+            <!-- ABA: LISTAGEM DE NOTÍCIAS                                 -->
+            <!-- ========================================================= -->
             <div id="lista-noticias-container" class="hidden bg-white p-6 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-jornal-red pl-3 mb-6">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Editar Publicações</h2>
@@ -411,6 +429,7 @@
         </main>
     </div>
 
+    <!-- SCRIPTS CORE E LÓGICA -->
     <script>
         var noticiasGlobais = [];
         var listaCategoriasLocais = ['Política', 'Economia', 'Cidades', 'Polícia', 'Justiça', 'Esportes', 'Brasil', 'Mundo'];
@@ -507,6 +526,7 @@
             var u = document.getElementById('login-user').value; 
             var p = document.getElementById('login-pass').value;
             var btn = document.getElementById('btn-fazer-login'); 
+            
             btn.innerHTML = "A VERIFICAR..."; btn.disabled = true;
 
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
@@ -628,7 +648,8 @@
             if (abaId === 'form-noticia-container') { 
                 botaoId = 'aba-noticia'; classAtiva = "bg-jornal-blue text-white font-black"; 
             } else if (abaId === 'lista-noticias-container') { 
-                botaoId = 'aba-lista'; classAtiva = "bg-jornal-dark text-white font-black"; carregarListaEdicao(); 
+                botaoId = 'aba-lista'; classAtiva = "bg-jornal-dark text-white font-black"; 
+                carregarListaEdicao(); 
             }
             
             var btnEl = document.getElementById(botaoId); 
@@ -638,8 +659,29 @@
         }
 
         function carregarNoticiasAdmin() {
-            document.getElementById('loading-global').classList.remove('hidden');
+            var loader = document.getElementById('loading-global');
+            var errorBox = document.getElementById('loading-error-box');
+            var spinner = document.getElementById('loading-spinner');
+            var text = document.getElementById('loading-text');
+
+            if(loader) loader.classList.remove('hidden');
+            if(errorBox) errorBox.classList.add('hidden');
+            if(spinner) spinner.classList.remove('hidden');
+            if(text) { text.innerText = "Acessar Sistema..."; text.classList.add('animate-pulse'); text.classList.remove('text-red-500'); }
             
+            // Lógica do Tempo Limite (Timeout de 12 segundos)
+            var timeoutId = setTimeout(function() {
+                if(loader && !loader.classList.contains('hidden')) {
+                    if(spinner) spinner.classList.add('hidden');
+                    if(text) { 
+                        text.innerText = "TEMPO LIMITE EXCEDIDO"; 
+                        text.classList.remove('animate-pulse'); 
+                        text.classList.add('text-red-500'); 
+                    }
+                    if(errorBox) errorBox.classList.remove('hidden');
+                }
+            }, 12000);
+
             var usouCache = false;
             try {
                 var cache = localStorage.getItem('admin_data_cache_v2');
@@ -651,7 +693,10 @@
                             listaCategoriasLocais = dados.categorias;
                         }
                         renderizarChecklistCategoriasAdmin();
-                        document.getElementById('loading-global').classList.add('hidden');
+                        
+                        clearTimeout(timeoutId); // Limpa o timeout se carregou do cache
+                        if(loader) loader.classList.add('hidden');
+                        
                         if (!document.getElementById('lista-noticias-container').classList.contains('hidden')) {
                             carregarListaEdicao();
                         }
@@ -664,7 +709,8 @@
 
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
-                    document.getElementById('loading-global').classList.add('hidden');
+                    clearTimeout(timeoutId); // Desliga o alerta de demora
+                    if(loader) loader.classList.add('hidden');
                     if (res && res.sucesso) {
                         try { 
                             localStorage.setItem('admin_data_cache_v2', JSON.stringify(res)); 
@@ -684,7 +730,8 @@
                         mostrarMensagem("Erro ao carregar dados.", 'erro');
                     }
                 }).withFailureHandler(function(err) {
-                    document.getElementById('loading-global').classList.add('hidden'); 
+                    clearTimeout(timeoutId); // Desliga o alerta de demora
+                    if(loader) loader.classList.add('hidden'); 
                     mostrarMensagem("Falha de rede. O Link da base de dados pode estar desatualizado.", 'erro');
                     
                     renderizarChecklistCategoriasAdmin();
@@ -693,7 +740,8 @@
                     }
                 }).getHomeData();
             } else {
-                document.getElementById('loading-global').classList.add('hidden');
+                clearTimeout(timeoutId);
+                if(loader) loader.classList.add('hidden');
                 renderizarChecklistCategoriasAdmin();
             }
         }
@@ -866,11 +914,10 @@
 
         function execCmd(command, arg) { 
             if(arg === undefined) arg = null; 
-            // Se as opções passadas forem os selects, restauramos a selecção primeiro!
             if(command === 'fontName' || command === 'fontSize') restaurarSelecao();
             document.execCommand(command, false, arg); 
             document.getElementById('admin-editor-rich').focus(); 
-            atualizarBarraFerramentas(); // Atualiza dropdowns
+            atualizarBarraFerramentas(); 
         }
         
         function aplicarFonte(valor) { 
@@ -878,7 +925,6 @@
             execCmd('fontName', valor); 
         }
         
-        // Verifica o estado atual do texto e atualiza os Selects de Letra e Tamanho
         function atualizarBarraFerramentas() {
             var editorAtivo = document.getElementById('admin-editor-rich');
             if (!editorAtivo) return;
@@ -959,7 +1005,6 @@
                 var img = new Image();
                 img.onload = function() {
                     var canvas = document.createElement('canvas'); var ctx = canvas.getContext('2d'); 
-                    // Limite agressivo de compressão para evitar exceder 50.000 chars na base de dados
                     var maxWidth = 500; var scale = 1;
                     if (img.width > maxWidth) scale = maxWidth / img.width;
                     
@@ -1036,13 +1081,21 @@
             var inputCreditos = document.getElementById('admin-creditos-imagem');
             
             if (input && input.files && input.files[0]) { 
-                if (containerMetadados) containerMetadados.classList.remove('hidden'); 
-                if (inputCreditos) inputCreditos.required = true; 
+                if (containerMetadados) {
+                    containerMetadados.classList.remove('hidden'); 
+                }
+                if (inputCreditos) {
+                    inputCreditos.required = true; 
+                }
             } else { 
                 var prevSrc = document.getElementById('preview-imagem').src; 
                 if (!prevSrc || prevSrc === "" || prevSrc.indexOf('placehold.co') !== -1) { 
-                    if (containerMetadados) containerMetadados.classList.add('hidden'); 
-                    if (inputCreditos) inputCreditos.required = false; 
+                    if (containerMetadados) {
+                        containerMetadados.classList.add('hidden'); 
+                    }
+                    if (inputCreditos) {
+                        inputCreditos.required = false; 
+                    }
                 } 
             }
         }
@@ -1123,23 +1176,25 @@
             
             var btn = document.getElementById(isRascunho ? 'btn-salvar-rascunho' : 'btn-salvar-noticia'); 
             var txtOriginal = btn.innerHTML; btn.innerHTML = 'A gravar...'; btn.disabled = true;
+            
+            // DETETOR DE PESO DA MATÉRIA (Proteção contra Erro 413 do Google)
+            var conteudoRich = document.getElementById('admin-editor-rich').innerHTML;
+            var tamanhoEmBytes = new Blob([conteudoRich]).size;
+            if (tamanhoEmBytes > 4 * 1024 * 1024) { // 4MB
+                mostrarMensagem("Erro: A matéria está muito pesada (" + (tamanhoEmBytes / 1024 / 1024).toFixed(1) + "MB). Apague as imagens que colou no texto e use o botão 🖼️ para fazer o upload corretamente.", "erro");
+                btn.innerHTML = txtOriginal; btn.disabled = false;
+                return;
+            }
 
             // LIMPEZA DA MATÉRIA (Remove botões interativos do editor antes de salvar)
             var tempDiv = document.createElement('div');
-            tempDiv.innerHTML = document.getElementById('admin-editor-rich').innerHTML;
+            tempDiv.innerHTML = conteudoRich;
             var botoesAdmin = tempDiv.querySelectorAll('.controles-imagem-admin, .btn-diminuir-img, .btn-aumentar-img');
             botoesAdmin.forEach(function(btnRem) {
                 var pai = btnRem.parentElement; btnRem.remove();
                 if (pai && pai.tagName !== 'FIGURE' && pai.innerHTML.trim() === '') pai.remove();
             });
             var conteudoLimpo = tempDiv.innerHTML;
-
-            // DETETOR DE PESO DA MATÉRIA (Proteção contra Erro de 50.000 caracteres no Google Sheets)
-            if (conteudoLimpo.length > 48000) {
-                mostrarMensagem("Erro: A matéria excede o limite de tamanho do servidor (50.000 caracteres). Por favor, apague algumas imagens coladas no texto.", "erro");
-                btn.innerHTML = txtOriginal; btn.disabled = false;
-                return;
-            }
 
             var payload = { 
                 id: editandoID, titulo: tituloDigitado, categoria: categoriasSelecionadas, cidade: cidadeSelecionada, 
@@ -1168,7 +1223,7 @@
                         setTimeout(function() { alternarAbaAdmin('lista-noticias-container'); window.scrollTo(0,0); }, 1500); 
                     } else { mostrarMensagem(res ? res.erro : "Erro ao guardar", 'erro'); }
                 }).withFailureHandler(function(err) {
-                    btn.innerHTML = txtOriginal; btn.disabled = false; mostrarMensagem(err.message, "erro");
+                    btn.innerHTML = txtOriginal; btn.disabled = false; mostrarMensagem("Falha na rede: " + err.message, "erro");
                 }).salvarNoticiaNoSheets(payload);
             }
         }
