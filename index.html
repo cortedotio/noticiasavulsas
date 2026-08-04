@@ -2,7 +2,8 @@
 <html lang="pt-PT" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Meta tag essencial para iPhone 14/15/16 respeitar o ecrã completo sem bordas brancas -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Notícias Avulsas - Portal de Informação</title>
     
     <meta property="og:title" content="Notícias Avulsas - Portal de Informação">
@@ -20,7 +21,7 @@
     
     <script>
         if (typeof google === 'undefined' || typeof google.script === 'undefined') {
-            const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyoHo_olvZbyvT-qfKBDAveq1-n1IHD_bLxf831i_bBrFJeSVTcc6RTfvdQ9QV25hTh/exec";
+            const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyVroxyx_f70Q2KkcnfMWtt2vV8EzQRsPBhF9nNL4frnKhdhe7t-oahNoJo9SCLfAbE/exec";
             window.google = { script: { run: { withSuccessHandler: function(cb) { this._onSuccess = cb; return this; }, withFailureHandler: function(cb) { this._onFailure = cb; return this; } } } };
             const apiFunctions = ['getHomeData', 'incrementarView', 'salvarComentarioNoSheets', 'inscreverNewsletter'];
             apiFunctions.forEach(function(funcName) {
@@ -41,10 +42,11 @@
                 };
             });
         }
+
         window.onerror = function(message, source, lineno, colno, error) {
             console.error("Erro Global JS:", message, "na linha", lineno);
-            setTimeout(function() { var debugBox = document.getElementById('debug-error-box'); if (debugBox) { debugBox.innerHTML = "Aviso: " + message + " (Linha " + lineno + ")"; debugBox.classList.remove('hidden'); } }, 500);
         };
+
         var configureTailwind = function() {
             if (typeof tailwind === 'undefined') { setTimeout(configureTailwind, 10); return; }
             tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] }, colors: { jornal: { blue: '#0F172A', red: '#E11D48', gray: '#F8FAFC', dark: '#020617' } } } } };
@@ -53,7 +55,18 @@
     </script>
     
     <style>
-        body { background-color: #f1f2f5; color: #111111; }
+        /* Otimizações Nativas para iPhone (iOS Safari) e Android */
+        * { -webkit-tap-highlight-color: transparent; }
+        
+        @supports (-webkit-touch-callout: none) {
+            input, select, textarea {
+                font-size: 16px !important; /* Impede o auto-zoom destrutivo do iPhone nas barras de pesquisa */
+            }
+            .pt-safe { padding-top: max(env(safe-area-inset-top), 0px); }
+            .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
+        }
+
+        body { background-color: #f1f2f5; color: #111111; overflow-x: hidden; }
         .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
@@ -65,6 +78,7 @@
         @keyframes marquee { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
         .animate-marquee-slow { animation: marquee 150s linear infinite; }
         .animate-marquee-slow:hover { animation-play-state: paused; }
+        
         .rich-editor img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px auto; border: 1px solid #e2e8f0; display: block; }
         .rich-editor iframe, .rich-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; background: #000; }
         .rich-editor a { color: #2563eb; text-decoration: underline; font-weight: 500; }
@@ -84,20 +98,20 @@
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
-    <!-- TELA DE CARREGAMENTO BRANCA E LIMPA -->
-    <div id="loading-noticias" class="fixed inset-0 z-[100000] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
+    <!-- TELA DE CARREGAMENTO -->
+    <div id="loading-noticias" class="fixed inset-0 z-[100000] bg-white flex flex-col items-center justify-center transition-opacity duration-500 pt-safe">
         <div id="loading-logo-container" class="mb-6">
-             <h1 id="loading-logo-text" class="text-4xl md:text-5xl font-black tracking-tighter uppercase bg-gradient-to-r from-blue-500 to-emerald-400 bg-clip-text text-transparent">NOTÍCIAS AVULSAS</h1>
+             <h1 id="loading-logo-text" class="text-4xl md:text-5xl font-black tracking-tighter uppercase bg-gradient-to-r from-blue-500 to-emerald-400 bg-clip-text text-transparent px-4 text-center">NOTÍCIAS AVULSAS</h1>
         </div>
         <div class="w-10 h-10 border-4 border-gray-100 border-t-rose-600 rounded-full animate-spin mb-4"></div>
-        <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 animate-pulse">ACESSAR SISTEMA...</p>
-        <div id="debug-error-box" class="hidden mt-4 text-xs text-red-500 font-mono text-center p-4 bg-red-50 border border-red-200 rounded max-w-xl break-words w-full shadow-sm"></div>
+        <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 animate-pulse">A CARREGAR O PORTAL...</p>
     </div>
 
-    <div id="view-portal" class="flex-grow flex flex-col relative min-w-0">
+    <div id="view-portal" class="flex-grow flex flex-col relative min-w-0 w-full overflow-hidden">
         
-        <div id="ticker-noticias" class="bg-jornal-red text-white text-[10px] font-bold h-8 overflow-hidden flex items-center border-b border-red-800 sticky top-0 z-50 w-full shadow-sm min-w-0 transition-colors duration-500">
-            <div class="overflow-hidden relative w-full flex-grow min-w-0">
+        <!-- TICKER COM SAFE-AREA TOP PARA IPHONE -->
+        <div id="ticker-noticias" class="bg-jornal-red text-white text-[10px] font-bold h-10 pt-safe overflow-hidden flex items-center border-b border-red-800 sticky top-0 z-50 w-full shadow-sm min-w-0 transition-colors duration-500">
+            <div class="overflow-hidden relative w-full flex-grow min-w-0 flex h-full items-center">
                 <div class="inline-block animate-marquee-slow whitespace-nowrap flex items-center gap-8 uppercase" id="ticker-content">
                     A carregar informações financeiras e matérias recentes...
                 </div>
@@ -111,7 +125,7 @@
                 </div>
                 
                 <form onsubmit="pesquisarSite(event)" class="relative hidden md:flex items-center mx-auto flex-grow max-w-sm">
-                    <input type="text" id="input-pesquisa" placeholder="Pesquisar notícias..." class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-full text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-jornal-blue pr-12 transition-all shadow-inner" />
+                    <input type="text" id="input-pesquisa" placeholder="Pesquisar notícias..." class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-full text-base md:text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-jornal-blue pr-12 transition-all shadow-inner" />
                     <button type="submit" class="absolute right-3 p-2 text-gray-400 hover:text-jornal-red transition-colors flex items-center justify-center">
                         <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M10 2a8 8 0 015.293 14.121l5.414 5.414a1 1 0 01-1.414 1.414l-5.414-5.414A8 8 0 1110 2zm0 2a6 6 0 100 12 6 6 0 000-12z"/></svg>
                     </button>
@@ -129,13 +143,13 @@
             
             <form id="form-pesquisa-mobile" onsubmit="pesquisarSite(event)" class="hidden w-full px-4 pb-4 bg-white lg:hidden">
                 <div class="relative w-full">
-                    <input type="text" id="input-pesquisa-mobile" placeholder="Pesquisar..." class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-full text-sm font-bold focus:outline-none shadow-inner" />
+                    <input type="text" id="input-pesquisa-mobile" placeholder="Pesquisar..." class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-full text-base font-bold focus:outline-none shadow-inner" />
                     <button type="submit" class="absolute right-3 top-2.5 text-gray-500">🔍</button>
                 </div>
             </form>
         </header>
 
-        <nav class="border-y border-gray-200 border-b-4 border-b-jornal-blue sticky top-0 md:top-8 z-40 bg-white/95 backdrop-blur-sm w-full shadow-sm min-w-0" id="nav-categorias-publicas">
+        <nav class="border-y border-gray-200 border-b-4 border-b-jornal-blue sticky top-[40px] md:top-10 z-40 bg-white/95 backdrop-blur-sm w-full shadow-sm min-w-0" id="nav-categorias-publicas">
             <div id="nav-container-inner" class="max-w-[1200px] mx-auto px-4 flex items-center overflow-x-auto whitespace-nowrap text-[11px] md:text-sm font-black uppercase tracking-widest text-jornal-dark py-3 md:py-4 custom-scrollbar min-w-0">
                 <div id="sticky-logo-container" class="hidden shrink-0 items-center cursor-pointer mr-6 pr-6 border-r-2 border-gray-200 transition-all duration-300" onclick="voltarCapa()">
                     <span class="font-black text-[15px] tracking-tighter uppercase bg-gradient-to-r from-blue-500 to-emerald-400 bg-clip-text text-transparent" id="sticky-logo-text">NOTÍCIAS AVULSAS</span>
@@ -155,8 +169,8 @@
                     <div id="filtro-cidades-container" class="w-full mb-6 hidden bg-gray-50 p-5 border border-gray-200 rounded-sm shadow-sm">
                         <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3">FILTRAR MATÉRIAS DE CIDADES</h3>
                         <div class="flex flex-col sm:flex-row gap-3">
-                            <input type="text" id="input-cidade-filtro" placeholder="Digite o nome da cidade..." class="flex-grow px-5 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-dark text-sm font-medium rounded-sm shadow-inner text-gray-700">
-                            <button onclick="aplicarFiltroCidade()" class="bg-jornal-dark text-white font-black uppercase tracking-widest text-[11px] px-8 py-3 rounded-sm hover:opacity-90 transition-opacity">Filtrar Cidade</button>
+                            <input type="text" id="input-cidade-filtro" placeholder="Nome da cidade..." class="flex-grow px-5 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-dark text-base md:text-sm font-medium rounded-sm shadow-inner text-gray-700">
+                            <button onclick="aplicarFiltroCidade()" class="bg-jornal-dark text-white font-black uppercase tracking-widest text-[11px] px-8 py-3 rounded-sm hover:opacity-90 transition-opacity">Filtrar</button>
                             <button onclick="limparFiltroCidade()" class="bg-white border border-gray-300 text-gray-600 font-black uppercase tracking-widest text-[11px] px-6 py-3 rounded-sm hover:bg-gray-100 transition-colors">Limpar</button>
                         </div>
                     </div>
@@ -199,11 +213,11 @@
 
                         <div class="flex flex-wrap items-center gap-2 md:gap-4 mb-8">
                             <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Partilhar:</span>
-                            <button onclick="shareLink('whatsapp')" class="p-2.5 bg-[#25D366] text-white rounded hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center" title="Compartilhar no WhatsApp">
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                            <button onclick="shareLink('whatsapp')" class="p-2.5 bg-[#25D366] text-white rounded hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center cursor-pointer">
+                                <svg class="w-4 h-4 fill-current pointer-events-none" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
                             </button>
-                            <button onclick="shareLink('x')" class="p-2.5 bg-black text-white rounded hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center" title="Compartilhar no X (Twitter)">
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>
+                            <button onclick="shareLink('x')" class="p-2.5 bg-black text-white rounded hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center cursor-pointer">
+                                <svg class="w-4 h-4 fill-current pointer-events-none" viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>
                             </button>
                         </div>
 
@@ -233,11 +247,11 @@
                             <form id="form-comentario" onsubmit="enviarComentario(event)" class="mb-10 bg-gray-50 p-6 md:p-8 border border-gray-200 rounded-sm shadow-inner">
                                 <div class="mb-5">
                                     <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">O seu Nome</label>
-                                    <input type="text" id="com-nome" class="w-full px-5 py-3 border border-gray-300 focus:outline-none focus:border-jornal-dark text-sm font-bold rounded-sm shadow-sm" required placeholder="Ex: Maria" />
+                                    <input type="text" id="com-nome" class="w-full px-5 py-3 border border-gray-300 focus:outline-none focus:border-jornal-dark text-base md:text-sm font-bold rounded-sm shadow-sm" required placeholder="Ex: Maria" />
                                 </div>
                                 <div class="mb-6">
                                     <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Comentário</label>
-                                    <textarea id="com-texto" class="w-full px-5 py-4 border border-gray-300 focus:outline-none focus:border-jornal-dark text-sm resize-none h-28 rounded-sm shadow-sm font-medium" required placeholder="Deixe a sua opinião..."></textarea>
+                                    <textarea id="com-texto" class="w-full px-5 py-4 border border-gray-300 focus:outline-none focus:border-jornal-dark text-base md:text-sm resize-none h-28 rounded-sm shadow-sm font-medium" required placeholder="Deixe a sua opinião..."></textarea>
                                 </div>
                                 <button type="submit" id="btn-enviar-comentario" class="bg-jornal-dark text-white px-8 py-3.5 font-black hover:bg-opacity-90 transition-colors uppercase text-[11px] tracking-widest rounded-sm w-full md:w-auto shadow-md">Publicar Comentário</button>
                             </form>
@@ -292,7 +306,7 @@
                     <div class="mb-10 bg-white border border-gray-200 p-1 shadow-sm rounded-sm cursor-pointer hover:shadow-md transition-shadow" onclick="abrirModalClima()">
                         <div class="border-t-4 border-sky-400 pt-2 px-4 pb-2 flex justify-between items-center bg-white">
                             <h2 class="text-xs font-black uppercase tracking-widest text-sky-500">Clima Local</h2>
-                            <span class="text-[9px] text-gray-400 uppercase font-bold tracking-widest hover:text-sky-500 transition-colors">Previsão &raquo;</span>
+                            <span class="text-[9px] text-gray-400 uppercase font-bold tracking-widest hover:text-sky-500 transition-colors pointer-events-none">Previsão &raquo;</span>
                         </div>
                         <div class="relative overflow-hidden bg-gradient-to-br from-sky-400 to-blue-600 rounded-b-sm shadow-inner py-8 px-4 text-white flex flex-col items-center">
                             <div class="absolute top-1/2 -translate-y-1/2 -right-10 text-[150px] opacity-10 select-none pointer-events-none" id="bg-icone-clima">☀️</div>
@@ -319,7 +333,7 @@
             </div>
         </main>
 
-        <footer class="mt-auto bg-jornal-dark text-white pt-14 pb-10 border-t-8 border-jornal-blue min-w-0 flex flex-col items-center justify-center text-center">
+        <footer class="mt-auto bg-jornal-dark text-white pt-14 pb-10 border-t-8 border-jornal-blue min-w-0 flex flex-col items-center justify-center text-center pb-safe">
             <div id="footer-branding" class="mb-3 min-w-0 cursor-pointer" onclick="voltarCapa()">
                 <h1 class="text-3xl md:text-4xl font-black tracking-tighter uppercase text-slate-100">
                     Notícias<span class="text-rose-600">Avulsas</span>
@@ -327,7 +341,7 @@
             </div>
             <p class="text-gray-400 text-sm font-medium">Jornalismo sério, ético e independente.</p>
             <div class="mt-6 flex flex-col items-center gap-4">
-                <button type="button" onclick="abrirModalExpediente()" class="text-[10px] font-black text-gray-500 hover:text-white uppercase tracking-widest border border-gray-700 hover:border-gray-500 px-5 py-2 rounded-sm transition-colors shadow-sm">
+                <button type="button" onclick="abrirModalExpediente()" class="text-[10px] font-black text-gray-500 hover:text-white uppercase tracking-widest border border-gray-700 hover:border-gray-500 px-5 py-2 rounded-sm transition-colors shadow-sm cursor-pointer">
                     Ver Expediente
                 </button>
             </div>
@@ -342,10 +356,10 @@
             <div class="p-6 pb-0">
                 <div class="flex justify-between items-center mb-6">
                     <div class="flex items-center gap-2 text-sm text-sky-700 font-black uppercase tracking-widest">
-                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                        <svg class="w-4 h-4 fill-current pointer-events-none" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                         <span>Cuiabá, Mato Grosso</span>
                     </div>
-                    <button onclick="fecharModalClima()" class="text-gray-400 hover:text-red-500 font-black text-2xl leading-none">&times;</button>
+                    <button onclick="fecharModalClima()" class="text-gray-400 hover:text-red-500 font-black text-2xl leading-none cursor-pointer">&times;</button>
                 </div>
                 <div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
                     <div class="flex items-center gap-4">
@@ -386,7 +400,7 @@
         <div class="bg-white w-full max-w-2xl rounded-sm shadow-2xl relative z-10 overflow-hidden font-sans border-t-4 border-jornal-blue max-h-[90vh] flex flex-col">
             <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
                 <h2 class="text-xl font-black uppercase tracking-tighter text-jornal-dark">EXPEDIENTE</h2>
-                <button onclick="fecharModalExpediente()" class="text-gray-400 hover:text-red-500 font-black text-2xl leading-none">&times;</button>
+                <button onclick="fecharModalExpediente()" class="text-gray-400 hover:text-red-500 font-black text-2xl leading-none cursor-pointer">&times;</button>
             </div>
             <div class="p-8 overflow-y-auto custom-scrollbar rich-editor text-base text-gray-800" id="conteudo-expediente">
                 <p class="text-gray-500 italic text-center font-medium">Expediente não configurado.</p>
@@ -407,25 +421,34 @@
         }
 
         // ==========================================
-        // BLINDAGEM CONTRA O SAFARI / iPHONE (DATAS)
+        // BLINDAGEM MÁXIMA CONTRA SAFARI / iPHONE (DATAS)
         // ==========================================
         function criarDataSegura(dataString) {
             if (!dataString) return new Date();
             var str = String(dataString).trim();
+            
+            // 1. Formato de API Oficial com 'Z' ou 'T' (Safari lê isto muito bem nativamente)
+            if (str.indexOf('T') !== -1 || str.endsWith('Z')) {
+                var n = new Date(str);
+                if (!isNaN(n.getTime())) return n;
+            }
+
+            // 2. Formato PT/BR: DD/MM/AAAA HH:mm ou DD-MM-AAAA
+            var isBr = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:[\sT](\d{1,2}):(\d{1,2}))?/);
+            if (isBr) {
+                var hora = isBr[4] ? parseInt(isBr[4], 10) : 0;
+                var min = isBr[5] ? parseInt(isBr[5], 10) : 0;
+                return new Date(parseInt(isBr[3], 10), parseInt(isBr[2], 10)-1, parseInt(isBr[1], 10), hora, min);
+            }
+
+            // 3. Formato ISO curto YYYY-MM-DD
+            var isIsoCurto = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (isIsoCurto) return new Date(parseInt(isIsoCurto[1], 10), parseInt(isIsoCurto[2], 10)-1, parseInt(isIsoCurto[3], 10));
+
+            // 4. Última esperança
             var dTeste = new Date(str);
             if (!isNaN(dTeste.getTime())) return dTeste;
-            var partesIso = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
-            if (partesIso) { return new Date(partesIso[1], parseInt(partesIso[2])-1, partesIso[3], partesIso[4], partesIso[5]); }
-            var partesBarra = str.split(/[\/\s:\-T]/);
-            if (partesBarra.length >= 5) {
-                var ano = partesBarra[2].length === 4 ? partesBarra[2] : partesBarra[0];
-                var dia = partesBarra[0].length <= 2 ? partesBarra[0] : partesBarra[2];
-                var mes = partesBarra[1];
-                var hora = partesBarra[3];
-                var min = partesBarra[4];
-                var dLocal = new Date(ano, parseInt(mes)-1, dia, hora, min);
-                if (!isNaN(dLocal.getTime())) return dLocal;
-            }
+
             return new Date();
         }
 
@@ -580,7 +603,7 @@
                     d.categorias.forEach(function(c) { 
                         var cl = String(c).toLowerCase().trim();
                         if(['agenda', 'carreira', 'carreiras', 'variedade', 'variedades'].indexOf(cl) !== -1) { esconderBlocoFoco = false; } 
-                        else if(cl.indexOf('opini') === -1) { navLinks.innerHTML += '<a href="javascript:void(0)" onclick="filtrarCategoria(\'' + c + '\', true)" class="hover:text-jornal-red transition-colors border-b-2 border-transparent hover:border-jornal-red whitespace-nowrap px-1 py-1">' + c + '</a>'; }
+                        else if(cl.indexOf('opini') === -1) { navLinks.innerHTML += '<a href="javascript:void(0)" onclick="filtrarCategoria(\'' + c + '\', true)" class="hover:text-jornal-red transition-colors border-b-2 border-transparent hover:border-jornal-red whitespace-nowrap px-1 py-1 cursor-pointer">' + c + '</a>'; }
                     });
                     var sblocoFoco = document.getElementById('sidebar-editorias-especiais');
                     if(sblocoFoco) { if(!esconderBlocoFoco) sblocoFoco.classList.remove('hidden'); else sblocoFoco.classList.add('hidden'); }
@@ -640,7 +663,7 @@
                 });
                 htmlAg += '</div>\n';
                 if (agenda.length > 1) {
-                    htmlAg += '<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', -1, ' + agenda.length + ')" class="absolute left-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full w-8 h-8 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">&#10094;</button>\n<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', 1, ' + agenda.length + ')" class="absolute right-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full w-8 h-8 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">&#10095;</button>\n';
+                    htmlAg += '<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', -1, ' + agenda.length + ')" class="absolute left-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full w-8 h-8 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">&#10094;</button>\n<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', 1, ' + agenda.length + ')" class="absolute right-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full w-8 h-8 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">&#10095;</button>\n';
                 }
                 htmlAg += '</div>\n';
                 contAg.innerHTML = htmlAg;
@@ -689,7 +712,7 @@
             var ext = prop.tipo ? prop.tipo.toLowerCase() : ''; var urlSegura = prop.urlArquivo ? String(prop.urlArquivo) : '';
             var isVideo = ext.indexOf('video') !== -1 || urlSegura.endsWith('.mp4');
             var mediaHtml = isVideo ? '<video src="' + urlSegura + '" autoplay loop muted playsinline class="w-full h-auto min-h-[100px] object-cover bg-gray-100 border border-gray-200"></video>\n' : '<img loading="lazy" src="' + urlSegura + '" alt="Anúncio" class="w-full h-auto min-h-[100px] object-cover bg-gray-100 border border-gray-200" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
-            return '<a href="' + prop.linkDestino + '" target="_blank" class="block w-full relative group hover:opacity-95 transition-opacity">\n<div class="absolute top-2 right-2 bg-white/90 text-[8px] uppercase font-black px-1.5 py-0.5 z-10 text-jornal-dark border border-gray-200 shadow-sm">Publicidade</div>\n' + mediaHtml + '</a>\n';
+            return '<a href="' + prop.linkDestino + '" target="_blank" class="block w-full relative group hover:opacity-95 transition-opacity cursor-pointer">\n<div class="absolute top-2 right-2 bg-white/90 text-[8px] uppercase font-black px-1.5 py-0.5 z-10 text-jornal-dark border border-gray-200 shadow-sm">Publicidade</div>\n' + mediaHtml + '</a>\n';
         }
 
         function renderizarOpinioes() {
@@ -909,7 +932,7 @@
         }
 
         function htmlCard(n) {
-            var cHTML = '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 p-0 flex flex-col h-full hover:shadow-md transition-shadow rounded-sm w-full overflow-hidden min-w-0">\n<div class="relative w-full aspect-video bg-gray-100 border-b border-gray-200 shrink-0 overflow-hidden">\n<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain group-hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n</div>\n';
+            var cHTML = '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 p-0 flex flex-col h-full hover:shadow-md transition-shadow rounded-sm w-full overflow-hidden min-w-0">\n<div class="relative w-full aspect-video bg-gray-100 border-b border-gray-200 shrink-0 overflow-hidden">\n<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n</div>\n';
             if (n.creditosImagem) { cHTML += '<div class="text-[8px] text-gray-400 italic px-4 py-1.5 bg-gray-50 border-b border-gray-100 truncate text-right font-medium">Foto: ' + n.creditosImagem + '</div>\n'; }
             cHTML += '<div class="p-5 flex flex-col flex-grow w-full bg-white min-w-0">\n<span class="text-jornal-red text-[10px] font-black uppercase tracking-widest mb-3 block truncate">' + (n.categoria || 'Geral') + '</span>\n<h3 class="font-serif text-xl font-black mb-3 leading-snug text-jornal-dark group-hover:text-jornal-blue line-clamp-3 break-words tracking-tight">' + (n.titulo || '') + '</h3>\n';
             if (n.linhaFina) { cHTML += '<p class="text-gray-500 text-xs font-medium mb-3 italic line-clamp-2 break-words">' + n.linhaFina + '</p>\n'; }
@@ -919,7 +942,7 @@
         }
 
         function htmlHero(n) {
-            var cHTML = '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 flex flex-col md:flex-row h-full overflow-hidden hover:shadow-md transition-shadow rounded-sm w-full">\n<div class="md:w-[55%] w-full bg-gray-100 min-h-[350px] shrink-0 overflow-hidden relative">\n<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition duration-700 min-h-[350px]" />\n';
+            var cHTML = '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 flex flex-col md:flex-row h-full overflow-hidden hover:shadow-md transition-shadow rounded-sm w-full">\n<div class="md:w-[55%] w-full bg-gray-100 min-h-[350px] shrink-0 overflow-hidden relative">\n<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700 min-h-[350px]" />\n';
             if (n.creditosImagem) { cHTML += '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 rounded-tl">Foto: ' + n.creditosImagem + '</div>\n'; }
             var dataFormatada = String(n.dataHora || '').replace(' ', ' às ');
             cHTML += '</div>\n<div class="md:w-[45%] p-8 flex flex-col justify-center w-full min-w-0">\n<span class="text-jornal-red text-[10px] font-black uppercase tracking-widest mb-3 block w-full truncate">' + (n.categoria || 'Geral') + '</span>\n<h3 class="font-serif text-3xl md:text-4xl font-black mb-4 leading-tight text-jornal-dark group-hover:text-jornal-blue break-words line-clamp-4 tracking-tight">' + (n.titulo || '') + '</h3>\n';
@@ -942,7 +965,7 @@
                     htmlFinal += '<div class="w-full mb-12">\n<div class="border-b-4 border-gray-200 pb-3 mb-6 flex justify-between items-center">\n<h3 class="text-lg font-black uppercase tracking-widest text-jornal-dark">\n<span class="inline-block w-3 h-3 bg-rose-600 mr-2 rounded-sm"></span>' + cat + '\n</h3>\n<button onclick="filtrarCategoria(\'' + cat + '\', true)" class="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-jornal-red transition-colors bg-gray-50 px-3 py-1.5 rounded-sm">\nVer tudo &raquo;\n</button>\n</div>\n<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">\n';
                     nCat.forEach(function(n) {
                         var dataFormatada = String(n.dataHora || '').replace(' ', ' às ');
-                        htmlFinal += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col h-full border border-gray-100 shadow-sm bg-white rounded-sm overflow-hidden min-w-0 hover:shadow-md transition-shadow">\n<div class="relative w-full aspect-video bg-gray-100 shrink-0 overflow-hidden">\n<img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n</div>\n<div class="p-4 flex flex-col flex-grow min-w-0 bg-white relative z-10">\n<h4 class="font-serif font-black text-sm leading-snug text-jornal-dark group-hover:text-jornal-red line-clamp-3 mb-3">' + n.titulo + '</h4>\n<span class="text-[9px] font-bold text-gray-400 mt-auto tracking-widest uppercase">\n' + dataFormatada + '\n</span>\n</div>\n</article>\n';
+                        htmlFinal += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col h-full border border-gray-100 shadow-sm bg-white rounded-sm overflow-hidden min-w-0 hover:shadow-md transition-shadow">\n<div class="relative w-full aspect-video bg-gray-100 shrink-0 overflow-hidden">\n<img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n</div>\n<div class="p-4 flex flex-col flex-grow min-w-0 bg-white relative z-10">\n<h4 class="font-serif font-black text-sm leading-snug text-jornal-dark group-hover:text-jornal-red line-clamp-3 mb-3">' + n.titulo + '</h4>\n<span class="text-[9px] font-bold text-gray-400 mt-auto tracking-widest uppercase">\n' + dataFormatada + '\n</span>\n</div>\n</article>\n';
                     });
                     htmlFinal += '</div>\n</div>\n';
                 }
@@ -956,7 +979,7 @@
             itens.forEach(function(n, i) {
                 var credHtml = ''; if (n.creditosImagem) { credHtml = '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 z-20">Foto: ' + n.creditosImagem + '</div>'; }
                 htmlInner += '<div class="absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out cursor-pointer group carrossel-slide opacity-0 z-0 pointer-events-none" onclick="abrirNoticia(\'' + n.id + '\', true)">\n<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover bg-gray-100" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'"/>\n' + credHtml + '\n<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>\n<div class="absolute bottom-0 left-0 p-8 md:p-14 w-full text-white min-w-0 z-10 pointer-events-none">\n<span class="bg-jornal-red text-white text-[10px] font-black uppercase px-3 py-1.5 mb-4 inline-block rounded-sm truncate shadow-sm">\n' + n.categoria + '\n</span>\n<h3 class="font-serif text-3xl md:text-5xl font-black mb-3 leading-tight break-words line-clamp-3 tracking-tighter drop-shadow-md">\n' + n.titulo + '\n</h3>\n</div>\n</div>\n';
-                htmlInd += '<button onclick="irParaSlide(' + i + ')" class="w-3 h-3 rounded-full carrossel-indicador transition-colors bg-white/50"></button>\n';
+                htmlInd += '<button onclick="irParaSlide(' + i + ')" class="w-3 h-3 rounded-full carrossel-indicador transition-colors bg-white/50 cursor-pointer"></button>\n';
             });
             inner.innerHTML = htmlInner; ind.innerHTML = htmlInd; slideIndex = 0; 
             if(carrosselTimer) clearInterval(carrosselTimer); carrosselTimer = setInterval(function() { moverCarrossel(1); }, 6000); atualizarCarrosselVisivel(); 
@@ -968,7 +991,7 @@
             var slides = document.getElementsByClassName('carrossel-slide'); var indics = document.getElementsByClassName('carrossel-indicador');
             for (var i = 0; i < slides.length; i++) {
                 if(slides[i]) { if (i === slideIndex) { slides[i].classList.remove('opacity-0', 'z-0', 'pointer-events-none'); slides[i].classList.add('opacity-100', 'z-10', 'pointer-events-auto'); } else { slides[i].classList.remove('opacity-100', 'z-10', 'pointer-events-auto'); slides[i].classList.add('opacity-0', 'z-0', 'pointer-events-none'); } }
-                if(indics[i]) { indics[i].className = 'w-3 h-3 rounded-full carrossel-indicador transition-colors ' + (i === slideIndex ? 'bg-jornal-red' : 'bg-white/50'); }
+                if(indics[i]) { indics[i].className = 'w-3 h-3 rounded-full carrossel-indicador transition-colors cursor-pointer ' + (i === slideIndex ? 'bg-jornal-red' : 'bg-white/50'); }
             }
         }
 
