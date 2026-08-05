@@ -57,7 +57,9 @@
                     if (successCb) {
                         var finalPayload = result;
                         if (result && result.result !== undefined) {
-                            finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
+                            try {
+                                finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
+                            } catch(e) { finalPayload = result.result; }
                         }
                         successCb(finalPayload);
                     }
@@ -75,7 +77,7 @@
                 var debugBox = document.getElementById('debug-error-box');
                 if (debugBox) {
                     debugBox.innerHTML = "Erro de JavaScript: " + message + " (Linha " + lineno + ")";
-                    debugBox.classList.remove('hidden');
+                    debugBox.style.display = 'block';
                 }
             }, 500);
         };
@@ -119,7 +121,7 @@
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
-    <!-- TELA DE CARREGAMENTO BLINDADA -->
+    <!-- TELA DE CARREGAMENTO COM DESTRUIÇÃO FORÇADA -->
     <div id="loading-noticias" class="fixed inset-0 z-[100000] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
         <div id="loading-logo-container" class="mb-6">
              <h1 id="loading-logo-text" class="text-4xl md:text-5xl font-black tracking-tighter uppercase text-jornal-dark">
@@ -128,7 +130,7 @@
         </div>
         <div class="w-10 h-10 border-4 border-gray-100 border-t-jornal-red rounded-full animate-spin mb-4"></div>
         <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 animate-pulse">ACESSAR PORTAL...</p>
-        <div id="debug-error-box" class="hidden mt-4 text-xs text-red-500 font-mono text-center p-4 bg-red-50 border border-red-200 rounded max-w-xl break-words w-full shadow-sm"></div>
+        <div id="debug-error-box" style="display: none;" class="mt-4 text-xs text-red-500 font-mono text-center p-4 bg-red-50 border border-red-200 rounded max-w-xl break-words w-full shadow-sm"></div>
     </div>
 
     <div id="view-portal" class="flex-grow flex flex-col relative min-w-0">
@@ -198,7 +200,7 @@
         <main class="max-w-[1200px] mx-auto pt-6 md:pt-8 pb-16 px-4 flex-grow w-full min-w-0">
             <div id="ads-topo-container" class="w-full mb-8 hidden grid gap-4 grid-cols-1 md:grid-cols-2"></div>
 
-            <div id="master-feed-wrapper" class="flex flex-col lg:flex-row gap-8 items-start hidden min-w-0">
+            <div id="master-feed-wrapper" style="display: none;" class="flex-col lg:flex-row gap-8 items-start min-w-0">
                 
                 <div class="lg:w-[72%] w-full flex flex-col gap-6 min-w-0">
                     
@@ -229,17 +231,17 @@
                         <div id="grid-noticias" class="grid gap-6 w-full min-w-0"></div>
                         
                         <div class="w-full flex justify-center mt-10">
-                            <button id="btn-mostrar-mais" onclick="mostrarMaisNoticias()" class="border-2 border-jornal-dark text-jornal-dark font-black uppercase text-[11px] px-12 py-3.5 rounded-full hover:bg-jornal-dark hover:text-white transition-all tracking-widest hidden shadow-sm w-full md:w-auto">Mostrar Mais Notícias</button>
+                            <button id="btn-mostrar-mais" style="display: none;" onclick="mostrarMaisNoticias()" class="border-2 border-jornal-dark text-jornal-dark font-black uppercase text-[11px] px-12 py-3.5 rounded-full hover:bg-jornal-dark hover:text-white transition-all tracking-widest shadow-sm w-full md:w-auto">Mostrar Mais Notícias</button>
                         </div>
                     </div>
 
-                    <div id="noticia-completa-container" class="hidden bg-white border border-gray-200 p-5 md:p-10 shadow-sm min-w-0 rounded-sm">
+                    <div id="noticia-completa-container" style="display: none;" class="bg-white border border-gray-200 p-5 md:p-10 shadow-sm min-w-0 rounded-sm">
                         <button onclick="voltarCapa()" class="mb-6 text-jornal-red font-black text-[10px] uppercase tracking-widest hover:underline flex items-center gap-1">&larr; Voltar à Capa</button>
                         
                         <span id="nc-categoria" class="text-jornal-red text-[11px] font-black uppercase tracking-widest mb-4 block cursor-pointer hover:underline" onclick="filtrarCategoria(this.innerText)"></span>
                         <h1 id="nc-titulo" class="font-serif text-3xl md:text-5xl font-black mb-5 leading-tight text-jornal-dark break-words tracking-tight"></h1>
                         
-                        <h2 id="nc-linha-fina" class="font-sans text-base md:text-xl text-gray-500 mb-8 leading-relaxed font-medium hidden break-words italic"></h2>
+                        <h2 id="nc-linha-fina" style="display: none;" class="font-sans text-base md:text-xl text-gray-500 mb-8 leading-relaxed font-medium break-words italic"></h2>
                         
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-5 mb-8 gap-4">
                             <div class="min-w-0">
@@ -268,7 +270,7 @@
 
                         <div id="nc-conteudo" class="text-slate-800 text-lg md:text-xl leading-relaxed font-serif whitespace-pre-line mb-12 rich-editor break-words"></div>
                         
-                        <div id="nc-relacionadas-container" class="hidden border-t-4 border-indigo-600 pt-8 mt-12 mb-8 bg-indigo-50/30 p-6 rounded-sm">
+                        <div id="nc-relacionadas-container" style="display: none;" class="border-t-4 border-indigo-600 pt-8 mt-12 mb-8 bg-indigo-50/30 p-6 rounded-sm">
                             <h3 class="text-sm font-black font-sans uppercase tracking-widest text-indigo-900 mb-6 flex items-center gap-2">LEIA TAMBÉM</h3>
                             <div id="nc-relacionadas-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
                         </div>
@@ -299,35 +301,35 @@
                 
                 <aside class="lg:w-[28%] w-full shrink-0 min-w-0">
                     
-                    <div id="sidebar-editorias-especiais" class="hidden mb-10 bg-white border border-gray-200 p-6 shadow-sm rounded-sm">
+                    <div id="sidebar-editorias-especiais" style="display: none;" class="mb-10 bg-white border border-gray-200 p-6 shadow-sm rounded-sm">
                         <div class="border-b-4 border-jornal-dark pb-3 mb-6">
                             <h2 class="text-xs font-black uppercase tracking-widest text-jornal-dark">Em Foco</h2>
                         </div>
                         
-                        <div id="bloco-agenda" class="mb-6 hidden">
+                        <div id="bloco-agenda" style="display: none;" class="mb-6">
                             <h3 onclick="filtrarCategoria('Agenda', true)" class="text-[11px] font-black uppercase tracking-widest text-jornal-dark mb-3 cursor-pointer hover:text-jornal-red flex items-center gap-1">Agenda &raquo;</h3>
                             <div id="agenda-carousel-container"></div>
                         </div>
                         
-                        <div id="bloco-carreiras" class="mb-6 hidden pt-4 border-t border-gray-100">
+                        <div id="bloco-carreiras" style="display: none;" class="mb-6 pt-4 border-t border-gray-100">
                             <h3 onclick="filtrarCategoria('Carreiras', true)" class="text-[11px] font-black uppercase tracking-widest text-jornal-dark mb-3 cursor-pointer hover:text-jornal-red flex items-center gap-1">Carreiras &raquo;</h3>
                             <div id="conteudo-carreiras"></div>
                         </div>
                         
-                        <div id="bloco-variedades" class="hidden pt-4 border-t border-gray-100">
+                        <div id="bloco-variedades" style="display: none;" class="pt-4 border-t border-gray-100">
                             <h3 onclick="filtrarCategoria('Variedades', true)" class="text-[11px] font-black uppercase tracking-widest text-jornal-dark mb-3 cursor-pointer hover:text-jornal-red flex items-center gap-1">Variedades &raquo;</h3>
                             <div id="conteudo-variedades"></div>
                         </div>
                     </div>
 
-                    <div id="sidebar-opinioes" class="hidden mb-10 bg-white border border-gray-200 p-6 shadow-sm rounded-sm">
+                    <div id="sidebar-opinioes" style="display: none;" class="mb-10 bg-white border border-gray-200 p-6 shadow-sm rounded-sm">
                         <div class="border-b-4 border-jornal-red pb-3 mb-6">
                             <h2 class="text-xs font-black uppercase tracking-widest text-jornal-red cursor-pointer hover:opacity-75 transition-opacity inline-flex items-center gap-1" onclick="filtrarCategoria('Opinião', true)">OPINIÃO &raquo;</h2>
                         </div>
                         <div id="conteudo-opinioes" class="flex flex-col gap-5"></div>
                     </div>
 
-                    <div id="container-placar-ao-vivo" class="hidden mb-10 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
+                    <div id="container-placar-ao-vivo" style="display: none;" class="mb-10 bg-white border border-gray-200 p-5 shadow-sm rounded-sm">
                         <div class="flex items-center justify-between mb-5 border-b border-gray-100 pb-3">
                             <h2 class="text-[11px] font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
                                 <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Placar Ao Vivo
@@ -381,11 +383,11 @@
                     Ver Expediente
                 </button>
             </div>
-            <div id="social-footer" class="flex justify-center gap-4 mt-8 hidden"></div>
+            <div id="social-footer" style="display: none;" class="justify-center gap-4 mt-8"></div>
         </footer>
     </div>
 
-    <div id="modalExpediente" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
+    <div id="modalExpediente" style="display: none;" class="fixed inset-0 z-[99999] items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/90 backdrop-blur-sm" onclick="fecharModalExpediente()"></div>
         <div class="bg-white w-full max-w-3xl rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-blue flex flex-col max-h-[90vh]">
             <div class="flex justify-between items-center p-6 border-b border-gray-100 shrink-0">
@@ -400,7 +402,7 @@
         </div>
     </div>
 
-    <div id="modalClima" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
+    <div id="modalClima" style="display: none;" class="fixed inset-0 z-[99999] items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/90 backdrop-blur-sm" onclick="fecharModalClima()"></div>
         <div class="bg-white w-full max-w-lg rounded-sm shadow-2xl relative z-10 overflow-hidden font-sans border-t-4 border-sky-500">
             <div class="p-6">
@@ -454,8 +456,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE LOGIN -->
-    <div id="modalLogin" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
+    <div id="modalLogin" style="display: none;" class="fixed inset-0 z-[9999] items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/80 backdrop-blur-sm" onclick="fecharModalLogin()"></div>
         <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
             <button type="button" onclick="fecharModalLogin()" class="absolute top-4 right-4 text-gray-400 hover:text-jornal-red">✕</button>
@@ -469,6 +470,26 @@
     </div>
 
     <script>
+        // FUNÇÃO DE FORÇA BRUTA (ANTI-LOOP ETERNO) - Esconde o loader ao fim de 6 segundos, SEMPRE.
+        function removerLoaderGlobal() {
+            try {
+                var loaderGlobal = document.getElementById('loading-noticias');
+                if (loaderGlobal) {
+                    loaderGlobal.style.display = 'none'; // A FORÇA BRUTA AQUI (Sobrepõe o Tailwind flex)
+                }
+                var wrap = document.getElementById('master-feed-wrapper');
+                if (wrap) {
+                    wrap.style.display = 'flex'; 
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                removerLoaderGlobal();
+            }, 6000); 
+        });
+
         var IMG_FALLBACK = 'https://placehold.co/600x400/e2e8f0/475569?text=Sem+Foto';
         var ICON_HEART = '<svg class="w-3 h-3 fill-current inline" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
 
@@ -555,18 +576,11 @@
             window.addEventListener('scroll', function() {
                 var stickyLogo = document.getElementById('sticky-logo-container');
                 if (stickyLogo) {
-                    if (window.scrollY > 110) { stickyLogo.classList.remove('hidden'); stickyLogo.classList.add('flex'); } 
-                    else { stickyLogo.classList.add('hidden'); stickyLogo.classList.remove('flex'); }
+                    if (window.scrollY > 110) { stickyLogo.classList.remove('hidden'); stickyLogo.style.display = 'flex'; } 
+                    else { stickyLogo.classList.add('hidden'); stickyLogo.style.display = 'none'; }
                 }
             });
         });
-
-        function removerLoaderGlobal() {
-            var loaderGlobal = document.getElementById('loading-noticias');
-            if (loaderGlobal && !loaderGlobal.classList.contains('hidden')) { loaderGlobal.classList.add('hidden'); }
-            var wrap = document.getElementById('master-feed-wrapper');
-            if(wrap) wrap.classList.remove('hidden');
-        }
 
         function tratarRotasIniciais(forcarUpdate) {
             var pathname = window.location.pathname;
@@ -591,23 +605,17 @@
         window.addEventListener('popstate', function(e) { tratarRotasIniciais(false); });
 
         function carregarNoticias(forcarUpdate) {
-            document.getElementById('master-feed-wrapper').classList.add('hidden');
-            document.getElementById('loading-noticias').classList.remove('hidden');
-            document.getElementById('debug-error-box').classList.add('hidden');
+            var mWrap = document.getElementById('master-feed-wrapper');
+            if(mWrap) mWrap.style.display = 'none';
             
-            // ANTI LOCK 8 SECONDS
-            var failSafeTimer = setTimeout(function() {
-                var loader = document.getElementById('loading-noticias');
-                if (loader && !loader.classList.contains('hidden')) {
-                    removerLoaderGlobal();
-                    var dbg = document.getElementById('debug-error-box');
-                    if(dbg) { dbg.innerHTML = "O servidor demorou a responder. A carregar cache de segurança..."; dbg.classList.remove('hidden'); }
-                }
-            }, 8000);
+            var loader = document.getElementById('loading-noticias');
+            if(loader) loader.style.display = 'flex';
+            
+            var dbg = document.getElementById('debug-error-box');
+            if(dbg) dbg.style.display = 'none';
 
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
-                    clearTimeout(failSafeTimer);
                     removerLoaderGlobal();
                     try {
                         if (res && res.sucesso) { 
@@ -619,24 +627,18 @@
                                 else { filtrarCategoria(window.categoriaAtual, false); }
                             }
                         } else {
-                            var dbg = document.getElementById('debug-error-box');
-                            if(dbg) { dbg.innerHTML = res ? res.erro : "Resposta inválida."; dbg.classList.remove('hidden'); }
+                            if(dbg) { dbg.innerHTML = res ? res.erro : "Resposta inválida."; dbg.style.display = 'block'; }
                         }
                     } catch(e) { 
-                        var dbg = document.getElementById('debug-error-box');
-                        if(dbg) { dbg.innerHTML = "Falha no JS: " + e.message; dbg.classList.remove('hidden'); }
+                        if(dbg) { dbg.innerHTML = "Falha no JS: " + e.message; dbg.style.display = 'block'; }
                     }
                 }).withFailureHandler(function(err) {
-                    clearTimeout(failSafeTimer);
                     removerLoaderGlobal();
-                    var dbg = document.getElementById('debug-error-box');
-                    if(dbg) { dbg.innerHTML = "Erro de conexão: " + err.message; dbg.classList.remove('hidden'); }
+                    if(dbg) { dbg.innerHTML = "Erro de conexão: " + err.message; dbg.style.display = 'block'; }
                 }).getHomeData();
             } else {
-                clearTimeout(failSafeTimer);
                 removerLoaderGlobal();
-                var dbg = document.getElementById('debug-error-box');
-                if(dbg) { dbg.innerHTML = "Motor Google não detectado."; dbg.classList.remove('hidden'); }
+                if(dbg) { dbg.innerHTML = "Motor Google não detetado."; dbg.style.display = 'block'; }
             }
         }
 
@@ -675,7 +677,7 @@
                 if (configuracoesGlobais['soc-fb-url']) { sHtml += '<a href="' + configuracoesGlobais['soc-fb-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.312h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/></svg></a>'; }
                 if (configuracoesGlobais['soc-x-url']) { sHtml += '<a href="' + configuracoesGlobais['soc-x-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></a>'; }
                 if (configuracoesGlobais['soc-yt-url']) { sHtml += '<a href="' + configuracoesGlobais['soc-yt-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>'; }
-                if (sHtml) { socFooter.innerHTML = sHtml; socFooter.classList.remove('hidden'); }
+                if (sHtml) { socFooter.innerHTML = sHtml; socFooter.style.display = 'flex'; }
             }
 
             if (d.categorias && Array.isArray(d.categorias)) {
@@ -694,8 +696,8 @@
                     });
                     var sblocoFoco = document.getElementById('sidebar-editorias-especiais');
                     if(sblocoFoco) {
-                        if(!esconderBlocoFoco) sblocoFoco.classList.remove('hidden');
-                        else sblocoFoco.classList.add('hidden');
+                        if(!esconderBlocoFoco) { sblocoFoco.style.display = 'block'; }
+                        else { sblocoFoco.style.display = 'none'; }
                     }
                 }
             }
@@ -767,7 +769,7 @@
             var contAg = document.getElementById('agenda-carousel-container');
             
             if (agenda.length > 0 && blocoAg && contAg) {
-                blocoAg.classList.remove('hidden');
+                blocoAg.style.display = 'block';
                 var carouselId = 'agenda-sidebar-carousel';
                 
                 var oldCarousel = window.agendaCarousels.find(function(c){ return c.id === carouselId; });
@@ -825,13 +827,13 @@
                     moverCarrosselAgenda(carouselId, 1, agenda.length);
                 }, 7000);
 
-            } else if(blocoAg) { blocoAg.classList.add('hidden'); }
+            } else if(blocoAg) { blocoAg.style.display = 'none'; }
 
             var carreiras = noticiasGlobais.filter(function(n) { return isNoticiaPublicada(n) && String(n.categoria).toLowerCase().indexOf('carreira') !== -1; });
             var blocoCa = document.getElementById('bloco-carreiras');
             var contCa = document.getElementById('conteudo-carreiras');
             if(carreiras.length > 0 && blocoCa && contCa) {
-                blocoCa.classList.remove('hidden');
+                blocoCa.style.display = 'block';
                 var n = carreiras[0];
                 var htmlCa = '';
                 htmlCa += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col bg-white border border-gray-100 shadow-sm rounded-sm overflow-hidden hover:shadow-md transition-shadow">\n';
@@ -843,13 +845,13 @@
                 htmlCa += '    </div>\n';
                 htmlCa += '</article>\n';
                 contCa.innerHTML = htmlCa;
-            } else if(blocoCa) { blocoCa.classList.add('hidden'); }
+            } else if(blocoCa) { blocoCa.style.display = 'none'; }
 
             var variedades = noticiasGlobais.filter(function(n) { return isNoticiaPublicada(n) && String(n.categoria).toLowerCase().indexOf('variedade') !== -1; });
             var blocoVa = document.getElementById('bloco-variedades');
             var contVa = document.getElementById('conteudo-variedades');
             if(variedades.length > 0 && blocoVa && contVa) {
-                blocoVa.classList.remove('hidden');
+                blocoVa.style.display = 'block';
                 var v = variedades[0];
                 var htmlVa = '';
                 htmlVa += '<article onclick="abrirNoticia(\'' + v.id + '\', true)" class="group cursor-pointer flex flex-col bg-white border border-gray-100 shadow-sm rounded-sm overflow-hidden hover:shadow-md transition-shadow">\n';
@@ -861,7 +863,7 @@
                 htmlVa += '    </div>\n';
                 htmlVa += '</article>\n';
                 contVa.innerHTML = htmlVa;
-            } else if(blocoVa) { blocoVa.classList.add('hidden'); }
+            } else if(blocoVa) { blocoVa.style.display = 'none'; }
         }
 
         function moverCarrosselAgenda(id, direcao, tamanho) {
@@ -878,9 +880,11 @@
             
             if(carrosselAdsTimers[containerId]) { clearTimeout(carrosselAdsTimers[containerId]); }
             
-            if (anuncios.length === 0) { container.classList.add('hidden'); container.innerHTML = ''; return; }
+            if (anuncios.length === 0) { container.style.display = 'none'; container.innerHTML = ''; return; }
             
-            container.classList.remove('hidden');
+            if(containerId === 'ads-topo-container') container.style.display = 'grid';
+            else container.style.display = 'flex';
+
             var index = 0;
             
             function mostrarProximo() {
@@ -919,8 +923,8 @@
             var c_in = document.getElementById('conteudo-opinioes');
             var op = noticiasGlobais.filter(function(n) { return isNoticiaPublicada(n) && String(n.categoria).toLowerCase().indexOf('opini') !== -1; });
             
-            if (op.length === 0) { if(c) c.classList.add('hidden'); return; }
-            if(c) c.classList.remove('hidden');
+            if (op.length === 0) { if(c) c.style.display = 'none'; return; }
+            if(c) c.style.display = 'block';
             if(!c_in) return;
             
             var d = op[0];
@@ -1154,7 +1158,7 @@
             var fetchesConcluidos = 0;
 
             if (ligasAtivas.length === 0) {
-                if (containerGeral) containerGeral.classList.add('hidden');
+                if (containerGeral) containerGeral.style.display = 'none';
                 return;
             }
 
@@ -1225,8 +1229,8 @@
                 .finally(function() {
                     fetchesConcluidos++;
                     if(fetchesConcluidos === ligasAtivas.length) {
-                        if(htmlFinal === '') { if(containerGeral) containerGeral.classList.add('hidden'); } 
-                        else { if(containerGeral) containerGeral.classList.remove('hidden'); placar.innerHTML = htmlFinal; }
+                        if(htmlFinal === '') { if(containerGeral) containerGeral.style.display = 'none'; } 
+                        else { if(containerGeral) containerGeral.style.display = 'block'; placar.innerHTML = htmlFinal; }
                     }
                 });
             });
@@ -1254,14 +1258,14 @@
             if(filtradas.length === 0) {
                 dest.classList.add('hidden');
                 grid.innerHTML = '<div class="col-span-full text-center py-16 bg-white border border-gray-200 rounded-sm shadow-sm flex flex-col items-center justify-center"><span class="text-4xl mb-3">📰</span><span class="text-sm font-bold text-gray-500 uppercase tracking-widest">Nenhuma matéria encontrada nesta cidade.</span></div>';
-                var btnMais = document.getElementById('btn-mostrar-mais'); if(btnMais) btnMais.classList.add('hidden');
+                var btnMais = document.getElementById('btn-mostrar-mais'); if(btnMais) btnMais.style.display = 'none';
             } else {
                 dest.innerHTML = htmlHero(filtradas[0]); dest.classList.remove('hidden');
                 var resto = filtradas.slice(1);
                 window.noticiasCategoriaAtual = resto; window.itensExibidosCategoria = 16;
                 resto.slice(0, 16).forEach(function(n) { grid.innerHTML += htmlCard(n); });
                 var btnMais = document.getElementById('btn-mostrar-mais');
-                if (btnMais) { if (resto.length > 16) { btnMais.classList.remove('hidden'); } else { btnMais.classList.add('hidden'); } }
+                if (btnMais) { if (resto.length > 16) { btnMais.style.display = 'block'; } else { btnMais.style.display = 'none'; } }
             }
         }
 
@@ -1327,7 +1331,7 @@
                 else { f.slice(0, window.itensExibidosCategoria).forEach(function(n) { grid.innerHTML += htmlCard(n); }); }
                 
                 var btnMais = document.getElementById('btn-mostrar-mais');
-                if(btnMais) { if(f.length > window.itensExibidosCategoria) { btnMais.classList.remove('hidden'); } else { btnMais.classList.add('hidden'); } }
+                if(btnMais) { if(f.length > window.itensExibidosCategoria) { btnMais.style.display = 'block'; } else { btnMais.style.display = 'none'; } }
             } else {
                 grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
                 if(gridEditorias) gridEditorias.classList.add('hidden');
@@ -1349,7 +1353,7 @@
                 }
                 
                 var btnMais = document.getElementById('btn-mostrar-mais');
-                if (btnMais) { if (f.length > 16) { btnMais.classList.remove('hidden'); } else { btnMais.classList.add('hidden'); } }
+                if (btnMais) { if (f.length > 16) { btnMais.style.display = 'block'; } else { btnMais.style.display = 'none'; } }
             }
             atualizarDestaqueMenuAtivo(cat);
             fecharNoticiaUI();
@@ -1363,7 +1367,7 @@
             
             if(grid) { f.slice(start, window.itensExibidosCategoria).forEach(function(n) { grid.innerHTML += htmlCard(n); }); }
             var btnMais = document.getElementById('btn-mostrar-mais');
-            if (window.itensExibidosCategoria >= f.length && btnMais) { btnMais.classList.add('hidden'); }
+            if (window.itensExibidosCategoria >= f.length && btnMais) { btnMais.style.display = 'none'; }
         }
 
         function htmlCard(n) {
@@ -1519,9 +1523,9 @@
                 var btnMais = document.getElementById('btn-mostrar-mais');
                 if (btnMais) { 
                     if (resultados.length > 16) {
-                        btnMais.classList.remove('hidden'); 
+                        btnMais.style.display = 'block'; 
                     } else {
-                        btnMais.classList.add('hidden'); 
+                        btnMais.style.display = 'none'; 
                     }
                 }
             }
@@ -1536,17 +1540,26 @@
             noticiaAbertaId = noticia.id; 
             if (updateUrl) atualizarURL('noticia', null, noticia);
             
-            document.getElementById('home-feed-container').classList.add('hidden'); 
-            var filtroCid = document.getElementById('filtro-cidades-container');
-            if (filtroCid) filtroCid.classList.add('hidden');
+            var hFeed = document.getElementById('home-feed-container');
+            if(hFeed) hFeed.style.display = 'none';
             
-            document.getElementById('noticia-completa-container').classList.remove('hidden');
+            var filtroCid = document.getElementById('filtro-cidades-container');
+            if (filtroCid) filtroCid.style.display = 'none';
+            
+            var nCont = document.getElementById('noticia-completa-container');
+            if(nCont) nCont.style.display = 'block';
+            
             document.getElementById('nc-categoria').innerText = noticia.categoria; 
             document.getElementById('nc-titulo').innerText = noticia.titulo;
             
             var ncLinhaFina = document.getElementById('nc-linha-fina');
-            if (noticia.linhaFina && noticia.linhaFina.trim() !== '') { ncLinhaFina.innerText = noticia.linhaFina; ncLinhaFina.classList.remove('hidden'); } 
-            else { ncLinhaFina.innerText = ''; ncLinhaFina.classList.add('hidden'); }
+            if (noticia.linhaFina && noticia.linhaFina.trim() !== '') { 
+                ncLinhaFina.innerText = noticia.linhaFina; 
+                ncLinhaFina.style.display = 'block'; 
+            } else { 
+                ncLinhaFina.innerText = ''; 
+                ncLinhaFina.style.display = 'none'; 
+            }
 
             document.getElementById('nc-autor').innerText = "Por: " + noticia.autor; 
             document.getElementById('nc-data').innerText = noticia.dataHora ? "Publicado em " + noticia.dataHora.replace(' ', ' às ') : '';
@@ -1563,8 +1576,13 @@
             if(conteudoFormatado.indexOf('twitter-tweet') !== -1) { setTimeout(function(){ if(window.twttr) window.twttr.widgets.load(); }, 500); }
             
             var ncImg = document.getElementById('nc-imagem');
-            if(noticia.urlImagem && noticia.urlImagem.trim() !== '') { ncImg.src = noticia.urlImagem; document.getElementById('nc-imagem-container').classList.remove('hidden'); } 
-            else { document.getElementById('nc-imagem-container').classList.add('hidden'); }
+            var imgCont = document.getElementById('nc-imagem-container');
+            if(noticia.urlImagem && noticia.urlImagem.trim() !== '') { 
+                ncImg.src = noticia.urlImagem; 
+                if(imgCont) imgCont.style.display = 'block'; 
+            } else { 
+                if(imgCont) imgCont.style.display = 'none'; 
+            }
             
             document.getElementById('nc-creditos').innerText = noticia.creditosImagem ? 'Foto: ' + noticia.creditosImagem : '';
             document.getElementById('nc-legenda').innerText = noticia.legendaImagem ? noticia.legendaImagem : '';
@@ -1590,10 +1608,11 @@
                 var idsRel = noticia.relacionadas.split(','); var objRel = [];
                 idsRel.forEach(function(idR) { var nr = noticiasGlobais.find(function(x) { return String(x.id) === String(idR.trim()); }); if(nr && isNoticiaPublicada(nr)) objRel.push(nr); });
                 if(objRel.length > 0) {
-                    relContainer.classList.remove('hidden'); relGrid.innerHTML = '';
+                    if(relContainer) relContainer.style.display = 'block'; 
+                    relGrid.innerHTML = '';
                     objRel.forEach(function(nr) { relGrid.innerHTML += htmlCard(nr); });
-                } else { relContainer.classList.add('hidden'); }
-            } else { relContainer.classList.add('hidden'); }
+                } else { if(relContainer) relContainer.style.display = 'none'; }
+            } else { if(relContainer) relContainer.style.display = 'none'; }
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { window.google.script.run.incrementarView(noticiaAbertaId); }
             window.scrollTo(0,0);
@@ -1601,10 +1620,17 @@
 
         function fecharNoticiaUI() { 
             noticiaAbertaId = null; document.title = "Notícias Avulsas - Portal de Informação";
-            document.getElementById('noticia-completa-container').classList.add('hidden'); 
-            var relCont = document.getElementById('nc-relacionadas-container'); if (relCont) relCont.classList.add('hidden');
+            var nCont = document.getElementById('noticia-completa-container');
+            if(nCont) nCont.style.display = 'none'; 
+            
+            var relCont = document.getElementById('nc-relacionadas-container'); 
+            if (relCont) relCont.style.display = 'none';
+            
             var masterWrap = document.getElementById('master-feed-wrapper');
-            if (masterWrap && !masterWrap.classList.contains('hidden')) { document.getElementById('home-feed-container').classList.remove('hidden'); }
+            if (masterWrap && masterWrap.style.display !== 'none') { 
+                var hFeed = document.getElementById('home-feed-container');
+                if(hFeed) hFeed.style.display = 'block'; 
+            }
             window.scrollTo(0,0); 
         }
         
@@ -1641,22 +1667,22 @@
 
         function abrirModalExpediente() {
             var m = document.getElementById('modalExpediente');
-            if(m){ m.classList.remove('hidden'); m.classList.add('flex'); }
+            if(m){ m.style.display = 'flex'; }
         }
 
         function fecharModalExpediente() {
             var m = document.getElementById('modalExpediente');
-            if(m){ m.classList.add('hidden'); m.classList.remove('flex'); }
+            if(m){ m.style.display = 'none'; }
         }
 
         function abrirModalClima() {
             var m = document.getElementById('modalClima');
-            if(m){ m.classList.remove('hidden'); m.classList.add('flex'); }
+            if(m){ m.style.display = 'flex'; }
         }
 
         function fecharModalClima() {
             var m = document.getElementById('modalClima');
-            if(m){ m.classList.add('hidden'); m.classList.remove('flex'); }
+            if(m){ m.style.display = 'none'; }
         }
         
         function abrirModalLogin() { 
