@@ -8,10 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
-    <!-- PONTE FIREBASE (O NOVO MOTOR) -->
+    <!-- PONTE FIREBASE (O NOVO MOTOR OTIMIZADO E SEM BLOQUEIOS) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
@@ -27,7 +26,6 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const auth = getAuth(app);
         const storage = getStorage(app);
 
         function formatDateStr(dt) {
@@ -40,13 +38,9 @@
         }
 
         window.firebaseBridge = {
-            init: async function() {
-                if (!auth.currentUser) await signInAnonymously(auth);
-            },
             getHomeData: async function() {
-                await this.init();
-                const res = { sucesso: true, noticias: [], categorias: [], comentarios: [], propagandas: [], config: {} };
                 try {
+                    const res = { sucesso: true, noticias: [], categorias: [], comentarios: [], propagandas: [], config: {} };
                     const [noticiasSnap, catSnap, configSnap, propSnap, comSnap] = await Promise.all([
                         getDocs(collection(db, 'Noticias')), getDocs(collection(db, 'Categorias')),
                         getDocs(collection(db, 'Configuracoes')), getDocs(collection(db, 'Propagandas')),
@@ -71,10 +65,12 @@
                         return parse(b.dataHora) - parse(a.dataHora);
                     });
                     return res;
-                } catch (err) { return { sucesso: false, erro: err.message }; }
+                } catch (err) { 
+                    console.error("Erro Firebase getHomeData:", err);
+                    return { sucesso: false, erro: err.message }; 
+                }
             },
             verificarLogin: async function(u, p) {
-                await this.init();
                 try {
                     if (u === 'admin' && p === '123456') return { sucesso: true, role: 'admin', usuario: 'admin' };
                     const snap = await getDocs(collection(db, 'Admins'));
@@ -85,12 +81,12 @@
                 } catch(e) { return { sucesso: false, erro: e.message }; }
             },
             salvarUsuario: async function(payload) {
-                await this.init();
-                await setDoc(doc(db, 'Admins', payload.usuario), { senha: payload.senha, role: payload.role || 'admin' });
-                return { sucesso: true };
+                try {
+                    await setDoc(doc(db, 'Admins', payload.usuario), { senha: payload.senha, role: payload.role || 'admin' });
+                    return { sucesso: true };
+                } catch(e) { return { sucesso: false, erro: e.message }; }
             },
             salvarNoticiaNoSheets: async function(payload) {
-                await this.init();
                 try {
                     const id = payload.id || new Date().getTime().toString();
                     let urlImagemFinal = payload.urlImagem || "";
@@ -124,25 +120,31 @@
                 } catch (e) { return { sucesso: false, erro: e.message }; }
             },
             alternarStatusNoticia: async function(id) {
-                await this.init();
-                const ref = doc(db, 'Noticias', id); const snap = await getDoc(ref);
-                if (snap.exists()) {
-                    const st = snap.data().status === 'Ativa' ? 'Inativa' : 'Ativa';
-                    await updateDoc(ref, { status: st }); return { sucesso: true, novoStatus: st };
-                }
-                return { sucesso: false };
+                try {
+                    const ref = doc(db, 'Noticias', id); const snap = await getDoc(ref);
+                    if (snap.exists()) {
+                        const st = snap.data().status === 'Ativa' ? 'Inativa' : 'Ativa';
+                        await updateDoc(ref, { status: st }); return { sucesso: true, novoStatus: st };
+                    }
+                    return { sucesso: false };
+                } catch(e) { return { sucesso: false, erro: e.message }; }
             },
             excluirNoticia: async function(id) {
-                await this.init(); await deleteDoc(doc(db, 'Noticias', id)); return { sucesso: true };
+                try {
+                    await deleteDoc(doc(db, 'Noticias', id)); return { sucesso: true };
+                } catch(e) { return { sucesso: false, erro: e.message }; }
             },
             adicionarCategoriaNoSheets: async function(p) {
-                await this.init(); await setDoc(doc(db, 'Categorias', p.nome), { nome: p.nome }); return { sucesso: true };
+                try {
+                    await setDoc(doc(db, 'Categorias', p.nome), { nome: p.nome }); return { sucesso: true };
+                } catch(e) { return { sucesso: false, erro: e.message }; }
             },
             salvarConfiguracaoHTMLCustom: async function(k, v) {
-                await this.init(); await setDoc(doc(db, 'Configuracoes', k), { valor: v }); return { sucesso: true };
+                try {
+                    await setDoc(doc(db, 'Configuracoes', k), { valor: v }); return { sucesso: true };
+                } catch(e) { return { sucesso: false, erro: e.message }; }
             },
             salvarPropagandaNoSheets: async function(payload) {
-                await this.init();
                 try {
                     const id = new Date().getTime().toString();
                     let urlFinal = payload.urlArquivo || ""; let tipoFinal = payload.tipo || "imagem";
@@ -157,16 +159,17 @@
                 } catch(e) { return { sucesso: false, erro: e.message }; }
             },
             chamarGeminiBackend: async function(prompt) {
-                await this.init();
-                const confRef = await getDoc(doc(db, 'Configuracoes', 'ChaveIA'));
-                const key = confRef.exists() ? confRef.data().valor : '';
-                if (!key) return { sucesso: false, erro: "Chave IA não configurada." };
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-                const json = await res.json();
-                if (json.candidates && json.candidates[0].content) return { sucesso: true, texto: json.candidates[0].content.parts[0].text };
-                return { sucesso: false, erro: "A IA não conseguiu responder." };
+                try {
+                    const confRef = await getDoc(doc(db, 'Configuracoes', 'ChaveIA'));
+                    const key = confRef.exists() ? confRef.data().valor : '';
+                    if (!key) return { sucesso: false, erro: "Chave IA não configurada." };
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
+                    const json = await res.json();
+                    if (json.candidates && json.candidates[0].content) return { sucesso: true, texto: json.candidates[0].content.parts[0].text };
+                    return { sucesso: false, erro: "A IA não conseguiu responder." };
+                } catch(e) { return { sucesso: false, erro: e.message }; }
             }
         };
     </script>
@@ -251,6 +254,7 @@
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
+    <!-- Ecrã de Loading com Proteção Anti-Bloqueio -->
     <div id="loading-global" class="fixed inset-0 z-[99998] bg-jornal-dark flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="w-12 h-12 border-4 border-gray-700 border-t-jornal-red rounded-full animate-spin mb-4"></div>
         <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Sistema...</p>
@@ -486,6 +490,20 @@
         }
 
         document.addEventListener("DOMContentLoaded", function() {
+            // TIMEOUT DE SEGURANÇA NO ARRANQUE:
+            setTimeout(function() {
+                var loader = document.getElementById('loading-global');
+                if (loader && !loader.classList.contains('hidden')) {
+                    loader.classList.add('hidden');
+                    var modalLogin = document.getElementById('modalLogin');
+                    if (modalLogin) {
+                        modalLogin.classList.remove('hidden');
+                        modalLogin.classList.add('flex');
+                    }
+                    mostrarMensagem("Aviso: O carregamento automático demorou mais que o normal. Tente fazer login.", "erro");
+                }
+            }, 12000);
+
             if (localStorage.getItem('admin_logado') === 'true') {
                 window.usuarioLogado = localStorage.getItem('admin_user') || 'admin';
                 document.getElementById('modalLogin').classList.add('hidden');
@@ -538,7 +556,6 @@
             var txtOrig = btn.innerHTML;
             btn.innerHTML = "A LER EXCEL... ⏳"; btn.disabled = true;
 
-            // Busca os dados diretamente do URL do GAS para não ativar o intercetor do Firebase
             fetch(GAS_API_URL, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
@@ -606,7 +623,8 @@
                             btn.innerHTML = "Entrar no Painel"; btn.disabled = false; 
                         }
                     }).catch(function(erro) {
-                        mostrarMensagem("Falha na rede.", 'erro'); btn.innerHTML = "Entrar no Painel"; btn.disabled = false;
+                        mostrarMensagem("Falha na rede ou base de dados.", 'erro'); 
+                        btn.innerHTML = "Entrar no Painel"; btn.disabled = false;
                     });
                 }
             }, 100);
@@ -633,17 +651,30 @@
             var checkReady = setInterval(function() {
                 if (window.firebaseBridge) {
                     clearInterval(checkReady);
-                    window.firebaseBridge.getHomeData().then(function(res) {
-                        loader.classList.add('hidden');
-                        if (res && res.sucesso) {
-                            noticiasGlobais = res.noticias || []; 
-                            if (res.categorias && res.categorias.length > 0) listaCategoriasLocais = res.categorias;
-                            renderizarChecklistCategoriasAdmin();
-                            if (!document.getElementById('lista-noticias-container').classList.contains('hidden')) carregarListaEdicao();
-                        } else { mostrarMensagem("Erro ao carregar dados.", 'erro'); }
-                    });
+                    window.firebaseBridge.getHomeData()
+                        .then(function(res) {
+                            loader.classList.add('hidden');
+                            if (res && res.sucesso) {
+                                noticiasGlobais = res.noticias || []; 
+                                if (res.categorias && res.categorias.length > 0) listaCategoriasLocais = res.categorias;
+                                renderizarChecklistCategoriasAdmin();
+                                if (!document.getElementById('lista-noticias-container').classList.contains('hidden')) carregarListaEdicao();
+                            } else { mostrarMensagem("Erro ao carregar dados: " + (res.erro || ''), 'erro'); }
+                        })
+                        .catch(function(err) {
+                            loader.classList.add('hidden');
+                            mostrarMensagem("Erro de comunicação com o Firebase: " + err.message, "erro");
+                        });
                 }
             }, 100);
+
+            // TIMEOUT DE SEGURANÇA DA LEITURA
+            setTimeout(function() {
+                if (!loader.classList.contains('hidden')) {
+                    loader.classList.add('hidden');
+                    mostrarMensagem("Aviso: O servidor está a demorar a responder ou encontrou um bloqueio. Recarregue a página.", "erro");
+                }
+            }, 15000);
         }
 
         function renderizarChecklistCategoriasAdmin() {
@@ -669,7 +700,7 @@
             var nome = prompt("Escreva o nome da nova editoria:"); if (!nome) return;
             window.firebaseBridge.adicionarCategoriaNoSheets({nome: nome}).then(function(res){
                 if(res.sucesso) { mostrarMensagem("Editoria adicionada!"); if(listaCategoriasLocais.indexOf(nome) === -1) listaCategoriasLocais.push(nome); renderizarChecklistCategoriasAdmin(); }
-            });
+            }).catch(function(e) { mostrarMensagem("Erro a adicionar editoria.", "erro"); });
         }
 
         function execCmd(command, arg) { 
@@ -784,6 +815,9 @@
                 btn.innerHTML = txtOriginal; btn.disabled = false;
                 if(res.sucesso) { mostrarMensagem('Matéria Publicada no Firebase!'); limparFormNoticia(); carregarNoticiasAdmin(); setTimeout(function(){ alternarAbaAdmin('lista-noticias-container'); }, 1000); }
                 else { mostrarMensagem("Erro: " + res.erro, "erro"); }
+            }).catch(function(e) {
+                btn.innerHTML = txtOriginal; btn.disabled = false;
+                mostrarMensagem("Falha na gravação.", "erro");
             });
         }
 
@@ -817,8 +851,21 @@
             });
         }
 
-        function alterarStatusRapido(id, checkbox) { window.firebaseBridge.alternarStatusNoticia(id).then(function(res){ if(res.sucesso) carregarNoticiasAdmin(); }); }
-        function apagarMateria(id) { if(confirm("Eliminar permanentemente?")) window.firebaseBridge.excluirNoticia(id).then(function(res){ if(res.sucesso) carregarNoticiasAdmin(); }); }
+        function alterarStatusRapido(id, checkbox) { 
+            window.firebaseBridge.alternarStatusNoticia(id).then(function(res){ 
+                if(res.sucesso) carregarNoticiasAdmin(); 
+                else { checkbox.checked = !checkbox.checked; mostrarMensagem("Erro a alterar status.", "erro"); }
+            }).catch(function(e) { checkbox.checked = !checkbox.checked; mostrarMensagem("Falha de rede.", "erro"); }); 
+        }
+
+        function apagarMateria(id) { 
+            if(confirm("Eliminar permanentemente?")) {
+                window.firebaseBridge.excluirNoticia(id).then(function(res){ 
+                    if(res.sucesso) carregarNoticiasAdmin(); 
+                    else mostrarMensagem("Erro ao apagar.", "erro");
+                }).catch(function(e) { mostrarMensagem("Falha de rede.", "erro"); });
+            }
+        }
 
         function editarNoticia(id) {
             var noticia = noticiasGlobais.find(function(n) { return String(n.id) === String(id); }); if(!noticia) return;
