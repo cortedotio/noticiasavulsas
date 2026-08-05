@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Redação - Notícias Avulsas (Firebase)</title>
+    <title>Painel de Redação - Notícias Avulsas</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
@@ -52,16 +52,22 @@
                     propSnap.forEach(d => res.propagandas.push({id: d.id, ...d.data()}));
                     comSnap.forEach(d => res.comentarios.push({id: d.id, ...d.data()}));
 
+                    // Ordenação à prova de balas (Garante as mais novas sempre no topo)
                     res.noticias.sort((a,b) => {
-                        function parse(s) {
-                            if(!s) return 0;
-                            const p = s.split(/[\/\s:\-T]/);
-                            if(p.length < 5) return 0;
-                            const ano = p[2].length === 4 ? p[2] : p[0];
-                            const dia = p[0].length <= 2 ? p[0] : p[2];
-                            return new Date(ano, p[1]-1, dia, p[3], p[4]).getTime();
+                        function getTs(str) {
+                            if(!str) return 0;
+                            const dt = new Date(str);
+                            if(!isNaN(dt.getTime())) return dt.getTime();
+                            
+                            const p = str.split(/[\/\s:\-T]/);
+                            if(p.length >= 5) {
+                                const ano = p[2].length === 4 ? p[2] : p[0];
+                                const dia = p[0].length <= 2 ? p[0] : p[2];
+                                return new Date(ano, p[1]-1, dia, p[3], p[4]).getTime();
+                            }
+                            return 0;
                         }
-                        return parse(b.dataHora) - parse(a.dataHora);
+                        return getTs(b.dataHora) - getTs(a.dataHora);
                     });
                     return res;
                 } catch (err) { return { sucesso: false, erro: err.message }; }
@@ -93,7 +99,7 @@
                     let dataRegistro = ""; let statusFinal = payload.statusForcado || 'Ativa';
                     if (payload.dataAgendamento) {
                         const dt = new Date(payload.dataAgendamento);
-                        if (dt > new Date()) statusFinal = 'Agendada';
+                        if (dt > new Date() && statusFinal === 'Ativa') statusFinal = 'Agendada';
                         dataRegistro = formatDateStr(dt);
                     } else { dataRegistro = payload.dataHora || formatDateStr(new Date()); }
 
@@ -207,7 +213,7 @@
     </script>
     
     <style>
-        body { background-color: #f1f2f5; color: #111111; }
+        body { background-color: #f1f5f9; color: #111111; }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -234,7 +240,7 @@
     </div>
 
     <!-- Ecrã de Loading com Proteção Anti-Bloqueio -->
-    <div id="loading-global" class="fixed inset-0 z-[99998] bg-jornal-dark flex flex-col items-center justify-center transition-opacity duration-500">
+    <div id="loading-global" class="fixed inset-0 z-[99998] bg-[#0f172a] flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="w-12 h-12 border-4 border-gray-700 border-t-jornal-red rounded-full animate-spin mb-4"></div>
         <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse mt-4">Acessar Sistema...</p>
     </div>
@@ -249,7 +255,7 @@
             <form onsubmit="fazerLogin(event)" class="space-y-4">
                 <input type="text" id="login-user" class="w-full px-5 py-3.5 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Usuário" />
                 <input type="password" id="login-pass" class="w-full px-5 py-3.5 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Senha" />
-                <button type="submit" id="btn-fazer-login" class="w-full bg-jornal-blue text-white font-black py-4 hover:opacity-90 transition-colors text-xs uppercase tracking-widest rounded-sm mt-4">Entrar no Painel</button>
+                <button type="submit" id="btn-fazer-login" class="w-full bg-[#0f172a] text-white font-black py-4 hover:opacity-90 transition-colors text-xs uppercase tracking-widest rounded-sm mt-4">Entrar no Painel</button>
             </form>
         </div>
     </div>
@@ -272,23 +278,23 @@
         </header>
 
         <main class="max-w-[1400px] mx-auto py-8 px-6 w-full flex-grow">
-            <!-- NAVEGAÇÃO DE TABS -->
-            <div class="flex items-end gap-1 mb-8 border-b-2 border-gray-200 overflow-x-auto custom-scrollbar pt-2 px-2" id="nav-abas-admin">
-                <button type="button" onclick="alternarAbaAdmin('form-noticia-container')" id="aba-noticia" class="py-4 px-8 font-black text-[11px] bg-gray-100 text-gray-500 hover:text-gray-800 hover:bg-gray-200 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Publicar</button>
+            <!-- NAVEGAÇÃO DE TABS (Como na Imagem) -->
+            <div class="flex items-end gap-1 mb-8 border-b border-gray-300 overflow-x-auto custom-scrollbar pt-2" id="nav-abas-admin">
+                <button type="button" onclick="alternarAbaAdmin('form-noticia-container')" id="aba-noticia" class="py-4 px-8 font-black text-[11px] bg-[#020617] text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">PUBLICAR</button>
                 
-                <button type="button" onclick="alternarAbaAdmin('lista-noticias-container')" id="aba-lista" class="py-4 px-8 font-black text-[11px] bg-[#020617] text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Gerir Matérias</button>
+                <button type="button" onclick="alternarAbaAdmin('lista-noticias-container')" id="aba-lista" class="py-4 px-8 font-black text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm">GERIR MATÉRIAS</button>
                 
-                <a href="config.html" class="py-4 px-8 font-black text-[11px] bg-gray-100 text-gray-500 hover:text-gray-800 hover:bg-gray-200 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-2">⚙ Configurações</a>
+                <a href="config.html" class="py-4 px-8 font-black text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-2 shadow-sm">⚙ CONFIGURAÇÕES</a>
                 
-                <a href="instagram.html" class="py-4 px-8 font-black text-[11px] bg-gray-100 text-purple-600 hover:text-purple-800 hover:bg-purple-100 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-2">📸 Estúdio IG</a>
+                <a href="instagram.html" class="py-4 px-8 font-black text-[11px] bg-gray-200 text-purple-600 hover:text-purple-800 hover:bg-purple-100 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-2 shadow-sm">📸 ESTÚDIO IG</a>
                 
-                <a href="index.html" class="py-3 px-6 font-black text-[11px] bg-emerald-100 text-emerald-800 hover:bg-emerald-200 uppercase tracking-widest whitespace-nowrap rounded-sm transition-colors ml-auto mb-1">Ver Portal »</a>
+                <a href="index.html" class="py-3 px-6 font-black text-[11px] bg-emerald-100 text-emerald-800 hover:bg-emerald-200 uppercase tracking-widest whitespace-nowrap rounded-sm transition-colors ml-auto mb-1">VER PORTAL »</a>
             </div>
 
-            <!-- FORMULÁRIO DE NOTÍCIA -->
+            <!-- 1. FORMULÁRIO DE NOTÍCIA -->
             <div id="form-noticia-container" class="hidden bg-white p-8 shadow-sm border border-gray-200 rounded-sm">
-                <div class="border-l-4 border-jornal-red pl-4 mb-8">
-                    <h2 class="font-sans text-2xl font-black text-jornal-dark uppercase tracking-tighter" id="titulo-pagina-form">Redigir Matéria</h2>
+                <div class="border-l-4 border-[#0f172a] pl-4 mb-8">
+                    <h2 class="font-sans text-2xl font-black text-[#0f172a] uppercase tracking-tighter" id="titulo-pagina-form">REDIGIR MATÉRIA</h2>
                 </div>
                 
                 <form id="form-admin" onsubmit="event.preventDefault();" class="space-y-8">
@@ -297,25 +303,25 @@
                     <div class="flex flex-col lg:flex-row gap-8">
                         <div class="lg:w-2/3 flex flex-col gap-6">
                             <div>
-                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">MANCHETE</label>
-                                <input type="text" id="admin-titulo" class="w-full px-5 py-4 bg-[#f8fafc] border border-gray-200 focus:outline-none focus:border-jornal-dark font-serif font-bold text-lg text-jornal-dark rounded-sm transition-colors" placeholder="O título da sua notícia..." />
+                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">MANCHETE</label>
+                                <input type="text" id="admin-titulo" class="w-full px-5 py-4 bg-[#f8fafc] border border-gray-200 focus:outline-none focus:border-[#0f172a] font-serif font-bold text-lg text-[#0f172a] rounded-sm transition-colors" placeholder="O título da sua notícia..." />
                             </div>
                             
                             <div>
                                 <div class="flex justify-between items-end mb-2">
-                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-400">LINHA FINA (OPCIONAL - SEO)</label>
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-500">LINHA FINA (OPCIONAL - SEO)</label>
                                     <button type="button" onclick="gerarLinhaFinaIA()" class="text-[10px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 transition-colors">✨ Gerar com IA</button>
                                 </div>
-                                <input type="text" id="admin-linha-fina" class="w-full px-5 py-3.5 bg-[#f8fafc] border border-gray-200 focus:outline-none focus:border-jornal-dark text-sm font-medium text-gray-700 rounded-sm transition-colors" placeholder="Breve resumo da matéria..." />
+                                <input type="text" id="admin-linha-fina" class="w-full px-5 py-3.5 bg-[#f8fafc] border border-gray-200 focus:outline-none focus:border-[#0f172a] text-sm font-medium text-gray-700 rounded-sm transition-colors" placeholder="Breve resumo da matéria..." />
                             </div>
                         </div>
                         
                         <div class="lg:w-1/3">
-                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">EDITORIAS (MÚLTIPLA SELEÇÃO)</label>
-                            <div class="p-5 bg-[#f8fafc] border border-gray-200 rounded-sm">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">EDITORIAS (MÚLTIPLA SELEÇÃO)</label>
+                            <div class="p-5 bg-white border border-gray-200 rounded-sm">
                                 <div id="admin-categoria-checklist" class="max-h-[140px] overflow-y-auto custom-scrollbar flex flex-col gap-3"></div>
                             </div>
-                            <button type="button" onclick="novaCategoria()" class="text-[10px] font-black text-jornal-red hover:text-red-700 mt-3 block">+ Nova Editoria</button>
+                            <button type="button" onclick="novaCategoria()" class="text-[10px] font-black text-rose-600 hover:text-rose-800 mt-3 block">+ Nova Editoria</button>
                         </div>
                     </div>
 
@@ -325,17 +331,18 @@
                     </div>
 
                     <div>
-                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">AUTOR / ASSINATURA</label>
-                        <input type="text" id="admin-autor" class="w-full px-5 py-3.5 bg-[#f8fafc] border border-gray-200 focus:outline-none focus:border-jornal-dark text-sm font-bold rounded-sm transition-colors" placeholder="Vazio = 'da redação'" />
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">AUTOR / ASSINATURA</label>
+                        <input type="text" id="admin-autor" class="w-full px-5 py-3.5 bg-[#f8fafc] border border-gray-200 focus:outline-none focus:border-[#0f172a] text-sm font-bold rounded-sm transition-colors" placeholder="Ex: João Silva (Vazio = 'da redação')" />
                     </div>
 
                     <!-- Editor Rich Text -->
                     <div>
-                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">CONTEÚDO DA MATÉRIA</label>
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">CONTEÚDO (RICH TEXT AVANÇADO)</label>
                         <input type="file" id="upload-imagem-conteudo" accept="image/*" class="hidden" onchange="processarUploadImagemConteudo(this)" />
                         
                         <div class="flex flex-wrap gap-1 p-3 bg-gray-100 border border-gray-200 border-b-0 rounded-t-sm items-center">
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('undo')" class="px-3 py-2 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded-sm font-bold shadow-sm">U</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('undo')" class="px-3 py-2 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded-sm font-bold shadow-sm" title="Desfazer">↶</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('redo')" class="px-3 py-2 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded-sm font-bold shadow-sm" title="Refazer">↷</button>
                             <span class="w-[1px] h-5 bg-gray-300 mx-2"></span>
                             
                             <select onchange="restaurarSelecao(); aplicarFonte(this.value);" class="fontFamilySelect px-3 py-2 bg-white border border-gray-300 text-xs font-bold rounded-sm shadow-sm focus:outline-none min-w-[120px]">
@@ -359,29 +366,37 @@
                             <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('justifyCenter')" class="px-3 py-2 bg-white border border-gray-300 text-xs font-bold rounded-sm shadow-sm">Cen</button>
                             <span class="w-[1px] h-5 bg-gray-300 mx-2"></span>
                             
-                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirLinkRichEditor()" class="px-3 py-2 bg-white border border-gray-300 text-xs text-blue-600 font-bold rounded-sm shadow-sm">🔗 Link</button>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirImagemRichEditor()" class="px-3 py-2 bg-white border border-gray-300 text-xs text-emerald-600 font-bold rounded-sm shadow-sm">🖼️ Imagem</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('insertUnorderedList')" class="px-3 py-2 bg-white border border-gray-300 text-xs font-bold rounded-sm shadow-sm">UL</button>
                             
                             <span class="w-[1px] h-5 bg-gray-300 mx-2"></span>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="limparFormatacao(this)" class="px-4 py-2 bg-red-50 text-red-600 border border-red-200 text-xs font-bold rounded-sm shadow-sm">Limpar</button>
+                            
+                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirLinkRichEditor()" class="px-3 py-2 bg-white border border-gray-300 text-xs text-blue-600 font-bold rounded-sm shadow-sm" title="Link">🔗</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirImagemRichEditor()" class="px-3 py-2 bg-white border border-gray-300 text-xs text-emerald-600 font-bold rounded-sm shadow-sm" title="Imagem">🖼️</button>
+                            
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('formatBlock', 'H2')" class="px-3 py-2 bg-white border border-gray-300 text-xs font-bold rounded-sm shadow-sm ml-2">H2</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('formatBlock', 'blockquote')" class="px-3 py-2 bg-white border border-gray-300 text-xs font-bold rounded-sm shadow-sm">""</button>
+                            
+                            <button type="button" onmousedown="event.preventDefault();" onclick="limparFormatacao(this)" class="px-4 py-2 bg-red-50 text-red-600 border border-red-200 text-xs font-bold rounded-sm shadow-sm ml-2">Limpar Formatação</button>
+                            
+                            <button type="button" id="btn-ia-conteudo" onclick="gerarConteudoIA()" class="ml-auto px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-800 border border-purple-200 text-xs font-bold rounded-sm shadow-sm transition-colors flex items-center justify-center gap-1">✨ Escrever com IA</button>
                         </div>
                         <div id="admin-editor-rich" contenteditable="true" class="w-full px-8 py-8 bg-white border border-gray-200 rounded-b-sm min-h-[400px] max-h-[600px] overflow-y-auto focus:outline-none focus:ring-1 focus:ring-jornal-dark text-base leading-relaxed font-serif custom-scrollbar rich-editor"></div>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-[#f8fafc] border border-gray-200 rounded-sm">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-white border border-gray-200 rounded-sm">
                         <div>
-                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3 block">UPLOAD DA FOTO DE CAPA</label>
-                            <input type="file" id="admin-arquivo-imagem" accept="image/*" class="w-full text-sm file:mr-3 file:py-2.5 file:px-5 file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-[#0f172a] file:text-white cursor-pointer rounded-sm bg-white border border-gray-300 shadow-sm" onchange="verificarUploadMedia(this)" />
+                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3 block">UPLOAD DA FOTO DE CAPA</label>
+                            <input type="file" id="admin-arquivo-imagem" accept="image/*" class="w-full text-sm file:mr-3 file:py-2.5 file:px-5 file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-[#020617] file:text-white cursor-pointer rounded-sm bg-gray-50 border border-gray-300 shadow-sm" onchange="verificarUploadMedia(this)" />
                             <img id="preview-imagem" loading="lazy" src="" class="mt-4 w-full h-48 object-contain bg-gray-100 border border-gray-200 rounded-sm hidden shadow-inner" />
                         </div>
                         
                         <div class="flex flex-col gap-6">
                             <div>
-                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-2">AGENDAMENTO</label>
+                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 block mb-2">AGENDAMENTO OU PUBLICAÇÃO RETROATIVA</label>
                                 <input type="datetime-local" id="admin-agendamento" class="w-full px-5 py-3.5 bg-white border border-gray-300 focus:outline-none focus:border-jornal-dark text-sm font-bold text-gray-700 rounded-sm shadow-sm transition-colors" />
                             </div>
                             <div>
-                                <label class="text-[10px] font-black uppercase tracking-widest text-rose-600 block mb-2">FIM DO EVENTO</label>
+                                <label class="text-[10px] font-black uppercase tracking-widest text-rose-600 block mb-2">FIM DO EVENTO (OBRIGATÓRIO SE FOR AGENDA)</label>
                                 <input type="datetime-local" id="admin-data-fim-evento" class="w-full px-5 py-3.5 bg-white border border-gray-300 focus:outline-none focus:border-rose-500 text-sm font-bold text-gray-700 rounded-sm shadow-sm transition-colors" />
                             </div>
                         </div>
@@ -400,51 +415,67 @@
                         </div>
                     </div>
 
-                    <div class="p-6 bg-sky-50/50 border border-sky-200 rounded-sm">
+                    <!-- NOTÍCIAS RELACIONADAS (Layout Fiel à Imagem) -->
+                    <div class="p-6 bg-[#f8fafc] border border-gray-200 rounded-sm mt-6">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-[#2f2b8a] mb-3 block">NOTÍCIAS RELACIONADAS</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="admin-busca-relacionada" placeholder="Pesquisar por título, editoria ou cidade..." class="flex-grow px-5 py-3.5 bg-white border border-gray-300 rounded-sm text-sm font-medium focus:outline-none focus:border-[#4f46e5]">
+                            <button type="button" onclick="buscarRelacionadas()" class="bg-[#4f46e5] hover:bg-[#4338ca] text-white px-8 py-3.5 rounded-sm text-xs font-black uppercase tracking-widest transition-colors shadow-sm">PESQUISAR</button>
+                        </div>
+                        
+                        <div id="lista-resultados-relacionadas" class="mt-4 space-y-2"></div>
+                        <div id="lista-selecionadas-relacionadas" class="mt-4 space-y-2"></div>
+                        <input type="hidden" id="admin-relacionadas-ids" value="">
+                    </div>
+
+                    <div class="p-6 bg-[#f8fafc] border border-gray-200 rounded-sm">
                         <label class="flex items-center gap-4 cursor-pointer">
-                            <input type="checkbox" id="admin-carrossel" class="w-5 h-5 text-sky-600 border-gray-400 rounded focus:ring-sky-500" />
-                            <span class="text-xs font-black text-[#0f172a] uppercase tracking-widest block">ADICIONAR AO CARROSSEL DE DESTAQUES</span>
+                            <input type="checkbox" id="admin-carrossel" class="w-5 h-5 text-[#0f172a] border-gray-400 rounded focus:ring-[#0f172a]" />
+                            <span class="text-xs font-black text-[#020617] uppercase tracking-widest block">ADICIONAR AO CARROSSEL DE DESTAQUES</span>
                         </label>
                     </div>
 
-                    <div class="pt-8 mt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-6">
-                        <button type="button" onclick="limparFormNoticia()" class="text-[11px] font-black text-gray-400 hover:text-jornal-red uppercase tracking-widest py-3 px-6 border border-transparent hover:border-gray-200 rounded-sm transition-all">LIMPAR FORMULÁRIO</button>
-                        <button type="submit" id="btn-salvar-noticia" onclick="salvarNoticia(event)" class="w-full md:w-auto bg-[#0f172a] hover:bg-[#1e293b] text-white font-black px-14 py-4 uppercase tracking-widest text-sm rounded-sm shadow-lg transition-colors">PUBLICAR MATÉRIA</button>
+                    <div class="pt-8 mt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <button type="button" onclick="limparFormNoticia()" class="text-[11px] font-black text-gray-500 hover:text-gray-800 uppercase tracking-widest py-3 px-6 transition-all">LIMPAR FORM</button>
+                        <div class="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                            <button type="button" onclick="salvarRascunho()" class="w-full md:w-auto bg-[#94a3b8] hover:bg-[#64748b] text-white font-black px-10 py-4 uppercase tracking-widest text-sm rounded-sm shadow-md transition-colors">SALVAR RASCUNHO</button>
+                            <button type="submit" id="btn-salvar-noticia" onclick="salvarNoticia(event)" class="w-full md:w-auto bg-[#020617] hover:bg-[#1e293b] text-white font-black px-12 py-4 uppercase tracking-widest text-sm rounded-sm shadow-xl transition-colors">PUBLICAR MATÉRIA</button>
+                        </div>
                     </div>
                 </form>
             </div>
 
-            <!-- LISTAGEM (GERIR MATÉRIAS) -->
+            <!-- 2. LISTAGEM (GERIR MATÉRIAS) -->
             <div id="lista-noticias-container" class="bg-white p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-jornal-red pl-4 mb-8">
-                    <h2 class="font-sans text-2xl font-black text-jornal-dark uppercase tracking-tighter">Editar Publicações</h2>
+                    <h2 class="font-sans text-2xl font-black text-jornal-dark uppercase tracking-tighter">EDITAR PUBLICAÇÕES</h2>
                 </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 p-6 bg-[#f8fafc] border border-gray-200 rounded-sm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 p-6 bg-white border border-gray-200 rounded-sm">
                     <div>
                         <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 block">FILTRAR POR EDITORIA</label>
-                        <select id="admin-filtro-editoria" onchange="carregarListaEdicao()" class="w-full px-5 py-3.5 bg-white border border-gray-300 focus:outline-none focus:border-jornal-dark text-sm font-bold text-jornal-dark rounded-sm shadow-sm transition-colors">
+                        <select id="admin-filtro-editoria" onchange="carregarListaEdicao()" class="w-full px-5 py-3.5 bg-white border border-gray-300 focus:outline-none focus:border-jornal-dark text-sm font-bold text-gray-700 rounded-sm shadow-sm transition-colors">
                             <option value="todas">Todas as editorias</option>
                         </select>
                     </div>
                     <div>
                         <label class="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 block">PESQUISAR MATÉRIA</label>
-                        <input type="search" id="admin-pesquisa-materia" oninput="carregarListaEdicao()" placeholder="Digite título ou conteúdo..." class="w-full px-5 py-3.5 bg-white border border-gray-300 focus:outline-none focus:border-jornal-dark text-sm font-bold text-jornal-dark rounded-sm shadow-sm transition-colors" />
+                        <input type="search" id="admin-pesquisa-materia" oninput="carregarListaEdicao()" placeholder="Digite título ou conteúdo..." class="w-full px-5 py-3.5 bg-white border border-gray-300 focus:outline-none focus:border-jornal-dark text-sm font-bold text-gray-700 rounded-sm shadow-sm transition-colors" />
                     </div>
                 </div>
                 
                 <div class="overflow-x-auto border border-gray-200 rounded-sm">
                     <table class="w-full text-left text-sm whitespace-nowrap">
-                        <thead class="bg-gray-100/50 border-b border-gray-200 text-[10px] uppercase font-black tracking-widest text-gray-500">
+                        <thead class="bg-[#f8fafc] border-b border-gray-200 text-[10px] uppercase font-black tracking-widest text-gray-500">
                             <tr>
-                                <th class="p-5">Data</th>
-                                <th class="p-5">Editorias</th>
-                                <th class="p-5">Manchete</th>
-                                <th class="p-5">Autor</th>
-                                <th class="p-5">Publicador</th>
-                                <th class="p-5">Visões</th>
-                                <th class="p-5">Visibilidade</th>
-                                <th class="p-5 text-center">Ações</th>
+                                <th class="p-5 w-1">DATA</th>
+                                <th class="p-5">EDITORIAS</th>
+                                <th class="p-5">MANCHETE</th>
+                                <th class="p-5">AUTOR</th>
+                                <th class="p-5">PUBLICADOR</th>
+                                <th class="p-5 text-center">VISÕES</th>
+                                <th class="p-5 text-center">VISIBILIDADE</th>
+                                <th class="p-5 text-center">AÇÕES</th>
                             </tr>
                         </thead>
                         <tbody id="admin-tabela-noticias" class="divide-y divide-gray-100"></tbody>
@@ -462,6 +493,7 @@
         var base64StringNoticia = ""; var mimeStringNoticia = ""; var nameStringNoticia = "";
         window.usuarioLogado = 'admin'; window.roleLogado = 'admin';
         var rangeSalvo = null;
+        window.relacionadasSelecionadas = [];
 
         document.addEventListener('selectionchange', function() {
             var sel = window.getSelection();
@@ -486,7 +518,7 @@
                     loader.classList.add('hidden');
                     var modalLogin = document.getElementById('modalLogin');
                     if (modalLogin) { modalLogin.classList.remove('hidden'); modalLogin.classList.add('flex'); }
-                    mostrarMensagem("O carregamento demorou mais que o normal. Tente fazer login.", "erro");
+                    mostrarMensagem("A base de dados tem muitas matérias. A carregar em background...", "sucesso");
                 }
             }, 12000);
 
@@ -500,31 +532,6 @@
                 document.getElementById('loading-global').classList.add('hidden');
                 document.getElementById('modalLogin').classList.remove('hidden');
                 document.getElementById('modalLogin').classList.add('flex');
-            }
-            
-            var editorRich = document.getElementById('admin-editor-rich');
-            if (editorRich) {
-                editorRich.addEventListener('click', function(e) {
-                    var el = e.target;
-                    if (el && (el.classList.contains('btn-diminuir-img') || el.classList.contains('btn-aumentar-img'))) {
-                        e.preventDefault(); e.stopPropagation();
-                        var figure = el.closest('figure');
-                        var img = figure ? figure.querySelector('img') : null;
-                        if (img) {
-                            var currentWidthStr = img.style.width || img.width + 'px';
-                            var val = parseFloat(currentWidthStr);
-                            var isPercent = currentWidthStr.indexOf('%') !== -1;
-                            if (isNaN(val)) { val = 300; isPercent = false; }
-                            var step = isPercent ? 10 : 50; 
-                            if (el.classList.contains('btn-aumentar-img')) { val += step; } else { val -= step; if(val < 50) val = 50; }
-                            if (isPercent && val > 100) val = 100;
-                            img.style.width = val + (isPercent ? '%' : 'px');
-                            img.style.maxWidth = '100%';
-                        }
-                    }
-                });
-                editorRich.addEventListener('keyup', atualizarBarraFerramentas);
-                editorRich.addEventListener('mouseup', atualizarBarraFerramentas);
             }
         });
 
@@ -576,8 +583,8 @@
         function alternarAbaAdmin(abaId) {
             ['form-noticia-container', 'lista-noticias-container'].forEach(function(id) { var el = document.getElementById(id); if (el) el.classList.add('hidden'); });
             
-            var classInativa = "py-4 px-8 font-black text-[11px] bg-gray-100 text-gray-500 hover:text-gray-800 hover:bg-gray-200 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors";
-            var classAtiva = "py-4 px-8 font-black text-[11px] bg-[#020617] text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors";
+            var classInativa = "py-4 px-8 font-black text-[11px] bg-gray-100 text-gray-500 hover:text-gray-800 hover:bg-gray-200 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm";
+            var classAtiva = "py-4 px-8 font-black text-[11px] bg-[#020617] text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors shadow-sm";
             
             ['aba-noticia', 'aba-lista'].forEach(function(id) { 
                 var el = document.getElementById(id); 
@@ -618,7 +625,7 @@
             checklistAdmin.innerHTML = '';
             listaCategoriasLocais.forEach(function(c) {
                 if (!c) return; var nomeCat = String(c).trim();
-                checklistAdmin.innerHTML += `<label class="flex items-center gap-3 cursor-pointer text-sm font-bold text-slate-700 p-2 hover:bg-white rounded-sm transition-colors border border-transparent hover:border-gray-200"><input type="checkbox" name="admin-categorias-checkbox" value="${nomeCat}" onchange="atualizarCampoCidadeAdmin();" class="w-5 h-5 text-jornal-dark rounded border-gray-300 focus:ring-jornal-dark" /> ${nomeCat.toUpperCase()}</label>`;
+                checklistAdmin.innerHTML += `<label class="flex items-center gap-3 cursor-pointer text-sm font-bold text-gray-700 p-2 hover:bg-gray-50 rounded-sm transition-colors"><input type="checkbox" name="admin-categorias-checkbox" value="${nomeCat}" onchange="atualizarCampoCidadeAdmin();" class="w-5 h-5 text-[#020617] rounded border-gray-300 focus:ring-[#020617]" /> ${nomeCat.toUpperCase()}</label>`;
             });
         }
 
@@ -639,6 +646,56 @@
             }).catch(function(e) { mostrarMensagem("Erro a adicionar editoria.", "erro"); });
         }
 
+        // =====================================
+        // LOGICA DE NOTICIAS RELACIONADAS
+        // =====================================
+        function buscarRelacionadas() {
+            var inputVal = normalizarTexto(document.getElementById('admin-busca-relacionada').value);
+            var divResultados = document.getElementById('lista-resultados-relacionadas');
+            if(!inputVal || inputVal.length < 2) { divResultados.innerHTML = '<div class="text-xs text-indigo-500 font-bold p-2">Digite pelo menos 2 letras.</div>'; return; }
+            
+            var res = noticiasGlobais.filter(function(n) {
+                var txt = normalizarTexto([n.titulo, n.categoria, n.cidade].join(' '));
+                return n.status === 'Ativa' && txt.indexOf(inputVal) !== -1;
+            }).slice(0, 5);
+            
+            var html = '';
+            if (res.length === 0) { html = '<div class="text-xs text-indigo-500 font-bold p-2">Nenhum resultado encontrado.</div>'; }
+            else {
+                res.forEach(function(n) {
+                    var tituloSafe = n.titulo.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    html += '<div class="flex justify-between items-center p-3 bg-white border border-indigo-200 text-xs rounded-sm hover:shadow-md transition-shadow"><div class="flex-grow min-w-0 pr-2 truncate font-bold text-gray-700">' + n.titulo + '</div><button type="button" onclick="adicionarRelacionada(\'' + n.id + '\', \'' + tituloSafe + '\')" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-black px-3 py-1 rounded text-[10px] uppercase tracking-widest shrink-0">Add</button></div>';
+                });
+            }
+            divResultados.innerHTML = html;
+        }
+
+        function adicionarRelacionada(id, titulo) {
+            if (window.relacionadasSelecionadas.length >= 3) { mostrarMensagem("Limite de 3 matérias atingido.", "erro"); return; }
+            if (window.relacionadasSelecionadas.find(function(r) { return r.id === id; })) { mostrarMensagem("Matéria já selecionada.", "erro"); return; }
+            window.relacionadasSelecionadas.push({id: id, titulo: titulo});
+            atualizarUIListaRelacionadas();
+            document.getElementById('lista-resultados-relacionadas').innerHTML = '';
+            document.getElementById('admin-busca-relacionada').value = '';
+        }
+
+        function removerRelacionada(id) {
+            window.relacionadasSelecionadas = window.relacionadasSelecionadas.filter(function(r) { return r.id !== id; });
+            atualizarUIListaRelacionadas();
+        }
+
+        function atualizarUIListaRelacionadas() {
+            var html = '';
+            window.relacionadasSelecionadas.forEach(function(r) {
+                html += '<div class="flex justify-between items-center p-3 bg-[#4f46e5] text-white text-xs rounded-sm shadow-sm"><div class="flex-grow min-w-0 pr-2 truncate font-bold">' + r.titulo + '</div><button type="button" onclick="removerRelacionada(\'' + r.id + '\')" class="text-red-200 hover:text-white font-black px-2 py-1 text-[10px] uppercase tracking-widest">Remover</button></div>';
+            });
+            document.getElementById('lista-selecionadas-relacionadas').innerHTML = html;
+            document.getElementById('admin-relacionadas-ids').value = window.relacionadasSelecionadas.map(function(r){return r.id;}).join(',');
+        }
+
+        // =====================================
+        // EDITOR E COMANDOS
+        // =====================================
         function execCmd(command, arg) { 
             if(arg === undefined) arg = null; 
             if(command === 'fontName' || command === 'fontSize') restaurarSelecao();
@@ -671,6 +728,7 @@
         }
 
         function inserirImagemRichEditor() { document.getElementById('upload-imagem-conteudo').click(); }
+        function inserirLinkRichEditor() { var url = prompt("Insira a URL completa do hiperlink:"); if (url) execCmd('createLink', url); }
 
         function processarUploadImagemConteudo(input) {
             if (!input.files || !input.files[0]) return; var file = input.files[0]; var reader = new FileReader();
@@ -706,11 +764,17 @@
 
         function limparFormNoticia() {
             document.getElementById('form-admin').reset(); document.getElementById('admin-id-noticia').value = ""; document.getElementById('preview-imagem').classList.add('hidden'); document.getElementById('preview-imagem').src = ""; document.getElementById('admin-editor-rich').innerHTML = ""; document.getElementById('admin-imagem-metadados').classList.add('hidden'); document.getElementById('admin-creditos-imagem').required = false; base64StringNoticia = ""; document.querySelectorAll('input[name="admin-categorias-checkbox"]').forEach(function(cb) { cb.checked = false; }); atualizarCampoCidadeAdmin(); 
-            var btnSalvar = document.getElementById('btn-salvar-noticia'); if (btnSalvar) btnSalvar.innerText = "PUBLICAR MATÉRIA"; document.getElementById('titulo-pagina-form').innerText = "Redigir Matéria";
+            window.relacionadasSelecionadas = []; atualizarUIListaRelacionadas();
+            var btnSalvar = document.getElementById('btn-salvar-noticia'); if (btnSalvar) btnSalvar.innerText = "PUBLICAR MATÉRIA"; document.getElementById('titulo-pagina-form').innerText = "REDIGIR MATÉRIA";
         }
 
-        function salvarNoticia(e) {
-            if(e) e.preventDefault(); 
+        // =====================================
+        // GRAVAÇÃO DA MATÉRIA (Ativa ou Inativa)
+        // =====================================
+        function salvarRascunho() { processarGravacaoNoticia('Inativa'); }
+        function salvarNoticia(e) { if(e) e.preventDefault(); processarGravacaoNoticia('Ativa'); }
+
+        function processarGravacaoNoticia(statusSelecionado) {
             var editandoID = document.getElementById('admin-id-noticia').value; var prevSrc = document.getElementById('preview-imagem').src; var temImagemAnterior = prevSrc && prevSrc !== "";
             var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked'); 
             var tituloDigitado = document.getElementById('admin-titulo').value.trim(); var creditos = document.getElementById('admin-creditos-imagem').value.trim();
@@ -719,7 +783,7 @@
             if ((base64StringNoticia || temImagemAnterior) && !creditos) { mostrarMensagem("Crédito de imagem obrigatório.", "erro"); return; }
             
             var categoriasSelecionadas = Array.from(checkboxes).map(function(cb) { return cb.value; }).join(", ");
-            var btn = document.getElementById('btn-salvar-noticia'); var txtOriginal = btn.innerHTML; btn.innerHTML = 'A publicar...'; btn.disabled = true;
+            var btn = document.getElementById('btn-salvar-noticia'); var txtOriginal = btn.innerHTML; btn.innerHTML = 'A GUARDAR...'; btn.disabled = true;
 
             var conteudoRich = document.getElementById('admin-editor-rich').innerHTML;
             var tamanhoEmBytes = new Blob([conteudoRich]).size;
@@ -735,8 +799,8 @@
                 linhaFina: document.getElementById('admin-linha-fina').value.trim(), conteudo: conteudoLimpo, 
                 autor: document.getElementById('admin-autor').value.trim(), dataAgendamento: document.getElementById('admin-agendamento').value, 
                 dataFimEvento: document.getElementById('admin-data-fim-evento').value, legendaImagem: document.getElementById('admin-legenda-imagem').value, 
-                creditosImagem: creditos, statusForcado: 'Ativa', noCarrossel: document.getElementById('admin-carrossel').checked,
-                usuarioPublicador: window.usuarioLogado
+                creditosImagem: creditos, statusForcado: statusSelecionado, noCarrossel: document.getElementById('admin-carrossel').checked,
+                usuarioPublicador: window.usuarioLogado, relacionadas: document.getElementById('admin-relacionadas-ids').value
             };
             
             if (base64StringNoticia) { payload.isUpload = true; payload.base64 = base64StringNoticia; payload.mimeType = mimeStringNoticia; payload.fileName = nameStringNoticia; } 
@@ -745,11 +809,14 @@
             
             window.firebaseBridge.salvarNoticiaNoSheets(payload).then(function(res){
                 btn.innerHTML = txtOriginal; btn.disabled = false;
-                if(res.sucesso) { mostrarMensagem('Matéria Publicada no Firebase!'); limparFormNoticia(); carregarNoticiasAdmin(); setTimeout(function(){ alternarAbaAdmin('lista-noticias-container'); }, 1000); }
+                if(res.sucesso) { mostrarMensagem('Matéria Guardada com Sucesso!'); limparFormNoticia(); carregarNoticiasAdmin(); setTimeout(function(){ alternarAbaAdmin('lista-noticias-container'); }, 1000); }
                 else { mostrarMensagem("Erro: " + res.erro, "erro"); }
             }).catch(function(e) { btn.innerHTML = txtOriginal; btn.disabled = false; mostrarMensagem("Falha na gravação.", "erro"); });
         }
 
+        // =====================================
+        // LISTAGEM E FORMATAÇÃO DA TABELA
+        // =====================================
         function atualizarFiltroEditoriasAdmin() {
             var select = document.getElementById('admin-filtro-editoria'); if (!select) return;
             var valorAtual = select.value || 'todas'; var categorias = [];
@@ -775,23 +842,41 @@
                 var checkedAttr = isAtivo ? 'checked' : '';
                 var categoryBadge = (n.categoria || 'Geral').split(',')[0].trim();
 
+                var dataOriginal = n.dataHora || '';
+                var dataLimpa = dataOriginal;
+                
+                // Tratamento especial para limpar o formato gigante do fuso horário na visualização
+                if (dataOriginal.includes('GMT')) {
+                    var d = new Date(dataOriginal);
+                    if (!isNaN(d.getTime())) {
+                        var dia = String(d.getDate()).padStart(2, '0');
+                        var mes = String(d.getMonth() + 1).padStart(2, '0');
+                        var ano = d.getFullYear();
+                        var hora = String(d.getHours()).padStart(2, '0');
+                        var min = String(d.getMinutes()).padStart(2, '0');
+                        dataLimpa = dia + '/' + mes + '/' + ano + ' ' + hora + ':' + min;
+                    } else {
+                        dataLimpa = dataOriginal.substring(0, 16); // Fallback
+                    }
+                }
+
                 tbody.innerHTML += `
                     <tr class="hover:bg-gray-50 border-b border-gray-100 transition-colors">
-                        <td class="p-5 text-xs font-medium text-gray-500 whitespace-nowrap">${n.dataHora || ''}</td>
-                        <td class="p-5 whitespace-nowrap"><span class="bg-gray-200 text-gray-800 px-2.5 py-1.5 rounded-sm text-[9px] uppercase font-black tracking-widest">${categoryBadge}</span></td>
-                        <td class="p-5 font-black text-[13px] text-jornal-dark truncate max-w-[280px] whitespace-normal leading-tight" title="${n.titulo.replace(/"/g, '&quot;')}">${n.titulo}</td>
-                        <td class="p-5 text-xs font-medium text-gray-500 whitespace-nowrap">${n.autor || 'da redação'}</td>
-                        <td class="p-5 text-xs font-medium text-gray-500 whitespace-nowrap">${n.usuarioPublicador || 'admin'}</td>
-                        <td class="p-5 text-xs font-black text-gray-400 whitespace-nowrap flex items-center gap-1.5 pt-6"><span class="text-[14px]">👁</span> <span class="text-jornal-dark">${n.views || 0}</span></td>
-                        <td class="p-5 whitespace-nowrap">
+                        <td class="p-5 text-xs font-medium text-gray-500 whitespace-nowrap w-1">${dataLimpa}</td>
+                        <td class="p-5 whitespace-nowrap w-1"><span class="bg-gray-200 text-gray-800 px-2.5 py-1.5 rounded-sm text-[9px] uppercase font-black tracking-widest">${categoryBadge}</span></td>
+                        <td class="p-5 font-black text-[13px] text-[#0f172a] truncate max-w-[280px] whitespace-normal leading-tight" title="${n.titulo.replace(/"/g, '&quot;')}">${n.titulo}</td>
+                        <td class="p-5 text-xs font-medium text-gray-500 whitespace-nowrap w-1">${n.autor || 'da redação'}</td>
+                        <td class="p-5 text-xs font-medium text-gray-500 whitespace-nowrap w-1">${n.usuarioPublicador || 'admin'}</td>
+                        <td class="p-5 text-xs font-black text-gray-400 whitespace-nowrap w-1 text-center"><span class="text-[14px]">👁</span> <span class="text-[#0f172a]">${n.views || 0}</span></td>
+                        <td class="p-5 whitespace-nowrap w-1">
                             <label class="relative inline-flex items-center cursor-pointer select-none">
                                 <input type="checkbox" class="sr-only peer" ${checkedAttr} onchange="alterarStatusRapido('${n.id}', this)" />
                                 <div class="w-10 h-5 bg-gray-300 rounded-full peer peer-checked:bg-emerald-500 transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
                                 <span class="ml-3 text-[10px] font-black uppercase tracking-widest min-w-[70px] ${corStat}">${txtStat}</span>
                             </label>
                         </td>
-                        <td class="p-5 text-center flex gap-2 justify-center whitespace-nowrap">
-                            <button type="button" onclick="editarNoticia('${n.id}')" class="text-[10px] font-black uppercase text-jornal-dark border border-gray-300 px-4 py-1.5 rounded-sm hover:bg-gray-100 transition-colors bg-white">EDITAR</button>
+                        <td class="p-5 text-center flex gap-2 justify-center whitespace-nowrap w-1">
+                            <button type="button" onclick="editarNoticia('${n.id}')" class="text-[10px] font-black uppercase text-[#0f172a] border border-gray-300 px-4 py-1.5 rounded-sm hover:bg-gray-100 transition-colors bg-white">EDITAR</button>
                             <button type="button" onclick="apagarMateria('${n.id}')" class="text-[10px] font-black uppercase text-red-600 border border-red-200 px-4 py-1.5 rounded-sm hover:bg-red-50 transition-colors bg-white">EXCLUIR</button>
                         </td>
                     </tr>
@@ -840,9 +925,22 @@
                 try { var dtFim = new Date(noticia.dataFimEvento); if(!isNaN(dtFim.getTime())) document.getElementById('admin-data-fim-evento').value = dtFim.toISOString().slice(0,16); } catch(e){}
             }
             
+            if (noticia.relacionadas) {
+                var relIds = String(noticia.relacionadas).split(',');
+                window.relacionadasSelecionadas = [];
+                relIds.forEach(function(rId) {
+                    var rn = noticiasGlobais.find(function(x) { return x.id === rId.trim(); });
+                    if(rn) window.relacionadasSelecionadas.push({id: rn.id, titulo: rn.titulo});
+                });
+                atualizarUIListaRelacionadas();
+            } else {
+                window.relacionadasSelecionadas = [];
+                atualizarUIListaRelacionadas();
+            }
+            
             var prevImg = document.getElementById('preview-imagem'); 
             if (prevImg) { if(noticia.urlImagem) { prevImg.src = noticia.urlImagem; prevImg.classList.remove('hidden'); document.getElementById('admin-imagem-metadados').classList.remove('hidden'); } else { prevImg.classList.add('hidden'); } }
-            document.getElementById('titulo-pagina-form').innerText = "Editar Matéria"; alternarAbaAdmin('form-noticia-container'); window.scrollTo(0,0);
+            document.getElementById('titulo-pagina-form').innerText = "EDITAR MATÉRIA"; alternarAbaAdmin('form-noticia-container'); window.scrollTo(0,0);
         }
     </script>
 </body>
