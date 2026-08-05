@@ -21,7 +21,7 @@
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
     
     <script>
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw3BLfTFC2Z4sPOQcFMEx8rO8Xz862pVR8STIcc_XK-HAtZjC_CTS_Xs36gh1qbwzWf/exec";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyoHo_olvZbyvT-qfKBDAveq1-n1IHD_bLxf831i_bBrFJeSVTcc6RTfvdQ9QV25hTh/exec";
         
         window.google = {
             script: {
@@ -115,7 +115,7 @@
              </h1>
         </div>
         <div class="w-10 h-10 border-4 border-gray-100 border-t-rose-600 rounded-full animate-spin mb-4"></div>
-        <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 animate-pulse">Acessar Servidor...</p>
+        <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 animate-pulse">A ligar ao servidor de notícias...</p>
     </div>
 
     <div id="view-portal" class="flex-grow flex flex-col relative min-w-0">
@@ -214,7 +214,7 @@
 
                         <div id="grid-editorias-exclusivo" class="w-full mb-10 hidden flex-col min-w-0 text-slate-800"></div>
                         
-                        <!-- Skeleton do Destaque Inicial (Profissionalismo enquanto carrega) -->
+                        <!-- SKELETON DO DESTAQUE: Mostra enquanto as notícias não chegam -->
                         <div id="destaque-noticia" class="w-full mb-8 min-w-0">
                             <article class="flex flex-col md:flex-row h-full overflow-hidden border border-gray-200 rounded-sm bg-white animate-pulse">
                                 <div class="md:w-[55%] w-full bg-gray-200 min-h-[350px] shrink-0"></div>
@@ -232,7 +232,7 @@
                             <h2 class="text-sm font-black uppercase tracking-widest text-jornal-dark" id="titulo-seccao-feed">Últimas Notícias</h2>
                         </div>
                         
-                        <!-- Skeletons da Grelha de Notícias -->
+                        <!-- SKELETON DA GRELHA: Preenche o espaço para não ficar em branco -->
                         <div id="grid-noticias" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full min-w-0">
                             <!-- Skeleton 1 -->
                             <div class="bg-white border border-gray-200 rounded-sm overflow-hidden animate-pulse">
@@ -287,7 +287,6 @@
 
                     <!-- Notícia Completa Container -->
                     <div id="noticia-completa-container" class="hidden bg-white border border-gray-200 p-5 md:p-10 shadow-sm min-w-0 rounded-sm">
-                        <!-- ... (O conteúdo da notícia preenchido pelo JS) ... -->
                         <button onclick="voltarCapa()" class="mb-6 text-jornal-red font-black text-[10px] uppercase tracking-widest hover:underline flex items-center gap-1">&larr; Voltar à Capa</button>
                         
                         <span id="nc-categoria" class="text-jornal-red text-[11px] font-black uppercase tracking-widest mb-4 block cursor-pointer hover:underline" onclick="filtrarCategoria(this.innerText)"></span>
@@ -388,7 +387,6 @@
                             </h2>
                         </div>
                         <div id="widget-placar" class="space-y-4 min-w-0">
-                            <!-- Skeleton Placar -->
                             <div class="animate-pulse bg-gray-100 h-16 rounded mb-2"></div>
                             <div class="animate-pulse bg-gray-100 h-16 rounded mb-2"></div>
                         </div>
@@ -414,7 +412,6 @@
                             <h2 class="text-xs font-black uppercase tracking-widest text-jornal-blue">Top 10 Mais Lidas</h2>
                         </div>
                         <ul id="lista-mais-lidas" class="space-y-4 divide-y divide-gray-100 min-w-0">
-                            <!-- Skeletons Top 10 -->
                             <li class="animate-pulse flex gap-3"><div class="w-8 h-8 rounded-full bg-gray-200 shrink-0"></div><div class="h-8 bg-gray-200 rounded w-full"></div></li>
                             <li class="animate-pulse flex gap-3"><div class="w-8 h-8 rounded-full bg-gray-200 shrink-0"></div><div class="h-8 bg-gray-200 rounded w-full"></div></li>
                             <li class="animate-pulse flex gap-3"><div class="w-8 h-8 rounded-full bg-gray-200 shrink-0"></div><div class="h-8 bg-gray-200 rounded w-full"></div></li>
@@ -446,6 +443,7 @@
         </footer>
     </div>
 
+    <!-- Modais (Expediente, Clima, Login) -->
     <div id="modalExpediente" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/90 backdrop-blur-sm" onclick="fecharModalExpediente()"></div>
         <div class="bg-white w-full max-w-3xl rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-blue flex flex-col max-h-[90vh]">
@@ -609,17 +607,17 @@
         var dadosClimaGlobal = null;
         window.agendaCarousels = [];
         window.agendaTimers = {};
-        var dadosCarregados = false; // Flag de segurança
+        
+        var dadosCarregados = false; 
 
         document.addEventListener("DOMContentLoaded", function() {
             carregarNoticias(false);
             
-            // ALARME DE SEGURANÇA: Se o site não carregar em 8s, força o erro profissional
             setTimeout(function() {
                 if (!dadosCarregados) {
                     mostrarErroCritico();
                 }
-            }, 8000); 
+            }, 10000); 
 
             window.addEventListener('scroll', function() {
                 var stickyLogo = document.getElementById('sticky-logo-container');
@@ -629,6 +627,33 @@
                 }
             });
         });
+
+        function mostrarErroCritico() {
+            var loader = document.getElementById('loading-noticias');
+            if(loader) loader.style.display = 'none';
+
+            var feed = document.getElementById('grid-noticias');
+            var secFeed = document.getElementById('titulo-seccao-feed');
+            var carrossel = document.getElementById('carrossel-destaques');
+            var gridEd = document.getElementById('grid-editorias-exclusivo');
+            var destaque = document.getElementById('destaque-noticia');
+
+            if(carrossel) carrossel.style.display = 'none';
+            if(gridEd) gridEd.style.display = 'none';
+            if(destaque) destaque.style.display = 'none';
+
+            if(secFeed) secFeed.innerText = '⚠️ Instabilidade na Rede';
+
+            if (feed) {
+                feed.className = "w-full";
+                feed.innerHTML = '<div class="col-span-full text-center py-20 bg-white border border-gray-200 rounded-sm shadow-sm flex flex-col items-center justify-center">' +
+                    '<span class="text-5xl mb-4">📡</span>' +
+                    '<h2 class="text-xl font-black text-jornal-dark uppercase tracking-tighter mb-2">Não foi possível ligar ao servidor</h2>' +
+                    '<p class="text-sm font-medium text-gray-500 mb-6 px-4">O Google Apps Script bloqueou a comunicação. Peça ao administrador para realizar uma Nova Implementação (Deploy) no Google.</p>' +
+                    '<button onclick="window.location.reload()" class="bg-jornal-red hover:opacity-90 text-white font-black uppercase tracking-widest text-[11px] px-8 py-3.5 rounded-sm transition-colors shadow-md">Recarregar Página</button>' +
+                '</div>';
+            }
+        }
 
         function carregarNoticias(forcarUpdate) {
             var loader = document.getElementById('loading-noticias');
@@ -640,11 +665,10 @@
                 if (cache) {
                     var dadosCache = JSON.parse(cache);
                     if (dadosCache && dadosCache.noticias && dadosCache.noticias.length > 0) {
-                        dadosCarregados = true; // Desativa o alarme de falha
+                        dadosCarregados = true;
                         processarDadosHome(dadosCache);
                         if (!forcarUpdate) tratarRotasIniciais(false);
                         temCacheValido = true;
-                        
                         if(loader) loader.style.display = 'none';
                     }
                 }
@@ -678,33 +702,6 @@
                 .getHomeData();
             } else {
                  if (!temCacheValido) mostrarErroCritico();
-            }
-        }
-
-        function mostrarErroCritico() {
-            var loader = document.getElementById('loading-noticias');
-            if(loader) loader.style.display = 'none';
-
-            var feed = document.getElementById('grid-noticias');
-            var secFeed = document.getElementById('titulo-seccao-feed');
-            var carrossel = document.getElementById('carrossel-destaques');
-            var gridEd = document.getElementById('grid-editorias-exclusivo');
-            var destaque = document.getElementById('destaque-noticia');
-
-            if(carrossel) carrossel.style.display = 'none';
-            if(gridEd) gridEd.style.display = 'none';
-            if(destaque) destaque.style.display = 'none';
-
-            if(secFeed) secFeed.innerText = '⚠️ Instabilidade na Rede';
-
-            if (feed) {
-                feed.className = "w-full";
-                feed.innerHTML = '<div class="col-span-full text-center py-20 bg-white border border-gray-200 rounded-sm shadow-sm flex flex-col items-center justify-center">' +
-                    '<span class="text-5xl mb-4">📡</span>' +
-                    '<h2 class="text-xl font-black text-jornal-dark uppercase tracking-tighter mb-2">Não foi possível ligar ao servidor</h2>' +
-                    '<p class="text-sm font-medium text-gray-500 mb-6 px-4">Pode haver uma instabilidade na sua ligação à internet ou no servidor. Por favor, tente novamente.</p>' +
-                    '<button onclick="window.location.reload()" class="bg-jornal-red hover:opacity-90 text-white font-black uppercase tracking-widest text-[11px] px-8 py-3.5 rounded-sm transition-colors shadow-md">Recarregar Página</button>' +
-                '</div>';
             }
         }
 
@@ -835,941 +832,3 @@
                 }
             });
         }
-
-        function renderizarAgendaSidebar() {
-            var sidebar = document.getElementById('sidebar-editorias-especiais');
-            if(!sidebar) return;
-            
-            var agora = new Date();
-            var agenda = noticiasGlobais.filter(function(n) { 
-                if(!isNoticiaPublicada(n)) return false;
-                var isAg = String(n.categoria).toLowerCase().indexOf('agenda') !== -1;
-                if(isAg && n.dataFimEvento && n.dataFimEvento.trim() !== '') {
-                    var dtFim = criarDataSegura(n.dataFimEvento); 
-                    if(!isNaN(dtFim.getTime()) && dtFim < agora) return false; 
-                }
-                return isAg;
-            });
-
-            var blocoAg = document.getElementById('bloco-agenda');
-            var contAg = document.getElementById('agenda-carousel-container');
-            
-            if (agenda.length > 0 && blocoAg && contAg) {
-                blocoAg.style.display = 'block';
-                var carouselId = 'agenda-sidebar-carousel';
-                
-                var oldCarousel = window.agendaCarousels.find(function(c){ return c.id === carouselId; });
-                if(!oldCarousel) window.agendaCarousels.push({id: carouselId, index: 0, length: agenda.length});
-                
-                var htmlAg = '';
-                htmlAg += '<div class="relative overflow-hidden w-full bg-gray-100 rounded-sm group aspect-[4/3] shadow-inner" id="' + carouselId + '">\n';
-                htmlAg += '    <div class="flex transition-transform duration-500 ease-in-out h-full" id="' + carouselId + '-inner" style="transform: translateX(0%);">\n';
-                
-                agenda.forEach(function(n) {
-                    htmlAg += '        <div class="w-full shrink-0 flex-none relative h-full cursor-pointer" onclick="abrirNoticia(\'' + n.id + '\', true)">\n';
-                    htmlAg += '            <img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute inset-0 w-full h-full object-contain bg-gray-100" onerror="this.src=\'' + IMG_FALLBACK + '\'" />\n';
-                    htmlAg += '            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>\n';
-                    htmlAg += '            <div class="absolute bottom-0 left-0 p-4 w-full text-white min-w-0 z-10">\n';
-                    
-                    var txtBadge = "Agenda"; 
-                    var dataReferencia = (n.dataFimEvento && String(n.dataFimEvento).trim() !== '') ? String(n.dataFimEvento).trim() : (n.dataHora ? String(n.dataHora).trim() : "");
-                    
-                    if (dataReferencia !== '') {
-                        var dObj = criarDataSegura(dataReferencia);
-                        var matchBarra = dataReferencia.match(/(\d{1,2})[\/\-](\d{1,2})/);
-                        var matchTracoISO = dataReferencia.match(/(\d{4})-(\d{2})-(\d{2})/);
-
-                        if (!isNaN(dObj.getTime())) {
-                            var dia = String(dObj.getDate()).padStart(2, '0');
-                            var mes = String(dObj.getMonth() + 1).padStart(2, '0');
-                            txtBadge = "Até " + dia + "/" + mes;
-                        } else if (matchTracoISO) {
-                            txtBadge = "Até " + matchTracoISO[3] + "/" + matchTracoISO[2];
-                        } else if (matchBarra) {
-                            txtBadge = "Até " + matchBarra[1] + "/" + matchBarra[2];
-                        } else {
-                            txtBadge = "Até " + dataReferencia.substring(0, 5).trim();
-                        }
-                    }
-                    
-                    htmlAg += '                <span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">' + txtBadge + '</span>\n';
-                    htmlAg += '                <h4 class="font-serif text-sm font-bold mb-1 leading-tight break-words line-clamp-3 text-white">' + n.titulo + '</h4>\n';
-                    htmlAg += '            </div>\n';
-                    htmlAg += '        </div>\n';
-                });
-                
-                htmlAg += '    </div>\n';
-                
-                if (agenda.length > 1) {
-                    htmlAg += '    <button onclick="moverCarrosselAgenda(\'' + carouselId + '\', -1, ' + agenda.length + ')" class="absolute left-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full w-8 h-8 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">&#10094;</button>\n';
-                    htmlAg += '    <button onclick="moverCarrosselAgenda(\'' + carouselId + '\', 1, ' + agenda.length + ')" class="absolute right-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full w-8 h-8 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">&#10095;</button>\n';
-                }
-                htmlAg += '</div>\n';
-                contAg.innerHTML = htmlAg;
-
-                if(!window.agendaTimers) window.agendaTimers = {};
-                if(window.agendaTimers[carouselId]) clearInterval(window.agendaTimers[carouselId]);
-                window.agendaTimers[carouselId] = setInterval(function() {
-                    moverCarrosselAgenda(carouselId, 1, agenda.length);
-                }, 7000);
-
-            } else if(blocoAg) { blocoAg.style.display = 'none'; }
-
-            var carreiras = noticiasGlobais.filter(function(n) { return isNoticiaPublicada(n) && String(n.categoria).toLowerCase().indexOf('carreira') !== -1; });
-            var blocoCa = document.getElementById('bloco-carreiras');
-            var contCa = document.getElementById('conteudo-carreiras');
-            if(carreiras.length > 0 && blocoCa && contCa) {
-                blocoCa.style.display = 'block';
-                var n = carreiras[0];
-                var htmlCa = '';
-                htmlCa += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col bg-white border border-gray-100 shadow-sm rounded-sm overflow-hidden hover:shadow-md transition-shadow">\n';
-                htmlCa += '    <div class="w-full aspect-video bg-gray-100 overflow-hidden relative">\n';
-                htmlCa += '        <img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.src=\'' + IMG_FALLBACK + '\'" />\n';
-                htmlCa += '    </div>\n';
-                htmlCa += '    <div class="p-3">\n';
-                htmlCa += '        <h4 class="font-serif font-black text-sm text-jornal-dark leading-tight group-hover:text-jornal-blue line-clamp-3 mb-1">' + n.titulo + '</h4>\n';
-                htmlCa += '    </div>\n';
-                htmlCa += '</article>\n';
-                contCa.innerHTML = htmlCa;
-            } else if(blocoCa) { blocoCa.style.display = 'none'; }
-
-            var variedades = noticiasGlobais.filter(function(n) { return isNoticiaPublicada(n) && String(n.categoria).toLowerCase().indexOf('variedade') !== -1; });
-            var blocoVa = document.getElementById('bloco-variedades');
-            var contVa = document.getElementById('conteudo-variedades');
-            if(variedades.length > 0 && blocoVa && contVa) {
-                blocoVa.style.display = 'block';
-                var v = variedades[0];
-                var htmlVa = '';
-                htmlVa += '<article onclick="abrirNoticia(\'' + v.id + '\', true)" class="group cursor-pointer flex flex-col bg-white border border-gray-100 shadow-sm rounded-sm overflow-hidden hover:shadow-md transition-shadow">\n';
-                htmlVa += '    <div class="w-full aspect-video bg-gray-100 overflow-hidden relative">\n';
-                htmlVa += '        <img src="' + (v.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.src=\'' + IMG_FALLBACK + '\'" />\n';
-                htmlVa += '    </div>\n';
-                htmlVa += '    <div class="p-3">\n';
-                htmlVa += '        <h4 class="font-serif font-black text-sm text-jornal-dark leading-tight group-hover:text-jornal-blue line-clamp-3 mb-1">' + v.titulo + '</h4>\n';
-                htmlVa += '    </div>\n';
-                htmlVa += '</article>\n';
-                contVa.innerHTML = htmlVa;
-            } else if(blocoVa) { blocoVa.style.display = 'none'; }
-        }
-
-        function moverCarrosselAgenda(id, direcao, tamanho) {
-            var c = window.agendaCarousels.find(function(x) { return x.id === id; });
-            if(!c) return;
-            c.index = (c.index + direcao + tamanho) % tamanho;
-            var inner = document.getElementById(id + '-inner');
-            if(inner) inner.style.transform = 'translateX(-' + (c.index * 100) + '%)';
-        }
-
-        function iniciarCarrosselAnuncios(containerId, anuncios) {
-            var container = document.getElementById(containerId);
-            if (!container) return;
-            
-            if(carrosselAdsTimers[containerId]) { clearTimeout(carrosselAdsTimers[containerId]); }
-            
-            if (anuncios.length === 0) { container.style.display = 'none'; container.innerHTML = ''; return; }
-            
-            if(containerId === 'ads-topo-container') container.style.display = 'grid';
-            else container.style.display = 'flex';
-
-            var index = 0;
-            
-            function mostrarProximo() {
-                var ad = anuncios[index];
-                container.innerHTML = criarElementoAd(ad);
-                var ms = (ad.tempo || 5) * 1000;
-                index = (index + 1) % anuncios.length;
-                carrosselAdsTimers[containerId] = setTimeout(mostrarProximo, ms);
-            }
-            mostrarProximo();
-        }
-
-        function criarElementoAd(prop) {
-            if(!prop) return '';
-            var ext = prop.tipo ? prop.tipo.toLowerCase() : '';
-            var urlSegura = prop.urlArquivo ? String(prop.urlArquivo) : '';
-            var isVideo = ext.indexOf('video') !== -1 || urlSegura.endsWith('.mp4');
-            
-            var mediaHtml = '';
-            if (isVideo) {
-                mediaHtml = '<video src="' + urlSegura + '" autoplay loop muted playsinline class="w-full h-auto min-h-[100px] object-cover bg-gray-100 border border-gray-200"></video>\n';
-            } else {
-                mediaHtml = '<img loading="lazy" src="' + urlSegura + '" alt="Anúncio" class="w-full h-auto min-h-[100px] object-cover bg-gray-100 border border-gray-200" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
-            }
-            
-            var html = '';
-            html += '<a href="' + prop.linkDestino + '" target="_blank" class="block w-full relative group hover:opacity-95 transition-opacity">\n';
-            html += '    <div class="absolute top-2 right-2 bg-white/90 text-[8px] uppercase font-black px-1.5 py-0.5 z-10 text-jornal-dark border border-gray-200 shadow-sm">Publicidade</div>\n';
-            html += '    ' + mediaHtml;
-            html += '</a>\n';
-            return html;
-        }
-
-        function renderizarOpinioes() {
-            var c = document.getElementById('sidebar-opinioes');
-            var c_in = document.getElementById('conteudo-opinioes');
-            var op = noticiasGlobais.filter(function(n) { return isNoticiaPublicada(n) && String(n.categoria).toLowerCase().indexOf('opini') !== -1; });
-            
-            if (op.length === 0) { if(c) c.style.display = 'none'; return; }
-            if(c) c.style.display = 'block';
-            if(!c_in) return;
-            
-            var d = op[0];
-            var letraAutor = d.autor ? d.autor.charAt(0).toUpperCase() : 'O';
-            
-            var html = '';
-            html += '<article onclick="abrirNoticia(\'' + d.id + '\', true)" class="group cursor-pointer flex flex-col mb-4 bg-gray-50 p-5 border border-gray-100 rounded-sm hover:shadow-md transition-shadow">\n';
-            html += '    <div class="flex items-center gap-3 mb-4">\n';
-            html += '        <div class="w-10 h-10 rounded-full bg-jornal-dark flex items-center justify-center text-white font-black text-sm shrink-0 shadow-inner">' + letraAutor + '</div>\n';
-            html += '        <div class="flex flex-col min-w-0">\n';
-            html += '            <span class="text-[10px] font-black uppercase tracking-widest text-jornal-red">OPINIÃO</span>\n';
-            html += '            <span class="text-xs font-bold text-gray-700 truncate w-full">' + (d.autor || 'Editorial') + '</span>\n';
-            html += '        </div>\n';
-            html += '    </div>\n';
-            html += '    <div class="w-full aspect-video mb-4 overflow-hidden rounded-sm bg-gray-100 shrink-0 relative">\n';
-            html += '        <img src="' + (d.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
-            if (d.creditosImagem) {
-                html += '        <div class="absolute bottom-0 right-0 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded-tl">Foto: ' + d.creditosImagem + '</div>\n';
-            }
-            html += '    </div>\n';
-            html += '    <h3 class="font-serif font-black text-sm md:text-base leading-snug text-jornal-dark group-hover:text-jornal-blue line-clamp-3 mb-2">' + d.titulo + '</h3>\n';
-            html += '    <p class="text-xs text-gray-500 line-clamp-2 mb-3 italic font-medium">' + (d.linhaFina || removerHTML(d.conteudo)) + '</p>\n';
-            html += '    <div class="text-[9px] text-gray-400 font-black uppercase tracking-widest mt-auto">' + (d.dataHora ? d.dataHora.replace(' ', ' às ') : '') + '</div>\n';
-            html += '</article>\n';
-            
-            if(op.length > 1) {
-                html += '<div class="flex flex-col gap-3 mt-2">\n';
-                for(var i=1; i<Math.min(op.length, 4); i++) {
-                    html += '    <article onclick="abrirNoticia(\'' + op[i].id + '\', true)" class="group cursor-pointer border-t border-gray-100 pt-3 flex gap-4 items-center hover:bg-gray-50 p-2 -mx-2 rounded transition-colors">\n';
-                    html += '        <div class="w-14 h-14 rounded bg-gray-100 shrink-0 overflow-hidden relative">\n';
-                    html += '            <img src="' + (op[i].urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
-                    html += '        </div>\n';
-                    html += '        <div class="flex-grow min-w-0 flex flex-col justify-center">\n';
-                    html += '            <h4 class="font-bold text-xs text-gray-800 leading-tight group-hover:text-jornal-red line-clamp-2 mb-1.5">' + op[i].titulo + '</h4>\n';
-                    html += '            <span class="text-[9px] font-black text-gray-400 tracking-widest uppercase">' + (op[i].dataHora ? op[i].dataHora.split(' ')[0] : '') + '</span>\n';
-                    html += '        </div>\n';
-                    html += '    </article>\n';
-                }
-                html += '</div>\n';
-            }
-            c_in.innerHTML = html;
-        }
-
-        function renderizarMaisLidas() {
-            var lista = document.getElementById('lista-mais-lidas'); 
-            if (!lista) return;
-            var publicadas = noticiasGlobais.filter(function(n){ return isNoticiaPublicada(n); });
-            publicadas.sort(function(a, b) { var vA = parseInt(a.views) || 0; var vB = parseInt(b.views) || 0; return vB - vA; });
-            
-            var top10 = publicadas.slice(0, 10);
-            var htmlFinal = '';
-            
-            if(top10.length === 0) {
-                lista.innerHTML = '<li class="text-xs text-gray-400 py-3 font-bold uppercase tracking-widest">Nenhuma matéria publicada.</li>';
-                return;
-            }
-            
-            top10.forEach(function(n, idx) {
-                if(!n) return;
-                htmlFinal += '<li class="flex gap-3 items-center group cursor-pointer py-3" onclick="abrirNoticia(\'' + n.id + '\', true)">\n';
-                htmlFinal += '    <div class="w-8 h-8 rounded-full bg-jornal-blue text-white flex items-center justify-center font-black text-xs shrink-0">' + (idx+1) + '</div>\n';
-                htmlFinal += '    <div class="flex-grow w-full overflow-hidden min-w-0"><h4 class="text-xs font-bold text-jornal-dark leading-tight group-hover:text-jornal-blue line-clamp-2 break-words">' + (n.titulo || 'Sem Título') + '</h4></div>\n';
-                htmlFinal += '</li>\n';
-            });
-            lista.innerHTML = htmlFinal;
-        }
-
-        function obterIconeClima(wCode) {
-            if (wCode === 0) return '☀️';
-            if (wCode === 1 || wCode === 2) return '🌤️';
-            if (wCode === 3) return '☁️';
-            if (wCode >= 45 && wCode <= 48) return '🌫️';
-            if (wCode >= 51 && wCode <= 67) return '🌧️';
-            if (wCode >= 71 && wCode <= 77) return '❄️';
-            if (wCode >= 80 && wCode <= 82) return '🌦️';
-            if (wCode >= 95) return '⛈️';
-            return '☀️';
-        }
-
-        function renderizarClimaEFinanceiro() {
-            var tick = document.getElementById('ticker-content'); 
-            var usd = '--'; var eur = '--'; var btc = '--'; 
-            var clima = '--'; var iconeClima = '☀️'; var descClima = 'A Atualizar...';
-            
-            function atualizarDOM() {
-                var stringTicker = '';
-                stringTicker += '<span class="text-amber-300 font-extrabold mr-2">💵 DÓLAR:</span> R$ ' + usd + ' &bull; ';
-                stringTicker += '<span class="text-blue-300 font-extrabold mr-2">💶 EURO:</span> R$ ' + eur + ' &bull; ';
-                stringTicker += '<span class="text-orange-400 font-extrabold mr-2">₿ BITCOIN:</span> R$ ' + btc + ' &bull; ';
-                stringTicker += '<span class="text-sky-300 font-extrabold mr-2">☀️ CUIABÁ:</span> ' + clima + '°C &bull; ';
-                
-                var recentes = noticiasGlobais.filter(function(n){ return isNoticiaPublicada(n); }).slice(0, 5); 
-                recentes.forEach(function(n) { 
-                    if(n) stringTicker += '<span class="mx-3 hover:text-red-200 cursor-pointer text-white underline" onclick="abrirNoticia(\'' + n.id + '\', true)">' + (n.titulo || '').toUpperCase() + '</span> • '; 
-                });
-                if(tick) tick.innerHTML = stringTicker;
-            }
-
-            try {
-                fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL')
-                .then(function(res) { return res.json(); })
-                .then(function(dadosC) {
-                    if(dadosC.USDBRL) { 
-                        usd = parseFloat(dadosC.USDBRL.ask).toFixed(2); 
-                        eur = parseFloat(dadosC.EURBRL.ask).toFixed(2); 
-                        btc = parseFloat(dadosC.BTCBRL.ask).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); 
-                    }
-                    atualizarDOM();
-                }).catch(function(e){ atualizarDOM(); });
-            } catch(e) { atualizarDOM(); }
-
-            try {
-                fetch('https://api.open-meteo.com/v1/forecast?latitude=-15.5961&longitude=-56.0967&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&hourly=temperature_2m,relativehumidity_2m,precipitation_probability,windspeed_10m,weathercode&timezone=auto')
-                .then(function(res) { return res.json(); })
-                .then(function(dadosClima) {
-                    window.dadosClimaGlobal = dadosClima;
-                    if(dadosClima.current_weather) {
-                        clima = Math.round(dadosClima.current_weather.temperature);
-                        var wCode = dadosClima.current_weather.weathercode;
-                        iconeClima = obterIconeClima(wCode);
-                        descClima = wCode <= 2 ? 'CÉU LIMPO' : wCode <= 3 ? 'NUBLADO' : wCode <= 67 ? 'CHUVA' : 'TEMPESTADE';
-
-                        var elTemp = document.getElementById('temp-clima');
-                        var elIcone = document.getElementById('icone-clima');
-                        var elBgIcone = document.getElementById('bg-icone-clima');
-                        var elDesc = document.getElementById('desc-clima');
-
-                        if (elTemp) elTemp.innerText = clima + '°';
-                        if (elIcone) elIcone.innerText = iconeClima;
-                        if (elBgIcone) elBgIcone.innerText = iconeClima;
-                        if (elDesc) elDesc.innerText = descClima;
-
-                        var mChuva = document.getElementById('modal-clima-chuva');
-                        var mUmid = document.getElementById('modal-clima-umidade');
-                        var mVento = document.getElementById('modal-clima-vento');
-                        var mDescModal = document.getElementById('modal-clima-desc');
-                        var mTempModal = document.getElementById('modal-clima-temp');
-                        var mIconeModal = document.getElementById('modal-clima-icone');
-                        
-                        if(mDescModal) mDescModal.innerText = descClima;
-                        if(mTempModal) mTempModal.innerText = clima;
-                        if(mIconeModal) mIconeModal.innerText = iconeClima;
-
-                        if(dadosClima.hourly && dadosClima.hourly.precipitation_probability) {
-                            if(mChuva) mChuva.innerText = dadosClima.hourly.precipitation_probability[0] + '%';
-                            if(mUmid) mUmid.innerText = dadosClima.hourly.relativehumidity_2m[0] + '%';
-                            if(mVento) mVento.innerText = Math.round(dadosClima.hourly.windspeed_10m[0]) + ' km/h';
-                        }
-
-                        var mPrevisao = document.getElementById('modal-clima-previsao');
-                        if (mPrevisao && dadosClima.daily) {
-                            var diasSemana = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
-                            var htmlDias = '';
-                            for (let i = 0; i < 7; i++) {
-                                var dataDia = new Date(dadosClima.daily.time[i] + 'T00:00:00'); 
-                                var nomeDia = i === 0 ? 'HOJE' : i === 1 ? 'AMANHÃ' : diasSemana[dataDia.getDay()];
-                                var iconeD = obterIconeClima(dadosClima.daily.weathercode[i]);
-                                var maxD = Math.round(dadosClima.daily.temperature_2m_max[i]);
-                                var minD = Math.round(dadosClima.daily.temperature_2m_min[i]);
-                                var activeClass = i === 0 ? 'border-sky-400 bg-sky-50' : 'border-transparent bg-gray-50 hover:bg-gray-100';
-
-                                htmlDias += `<div class="btn-dia-clima shrink-0 cursor-pointer border-2 ${activeClass} p-3 rounded-sm text-center min-w-[80px] transition-all flex flex-col items-center" data-dia="${i}">
-                                    <span class="text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">${nomeDia}</span>
-                                    <span class="text-3xl mb-2 drop-shadow-sm">${iconeD}</span>
-                                    <div class="text-[10px] font-bold flex gap-2"><span class="text-rose-500">${maxD}°</span> <span class="text-gray-400">${minD}°</span></div>
-                                </div>`;
-                            }
-                            mPrevisao.innerHTML = htmlDias;
-                            
-                            var botoesDia = mPrevisao.querySelectorAll('.btn-dia-clima');
-                            botoesDia.forEach(function(btn) {
-                                btn.onclick = function() {
-                                    botoesDia.forEach(b => { b.classList.remove('border-sky-400', 'bg-sky-50'); b.classList.add('border-transparent', 'bg-gray-50'); });
-                                    this.classList.remove('border-transparent', 'bg-gray-50'); this.classList.add('border-sky-400', 'bg-sky-50');
-                                    renderizarHoras(this.getAttribute('data-dia'));
-                                };
-                            });
-                            
-                            function renderizarHoras(diaIndex) {
-                                var containerHoras = document.getElementById('horas-clima-container');
-                                if(!containerHoras) return;
-                                containerHoras.innerHTML = '';
-                                var startIndex = diaIndex * 24;
-                                for (let j = startIndex; j < startIndex + 24; j++) {
-                                    var horaFull = dadosClima.hourly.time[j];
-                                    var horaLimpa = horaFull.substring(11, 16); 
-                                    var tempH = Math.round(dadosClima.hourly.temperature_2m[j]);
-                                    var iconH = obterIconeClima(dadosClima.hourly.weathercode[j]);
-                                    var probChuva = dadosClima.hourly.precipitation_probability[j] || 0;
-                                    containerHoras.innerHTML += `<div class="shrink-0 text-center flex flex-col items-center p-3 border border-gray-100 rounded-sm bg-gray-50 min-w-[70px]">
-                                        <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">${horaLimpa}</span>
-                                        <span class="text-2xl mb-2 drop-shadow-sm">${iconH}</span>
-                                        <span class="text-xs font-black text-jornal-dark mb-1">${tempH}°</span>
-                                        <span class="text-[9px] font-bold text-sky-500 tracking-wider flex items-center gap-0.5">💧 ${probChuva}%</span>
-                                    </div>`;
-                                }
-                            }
-                            renderizarHoras(0);
-                        }
-                    }
-                    if (typeof atualizarDOM === 'function') atualizarDOM();
-                }).catch(function(e){ if (typeof atualizarDOM === 'function') atualizarDOM(); });
-            } catch(e) { if (typeof atualizarDOM === 'function') atualizarDOM(); }
-        }
-
-        function traduzirTermoPlacar(termo) {
-            if(!termo) return '';
-            var t = termo.toLowerCase();
-            if(t.includes('half')) return 'Intervalo';
-            if(t.includes('final')) return 'Encerrado';
-            if(t.includes('canceled')) return 'Cancelado';
-            if(t.includes('postponed')) return 'Adiado';
-            return termo;
-        }
-
-        function renderizarPlacarAoVivo() {
-            var placar = document.getElementById('widget-placar'); 
-            var containerGeral = document.getElementById('container-placar-ao-vivo');
-            if(!placar) return;
-            
-            var ligasAtivas = ['soccer/bra.1']; 
-            if (configuracoesGlobais['LigasPlacar']) { 
-                try { var prs = JSON.parse(configuracoesGlobais['LigasPlacar']); if(prs && prs.length > 0) ligasAtivas = prs; } catch(e){} 
-            }
-            
-            var hoje = new Date();
-            var dataHojeLocalStr = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
-
-            placar.innerHTML = '<div class="text-center text-xs text-gray-400 py-4 font-bold uppercase tracking-widest">A procurar jogos...</div>';
-            var htmlFinal = ''; 
-            var fetchesConcluidos = 0;
-
-            if (ligasAtivas.length === 0) {
-                if (containerGeral) containerGeral.style.display = 'none';
-                return;
-            }
-
-            ligasAtivas.forEach(function(liga) {
-                fetch('https://site.api.espn.com/apis/site/v2/sports/' + liga + '/scoreboard?lang=pt&region=br')
-                .then(function(res) { return res.ok ? res.json() : null; })
-                .then(function(data) {
-                    if (data && data.events && data.events.length > 0) {
-                        var nomeCompeticao = traduzirTermoPlacar(data.leagues && data.leagues.length > 0 ? data.leagues[0].name : 'Competição');
-                        var matchesHtml = ''; 
-                        var exibidos = 0;
-                        
-                        data.events.forEach(function(jogo) {
-                            if (!jogo.date || !jogo.competitions || jogo.competitions.length === 0) return;
-                            var dtJogo = criarDataSegura(jogo.date);
-                            if (isNaN(dtJogo.getTime())) return;
-                            
-                            var dataJogoLocal = dtJogo.getFullYear() + '-' + String(dtJogo.getMonth() + 1).padStart(2, '0') + '-' + String(dtJogo.getDate()).padStart(2, '0');
-                            if (dataJogoLocal !== dataHojeLocalStr) return;
-                            if (exibidos >= 4) return;
-                            
-                            var matchInfo = jogo.competitions[0];
-                            var casa = matchInfo.competitors.find(function(c) { return c.homeAway === 'home'; }) || matchInfo.competitors[0];
-                            var fora = matchInfo.competitors.find(function(c) { return c.homeAway === 'away'; }) || matchInfo.competitors[1];
-                            
-                            var logoCasa = casa.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=C'; 
-                            var logoFora = fora.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=F';
-                            var isAoVivo = jogo.status.type.state === 'in'; 
-                            var isEncerrado = jogo.status.type.state === 'post'; 
-                            var isAgendado = jogo.status.type.state === 'pre';
-                            
-                            var corEstado = 'text-gray-400'; 
-                            var bgPlacar = 'bg-jornal-dark text-white';
-
-                            if (isAoVivo) { corEstado = 'text-red-600 animate-pulse'; bgPlacar = 'bg-jornal-red text-white'; } 
-                            else if (isAgendado) { corEstado = 'text-emerald-600'; }
-                            
-                            var infoEstadoTexto = traduzirTermoPlacar(jogo.status.type.shortDetail);
-                            if (isAoVivo) { infoEstadoTexto = 'AO VIVO'; } 
-                            else if (isAgendado) { 
-                                var hrs = String(dtJogo.getHours()).padStart(2, '0');
-                                var mns = String(dtJogo.getMinutes()).padStart(2, '0');
-                                infoEstadoTexto = hrs + ':' + mns;
-                            } else if (isEncerrado) { infoEstadoTexto = 'ENCERRADO'; }
-                            
-                            var h = '<div class="bg-white border border-gray-100 rounded-lg p-3 mb-3 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.1)] hover:shadow-md transition-shadow">\n';
-                            h += '    <div class="flex items-center justify-between w-full gap-2">\n';
-                            h += '        <div class="flex items-center justify-start gap-2 w-[40%] min-w-0">\n';
-                            h += '            <img src="' + logoCasa + '" class="w-6 h-6 sm:w-7 sm:h-7 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'">\n';
-                            h += '            <span class="font-bold text-gray-800 text-[11px] sm:text-xs text-left truncate w-full" title="' + traduzirTermoPlacar(casa.team.name) + '">' + traduzirTermoPlacar(casa.team.name) + '</span>\n';
-                            h += '        </div>\n';
-                            h += '        <div class="flex flex-col items-center justify-center shrink-0 w-[55px]">\n';
-                            h += '            <div class="' + bgPlacar + ' font-black text-[13px] w-full py-1.5 rounded flex items-center justify-center tracking-wider shadow-inner mb-1.5 leading-none">' + (casa.score || '0') + ' - ' + (fora.score || '0') + '</div>\n';
-                            h += '            <span class="text-[8px] uppercase tracking-widest font-bold ' + corEstado + ' text-center leading-none whitespace-nowrap">' + infoEstadoTexto + '</span>\n';
-                            h += '        </div>\n';
-                            h += '        <div class="flex items-center justify-end gap-2 w-[40%] min-w-0">\n';
-                            h += '            <span class="font-bold text-gray-800 text-[11px] sm:text-xs text-right truncate w-full" title="' + traduzirTermoPlacar(fora.team.name) + '">' + traduzirTermoPlacar(fora.team.name) + '</span>\n';
-                            h += '            <img src="' + logoFora + '" class="w-6 h-6 sm:w-7 sm:h-7 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'">\n';
-                            h += '        </div>\n';
-                            h += '    </div>\n';
-                            h += '</div>\n';
-                            matchesHtml += h; exibidos++;
-                        });
-                        if (matchesHtml !== '') { htmlFinal += '<h5 class="text-[10px] uppercase font-black tracking-widest text-slate-400 mt-4 mb-3 border-b border-gray-100 pb-1">' + nomeCompeticao + '</h5>\n' + matchesHtml; }
-                    }
-                })
-                .catch(function(e){})
-                .finally(function() {
-                    fetchesConcluidos++;
-                    if(fetchesConcluidos === ligasAtivas.length) {
-                        if(htmlFinal === '') { if(containerGeral) containerGeral.style.display = 'none'; } 
-                        else { if(containerGeral) containerGeral.style.display = 'block'; placar.innerHTML = htmlFinal; }
-                    }
-                });
-            });
-        }
-
-        function aplicarFiltroCidade() {
-            var inputFiltro = document.getElementById('input-cidade-filtro');
-            if(!inputFiltro) return;
-            var termo = normalizarTextoBusca(inputFiltro.value);
-            if(!termo) { limparFiltroCidade(); return; }
-            
-            var grid = document.getElementById('grid-noticias');
-            var dest = document.getElementById('destaque-noticia');
-            if(!grid || !dest) return;
-            
-            var tituloSec = document.getElementById('titulo-seccao-feed');
-            if(tituloSec) tituloSec.innerText = 'MATÉRIAS EM: ' + termo.toUpperCase();
-            
-            var filtradas = noticiasGlobais.filter(function(n) {
-                return isNoticiaPublicada(n) && normalizarTextoBusca(n.categoria).indexOf('cidades') !== -1 && normalizarTextoBusca(n.cidade).indexOf(termo) !== -1;
-            });
-            
-            grid.innerHTML = ''; dest.innerHTML = ''; grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
-            
-            if(filtradas.length === 0) {
-                dest.style.display = 'none';
-                grid.innerHTML = '<div class="col-span-full text-center py-16 bg-white border border-gray-200 rounded-sm shadow-sm flex flex-col items-center justify-center"><span class="text-4xl mb-3">📰</span><span class="text-sm font-bold text-gray-500 uppercase tracking-widest">Nenhuma matéria encontrada nesta cidade.</span></div>';
-                var btnMais = document.getElementById('btn-mostrar-mais'); if(btnMais) btnMais.style.display = 'none';
-            } else {
-                dest.innerHTML = htmlHero(filtradas[0]); dest.style.display = 'block';
-                var resto = filtradas.slice(1);
-                window.noticiasCategoriaAtual = resto; window.itensExibidosCategoria = 16;
-                resto.slice(0, 16).forEach(function(n) { grid.innerHTML += htmlCard(n); });
-                var btnMais = document.getElementById('btn-mostrar-mais');
-                if (btnMais) { if (resto.length > 16) { btnMais.style.display = 'block'; } else { btnMais.style.display = 'none'; } }
-            }
-        }
-
-        function limparFiltroCidade() {
-            var inputFiltro = document.getElementById('input-cidade-filtro');
-            if(inputFiltro) inputFiltro.value = '';
-            filtrarCategoria('Cidades', true);
-        }
-
-        function filtrarCategoria(cat, up) {
-            if (up === undefined) up = true;
-            window.categoriaAtual = cat; 
-            if(up) atualizarURL('categoria', cat);
-            
-            var grid = document.getElementById('grid-noticias'); 
-            var dest = document.getElementById('destaque-noticia');
-            if (!grid || !dest) return;
-            
-            grid.innerHTML = ''; dest.innerHTML = '';
-            var tituloSec = document.getElementById('titulo-seccao-feed');
-            if(tituloSec) tituloSec.innerText = cat === 'Todas' ? 'Últimas Notícias' : 'Editoria: ' + cat;
-            var headerNot = document.getElementById('header-ultimas-noticias');
-            if(headerNot) headerNot.style.display = 'flex';
-            var inputPesq = document.getElementById('input-pesquisa');
-            if(inputPesq) inputPesq.value = '';
-            
-            var filtroCidades = document.getElementById('filtro-cidades-container');
-            if (filtroCidades) {
-                if(normalizarTextoBusca(cat) === 'cidades') { filtroCidades.style.display = 'block'; var icf = document.getElementById('input-cidade-filtro'); if(icf) icf.value = ''; } 
-                else { filtroCidades.style.display = 'none'; }
-            }
-            
-            var catNorm = normalizarTextoBusca(cat);
-            var f = noticiasGlobais.filter(function(n) {
-                var isPub = isNoticiaPublicada(n);
-                if (cat === 'Todas') return isPub;
-                var catNoticiaNorm = normalizarTextoBusca(n.categoria || '');
-                return isPub && catNoticiaNorm.indexOf(catNorm) !== -1;
-            });
-            
-            var carrosselContainer = document.getElementById('carrossel-destaques');
-            var gridEditorias = document.getElementById('grid-editorias-exclusivo');
-
-            if(cat === 'Todas') {
-                grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6";
-                var f_todas_editorias = f.slice();
-                var c_itens = f.filter(function(n) { return String(n.noCarrossel) === 'true'; }).slice(0, 5);
-                
-                if(c_itens.length > 0) { 
-                    montarCarrossel(c_itens); 
-                    if(carrosselContainer) carrosselContainer.style.display = 'block'; 
-                    dest.style.display = 'none';
-                    f = f.filter(function(n) { return String(n.noCarrossel) !== 'true'; }); 
-                } else { if(carrosselContainer) carrosselContainer.style.display = 'none'; }
-                
-                montarGrelhaEditorias(f_todas_editorias);
-                if(gridEditorias) gridEditorias.style.display = 'flex';
-                
-                window.noticiasCategoriaAtual = f; window.itensExibidosCategoria = 15;
-                if (f.length === 0) { 
-                    grid.innerHTML = '<div class="col-span-full text-center py-16 bg-white border border-gray-200 rounded-sm shadow-sm flex flex-col items-center justify-center"><span class="text-4xl mb-3">📰</span><span class="text-sm font-bold text-gray-500 uppercase tracking-widest">Nenhuma matéria publicada no momento.</span></div>'; 
-                } 
-                else { f.slice(0, window.itensExibidosCategoria).forEach(function(n) { grid.innerHTML += htmlCard(n); }); }
-                
-                var btnMais = document.getElementById('btn-mostrar-mais');
-                if(btnMais) { if(f.length > window.itensExibidosCategoria) { btnMais.style.display = 'block'; } else { btnMais.style.display = 'none'; } }
-            } else {
-                grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
-                if(gridEditorias) gridEditorias.style.display = 'none';
-                if(carrosselContainer) carrosselContainer.style.display = 'none';
-                
-                if(f.length > 0) { 
-                    dest.innerHTML = htmlHero(f[0]); 
-                    dest.style.display = 'block'; 
-                    f = f.slice(1); 
-                } else { 
-                    dest.innerHTML = '<div class="col-span-full text-center py-16 bg-white border border-gray-200 rounded-sm shadow-sm flex flex-col items-center justify-center"><span class="text-4xl mb-3">📰</span><span class="text-sm font-bold text-gray-500 uppercase tracking-widest">Nenhuma matéria publicada nesta editoria no momento.</span></div>';
-                    dest.style.display = 'block'; 
-                }
-                
-                window.noticiasCategoriaAtual = f; window.itensExibidosCategoria = 16;
-                
-                if (f.length > 0) { 
-                    f.slice(0, 16).forEach(function(n) { grid.innerHTML += htmlCard(n); }); 
-                }
-                
-                var btnMais = document.getElementById('btn-mostrar-mais');
-                if (btnMais) { if (f.length > 16) { btnMais.style.display = 'block'; } else { btnMais.style.display = 'none'; } }
-            }
-            atualizarDestaqueMenuAtivo(cat);
-            fecharNoticiaUI();
-        }
-
-        function mostrarMaisNoticias() {
-            var grid = document.getElementById('grid-noticias');
-            var f = window.noticiasCategoriaAtual || [];
-            var start = window.itensExibidosCategoria;
-            window.itensExibidosCategoria += 16;
-            
-            if(grid) { f.slice(start, window.itensExibidosCategoria).forEach(function(n) { grid.innerHTML += htmlCard(n); }); }
-            var btnMais = document.getElementById('btn-mostrar-mais');
-            if (window.itensExibidosCategoria >= f.length && btnMais) { btnMais.style.display = 'none'; }
-        }
-
-        function htmlCard(n) {
-            var cHTML = '';
-            cHTML += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 p-0 flex flex-col h-full hover:shadow-md transition-shadow rounded-sm w-full overflow-hidden min-w-0">\n';
-            cHTML += '    <div class="relative w-full aspect-video bg-gray-100 border-b border-gray-200 shrink-0 overflow-hidden">\n';
-            cHTML += '        <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
-            cHTML += '    </div>\n';
-            if (n.creditosImagem) { cHTML += '    <div class="text-[8px] text-gray-400 italic px-4 py-1.5 bg-gray-50 border-b border-gray-100 truncate text-right font-medium">Foto: ' + n.creditosImagem + '</div>\n'; }
-            cHTML += '    <div class="p-5 flex flex-col flex-grow w-full bg-white min-w-0">\n';
-            cHTML += '        <span class="text-jornal-red text-[10px] font-black uppercase tracking-widest mb-3 block truncate">' + (n.categoria || 'Geral') + '</span>\n';
-            cHTML += '        <h3 class="font-serif text-xl font-black mb-3 leading-snug text-jornal-dark group-hover:text-jornal-blue line-clamp-3 break-words tracking-tight">' + (n.titulo || '') + '</h3>\n';
-            if (n.linhaFina) { cHTML += '        <p class="text-gray-500 text-xs font-medium mb-3 italic line-clamp-2 break-words">' + n.linhaFina + '</p>\n'; }
-            cHTML += '        <div class="text-gray-600 text-xs line-clamp-2 leading-relaxed flex-grow font-serif break-words">' + removerHTML(n.conteudo) + '</div>\n';
-            cHTML += '        <div class="pt-4 mt-4 border-t border-gray-100 flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest w-full min-w-0"><span class="truncate pr-2">' + (n.dataHora ? n.dataHora.replace(' ', ' às ') : '') + '</span></div>\n';
-            cHTML += '    </div>\n</article>\n';
-            return cHTML;
-        }
-
-        function htmlHero(n) {
-            var cHTML = '';
-            cHTML += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 flex flex-col md:flex-row h-full overflow-hidden hover:shadow-md transition-shadow rounded-sm w-full">\n';
-            cHTML += '    <div class="md:w-[55%] w-full bg-gray-100 min-h-[350px] shrink-0 overflow-hidden relative">\n';
-            cHTML += '        <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700 min-h-[350px]" />\n';
-            if (n.creditosImagem) { cHTML += '        <div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 rounded-tl">Foto: ' + n.creditosImagem + '</div>\n'; }
-            cHTML += '    </div>\n';
-            cHTML += '    <div class="md:w-[45%] p-8 flex flex-col justify-center w-full min-w-0">\n';
-            cHTML += '        <span class="text-jornal-red text-[10px] font-black uppercase tracking-widest mb-3 block w-full truncate">' + (n.categoria || 'Geral') + '</span>\n';
-            cHTML += '        <h3 class="font-serif text-3xl md:text-4xl font-black mb-4 leading-tight text-jornal-dark group-hover:text-jornal-blue break-words line-clamp-4 tracking-tight">' + (n.titulo || '') + '</h3>\n';
-            if (n.linhaFina) { cHTML += '        <p class="text-gray-500 text-sm font-medium mb-4 italic line-clamp-3 break-words">' + n.linhaFina + '</p>\n'; }
-            cHTML += '        <div class="text-gray-600 text-sm line-clamp-4 leading-relaxed font-serif mb-6 break-words">' + removerHTML(n.conteudo) + '</div>\n';
-            cHTML += '        <div class="mt-auto flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest w-full border-t border-gray-100 pt-4"><span>' + (n.dataHora ? n.dataHora.replace(' ', ' às ') : '') + '</span></div>\n';
-            cHTML += '    </div>\n</article>\n';
-            return cHTML;
-        }
-
-        function montarGrelhaEditorias(noticiasAtivas) {
-            var container = document.getElementById('grid-editorias-exclusivo'); if(!container) return;
-            container.innerHTML = ''; var categoriasBlocos = [];
-            
-            if (configuracoesGlobais['CategoriasCapa']) { try { categoriasBlocos = JSON.parse(configuracoesGlobais['CategoriasCapa']); } catch(e) {} }
-            
-            if (!categoriasBlocos || categoriasBlocos.length === 0) {
-                listaCategoriasLocais.forEach(function(c) {
-                    var l = String(c).toLowerCase().trim();
-                    if (['opinião', 'opiniao', 'opiniões', 'opinioes', 'carreira', 'carreiras', 'agenda', 'variedade', 'variedades'].indexOf(l) === -1) { if(categoriasBlocos.length < 8) categoriasBlocos.push(c); }
-                });
-            }
-
-            var htmlFinal = ''; 
-            categoriasBlocos.forEach(function(cat) {
-                if(!cat || cat.trim() === '') return;
-                var nCat = noticiasAtivas.filter(function(n) { return normalizarTextoBusca(n.categoria).indexOf(normalizarTextoBusca(cat)) !== -1; }).slice(0, 4); 
-                
-                if (nCat.length > 0) {
-                    htmlFinal += '<div class="w-full mb-12">\n    <div class="border-b-4 border-gray-200 pb-3 mb-6 flex justify-between items-center">\n        <h3 class="text-lg font-black uppercase tracking-widest text-jornal-dark">\n            <span class="inline-block w-3 h-3 bg-rose-600 mr-2 rounded-sm"></span>' + cat + '\n        </h3>\n        <button onclick="filtrarCategoria(\'' + cat + '\', true)" class="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-jornal-red transition-colors bg-gray-50 px-3 py-1.5 rounded-sm">\n            Ver tudo &raquo;\n        </button>\n    </div>\n    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">\n';
-                    nCat.forEach(function(n) {
-                        htmlFinal += '        <article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col h-full border border-gray-100 shadow-sm bg-white rounded-sm overflow-hidden min-w-0 hover:shadow-md transition-shadow">\n            <div class="relative w-full aspect-video bg-gray-100 shrink-0 overflow-hidden">\n                <img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n            </div>\n            <div class="p-4 flex flex-col flex-grow min-w-0 bg-white relative z-10">\n                <h4 class="font-serif font-black text-sm leading-snug text-jornal-dark group-hover:text-jornal-red line-clamp-3 mb-3">' + n.titulo + '</h4>\n                <span class="text-[9px] font-bold text-gray-400 mt-auto tracking-widest uppercase">\n                    ' + (n.dataHora ? n.dataHora.replace(' ', ' às ') : '') + '\n                </span>\n            </div>\n        </article>\n';
-                    });
-                    htmlFinal += '    </div>\n</div>\n';
-                }
-            });
-            container.innerHTML = htmlFinal;
-        }
-
-        function montarCarrossel(itens) {
-            var inner = document.getElementById('carrossel-inner'); var ind = document.getElementById('carrossel-indicadores');
-            if(!inner || !ind) return;
-            var htmlInner = ''; var htmlInd = '';
-            
-            itens.forEach(function(n, i) {
-                var credHtml = '';
-                if (n.creditosImagem) { credHtml = '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 z-20">Foto: ' + n.creditosImagem + '</div>'; }
-                
-                htmlInner += '<div class="absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out cursor-pointer group carrossel-slide opacity-0 z-0 pointer-events-none" onclick="abrirNoticia(\'' + n.id + '\', true)">\n    <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover bg-gray-100" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'"/>\n    ' + credHtml + '\n    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>\n    <div class="absolute bottom-0 left-0 p-8 md:p-14 w-full text-white min-w-0 z-10 pointer-events-none">\n        <span class="bg-jornal-red text-white text-[10px] font-black uppercase px-3 py-1.5 mb-4 inline-block rounded-sm truncate shadow-sm">\n            ' + n.categoria + '\n        </span>\n        <h3 class="font-serif text-3xl md:text-5xl font-black mb-3 leading-tight break-words line-clamp-3 tracking-tighter drop-shadow-md">\n            ' + n.titulo + '\n        </h3>\n    </div>\n</div>\n';
-                htmlInd += '<button onclick="irParaSlide(' + i + ')" class="w-3 h-3 rounded-full carrossel-indicador transition-colors bg-white/50"></button>\n';
-            });
-            
-            inner.innerHTML = htmlInner; ind.innerHTML = htmlInd;
-            slideIndex = 0; 
-            if(carrosselTimer) clearInterval(carrosselTimer);
-            carrosselTimer = setInterval(function() { moverCarrossel(1); }, 6000); 
-            atualizarCarrosselVisivel(); 
-        }
-
-        function moverCarrossel(d) { var s = document.getElementsByClassName('carrossel-slide'); if(s.length > 0) { slideIndex = (slideIndex + d + s.length) % s.length; atualizarCarrosselVisivel(); } }
-        function irParaSlide(idx) { slideIndex = idx; atualizarCarrosselVisivel(); }
-
-        function atualizarCarrosselVisivel() {
-            var slides = document.getElementsByClassName('carrossel-slide'); var indics = document.getElementsByClassName('carrossel-indicador');
-            for (var i = 0; i < slides.length; i++) {
-                if(slides[i]) { 
-                    if (i === slideIndex) { slides[i].classList.remove('opacity-0', 'z-0', 'pointer-events-none'); slides[i].classList.add('opacity-100', 'z-10', 'pointer-events-auto'); } 
-                    else { slides[i].classList.remove('opacity-100', 'z-10', 'pointer-events-auto'); slides[i].classList.add('opacity-0', 'z-0', 'pointer-events-none'); }
-                }
-                if(indics[i]) { indics[i].className = 'w-3 h-3 rounded-full carrossel-indicador transition-colors ' + (i === slideIndex ? 'bg-jornal-red' : 'bg-white/50'); }
-            }
-        }
-
-        function pesquisarSite(e) {
-            if(e) e.preventDefault();
-            var formMobile = document.getElementById('form-pesquisa-mobile');
-            var termoDesk = document.getElementById('input-pesquisa').value;
-            var termoMob = document.getElementById('input-pesquisa-mobile').value;
-            var termo = termoDesk || termoMob;
-            
-            termo = termo.toLowerCase().trim();
-            if (!termo) { voltarCapa(); return; }
-            
-            if(formMobile) formMobile.style.display = 'none';
-            
-            window.categoriaAtual = 'Pesquisa';
-            atualizarURL('pesquisa', termo);
-            
-            var grid = document.getElementById('grid-noticias');
-            var dest = document.getElementById('destaque-noticia');
-            var carrosselContainer = document.getElementById('carrossel-destaques');
-            var gridEditorias = document.getElementById('grid-editorias-exclusivo');
-            var filtroCidades = document.getElementById('filtro-cidades-container');
-            
-            if(carrosselContainer) carrosselContainer.style.display = 'none';
-            if(gridEditorias) gridEditorias.style.display = 'none';
-            if(filtroCidades) filtroCidades.style.display = 'none';
-            if(dest) { dest.innerHTML = ''; dest.style.display = 'none'; }
-            
-            var headerNot = document.getElementById('header-ultimas-noticias');
-            if(headerNot) headerNot.style.display = 'flex';
-            
-            var tituloSec = document.getElementById('titulo-seccao-feed');
-            if(tituloSec) tituloSec.innerText = 'Resultados da pesquisa: "' + termo + '"';
-            
-            var resultados = noticiasGlobais.filter(function(n) {
-                if (!isNoticiaPublicada(n)) return false;
-                var t = String(n.titulo).toLowerCase(); 
-                var f = String(n.linhaFina).toLowerCase(); 
-                var c = String(n.conteudo).toLowerCase();
-                return t.indexOf(termo) !== -1 || f.indexOf(termo) !== -1 || c.indexOf(termo) !== -1;
-            });
-            
-            if(!grid) return;
-            grid.innerHTML = ''; 
-            grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
-            
-            if (resultados.length === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-500 font-bold bg-white border border-gray-200 rounded-sm shadow-sm">Nenhum resultado encontrado para "' + termo + '".</div>';
-            } else {
-                window.noticiasCategoriaAtual = resultados; 
-                window.itensExibidosCategoria = 16;
-                resultados.slice(0, 16).forEach(function(n) { 
-                    grid.innerHTML += htmlCard(n); 
-                });
-                
-                var btnMais = document.getElementById('btn-mostrar-mais');
-                if (btnMais) { 
-                    if (resultados.length > 16) { btnMais.style.display = 'block'; } else { btnMais.style.display = 'none'; }
-                }
-            }
-            fecharNoticiaUI();
-        }
-
-        function abrirNoticia(idNoticia, updateUrl) {
-            if (updateUrl === undefined) updateUrl = true;
-            var noticia = noticiasGlobais.find(function(n) { return String(n.id) === String(idNoticia); }); 
-            if(!noticia) return;
-            
-            noticiaAbertaId = noticia.id; 
-            if (updateUrl) atualizarURL('noticia', null, noticia);
-            
-            var hFeed = document.getElementById('home-feed-container');
-            if(hFeed) hFeed.style.display = 'none';
-            
-            var filtroCid = document.getElementById('filtro-cidades-container');
-            if (filtroCid) filtroCid.style.display = 'none';
-            
-            var nCont = document.getElementById('noticia-completa-container');
-            if(nCont) nCont.style.display = 'block';
-            
-            document.getElementById('nc-categoria').innerText = noticia.categoria; 
-            document.getElementById('nc-titulo').innerText = noticia.titulo;
-            
-            var ncLinhaFina = document.getElementById('nc-linha-fina');
-            if (noticia.linhaFina && noticia.linhaFina.trim() !== '') { 
-                ncLinhaFina.innerText = noticia.linhaFina; 
-                ncLinhaFina.style.display = 'block'; 
-            } else { 
-                ncLinhaFina.innerText = ''; 
-                ncLinhaFina.style.display = 'none'; 
-            }
-
-            document.getElementById('nc-autor').innerText = "Por: " + noticia.autor; 
-            document.getElementById('nc-data').innerText = noticia.dataHora ? "Publicado em " + noticia.dataHora.replace(' ', ' às ') : '';
-            
-            var conteudoFormatado = (noticia.conteudo || '');
-            var tempDiv = document.createElement('div'); tempDiv.innerHTML = conteudoFormatado;
-            var botoesDeletar = tempDiv.querySelectorAll('.btn-diminuir-img, .btn-aumentar-img');
-            botoesDeletar.forEach(function(b) { var pai = b.parentElement; b.remove(); if(pai && pai.innerHTML.trim() === '') pai.remove(); });
-            conteudoFormatado = tempDiv.innerHTML;
-
-            document.getElementById('nc-conteudo').innerHTML = conteudoFormatado || '<p class="text-gray-400 italic">Sem conteúdo disponível para esta matéria.</p>';
-            
-            if(conteudoFormatado.indexOf('instagram-media') !== -1) { setTimeout(function(){ if(window.instgrm) window.instgrm.Embeds.process(); }, 500); }
-            if(conteudoFormatado.indexOf('twitter-tweet') !== -1) { setTimeout(function(){ if(window.twttr) window.twttr.widgets.load(); }, 500); }
-            
-            var ncImg = document.getElementById('nc-imagem');
-            var imgCont = document.getElementById('nc-imagem-container');
-            if(noticia.urlImagem && noticia.urlImagem.trim() !== '') { 
-                ncImg.src = noticia.urlImagem; 
-                if(imgCont) imgCont.style.display = 'block'; 
-            } else { 
-                if(imgCont) imgCont.style.display = 'none'; 
-            }
-            
-            document.getElementById('nc-creditos').innerText = noticia.creditosImagem ? 'Foto: ' + noticia.creditosImagem : '';
-            document.getElementById('nc-legenda').innerText = noticia.legendaImagem ? noticia.legendaImagem : '';
-            
-            var coms = comentariosGlobais.filter(function(c) { return c && String(c.idNoticia) === String(idNoticia); });
-            var divComs = document.getElementById('lista-comentarios'); 
-            if (divComs) {
-                divComs.innerHTML = '';
-                if(coms.length === 0) { divComs.innerHTML = '<p class="text-sm text-gray-400 italic font-medium">Seja o primeiro a comentar.</p>'; } 
-                else { 
-                    coms.forEach(function(c) { 
-                        if(c) { 
-                            divComs.innerHTML += '<div class="bg-white p-5 border border-gray-200 rounded-sm shadow-sm">\n    <div class="flex items-center gap-3 mb-2">\n        <span class="font-black text-sm text-jornal-dark">' + c.nome + '</span>\n        <span class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">' + c.data + '</span>\n    </div>\n    <p class="text-sm text-gray-700 font-medium">' + c.texto + '</p>\n</div>\n';
-                        }
-                    }); 
-                }
-            }
-            
-            var relContainer = document.getElementById('nc-relacionadas-container');
-            var relGrid = document.getElementById('nc-relacionadas-grid');
-            
-            if(noticia.relacionadas && noticia.relacionadas.trim() !== '') {
-                var idsRel = String(noticia.relacionadas).split(','); var objRel = [];
-                idsRel.forEach(function(idR) { var nr = noticiasGlobais.find(function(x) { return String(x.id) === String(idR.trim()); }); if(nr && isNoticiaPublicada(nr)) objRel.push(nr); });
-                if(objRel.length > 0) {
-                    if(relContainer) relContainer.style.display = 'block'; 
-                    relGrid.innerHTML = '';
-                    objRel.forEach(function(nr) { relGrid.innerHTML += htmlCard(nr); });
-                } else { if(relContainer) relContainer.style.display = 'none'; }
-            } else { if(relContainer) relContainer.style.display = 'none'; }
-            
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { window.google.script.run.incrementarView(noticiaAbertaId); }
-            window.scrollTo(0,0);
-        }
-
-        function fecharNoticiaUI() { 
-            noticiaAbertaId = null; document.title = "Notícias Avulsas - Portal de Informação";
-            var nCont = document.getElementById('noticia-completa-container');
-            if(nCont) nCont.style.display = 'none'; 
-            
-            var relCont = document.getElementById('nc-relacionadas-container'); 
-            if (relCont) relCont.style.display = 'none';
-            
-            var masterWrap = document.getElementById('master-feed-wrapper');
-            if (masterWrap && masterWrap.style.display !== 'none') { 
-                var hFeed = document.getElementById('home-feed-container');
-                if(hFeed) hFeed.style.display = 'block'; 
-            }
-            window.scrollTo(0,0); 
-        }
-        
-        function voltarCapa() { fecharNoticiaUI(); atualizarURL('categoria', 'Todas'); filtrarCategoria('Todas', false); var iPesq = document.getElementById('input-pesquisa'); if(iPesq) iPesq.value = ''; }
-
-        function enviarComentario(e) {
-            e.preventDefault(); if(!noticiaAbertaId) return;
-            var btn = document.getElementById('btn-enviar-comentario'); var txt = btn.innerHTML; btn.innerHTML = 'A enviar...'; btn.disabled = true;
-            var payload = { idNoticia: noticiaAbertaId, nome: document.getElementById('com-nome').value, texto: document.getElementById('com-texto').value };
-            
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                window.google.script.run.withSuccessHandler(function(res) {
-                    if (res && res.sucesso) { 
-                        var t = document.getElementById('toast'); document.getElementById('toast-msg').innerText = 'Comentário publicado!';
-                        t.className = 'fixed top-5 right-5 px-6 py-4 font-bold shadow-xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-jornal-dark border-jornal-dark text-white rounded-sm'; 
-                        document.getElementById('toast-icon').innerHTML = '✓'; t.classList.remove('hidden'); 
-                        setTimeout(function() { t.classList.add('hidden'); }, 4500);
-                        document.getElementById('form-comentario').reset(); comentariosGlobais.push(res.comentario); abrirNoticia(noticiaAbertaId, false); 
-                    }
-                    btn.innerHTML = txt; btn.disabled = false;
-                }).salvarComentarioNoSheets(payload);
-            }
-        }
-
-        function shareLink(plataforma) {
-            if(!noticiaAbertaId) return; var noticia = noticiasGlobais.find(function(n) { return n && String(n.id) === String(noticiaAbertaId); }); if(!noticia) return;
-            var urlEncoded = encodeURIComponent(window.location.href); var tituloTexto = noticia.titulo;
-            if (noticia.linhaFina) { tituloTexto += " - " + noticia.linhaFina; }
-            var textoEncoded = encodeURIComponent(tituloTexto); var link = '';
-            if(plataforma === 'whatsapp') { link = 'https://api.whatsapp.com/send?text=' + textoEncoded + '%0A%0A' + urlEncoded; }
-            if(plataforma === 'x') { link = 'https://twitter.com/intent/tweet?text=' + textoEncoded + '&url=' + urlEncoded; }
-            window.open(link, '_blank', 'width=600,height=400');
-        }
-
-        function abrirModalExpediente() {
-            var m = document.getElementById('modalExpediente');
-            if(m){ m.classList.remove('hidden'); m.classList.add('flex'); }
-        }
-
-        function fecharModalExpediente() {
-            var m = document.getElementById('modalExpediente');
-            if(m){ m.classList.add('hidden'); m.classList.remove('flex'); }
-        }
-
-        function abrirModalClima() {
-            var m = document.getElementById('modalClima');
-            if(m){ m.classList.remove('hidden'); m.classList.add('flex'); }
-        }
-
-        function fecharModalClima() {
-            var m = document.getElementById('modalClima');
-            if(m){ m.classList.add('hidden'); m.classList.remove('flex'); }
-        }
-        
-        function abrirModalLogin() { 
-            window.location.href = "admin.html";
-        }
-    </script>
-</body>
-</html>
