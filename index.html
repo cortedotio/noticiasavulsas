@@ -2,77 +2,161 @@
 <html lang="pt-PT" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notícias Avulsas - Portal de Informação</title>
     
-    <meta property="og:title" content="Notícias Avulsas - Portal de Informação">
-    <meta property="og:description" content="Jornalismo sério, ético e independente. Acompanhe as últimas matérias.">
-    <meta property="og:image" content="https://placehold.co/1200x630/0F172A/ffffff?text=Noticias+Avulsas">
-    <meta property="og:url" content="https://noticiasavulsas.com.br">
-    <meta property="og:type" content="website">
-    <meta name="twitter:card" content="summary_large_image">
-    
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
+    <!-- Scripts Oficiais para as Redes Sociais Embutidas -->
     <script async src="//www.instagram.com/embed.js"></script>
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
     
-    <script>
-        if (typeof google === 'undefined' || typeof google.script === 'undefined') {
-            const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyoHo_olvZbyvT-qfKBDAveq1-n1IHD_bLxf831i_bBrFJeSVTcc6RTfvdQ9QV25hTh/exec";
-            window.google = { script: { run: { withSuccessHandler: function(cb) { this._onSuccess = cb; return this; }, withFailureHandler: function(cb) { this._onFailure = cb; return this; } } } };
-            const apiFunctions = ['getHomeData', 'incrementarView', 'salvarComentarioNoSheets', 'inscreverNewsletter'];
-            apiFunctions.forEach(function(funcName) {
-                window.google.script.run[funcName] = function() {
-                    var argsArray = Array.prototype.slice.call(arguments);
-                    var successCb = this._onSuccess; var failureCb = this._onFailure;
-                    this._onSuccess = null; this._onFailure = null;
-                    fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: funcName, args: argsArray }), redirect: 'follow' })
-                    .then(function(res) { return res.json(); })
-                    .then(function(result) { 
-                        if (successCb) {
-                            var finalPayload = result;
-                            if (result && result.result !== undefined) { finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result; }
-                            successCb(finalPayload);
-                        }
-                    }).catch(function(err) { if (failureCb) failureCb(err); else console.error("API Error:", err); });
-                    return this;
-                };
-            });
-        }
+    <!-- PONTE HÍBRIDA FIREBASE (NOVO MOTOR ULTRA RÁPIDO) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+        // AS SUAS CHAVES OFICIAIS DO FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyD7HqJYDLlREM2OV3dofdKgyBXLJ_OdD0M",
+            authDomain: "noticias-avulsas.firebaseapp.com",
+            projectId: "noticias-avulsas",
+            storageBucket: "noticias-avulsas.firebasestorage.app",
+            messagingSenderId: "632608657227",
+            appId: "1:632608657227:web:d88d071fd8b92d08c0e2ce"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.firebaseBridge = {
+            getHomeData: async function() {
+                try {
+                    const res = { sucesso: true, noticias: [], categorias: [], comentarios: [], propagandas: [], config: {} };
+                    
+                    // Vai buscar tudo ao Firebase em paralelo (Muito mais rápido!)
+                    const [noticiasSnap, catSnap, configSnap, propSnap, comSnap] = await Promise.all([
+                        getDocs(collection(db, 'Noticias')), getDocs(collection(db, 'Categorias')),
+                        getDocs(collection(db, 'Configuracoes')), getDocs(collection(db, 'Propagandas')),
+                        getDocs(collection(db, 'Comentarios'))
+                    ]);
+
+                    noticiasSnap.forEach(d => res.noticias.push({id: d.id, ...d.data()}));
+                    catSnap.forEach(d => res.categorias.push(d.id));
+                    configSnap.forEach(d => res.config[d.id] = d.data().valor);
+                    propSnap.forEach(d => {
+                        const p = d.data();
+                        if(p.status === 'Ativa') res.propagandas.push({id: d.id, ...p});
+                    });
+                    comSnap.forEach(d => {
+                        const c = d.data();
+                        if(c.status === 'Aprovado') res.comentarios.push({id: d.id, ...c});
+                    });
+
+                    // Ordena as notícias da mais recente para a mais antiga
+                    res.noticias.sort((a,b) => {
+                        function parse(s) {
+                            if(!s) return 0;
+                            const p = s.split(/[\/\s:\-T]/);
+                            if(p.length < 5) return 0;
+                            const ano = p[2].length === 4 ? p[2] : p[0];
+                            const dia = p[0].length <= 2 ? p[0] : p[2];
+                            return new Date(ano, p[1]-1, dia, p[3], p[4]).getTime();
+                        }
+                        return parse(b.dataHora) - parse(a.dataHora);
+                    });
+                    
+                    return res;
+                } catch (err) { 
+                    console.error("Erro ao ler Firebase:", err);
+                    return { sucesso: false, erro: err.message }; 
+                }
+            },
+            curtirNoticiaNoSheets: async function(id) { 
+                try { await updateDoc(doc(db, 'Noticias', id), { likes: increment(1) }); return { sucesso: true }; } catch(e){ return {sucesso: false}; }
+            },
+            incrementarView: async function(id) { 
+                try { await updateDoc(doc(db, 'Noticias', id), { views: increment(1) }); return { sucesso: true }; } catch(e){ return {sucesso: false}; }
+            },
+            salvarComentarioNoSheets: async function(p) {
+                try {
+                    const id = new Date().getTime().toString();
+                    const d = new Date(); 
+                    const dataStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                    const payloadFinal = { idNoticia: p.idNoticia, nome: p.nome, texto: p.texto, data: dataStr, status: 'Aprovado' };
+                    await setDoc(doc(db, 'Comentarios', id), payloadFinal);
+                    return { sucesso: true, comentario: payloadFinal };
+                } catch(e) { return { sucesso: false, erro: e.message }; }
+            }
+        };
+    </script>
+    
+    <script>
+        // O SEU LINK OFICIAL DA BASE DE DADOS GOOGLE (Para o que não for Firebase)
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw3BLfTFC2Z4sPOQcFMEx8rO8Xz862pVR8STIcc_XK-HAtZjC_CTS_Xs36gh1qbwzWf/exec";
+        
+        window.google = { script: { run: {
+            withSuccessHandler: function(cb) { this._onSuccess = cb; return this; },
+            withFailureHandler: function(cb) { this._onFailure = cb; return this; }
+        }}};
+
+        const apiFunctions = ['getHomeData', 'curtirNoticiaNoSheets', 'incrementarView', 'salvarComentarioNoSheets', 'inscreverNewsletter'];
+        const firebaseOverrides = ['getHomeData', 'curtirNoticiaNoSheets', 'incrementarView', 'salvarComentarioNoSheets'];
+
+        apiFunctions.forEach(function(funcName) {
+            window.google.script.run[funcName] = function() {
+                var argsArray = Array.prototype.slice.call(arguments);
+                var successCb = this._onSuccess; var failureCb = this._onFailure;
+                this._onSuccess = null; this._onFailure = null;
+                
+                var checkReady = setInterval(function() {
+                    if (window.firebaseBridge || !firebaseOverrides.includes(funcName)) {
+                        clearInterval(checkReady);
+                        if (firebaseOverrides.includes(funcName)) {
+                            window.firebaseBridge[funcName].apply(window.firebaseBridge, argsArray)
+                                .then(res => { if(successCb) successCb(res); })
+                                .catch(err => { if(failureCb) failureCb(err); });
+                        } else {
+                            fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: funcName, args: argsArray }) })
+                            .then(res => res.json())
+                            .then(result => {
+                                var finalPayload = result;
+                                if (result && result.result !== undefined) finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
+                                if (successCb) successCb(finalPayload);
+                            }).catch(err => { if (failureCb) failureCb(err); });
+                        }
+                    }
+                }, 50);
+            };
+        });
+
+        // ================================================================
+        // TRATAMENTO DE ERROS E CONFIGURAÇÕES VISUAIS
+        // ================================================================
         window.onerror = function(message, source, lineno, colno, error) {
-            console.error("Erro Global JS:", message, "na linha", lineno);
+            setTimeout(function() {
+                var debugBox = document.getElementById('debug-error-box');
+                if (debugBox) {
+                    debugBox.innerHTML = "Aviso: A rede encontrou uma lentidão. Algumas imagens podem não carregar imediatamente.";
+                    debugBox.classList.remove('hidden');
+                }
+            }, 500);
         };
 
         var configureTailwind = function() {
             if (typeof tailwind === 'undefined') { setTimeout(configureTailwind, 10); return; }
-            tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] }, colors: { jornal: { blue: '#0F172A', red: '#E11D48', gray: '#F8FAFC', dark: '#020617' } } } } };
+            tailwind.config = {
+                theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] }, colors: { jornal: { blue: '#0F172A', red: '#E11D48', gray: '#F8FAFC', dark: '#020617' } } } }
+            };
         };
         configureTailwind();
     </script>
     
     <style>
-        * { -webkit-tap-highlight-color: transparent; }
-        
-        @supports (-webkit-touch-callout: none) {
-            input, select, textarea { font-size: 16px !important; }
-        }
-        
-        .ticker-safe {
-            height: 40px; 
-            height: calc(40px + env(safe-area-inset-top, 0px));
-            padding-top: env(safe-area-inset-top, 0px);
-        }
-        .nav-safe {
-            top: 40px; 
-            top: calc(40px + env(safe-area-inset-top, 0px));
-        }
-
-        .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
-
-        body { background-color: #f1f2f5; color: #111111; overflow-x: hidden; }
+        body { background-color: #f1f2f5; color: #111111; }
         .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
@@ -81,6 +165,8 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #999; }
+        .heart-beat { animation: heartbeat 0.3s ease-in-out; }
+        @keyframes heartbeat { 0% { transform: scale(1); } 50% { transform: scale(1.3); color: #E11D48; } 100% { transform: scale(1); } }
         @keyframes marquee { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
         .animate-marquee-slow { animation: marquee 150s linear infinite; }
         .animate-marquee-slow:hover { animation-play-state: paused; }
@@ -94,6 +180,7 @@
         .rich-editor blockquote { border-left: 4px solid #E11D48; background: #f8fafc; padding: 12px 16px; color: #475569; font-style: italic; margin: 16px 0; border-radius: 0 8px 8px 0; }
         .rich-editor ul { list-style-type: disc; padding-left: 24px; margin-bottom: 12px; }
         .rich-editor ol { list-style-type: decimal; padding-left: 24px; margin-bottom: 12px; }
+        
         .instagram-media { background: #FFF; border: 0; border-radius: 3px; box-shadow: 0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px auto; max-width: 540px; min-width: 326px; padding: 0; width: 99.375%; width: calc(100% - 2px); }
     </style>
 </head>
@@ -104,18 +191,23 @@
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
-    <div id="loading-noticias" class="fixed inset-0 z-[100000] bg-white flex flex-col items-center justify-center transition-opacity duration-500 pt-safe">
+    <!-- Ecrã de Carregamento Ultra Rápido -->
+    <div id="loading-noticias" class="fixed inset-0 z-[100000] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
         <div id="loading-logo-container" class="mb-6">
-             <h1 id="loading-logo-text" class="text-4xl md:text-5xl font-black tracking-tighter uppercase bg-gradient-to-r from-blue-500 to-emerald-400 bg-clip-text text-transparent px-4 text-center">NOTÍCIAS AVULSAS</h1>
+             <h1 id="loading-logo-text" class="text-4xl md:text-5xl font-black tracking-tighter uppercase text-slate-900">
+                NOTÍCIAS AVULSAS
+             </h1>
         </div>
         <div class="w-10 h-10 border-4 border-gray-100 border-t-rose-600 rounded-full animate-spin mb-4"></div>
-        <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 animate-pulse">A CARREGAR O PORTAL...</p>
+        <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 animate-pulse">ACESSAR PORTAL...</p>
+        <div id="debug-error-box" class="hidden mt-4 text-xs text-amber-600 font-bold text-center p-4 bg-amber-50 border border-amber-200 rounded max-w-xl break-words w-full shadow-sm"></div>
     </div>
 
-    <div id="view-portal" class="flex-grow flex flex-col relative min-w-0 w-full">
+    <div id="view-portal" class="flex-grow flex flex-col relative min-w-0">
         
-        <div id="ticker-noticias" class="bg-jornal-red border-red-800 text-white text-[10px] font-bold ticker-safe overflow-hidden flex items-center border-b sticky top-0 z-50 w-full shadow-sm min-w-0 transition-colors duration-500">
-            <div class="overflow-hidden relative w-full flex-grow min-w-0 flex h-full items-center">
+        <!-- Ticker de Informações -->
+        <div id="ticker-noticias" class="bg-jornal-red text-white text-[10px] font-bold h-8 overflow-hidden flex items-center border-b border-red-800 sticky top-0 z-50 w-full shadow-sm min-w-0 transition-colors duration-500">
+            <div class="overflow-hidden relative w-full flex-grow min-w-0">
                 <div class="inline-block animate-marquee-slow whitespace-nowrap flex items-center gap-8 uppercase" id="ticker-content">
                     A carregar informações financeiras e matérias recentes...
                 </div>
@@ -125,11 +217,13 @@
         <header class="bg-white w-full relative z-30 min-w-0 border-b border-gray-100">
             <div class="max-w-[1200px] mx-auto flex justify-between items-center px-4 py-5 md:py-8 min-w-0 gap-4">
                 <div id="header-branding" class="flex flex-wrap items-center gap-3 min-w-0 cursor-pointer" onclick="voltarCapa();">
-                    <h1 class="text-4xl md:text-5xl font-black tracking-tighter uppercase text-slate-900">Notícias<span class="text-rose-600">Avulsas</span></h1>
+                    <h1 class="text-4xl md:text-5xl font-black tracking-tighter uppercase text-slate-900">
+                        Notícias<span class="text-rose-600">Avulsas</span>
+                    </h1>
                 </div>
                 
                 <form onsubmit="pesquisarSite(event)" class="relative hidden md:flex items-center mx-auto flex-grow max-w-sm">
-                    <input type="text" id="input-pesquisa" placeholder="Pesquisar notícias..." class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-full text-base md:text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-jornal-blue pr-12 transition-all shadow-inner" />
+                    <input type="text" id="input-pesquisa" placeholder="Pesquisar notícias..." class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-full text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-jornal-blue pr-12 transition-all shadow-inner" />
                     <button type="submit" class="absolute right-3 p-2 text-gray-400 hover:text-jornal-red transition-colors flex items-center justify-center">
                         <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M10 2a8 8 0 015.293 14.121l5.414 5.414a1 1 0 01-1.414 1.414l-5.414-5.414A8 8 0 1110 2zm0 2a6 6 0 100 12 6 6 0 000-12z"/></svg>
                     </button>
@@ -147,16 +241,17 @@
             
             <form id="form-pesquisa-mobile" onsubmit="pesquisarSite(event)" class="hidden w-full px-4 pb-4 bg-white lg:hidden">
                 <div class="relative w-full">
-                    <input type="text" id="input-pesquisa-mobile" placeholder="Pesquisar..." class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-full text-base font-bold focus:outline-none shadow-inner" />
+                    <input type="text" id="input-pesquisa-mobile" placeholder="Pesquisar..." class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-full text-sm font-bold focus:outline-none shadow-inner" />
                     <button type="submit" class="absolute right-3 top-2.5 text-gray-500">🔍</button>
                 </div>
             </form>
         </header>
 
-        <nav class="border-y border-gray-200 border-b-4 border-b-jornal-blue sticky nav-safe z-40 bg-white/95 backdrop-blur-sm w-full shadow-sm min-w-0" id="nav-categorias-publicas">
+        <!-- MENU DE NAVEGAÇÃO -->
+        <nav class="border-y border-gray-200 border-b-4 border-b-jornal-blue sticky top-0 md:top-8 z-40 bg-white/95 backdrop-blur-sm w-full shadow-sm min-w-0" id="nav-categorias-publicas">
             <div id="nav-container-inner" class="max-w-[1200px] mx-auto px-4 flex items-center overflow-x-auto whitespace-nowrap text-[11px] md:text-sm font-black uppercase tracking-widest text-jornal-dark py-3 md:py-4 custom-scrollbar min-w-0">
                 <div id="sticky-logo-container" class="hidden shrink-0 items-center cursor-pointer mr-6 pr-6 border-r-2 border-gray-200 transition-all duration-300" onclick="voltarCapa()">
-                    <span class="font-black text-[15px] tracking-tighter uppercase bg-gradient-to-r from-blue-500 to-emerald-400 bg-clip-text text-transparent" id="sticky-logo-text">NOTÍCIAS AVULSAS</span>
+                    <span class="font-black text-[15px] tracking-tighter uppercase text-slate-900" id="sticky-logo-text">NOTÍCIAS AVULSAS</span>
                 </div>
                 <div id="links-categorias" class="flex items-center gap-6 md:gap-8 min-w-0"></div>
             </div>
@@ -165,24 +260,26 @@
         <main class="max-w-[1200px] mx-auto pt-6 md:pt-8 pb-16 px-4 flex-grow w-full min-w-0">
             <div id="ads-topo-container" class="w-full mb-8 hidden grid gap-4 grid-cols-1 md:grid-cols-2"></div>
 
-            <div id="master-feed-wrapper" class="flex flex-col lg:flex-row gap-8 items-start hidden min-w-0">
+            <div id="master-feed-wrapper" class="flex flex-col lg:flex-row gap-8 items-start min-w-0">
                 
+                <!-- Coluna Esquerda: Notícias -->
                 <div class="lg:w-[72%] w-full flex flex-col gap-6 min-w-0">
                     
                     <div id="filtro-cidades-container" class="w-full mb-6 hidden bg-gray-50 p-5 border border-gray-200 rounded-sm shadow-sm">
                         <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3">FILTRAR MATÉRIAS DE CIDADES</h3>
                         <div class="flex flex-col sm:flex-row gap-3">
-                            <input type="text" id="input-cidade-filtro" placeholder="Nome da cidade..." class="flex-grow px-5 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-dark text-base md:text-sm font-medium rounded-sm shadow-inner text-gray-700">
-                            <button onclick="aplicarFiltroCidade()" class="bg-jornal-dark text-white font-black uppercase tracking-widest text-[11px] px-8 py-3 rounded-sm hover:opacity-90 transition-opacity">Filtrar</button>
+                            <input type="text" id="input-cidade-filtro" placeholder="Digite o nome da cidade..." class="flex-grow px-5 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-dark text-sm font-medium rounded-sm shadow-inner text-gray-700">
+                            <button onclick="aplicarFiltroCidade()" class="bg-jornal-dark text-white font-black uppercase tracking-widest text-[11px] px-8 py-3 rounded-sm hover:opacity-90 transition-opacity">Filtrar Cidade</button>
                             <button onclick="limparFiltroCidade()" class="bg-white border border-gray-300 text-gray-600 font-black uppercase tracking-widest text-[11px] px-6 py-3 rounded-sm hover:bg-gray-100 transition-colors">Limpar</button>
                         </div>
                     </div>
 
+                    <!-- PÁGINA INICIAL DO FEED -->
                     <div id="home-feed-container" class="w-full min-w-0">
                         <div id="carrossel-destaques" class="w-full mb-8 relative hidden overflow-hidden bg-gray-100 aspect-video shrink-0 rounded-sm shadow-md">
                             <div id="carrossel-inner" class="w-full h-full relative"></div>
-                            <button onclick="moverCarrossel(-1)" class="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/50 text-white rounded-full p-3 z-20 backdrop-blur-sm transition-all shadow-lg">❮</button>
-                            <button onclick="moverCarrossel(1)" class="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/50 text-white rounded-full p-3 z-20 backdrop-blur-sm transition-all shadow-lg">❯</button>
+                            <button onclick="moverCarrossel(-1)" class="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/50 text-white rounded-full w-10 h-10 flex items-center justify-center z-20 backdrop-blur-sm transition-all shadow-lg font-bold">❮</button>
+                            <button onclick="moverCarrossel(1)" class="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/50 text-white rounded-full w-10 h-10 flex items-center justify-center z-20 backdrop-blur-sm transition-all shadow-lg font-bold">❯</button>
                             <div id="carrossel-indicadores" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3 z-20"></div>
                         </div>
 
@@ -200,11 +297,13 @@
                         </div>
                     </div>
 
+                    <!-- LEITURA DA MATÉRIA -->
                     <div id="noticia-completa-container" class="hidden bg-white border border-gray-200 p-5 md:p-10 shadow-sm min-w-0 rounded-sm">
                         <button onclick="voltarCapa()" class="mb-6 text-jornal-red font-black text-[10px] uppercase tracking-widest hover:underline flex items-center gap-1">&larr; Voltar à Capa</button>
                         
                         <span id="nc-categoria" class="text-jornal-red text-[11px] font-black uppercase tracking-widest mb-4 block cursor-pointer hover:underline" onclick="filtrarCategoria(this.innerText)"></span>
                         <h1 id="nc-titulo" class="font-serif text-3xl md:text-5xl font-black mb-5 leading-tight text-jornal-dark break-words tracking-tight"></h1>
+                        
                         <h2 id="nc-linha-fina" class="font-sans text-base md:text-xl text-gray-500 mb-8 leading-relaxed font-medium hidden break-words italic"></h2>
                         
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-5 mb-8 gap-4">
@@ -216,11 +315,11 @@
 
                         <div class="flex flex-wrap items-center gap-2 md:gap-4 mb-8">
                             <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Partilhar:</span>
-                            <button onclick="shareLink('whatsapp')" class="p-2.5 bg-[#25D366] text-white rounded hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center cursor-pointer">
-                                <svg class="w-4 h-4 fill-current pointer-events-none" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                            <button onclick="shareLink('whatsapp')" class="p-2.5 bg-[#25D366] text-white rounded hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center">
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
                             </button>
-                            <button onclick="shareLink('x')" class="p-2.5 bg-black text-white rounded hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center cursor-pointer">
-                                <svg class="w-4 h-4 fill-current pointer-events-none" viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>
+                            <button onclick="shareLink('x')" class="p-2.5 bg-black text-white rounded hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center">
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>
                             </button>
                         </div>
 
@@ -245,16 +344,17 @@
                             </button>
                         </div>
 
+                        <!-- COMENTÁRIOS DA NOTÍCIA -->
                         <div class="border-t-4 border-jornal-dark pt-8 mt-4">
                             <h3 class="text-lg font-black font-sans uppercase tracking-tighter text-jornal-dark mb-6">Comentários</h3>
                             <form id="form-comentario" onsubmit="enviarComentario(event)" class="mb-10 bg-gray-50 p-6 md:p-8 border border-gray-200 rounded-sm shadow-inner">
                                 <div class="mb-5">
                                     <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">O seu Nome</label>
-                                    <input type="text" id="com-nome" class="w-full px-5 py-3 border border-gray-300 focus:outline-none focus:border-jornal-dark text-base md:text-sm font-bold rounded-sm shadow-sm" required placeholder="Ex: Maria" />
+                                    <input type="text" id="com-nome" class="w-full px-5 py-3 border border-gray-300 focus:outline-none focus:border-jornal-dark text-sm font-bold rounded-sm shadow-sm" required placeholder="Ex: Maria" />
                                 </div>
                                 <div class="mb-6">
                                     <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Comentário</label>
-                                    <textarea id="com-texto" class="w-full px-5 py-4 border border-gray-300 focus:outline-none focus:border-jornal-dark text-base md:text-sm resize-none h-28 rounded-sm shadow-sm font-medium" required placeholder="Deixe a sua opinião..."></textarea>
+                                    <textarea id="com-texto" class="w-full px-5 py-4 border border-gray-300 focus:outline-none focus:border-jornal-dark text-sm resize-none h-28 rounded-sm shadow-sm font-medium" required placeholder="Deixe a sua opinião..."></textarea>
                                 </div>
                                 <button type="submit" id="btn-enviar-comentario" class="bg-jornal-dark text-white px-8 py-3.5 font-black hover:bg-opacity-90 transition-colors uppercase text-[11px] tracking-widest rounded-sm w-full md:w-auto shadow-md">Publicar Comentário</button>
                             </form>
@@ -263,6 +363,7 @@
                     </div>
                 </div>
                 
+                <!-- SIDEBAR DIREITA -->
                 <aside class="lg:w-[28%] w-full shrink-0 min-w-0">
                     
                     <div id="sidebar-editorias-especiais" class="hidden mb-10 bg-white border border-gray-200 p-6 shadow-sm rounded-sm">
@@ -300,14 +401,14 @@
                             </h2>
                         </div>
                         <div id="widget-placar" class="space-y-4 min-w-0">
-                            <div class="text-center text-xs font-bold text-gray-500">A carregar resultados...</div>
+                            <div class="text-center text-xs text-gray-400 py-4 font-bold uppercase tracking-widest">A procurar jogos...</div>
                         </div>
                     </div>
 
                     <div class="mb-10 bg-white border border-gray-200 p-1 shadow-sm rounded-sm cursor-pointer hover:shadow-md transition-shadow" onclick="abrirModalClima()">
                         <div class="border-t-4 border-sky-400 pt-2 px-4 pb-2 flex justify-between items-center bg-white">
                             <h2 class="text-xs font-black uppercase tracking-widest text-sky-500">Clima Local</h2>
-                            <span class="text-[9px] text-gray-400 uppercase font-bold tracking-widest hover:text-sky-500 transition-colors pointer-events-none">Previsão &raquo;</span>
+                            <span class="text-[9px] text-gray-400 uppercase font-bold tracking-widest hover:text-sky-500 transition-colors">Previsão &raquo;</span>
                         </div>
                         <div class="relative overflow-hidden bg-gradient-to-br from-sky-400 to-blue-600 rounded-b-sm shadow-inner py-8 px-4 text-white flex flex-col items-center">
                             <div class="absolute top-1/2 -translate-y-1/2 -right-10 text-[150px] opacity-10 select-none pointer-events-none" id="bg-icone-clima">☀️</div>
@@ -334,15 +435,16 @@
             </div>
         </main>
 
-        <footer class="mt-auto bg-jornal-dark text-white pt-14 pb-10 border-t-8 border-jornal-blue min-w-0 flex flex-col items-center justify-center text-center pb-safe">
+        <footer class="mt-auto bg-jornal-dark text-white pt-14 pb-10 border-t-8 border-jornal-blue min-w-0 flex flex-col items-center justify-center text-center">
             <div id="footer-branding" class="mb-3 min-w-0 cursor-pointer" onclick="voltarCapa()">
                 <h1 class="text-3xl md:text-4xl font-black tracking-tighter uppercase text-slate-100">
                     Notícias<span class="text-rose-600">Avulsas</span>
                 </h1>
             </div>
             <p class="text-gray-400 text-sm font-medium">Jornalismo sério, ético e independente.</p>
+            
             <div class="mt-6 flex flex-col items-center gap-4">
-                <button type="button" onclick="abrirModalExpediente()" class="text-[10px] font-black text-gray-500 hover:text-white uppercase tracking-widest border border-gray-700 hover:border-gray-500 px-5 py-2 rounded-sm transition-colors shadow-sm cursor-pointer">
+                <button type="button" onclick="abrirModalExpediente()" class="text-[10px] font-black text-gray-500 hover:text-white uppercase tracking-widest border border-gray-700 hover:border-gray-500 px-5 py-2 rounded-sm transition-colors shadow-sm">
                     Ver Expediente
                 </button>
             </div>
@@ -350,67 +452,81 @@
         </footer>
     </div>
 
-    <!-- Modais Clima e Expediente -->
+    <!-- MODAL EXPEDIENTE -->
+    <div id="modalExpediente" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-jornal-dark/90 backdrop-blur-sm" onclick="fecharModalExpediente()"></div>
+        <div class="bg-white w-full max-w-3xl rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-blue flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center p-6 border-b border-gray-100 shrink-0">
+                <h2 class="font-sans text-xl font-black uppercase text-jornal-dark tracking-tighter">Expediente</h2>
+                <button onclick="fecharModalExpediente()" class="text-gray-400 hover:text-red-500 font-bold text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-6 md:p-10 overflow-y-auto custom-scrollbar flex-grow">
+                <div id="conteudo-expediente" class="text-slate-800 text-sm md:text-base leading-relaxed font-serif whitespace-pre-line rich-editor break-words">
+                    <p class="text-gray-500 italic text-center py-10">O expediente ainda não foi configurado pelo administrador.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CLIMA -->
     <div id="modalClima" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
-        <div class="absolute inset-0 bg-jornal-dark/80 backdrop-blur-sm" onclick="fecharModalClima()"></div>
-        <div class="bg-white w-full max-w-lg rounded-sm shadow-2xl relative z-10 overflow-hidden font-sans flex flex-col max-h-[90vh]">
-            <div class="p-6 pb-0">
-                <div class="flex justify-between items-center mb-6">
+        <div class="absolute inset-0 bg-jornal-dark/90 backdrop-blur-sm" onclick="fecharModalClima()"></div>
+        <div class="bg-white w-full max-w-lg rounded-sm shadow-2xl relative z-10 overflow-hidden font-sans border-t-4 border-sky-500">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-6 border-b border-gray-100 pb-4">
                     <div class="flex items-center gap-2 text-sm text-sky-700 font-black uppercase tracking-widest">
-                        <svg class="w-4 h-4 fill-current pointer-events-none" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                         <span>Cuiabá, Mato Grosso</span>
                     </div>
-                    <button onclick="fecharModalClima()" class="text-gray-400 hover:text-red-500 font-black text-2xl leading-none cursor-pointer">&times;</button>
+                    <button onclick="fecharModalClima()" class="text-gray-400 hover:text-red-500 font-bold text-2xl leading-none">&times;</button>
                 </div>
-                <div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
-                    <div class="flex items-center gap-4">
+                
+                <div class="flex justify-between items-center mb-8">
+                    <div class="flex items-center gap-5">
                         <span id="modal-clima-icone" class="text-7xl drop-shadow-sm">☀️</span>
                         <div class="flex items-start">
-                            <span id="modal-clima-temp" class="text-7xl font-black text-gray-800 tracking-tighter leading-none">--</span>
-                            <span class="text-3xl text-gray-800 font-black mt-1">°C</span>
+                            <span id="modal-clima-temp" class="text-6xl font-black text-gray-800 tracking-tighter">--</span>
+                            <div class="flex flex-col text-2xl text-gray-400 mt-2 font-black">
+                                <span>&deg;C</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="flex gap-6 items-center">
-                        <div class="text-[10px] font-black text-gray-500 flex flex-col gap-1.5 uppercase tracking-widest border-l-2 border-gray-100 pl-4">
-                            <span>Chuva: <span id="modal-clima-chuva" class="text-sky-600">--%</span></span>
-                            <span>Umidade: <span id="modal-clima-umidade" class="text-sky-600">--%</span></span>
-                            <span>Vento: <span id="modal-clima-vento" class="text-sky-600">-- km/h</span></span>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-xl font-black text-jornal-dark uppercase leading-tight" id="modal-clima-desc">--</div>
-                            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Hoje</div>
-                        </div>
+                    <div class="text-right flex flex-col items-end">
+                        <span class="text-xl font-black text-gray-800 uppercase tracking-tight" id="modal-clima-desc">Clima</span>
+                        <span class="text-[10px] font-black text-sky-600 uppercase tracking-widest bg-sky-50 px-2 py-1 rounded mt-2">Condição Atual</span>
                     </div>
                 </div>
-            </div>
-            <div class="overflow-y-auto custom-scrollbar p-6 pt-0">
-                <div class="mb-8">
-                    <h3 class="text-xs font-black uppercase tracking-widest text-jornal-dark border-b-2 border-amber-500 pb-2 mb-4 inline-block">Previsão 7 Dias</h3>
-                    <div class="flex gap-3 overflow-x-auto custom-scrollbar pb-2" id="modal-clima-previsao"></div>
+                
+                <div class="grid grid-cols-3 gap-4 mb-8">
+                    <div class="bg-gray-50 border border-gray-100 p-3 rounded-sm flex flex-col items-center text-center">
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Chuva</span>
+                        <span id="modal-clima-chuva" class="text-sm font-bold text-sky-600">0%</span>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-100 p-3 rounded-sm flex flex-col items-center text-center">
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Umidade</span>
+                        <span id="modal-clima-umidade" class="text-sm font-bold text-sky-600">--%</span>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-100 p-3 rounded-sm flex flex-col items-center text-center">
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Vento</span>
+                        <span id="modal-clima-vento" class="text-sm font-bold text-sky-600">-- km/h</span>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="text-xs font-black uppercase tracking-widest text-gray-500 mb-4">Previsão por Hora</h3>
-                    <div class="flex gap-3 overflow-x-auto custom-scrollbar pb-2" id="horas-clima-container"></div>
+                
+                <div class="border-b-2 border-gray-100 mb-6 flex justify-between items-end pb-2">
+                    <h3 class="text-xs font-black uppercase tracking-widest text-gray-800">Previsão 7 Dias</h3>
+                    <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Clique num dia para ver as horas</span>
                 </div>
+                
+                <div class="flex gap-3 overflow-x-auto custom-scrollbar pb-4 mb-4" id="modal-clima-previsao"></div>
+                <div class="flex gap-3 overflow-x-auto custom-scrollbar pb-2" id="horas-clima-container"></div>
             </div>
         </div>
     </div>
 
-    <div id="modalExpediente" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
-        <div class="absolute inset-0 bg-jornal-dark/80 backdrop-blur-sm" onclick="fecharModalExpediente()"></div>
-        <div class="bg-white w-full max-w-2xl rounded-sm shadow-2xl relative z-10 overflow-hidden font-sans border-t-4 border-jornal-blue max-h-[90vh] flex flex-col">
-            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
-                <h2 class="text-xl font-black uppercase tracking-tighter text-jornal-dark">EXPEDIENTE</h2>
-                <button onclick="fecharModalExpediente()" class="text-gray-400 hover:text-red-500 font-black text-2xl leading-none cursor-pointer">&times;</button>
-            </div>
-            <div class="p-8 overflow-y-auto custom-scrollbar rich-editor text-base text-gray-800" id="conteudo-expediente">
-                <p class="text-gray-500 italic text-center font-medium">Expediente não configurado.</p>
-            </div>
-        </div>
-    </div>
-
+    <!-- JAVASCRIPT GLOBAL DO PORTAL -->
     <script>
         var IMG_FALLBACK = 'https://placehold.co/600x400/e2e8f0/475569?text=Sem+Foto';
+        var ICON_HEART = '<svg class="w-3 h-3 fill-current inline" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
 
         function formatarUrlImagem(url) {
             if (!url) return '';
@@ -421,30 +537,19 @@
             } catch(e) { return url; }
         }
 
-        // Blindagem contra Bug do Safari: Parseia datas corretamente e evita Crashs
         function criarDataSegura(dataString) {
             if (!dataString) return new Date();
             var str = String(dataString).trim();
-            
-            if (str.indexOf('T') !== -1 || str.endsWith('Z')) {
-                var n = new Date(str);
-                if (!isNaN(n.getTime())) return n;
+            var partesIso = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+            if (partesIso) { return new Date(partesIso[1], parseInt(partesIso[2])-1, partesIso[3], partesIso[4], partesIso[5]); }
+            var partesBarra = str.split(/[\/\s:\-T]/);
+            if (partesBarra.length >= 5) {
+                var ano, mes, dia, hora, min;
+                if (partesBarra[0].length === 4) { ano = partesBarra[0]; mes = partesBarra[1]; dia = partesBarra[2]; hora = partesBarra[3]; min = partesBarra[4]; } 
+                else { dia = partesBarra[0]; mes = partesBarra[1]; ano = partesBarra[2]; hora = partesBarra[3]; min = partesBarra[4]; }
+                return new Date(ano, parseInt(mes)-1, dia, hora, min);
             }
-
-            var isBr = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:[\sT](\d{1,2}):(\d{1,2}))?/);
-            if (isBr) {
-                var hora = isBr[4] ? parseInt(isBr[4], 10) : 0;
-                var min = isBr[5] ? parseInt(isBr[5], 10) : 0;
-                return new Date(parseInt(isBr[3], 10), parseInt(isBr[2], 10)-1, parseInt(isBr[1], 10), hora, min);
-            }
-
-            var isIsoCurto = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-            if (isIsoCurto) return new Date(parseInt(isIsoCurto[1], 10), parseInt(isIsoCurto[2], 10)-1, parseInt(isIsoCurto[3], 10));
-
-            var dTeste = new Date(str);
-            if (!isNaN(dTeste.getTime())) return dTeste;
-
-            return new Date();
+            return new Date(str); 
         }
 
         function isNoticiaPublicada(n) {
@@ -465,16 +570,6 @@
             return String(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
         }
 
-        // NOVO: Corta os textos de base64 antes de limpar as tags para não congelar o iPhone
-        function removerHTMLRápido(t) {
-            if (!t) return '';
-            var s = String(t);
-            s = s.replace(/<(img|iframe|video|audio|source)[^>]*>/gi, '');
-            s = s.replace(/<[^>]*>?/gm, '');
-            s = s.replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&quot;/gi, '"').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>');
-            return s.trim();
-        }
-
         function atualizarURL(tipo, valor, noticiaObj) {
             try {
                 if (window.location.protocol === 'file:') return;
@@ -482,14 +577,18 @@
                 var pathnameOriginal = window.location.pathname;
                 var pathNovo = '/';
                 if(pathnameOriginal.indexOf('/noticias') !== -1) { baseUrl += '/noticias'; }
+                
                 if (tipo === 'noticia' && noticiaObj) {
                     var cat = normalizarTextoUrl(noticiaObj.categoria.split(',')[0]);
                     var titulo = normalizarTextoUrl(noticiaObj.titulo);
                     pathNovo = '/' + cat + '/' + titulo + '/' + noticiaObj.id;
-                } else if (tipo === 'categoria' && valor !== 'Todas') { pathNovo = '/editoria/' + normalizarTextoUrl(valor); } 
-                else if (tipo === 'pesquisa') { pathNovo = '/busca/' + encodeURIComponent(valor); }
+                } else if (tipo === 'categoria' && valor !== 'Todas') {
+                    pathNovo = '/editoria/' + normalizarTextoUrl(valor);
+                } else if (tipo === 'pesquisa') {
+                    pathNovo = '/busca/' + encodeURIComponent(valor);
+                }
                 window.history.pushState({ path: baseUrl + pathNovo }, '', baseUrl + pathNovo);
-            } catch(e) {}
+            } catch(e) { console.warn("Navegação bloqueada."); }
         }
 
         window.categoriaAtual = 'Todas';
@@ -508,16 +607,17 @@
         document.addEventListener("DOMContentLoaded", function() {
             setTimeout(function() {
                 var loaderGlobal = document.getElementById('loading-noticias');
-                if (loaderGlobal && loaderGlobal.classList) {
+                if (loaderGlobal && !loaderGlobal.classList.contains('hidden')) {
                     loaderGlobal.classList.add('hidden');
                     var wrap = document.getElementById('master-feed-wrapper');
-                    if(wrap && wrap.classList) wrap.classList.remove('hidden');
+                    if(wrap) wrap.classList.remove('hidden');
                 }
-            }, 10000); 
+            }, 15000); 
             carregarNoticias(false);
+            
             window.addEventListener('scroll', function() {
                 var stickyLogo = document.getElementById('sticky-logo-container');
-                if (stickyLogo && stickyLogo.classList) {
+                if (stickyLogo) {
                     if (window.scrollY > 110) { stickyLogo.classList.remove('hidden'); stickyLogo.classList.add('flex'); } 
                     else { stickyLogo.classList.add('hidden'); stickyLogo.classList.remove('flex'); }
                 }
@@ -526,90 +626,88 @@
 
         function removerLoaderGlobal() {
             var loaderGlobal = document.getElementById('loading-noticias');
-            if (loaderGlobal && loaderGlobal.classList) { loaderGlobal.classList.add('hidden'); }
+            if (loaderGlobal && !loaderGlobal.classList.contains('hidden')) { loaderGlobal.classList.add('hidden'); }
             var wrap = document.getElementById('master-feed-wrapper');
-            if(wrap && wrap.classList) wrap.classList.remove('hidden');
+            if(wrap) wrap.classList.remove('hidden');
         }
 
         function tratarRotasIniciais(forcarUpdate) {
             var pathname = window.location.pathname;
             var p = new URLSearchParams(window.location.search);
             var pathParts = pathname.split('/').filter(Boolean);
+            
             if (p.get('noticia')) { abrirNoticia(p.get('noticia'), false); } 
             else if (pathParts.length >= 3) { abrirNoticia(pathParts[pathParts.length - 1], false); } 
             else if (pathParts.length === 2 && pathParts[0] === 'editoria') {
                 var requestedCat = pathParts[1]; var catName = 'Todas';
                 listaCategoriasLocais.forEach(function(c) { if (normalizarTextoUrl(c) === requestedCat) catName = c; });
                 filtrarCategoria(catName, false);
-            } else if (pathParts.length === 2 && pathParts[0] === 'busca') {
-                var inPesq = document.getElementById('input-pesquisa'); if(inPesq) inPesq.value = decodeURIComponent(pathParts[1]); pesquisarSite(new Event('submit'));
-            } else if (p.get('categoria')) { filtrarCategoria(p.get('categoria'), false); } 
+            } 
+            else if (pathParts.length === 2 && pathParts[0] === 'busca') {
+                document.getElementById('input-pesquisa').value = decodeURIComponent(pathParts[1]);
+                pesquisarSite(new Event('submit'));
+            } 
+            else if (p.get('categoria')) { filtrarCategoria(p.get('categoria'), false); } 
             else { filtrarCategoria(window.categoriaAtual, false); }
         }
 
         window.addEventListener('popstate', function(e) { tratarRotasIniciais(false); });
 
         function carregarNoticias(forcarUpdate) {
-            var cacheAntigo = null;
-            try { cacheAntigo = localStorage.getItem('portal_data_cache'); } catch(e){}
-            var usouCache = false;
-            if(cacheAntigo && !forcarUpdate) {
-                try { var dadosCache = JSON.parse(cacheAntigo); processarDadosHome(dadosCache); tratarRotasIniciais(false); usouCache = true; removerLoaderGlobal(); } catch(e){}
-            }
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                if (!usouCache) { var loaderGlobal = document.getElementById('loading-noticias'); if(loaderGlobal && loaderGlobal.classList) loaderGlobal.classList.remove('hidden'); }
+                var dbg = document.getElementById('debug-error-box'); if(dbg) dbg.classList.add('hidden');
+                var loaderGlobal = document.getElementById('loading-noticias'); if(loaderGlobal) loaderGlobal.classList.remove('hidden');
+
                 window.google.script.run.withSuccessHandler(function(res) {
                     removerLoaderGlobal();
                     try {
                         if (res && res.sucesso) { 
-                            try { localStorage.setItem('portal_data_cache', JSON.stringify(res)); } catch(err){}
                             processarDadosHome(res); 
-                            
-                            // NOVO: Obriga o painel a redesenhar para que os artigos mais recentes apareçam SEMPRE!
-                            if (noticiaAbertaId) { /* Faz nada para não quebrar a leitura da pessoa */ } 
-                            else if(window.categoriaAtual === 'Pesquisa') { pesquisarSite(new Event('submit')); } 
-                            else { filtrarCategoria(window.categoriaAtual, false); }
+                            if (!forcarUpdate) { tratarRotasIniciais(false); } 
+                            else { 
+                                if (noticiaAbertaId) { abrirNoticia(noticiaAbertaId, false); } 
+                                else if(window.categoriaAtual === 'Pesquisa') { pesquisarSite(new Event('submit')); } 
+                                else { filtrarCategoria(window.categoriaAtual, false); }
+                            }
                         }
                     } catch(e) { console.error("Falha no JS Local: " + e.message); }
-                }).withFailureHandler(function(err) { removerLoaderGlobal(); console.error("Falha de Servidor: " + err.message); }).getHomeData();
+                }).withFailureHandler(function(err) {
+                    removerLoaderGlobal(); console.error("Falha de Servidor: " + err.message);
+                }).getHomeData();
             } else { removerLoaderGlobal(); }
         }
 
-        function abrirModalExpediente() { var m = document.getElementById('modalExpediente'); if(m && m.classList){ m.classList.remove('hidden'); m.classList.add('flex'); } }
-        function fecharModalExpediente() { var m = document.getElementById('modalExpediente'); if(m && m.classList){ m.classList.add('hidden'); m.classList.remove('flex'); } }
-        function abrirModalClima() { var m = document.getElementById('modalClima'); if(m && m.classList){ m.classList.remove('hidden'); m.classList.add('flex'); } }
-        function fecharModalClima() { var m = document.getElementById('modalClima'); if(m && m.classList){ m.classList.add('hidden'); m.classList.remove('flex'); } }
+        function abrirModalExpediente() { var m = document.getElementById('modalExpediente'); if(m){ m.classList.remove('hidden'); m.classList.add('flex'); } }
+        function fecharModalExpediente() { var m = document.getElementById('modalExpediente'); if(m){ m.classList.add('hidden'); m.classList.remove('flex'); } }
 
         function processarDadosHome(d) {
             window.agendaCarousels = [];
             if (d.config) configuracoesGlobais = d.config;
-            var headerBranding = document.getElementById('header-branding'); var footerBranding = document.getElementById('footer-branding');
-            if (configuracoesGlobais['LogoHTML']) { if(headerBranding) headerBranding.innerHTML = configuracoesGlobais['LogoHTML']; if(footerBranding) footerBranding.innerHTML = configuracoesGlobais['LogoHTML']; }
-            if (configuracoesGlobais['ExpedienteHTML']) { var expContainer = document.getElementById('conteudo-expediente'); if(expContainer) expContainer.innerHTML = configuracoesGlobais['ExpedienteHTML']; }
             
+            var headerBranding = document.getElementById('header-branding');
+            var footerBranding = document.getElementById('footer-branding');
+            
+            if (configuracoesGlobais['LogoHTML']) {
+                headerBranding.innerHTML = configuracoesGlobais['LogoHTML'];
+                if(footerBranding) footerBranding.innerHTML = configuracoesGlobais['LogoHTML'];
+            }
+            if (configuracoesGlobais['ExpedienteHTML']) {
+                var expContainer = document.getElementById('conteudo-expediente');
+                if(expContainer) expContainer.innerHTML = configuracoesGlobais['ExpedienteHTML'];
+            }
             if (configuracoesGlobais['CorLogo']) {
                 try {
-                    var rawClasses = String(configuracoesGlobais['CorLogo']).replace(/bg-clip-text/g, '').replace(/text-transparent/g, '').trim();
+                    var rawClasses = String(configuracoesGlobais['CorLogo']).replace('bg-clip-text', '').replace('text-transparent', '').trim();
                     var textClasses = "bg-clip-text text-transparent " + rawClasses;
-                    
                     var ticker = document.getElementById('ticker-noticias');
-                    if (ticker && rawClasses) {
-                        ticker.classList.remove('bg-jornal-red', 'border-red-800');
-                        var classesArray = rawClasses.split(' ');
-                        for(var i=0; i<classesArray.length; i++) {
-                            if(classesArray[i]) ticker.classList.add(classesArray[i]);
-                        }
-                        ticker.classList.add('border-black/10');
-                    }
-                    
+                    if (ticker && rawClasses) { ticker.className = "text-white text-[10px] font-bold h-8 overflow-hidden flex items-center border-b border-red-800 sticky top-0 z-50 w-full shadow-sm min-w-0 transition-colors duration-500 bg-gradient-to-r " + rawClasses; }
                     var stickyText = document.getElementById('sticky-logo-text');
-                    if(stickyText) { stickyText.className = "font-black text-[15px] tracking-tighter uppercase " + textClasses; }
-                    
+                    if(stickyText) stickyText.className = "font-black text-[15px] tracking-tighter uppercase " + textClasses;
                     var loadingText = document.getElementById('loading-logo-text');
-                    if(loadingText) { loadingText.className = "text-4xl md:text-5xl font-black tracking-tighter uppercase px-4 text-center " + textClasses; }
+                    if(loadingText) loadingText.className = "text-4xl md:text-5xl font-black tracking-tighter uppercase " + textClasses;
                 } catch(e){}
             }
-            
+
             var socFooter = document.getElementById('social-footer');
             if (socFooter) {
                 var sHtml = '';
@@ -628,21 +726,38 @@
                     var esconderBlocoFoco = true;
                     d.categorias.forEach(function(c) { 
                         var cl = String(c).toLowerCase().trim();
-                        if(['agenda', 'carreira', 'carreiras', 'variedade', 'variedades'].indexOf(cl) !== -1) { esconderBlocoFoco = false; } 
-                        else if(cl.indexOf('opini') === -1) { navLinks.innerHTML += '<a href="javascript:void(0)" onclick="filtrarCategoria(\'' + c + '\', true)" class="hover:text-jornal-red transition-colors border-b-2 border-transparent hover:border-jornal-red whitespace-nowrap px-1 py-1 cursor-pointer">' + c + '</a>'; }
+                        if(['agenda', 'carreira', 'carreiras', 'variedade', 'variedades'].indexOf(cl) !== -1) {
+                            esconderBlocoFoco = false;
+                        } else if(cl.indexOf('opini') === -1) {
+                            navLinks.innerHTML += '<a href="javascript:void(0)" onclick="filtrarCategoria(\'' + c + '\', true)" class="hover:text-jornal-red transition-colors border-b-2 border-transparent hover:border-jornal-red whitespace-nowrap px-1 py-1">' + c + '</a>'; 
+                        }
                     });
                     var sblocoFoco = document.getElementById('sidebar-editorias-especiais');
-                    if(sblocoFoco) { if(!esconderBlocoFoco) sblocoFoco.classList.remove('hidden'); else sblocoFoco.classList.add('hidden'); }
+                    if(sblocoFoco) {
+                        if(!esconderBlocoFoco) sblocoFoco.classList.remove('hidden');
+                        else sblocoFoco.classList.add('hidden');
+                    }
                 }
             }
 
-            if (d.noticias && Array.isArray(d.noticias)) { noticiasGlobais = d.noticias.map(function(n) { if(n) n.urlImagem = formatarUrlImagem(n.urlImagem); return n; }); }
-            if (d.comentarios && Array.isArray(d.comentarios)) { comentariosGlobais = d.comentarios; }
+            if (d.noticias && Array.isArray(d.noticias)) {
+                noticiasGlobais = d.noticias.map(function(n) { 
+                    if(n) n.urlImagem = formatarUrlImagem(n.urlImagem); 
+                    return n; 
+                });
+            }
+            if (d.comentarios && Array.isArray(d.comentarios)) {
+                comentariosGlobais = d.comentarios;
+            }
 
             if (d.propagandas && Array.isArray(d.propagandas)) {
-                var adsTopo = []; var adsLateral = [];
+                var adsTopo = []; 
+                var adsLateral = [];
                 d.propagandas.forEach(function(p) {
-                    if(!p) return; var partes = String(p.empresa || '').split('|||'); p.empresaReal = partes[0]; p.tempo = parseInt(partes[1]) || 5;
+                    if(!p) return;
+                    var partes = String(p.empresa || '').split('|||');
+                    p.empresaReal = partes[0]; 
+                    p.tempo = parseInt(partes[1]) || 5;
                     if (p.local === 'Topo') { adsTopo.push(p); } else { adsLateral.push(p); }
                 });
                 try { iniciarCarrosselAnuncios('ads-topo-container', adsTopo); } catch(e){}
@@ -658,76 +773,144 @@
 
         function renderizarAgendaSidebar() {
             var sidebar = document.getElementById('sidebar-editorias-especiais');
-            var container = document.getElementById('lista-editorias-especiais');
             if(!sidebar) return;
+            
             var agora = new Date();
             var agenda = noticiasGlobais.filter(function(n) { 
                 if(!isNoticiaPublicada(n)) return false;
                 var isAg = String(n.categoria).toLowerCase().indexOf('agenda') !== -1;
                 if(isAg && n.dataFimEvento && n.dataFimEvento.trim() !== '') {
-                    try { var dtFim = criarDataSegura(n.dataFimEvento); if (!isNaN(dtFim.getTime()) && dtFim < agora) { return false; } } catch(e) {}
+                    var dtFim = criarDataSegura(n.dataFimEvento); 
+                    if(!isNaN(dtFim.getTime()) && dtFim < agora) return false; 
                 }
                 return isAg;
             });
 
-            var blocoAg = document.getElementById('bloco-agenda'); var contAg = document.getElementById('agenda-carousel-container');
+            var blocoAg = document.getElementById('bloco-agenda');
+            var contAg = document.getElementById('agenda-carousel-container');
+            
             if (agenda.length > 0 && blocoAg && contAg) {
                 blocoAg.classList.remove('hidden');
                 var carouselId = 'agenda-sidebar-carousel';
+                
                 var oldCarousel = window.agendaCarousels.find(function(c){ return c.id === carouselId; });
                 if(!oldCarousel) window.agendaCarousels.push({id: carouselId, index: 0, length: agenda.length});
                 
-                var htmlAg = '<div class="relative overflow-hidden w-full bg-gray-100 rounded-sm group aspect-[4/3] shadow-inner" id="' + carouselId + '">\n<div class="flex transition-transform duration-500 ease-in-out h-full" id="' + carouselId + '-inner" style="transform: translateX(0%);">\n';
+                var htmlAg = '';
+                htmlAg += '<div class="relative overflow-hidden w-full bg-gray-100 rounded-sm group aspect-[4/3] shadow-inner" id="' + carouselId + '">\n';
+                htmlAg += '    <div class="flex transition-transform duration-500 ease-in-out h-full" id="' + carouselId + '-inner" style="transform: translateX(0%);">\n';
+                
                 agenda.forEach(function(n) {
-                    htmlAg += '<div class="w-full shrink-0 flex-none relative h-full cursor-pointer" onclick="abrirNoticia(\'' + n.id + '\', true)">\n<img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute inset-0 w-full h-full object-contain bg-gray-100" onerror="this.src=\'' + IMG_FALLBACK + '\'" />\n<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>\n<div class="absolute bottom-0 left-0 p-4 w-full text-white min-w-0 z-10">\n';
+                    htmlAg += '        <div class="w-full shrink-0 flex-none relative h-full cursor-pointer" onclick="abrirNoticia(\'' + n.id + '\', true)">\n';
+                    htmlAg += '            <img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute inset-0 w-full h-full object-contain bg-gray-100" onerror="this.src=\'' + IMG_FALLBACK + '\'" />\n';
+                    htmlAg += '            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>\n';
+                    htmlAg += '            <div class="absolute bottom-0 left-0 p-4 w-full text-white min-w-0 z-10">\n';
+                    
                     var txtBadge = "Agenda"; 
-                    if (n.dataFimEvento && String(n.dataFimEvento).trim() !== '') {
-                        var dObj = criarDataSegura(n.dataFimEvento);
-                        if (!isNaN(dObj.getTime())) { var dia = String(dObj.getDate()).padStart(2, '0'); var mes = String(dObj.getMonth() + 1).padStart(2, '0'); txtBadge = "Até " + dia + "/" + mes; }
+                    var dataReferencia = (n.dataFimEvento && String(n.dataFimEvento).trim() !== '') ? String(n.dataFimEvento).trim() : (n.dataHora ? String(n.dataHora).trim() : "");
+                    
+                    if (dataReferencia !== '') {
+                        var dObj = criarDataSegura(dataReferencia);
+                        var matchBarra = dataReferencia.match(/(\d{1,2})[\/\-](\d{1,2})/);
+                        var matchTracoISO = dataReferencia.match(/(\d{4})-(\d{2})-(\d{2})/);
+
+                        if (!isNaN(dObj.getTime())) {
+                            var dia = String(dObj.getDate()).padStart(2, '0');
+                            var mes = String(dObj.getMonth() + 1).padStart(2, '0');
+                            txtBadge = "Até " + dia + "/" + mes;
+                        } else if (matchTracoISO) {
+                            txtBadge = "Até " + matchTracoISO[3] + "/" + matchTracoISO[2];
+                        } else if (matchBarra) {
+                            txtBadge = "Até " + matchBarra[1] + "/" + matchBarra[2];
+                        } else {
+                            txtBadge = "Até " + dataReferencia.substring(0, 5).trim();
+                        }
                     }
-                    htmlAg += '<span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">' + txtBadge + '</span>\n<h4 class="font-serif text-sm font-bold mb-1 leading-tight break-words line-clamp-3 text-white">' + n.titulo + '</h4>\n</div>\n</div>\n';
+                    
+                    htmlAg += '                <span class="bg-amber-500 text-black text-[9px] font-black uppercase px-2 py-1 mb-1 inline-block rounded-sm shadow-sm">' + txtBadge + '</span>\n';
+                    htmlAg += '                <h4 class="font-serif text-sm font-bold mb-1 leading-tight break-words line-clamp-3 text-white">' + n.titulo + '</h4>\n';
+                    htmlAg += '            </div>\n';
+                    htmlAg += '        </div>\n';
                 });
-                htmlAg += '</div>\n';
+                
+                htmlAg += '    </div>\n';
+                
                 if (agenda.length > 1) {
-                    htmlAg += '<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', -1, ' + agenda.length + ')" class="absolute left-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full w-8 h-8 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">&#10094;</button>\n<button onclick="moverCarrosselAgenda(\'' + carouselId + '\', 1, ' + agenda.length + ')" class="absolute right-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full w-8 h-8 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">&#10095;</button>\n';
+                    htmlAg += '    <button onclick="moverCarrosselAgenda(\'' + carouselId + '\', -1, ' + agenda.length + ')" class="absolute left-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full w-8 h-8 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">&#10094;</button>\n';
+                    htmlAg += '    <button onclick="moverCarrosselAgenda(\'' + carouselId + '\', 1, ' + agenda.length + ')" class="absolute right-1 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-white rounded-full w-8 h-8 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">&#10095;</button>\n';
                 }
                 htmlAg += '</div>\n';
                 contAg.innerHTML = htmlAg;
 
                 if(!window.agendaTimers) window.agendaTimers = {};
                 if(window.agendaTimers[carouselId]) clearInterval(window.agendaTimers[carouselId]);
-                window.agendaTimers[carouselId] = setInterval(function() { moverCarrosselAgenda(carouselId, 1, agenda.length); }, 7000);
+                window.agendaTimers[carouselId] = setInterval(function() {
+                    moverCarrosselAgenda(carouselId, 1, agenda.length);
+                }, 7000);
+
             } else if(blocoAg) { blocoAg.classList.add('hidden'); }
 
             var carreiras = noticiasGlobais.filter(function(n) { return isNoticiaPublicada(n) && String(n.categoria).toLowerCase().indexOf('carreira') !== -1; });
-            var blocoCa = document.getElementById('bloco-carreiras'); var contCa = document.getElementById('conteudo-carreiras');
+            var blocoCa = document.getElementById('bloco-carreiras');
+            var contCa = document.getElementById('conteudo-carreiras');
             if(carreiras.length > 0 && blocoCa && contCa) {
-                blocoCa.classList.remove('hidden'); var n = carreiras[0];
-                contCa.innerHTML = '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col bg-white border border-gray-100 shadow-sm rounded-sm overflow-hidden hover:shadow-md transition-shadow">\n<div class="w-full aspect-video bg-gray-100 overflow-hidden relative">\n<img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.src=\'' + IMG_FALLBACK + '\'" />\n</div>\n<div class="p-3">\n<h4 class="font-serif font-black text-sm text-jornal-dark leading-tight group-hover:text-jornal-blue line-clamp-3 mb-1">' + n.titulo + '</h4>\n</div>\n</article>\n';
+                blocoCa.classList.remove('hidden');
+                var n = carreiras[0];
+                var htmlCa = '';
+                htmlCa += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col bg-white border border-gray-100 shadow-sm rounded-sm overflow-hidden hover:shadow-md transition-shadow">\n';
+                htmlCa += '    <div class="w-full aspect-video bg-gray-100 overflow-hidden relative">\n';
+                htmlCa += '        <img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.src=\'' + IMG_FALLBACK + '\'" />\n';
+                htmlCa += '    </div>\n';
+                htmlCa += '    <div class="p-3">\n';
+                htmlCa += '        <h4 class="font-serif font-black text-sm text-jornal-dark leading-tight group-hover:text-jornal-blue line-clamp-3 mb-1">' + n.titulo + '</h4>\n';
+                htmlCa += '    </div>\n';
+                htmlCa += '</article>\n';
+                contCa.innerHTML = htmlCa;
             } else if(blocoCa) { blocoCa.classList.add('hidden'); }
 
             var variedades = noticiasGlobais.filter(function(n) { return isNoticiaPublicada(n) && String(n.categoria).toLowerCase().indexOf('variedade') !== -1; });
-            var blocoVa = document.getElementById('bloco-variedades'); var contVa = document.getElementById('conteudo-variedades');
+            var blocoVa = document.getElementById('bloco-variedades');
+            var contVa = document.getElementById('conteudo-variedades');
             if(variedades.length > 0 && blocoVa && contVa) {
-                blocoVa.classList.remove('hidden'); var v = variedades[0];
-                contVa.innerHTML = '<article onclick="abrirNoticia(\'' + v.id + '\', true)" class="group cursor-pointer flex flex-col bg-white border border-gray-100 shadow-sm rounded-sm overflow-hidden hover:shadow-md transition-shadow">\n<div class="w-full aspect-video bg-gray-100 overflow-hidden relative">\n<img src="' + (v.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.src=\'' + IMG_FALLBACK + '\'" />\n</div>\n<div class="p-3">\n<h4 class="font-serif font-black text-sm text-jornal-dark leading-tight group-hover:text-jornal-blue line-clamp-3 mb-1">' + v.titulo + '</h4>\n</div>\n</article>\n';
+                blocoVa.classList.remove('hidden');
+                var v = variedades[0];
+                var htmlVa = '';
+                htmlVa += '<article onclick="abrirNoticia(\'' + v.id + '\', true)" class="group cursor-pointer flex flex-col bg-white border border-gray-100 shadow-sm rounded-sm overflow-hidden hover:shadow-md transition-shadow">\n';
+                htmlVa += '    <div class="w-full aspect-video bg-gray-100 overflow-hidden relative">\n';
+                htmlVa += '        <img src="' + (v.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.src=\'' + IMG_FALLBACK + '\'" />\n';
+                htmlVa += '    </div>\n';
+                htmlVa += '    <div class="p-3">\n';
+                htmlVa += '        <h4 class="font-serif font-black text-sm text-jornal-dark leading-tight group-hover:text-jornal-blue line-clamp-3 mb-1">' + v.titulo + '</h4>\n';
+                htmlVa += '    </div>\n';
+                htmlVa += '</article>\n';
+                contVa.innerHTML = htmlVa;
             } else if(blocoVa) { blocoVa.classList.add('hidden'); }
         }
 
         function moverCarrosselAgenda(id, direcao, tamanho) {
             var c = window.agendaCarousels.find(function(x) { return x.id === id; });
-            if(!c) return; c.index = (c.index + direcao + tamanho) % tamanho;
+            if(!c) return;
+            c.index = (c.index + direcao + tamanho) % tamanho;
             var inner = document.getElementById(id + '-inner');
             if(inner) inner.style.transform = 'translateX(-' + (c.index * 100) + '%)';
         }
 
         function iniciarCarrosselAnuncios(containerId, anuncios) {
-            var container = document.getElementById(containerId); if (!container) return;
+            var container = document.getElementById(containerId);
+            if (!container) return;
+            
             if(carrosselAdsTimers[containerId]) { clearTimeout(carrosselAdsTimers[containerId]); }
+            
             if (anuncios.length === 0) { container.classList.add('hidden'); container.innerHTML = ''; return; }
-            container.classList.remove('hidden'); var index = 0;
+            
+            container.classList.remove('hidden');
+            var index = 0;
+            
             function mostrarProximo() {
-                var ad = anuncios[index]; container.innerHTML = criarElementoAd(ad); var ms = (ad.tempo || 5) * 1000; index = (index + 1) % anuncios.length;
+                var ad = anuncios[index];
+                container.innerHTML = criarElementoAd(ad);
+                var ms = (ad.tempo || 5) * 1000;
+                index = (index + 1) % anuncios.length;
                 carrosselAdsTimers[containerId] = setTimeout(mostrarProximo, ms);
             }
             mostrarProximo();
@@ -735,23 +918,69 @@
 
         function criarElementoAd(prop) {
             if(!prop) return '';
-            var ext = prop.tipo ? prop.tipo.toLowerCase() : ''; var urlSegura = prop.urlArquivo ? String(prop.urlArquivo) : '';
+            var ext = prop.tipo ? prop.tipo.toLowerCase() : '';
+            var urlSegura = prop.urlArquivo ? String(prop.urlArquivo) : '';
             var isVideo = ext.indexOf('video') !== -1 || urlSegura.endsWith('.mp4');
-            var mediaHtml = isVideo ? '<video src="' + urlSegura + '" autoplay loop muted playsinline class="w-full h-auto min-h-[100px] object-cover bg-gray-100 border border-gray-200"></video>\n' : '<img loading="lazy" src="' + urlSegura + '" alt="Anúncio" class="w-full h-auto min-h-[100px] object-cover bg-gray-100 border border-gray-200" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
-            return '<a href="' + prop.linkDestino + '" target="_blank" class="block w-full relative group hover:opacity-95 transition-opacity cursor-pointer">\n<div class="absolute top-2 right-2 bg-white/90 text-[8px] uppercase font-black px-1.5 py-0.5 z-10 text-jornal-dark border border-gray-200 shadow-sm">Publicidade</div>\n' + mediaHtml + '</a>\n';
+            
+            var mediaHtml = '';
+            if (isVideo) {
+                mediaHtml = '<video src="' + urlSegura + '" autoplay loop muted playsinline class="w-full h-auto min-h-[100px] object-cover bg-gray-100 border border-gray-200"></video>\n';
+            } else {
+                mediaHtml = '<img loading="lazy" src="' + urlSegura + '" alt="Anúncio" class="w-full h-auto min-h-[100px] object-cover bg-gray-100 border border-gray-200" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
+            }
+            
+            var html = '';
+            html += '<a href="' + prop.linkDestino + '" target="_blank" class="block w-full relative group hover:opacity-95 transition-opacity">\n';
+            html += '    <div class="absolute top-2 right-2 bg-white/90 text-[8px] uppercase font-black px-1.5 py-0.5 z-10 text-jornal-dark border border-gray-200 shadow-sm">Publicidade</div>\n';
+            html += '    ' + mediaHtml;
+            html += '</a>\n';
+            return html;
         }
 
         function renderizarOpinioes() {
-            var c = document.getElementById('sidebar-opinioes'); var c_in = document.getElementById('conteudo-opinioes');
+            var c = document.getElementById('sidebar-opinioes');
+            var c_in = document.getElementById('conteudo-opinioes');
             var op = noticiasGlobais.filter(function(n) { return isNoticiaPublicada(n) && String(n.categoria).toLowerCase().indexOf('opini') !== -1; });
+            
             if (op.length === 0) { if(c) c.classList.add('hidden'); return; }
-            if(c) c.classList.remove('hidden'); if(!c_in) return;
-            var d = op[0]; var letraAutor = d.autor ? d.autor.charAt(0).toUpperCase() : 'O';
-            var html = '<article onclick="abrirNoticia(\'' + d.id + '\', true)" class="group cursor-pointer flex flex-col mb-4 bg-gray-50 p-5 border border-gray-100 rounded-sm hover:shadow-md transition-shadow">\n<div class="flex items-center gap-3 mb-4">\n<div class="w-10 h-10 rounded-full bg-jornal-dark flex items-center justify-center text-white font-black text-sm shrink-0 shadow-inner">' + letraAutor + '</div>\n<div class="flex flex-col min-w-0">\n<span class="text-[10px] font-black uppercase tracking-widest text-jornal-red">OPINIÃO</span>\n<span class="text-xs font-bold text-gray-700 truncate w-full">' + (d.autor || 'Editorial') + '</span>\n</div>\n</div>\n<div class="w-full aspect-video mb-4 overflow-hidden rounded-sm bg-gray-100 shrink-0 relative">\n<img src="' + (d.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n' + (d.creditosImagem ? '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded-tl">Foto: ' + d.creditosImagem + '</div>\n' : '') + '</div>\n<h3 class="font-serif font-black text-sm md:text-base leading-snug text-jornal-dark group-hover:text-jornal-blue line-clamp-3 mb-2">' + d.titulo + '</h3>\n<p class="text-xs text-gray-500 line-clamp-2 mb-3 italic font-medium">' + (d.linhaFina || removerHTMLRápido(d.conteudo).substring(0, 150)) + '</p>\n<div class="text-[9px] text-gray-400 font-black uppercase tracking-widest mt-auto">' + (d.dataHora ? String(d.dataHora).replace(' ', ' às ') : '') + '</div>\n</article>\n';
+            if(c) c.classList.remove('hidden');
+            if(!c_in) return;
+            
+            var d = op[0];
+            var letraAutor = d.autor ? d.autor.charAt(0).toUpperCase() : 'O';
+            
+            var html = '';
+            html += '<article onclick="abrirNoticia(\'' + d.id + '\', true)" class="group cursor-pointer flex flex-col mb-4 bg-gray-50 p-5 border border-gray-100 rounded-sm hover:shadow-md transition-shadow">\n';
+            html += '    <div class="flex items-center gap-3 mb-4">\n';
+            html += '        <div class="w-10 h-10 rounded-full bg-jornal-dark flex items-center justify-center text-white font-black text-sm shrink-0 shadow-inner">' + letraAutor + '</div>\n';
+            html += '        <div class="flex flex-col min-w-0">\n';
+            html += '            <span class="text-[10px] font-black uppercase tracking-widest text-jornal-red">OPINIÃO</span>\n';
+            html += '            <span class="text-xs font-bold text-gray-700 truncate w-full">' + (d.autor || 'Editorial') + '</span>\n';
+            html += '        </div>\n';
+            html += '    </div>\n';
+            html += '    <div class="w-full aspect-video mb-4 overflow-hidden rounded-sm bg-gray-100 shrink-0 relative">\n';
+            html += '        <img src="' + (d.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
+            if (d.creditosImagem) {
+                html += '        <div class="absolute bottom-0 right-0 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded-tl">Foto: ' + d.creditosImagem + '</div>\n';
+            }
+            html += '    </div>\n';
+            html += '    <h3 class="font-serif font-black text-sm md:text-base leading-snug text-jornal-dark group-hover:text-jornal-blue line-clamp-3 mb-2">' + d.titulo + '</h3>\n';
+            html += '    <p class="text-xs text-gray-500 line-clamp-2 mb-3 italic font-medium">' + (d.linhaFina || removerHTML(d.conteudo)) + '</p>\n';
+            html += '    <div class="text-[9px] text-gray-400 font-black uppercase tracking-widest mt-auto">' + (d.dataHora ? d.dataHora.replace(' ', ' às ') : '') + '</div>\n';
+            html += '</article>\n';
+            
             if(op.length > 1) {
                 html += '<div class="flex flex-col gap-3 mt-2">\n';
                 for(var i=1; i<Math.min(op.length, 4); i++) {
-                    html += '<article onclick="abrirNoticia(\'' + op[i].id + '\', true)" class="group cursor-pointer border-t border-gray-100 pt-3 flex gap-4 items-center hover:bg-gray-50 p-2 -mx-2 rounded transition-colors">\n<div class="w-14 h-14 rounded bg-gray-100 shrink-0 overflow-hidden relative">\n<img src="' + (op[i].urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n</div>\n<div class="flex-grow min-w-0 flex flex-col justify-center">\n<h4 class="font-bold text-xs text-gray-800 leading-tight group-hover:text-jornal-red line-clamp-2 mb-1.5">' + op[i].titulo + '</h4>\n<span class="text-[9px] font-black text-gray-400 tracking-widest uppercase">' + (op[i].dataHora ? String(op[i].dataHora).split(' ')[0] : '') + '</span>\n</div>\n</article>\n';
+                    html += '    <article onclick="abrirNoticia(\'' + op[i].id + '\', true)" class="group cursor-pointer border-t border-gray-100 pt-3 flex gap-4 items-center hover:bg-gray-50 p-2 -mx-2 rounded transition-colors">\n';
+                    html += '        <div class="w-14 h-14 rounded bg-gray-100 shrink-0 overflow-hidden relative">\n';
+                    html += '            <img src="' + (op[i].urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
+                    html += '        </div>\n';
+                    html += '        <div class="flex-grow min-w-0 flex flex-col justify-center">\n';
+                    html += '            <h4 class="font-bold text-xs text-gray-800 leading-tight group-hover:text-jornal-red line-clamp-2 mb-1.5">' + op[i].titulo + '</h4>\n';
+                    html += '            <span class="text-[9px] font-black text-gray-400 tracking-widest uppercase">' + (op[i].dataHora ? op[i].dataHora.split(' ')[0] : '') + '</span>\n';
+                    html += '        </div>\n';
+                    html += '    </article>\n';
                 }
                 html += '</div>\n';
             }
@@ -759,64 +988,157 @@
         }
 
         function renderizarMaisLidas() {
-            var lista = document.getElementById('lista-mais-lidas'); if (!lista) return;
+            var lista = document.getElementById('lista-mais-lidas'); 
+            if (!lista) return;
             var publicadas = noticiasGlobais.filter(function(n){ return isNoticiaPublicada(n); });
-            publicadas.sort(function(a, b) { return (parseInt(b.views) || 0) - (parseInt(a.views) || 0); });
+            publicadas.sort(function(a, b) { var vA = parseInt(a.views) || 0; var vB = parseInt(b.views) || 0; return vB - vA; });
+            
             var top10 = publicadas.slice(0, 10);
-            if(top10.length === 0) { lista.innerHTML = '<li class="text-xs text-gray-400 py-3 font-bold uppercase tracking-widest">Nenhuma matéria publicada.</li>'; return; }
             var htmlFinal = '';
+            
+            if(top10.length === 0) {
+                lista.innerHTML = '<li class="text-xs text-gray-400 py-3 font-bold uppercase tracking-widest">Nenhuma matéria publicada.</li>';
+                return;
+            }
+            
             top10.forEach(function(n, idx) {
-                htmlFinal += '<li class="flex gap-3 items-center group cursor-pointer py-3" onclick="abrirNoticia(\'' + n.id + '\', true)">\n<div class="w-8 h-8 rounded-full bg-jornal-blue text-white flex items-center justify-center font-black text-xs shrink-0">' + (idx+1) + '</div>\n<div class="flex-grow w-full overflow-hidden min-w-0"><h4 class="text-xs font-bold text-jornal-dark leading-tight group-hover:text-jornal-blue line-clamp-2 break-words">' + (n.titulo || 'Sem Título') + '</h4></div>\n</li>\n';
+                if(!n) return;
+                htmlFinal += '<li class="flex gap-3 items-center group cursor-pointer py-3" onclick="abrirNoticia(\'' + n.id + '\', true)">\n';
+                htmlFinal += '    <div class="w-8 h-8 rounded-full bg-jornal-blue text-white flex items-center justify-center font-black text-xs shrink-0">' + (idx+1) + '</div>\n';
+                htmlFinal += '    <div class="flex-grow w-full overflow-hidden min-w-0"><h4 class="text-xs font-bold text-jornal-dark leading-tight group-hover:text-jornal-blue line-clamp-2 break-words">' + (n.titulo || 'Sem Título') + '</h4></div>\n';
+                htmlFinal += '</li>\n';
             });
             lista.innerHTML = htmlFinal;
         }
 
         function obterIconeClima(wCode) {
-            if (wCode === 0) return '☀️'; if (wCode === 1 || wCode === 2) return '🌤️'; if (wCode === 3) return '☁️'; if (wCode >= 45 && wCode <= 48) return '🌫️'; if (wCode >= 51 && wCode <= 67) return '🌧️'; if (wCode >= 71 && wCode <= 77) return '❄️'; if (wCode >= 80 && wCode <= 82) return '🌦️'; if (wCode >= 95) return '⛈️'; return '☀️';
+            if (wCode === 0) return '☀️';
+            if (wCode === 1 || wCode === 2) return '🌤️';
+            if (wCode === 3) return '☁️';
+            if (wCode >= 45 && wCode <= 48) return '🌫️';
+            if (wCode >= 51 && wCode <= 67) return '🌧️';
+            if (wCode >= 71 && wCode <= 77) return '❄️';
+            if (wCode >= 80 && wCode <= 82) return '🌦️';
+            if (wCode >= 95) return '⛈️';
+            return '☀️';
         }
 
         function renderizarClimaEFinanceiro() {
-            var tick = document.getElementById('ticker-content'); var usd = '--'; var eur = '--'; var btc = '--'; var clima = '--'; var iconeClima = '☀️'; var descClima = 'A Atualizar...';
+            var tick = document.getElementById('ticker-content'); 
+            var usd = '--'; var eur = '--'; var btc = '--'; 
+            var clima = '--'; var iconeClima = '☀️'; var descClima = 'A Atualizar...';
+            
             function atualizarDOM() {
-                var stringTicker = '<span class="text-amber-300 font-extrabold mr-2">💵 DÓLAR:</span> R$ ' + usd + ' &bull; <span class="text-blue-300 font-extrabold mr-2">💶 EURO:</span> R$ ' + eur + ' &bull; <span class="text-orange-400 font-extrabold mr-2">₿ BITCOIN:</span> R$ ' + btc + ' &bull; <span class="text-sky-300 font-extrabold mr-2">☀️ CUIABÁ:</span> ' + clima + '°C &bull; ';
+                var stringTicker = '';
+                stringTicker += '<span class="text-amber-300 font-extrabold mr-2">💵 DÓLAR:</span> R$ ' + usd + ' &bull; ';
+                stringTicker += '<span class="text-blue-300 font-extrabold mr-2">💶 EURO:</span> R$ ' + eur + ' &bull; ';
+                stringTicker += '<span class="text-orange-400 font-extrabold mr-2">₿ BITCOIN:</span> R$ ' + btc + ' &bull; ';
+                stringTicker += '<span class="text-sky-300 font-extrabold mr-2">☀️ CUIABÁ:</span> ' + clima + '°C &bull; ';
+                
                 var recentes = noticiasGlobais.filter(function(n){ return isNoticiaPublicada(n); }).slice(0, 5); 
-                recentes.forEach(function(n) { if(n) stringTicker += '<span class="mx-3 hover:text-red-200 cursor-pointer text-white underline" onclick="abrirNoticia(\'' + n.id + '\', true)">' + (n.titulo || '').toUpperCase() + '</span> • '; });
+                recentes.forEach(function(n) { 
+                    if(n) stringTicker += '<span class="mx-3 hover:text-red-200 cursor-pointer text-white underline" onclick="abrirNoticia(\'' + n.id + '\', true)">' + (n.titulo || '').toUpperCase() + '</span> • '; 
+                });
                 if(tick) tick.innerHTML = stringTicker;
             }
+
             try {
-                fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL').then(function(res) { return res.json(); }).then(function(dadosC) {
-                    if(dadosC.USDBRL) { usd = parseFloat(dadosC.USDBRL.ask).toFixed(2); eur = parseFloat(dadosC.EURBRL.ask).toFixed(2); btc = parseFloat(dadosC.BTCBRL.ask).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+                fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL')
+                .then(function(res) { return res.json(); })
+                .then(function(dadosC) {
+                    if(dadosC.USDBRL) { 
+                        usd = parseFloat(dadosC.USDBRL.ask).toFixed(2); 
+                        eur = parseFloat(dadosC.EURBRL.ask).toFixed(2); 
+                        btc = parseFloat(dadosC.BTCBRL.ask).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); 
+                    }
                     atualizarDOM();
                 }).catch(function(e){ atualizarDOM(); });
             } catch(e) { atualizarDOM(); }
+
             try {
-                fetch('https://api.open-meteo.com/v1/forecast?latitude=-15.5961&longitude=-56.0967&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&hourly=temperature_2m,relativehumidity_2m,precipitation_probability,windspeed_10m,weathercode&timezone=auto').then(function(res) { return res.json(); }).then(function(dadosClima) {
+                fetch('https://api.open-meteo.com/v1/forecast?latitude=-15.5961&longitude=-56.0967&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&hourly=temperature_2m,relativehumidity_2m,precipitation_probability,windspeed_10m,weathercode&timezone=auto')
+                .then(function(res) { return res.json(); })
+                .then(function(dadosClima) {
                     window.dadosClimaGlobal = dadosClima;
                     if(dadosClima.current_weather) {
-                        clima = Math.round(dadosClima.current_weather.temperature); var wCode = dadosClima.current_weather.weathercode; iconeClima = obterIconeClima(wCode);
+                        clima = Math.round(dadosClima.current_weather.temperature);
+                        var wCode = dadosClima.current_weather.weathercode;
+                        iconeClima = obterIconeClima(wCode);
                         descClima = wCode <= 2 ? 'CÉU LIMPO' : wCode <= 3 ? 'NUBLADO' : wCode <= 67 ? 'CHUVA' : 'TEMPESTADE';
-                        var elTemp = document.getElementById('temp-clima'); var elIcone = document.getElementById('icone-clima'); var elBgIcone = document.getElementById('bg-icone-clima'); var elDesc = document.getElementById('desc-clima');
-                        if (elTemp) elTemp.innerText = clima + '°'; if (elIcone) elIcone.innerText = iconeClima; if (elBgIcone) elBgIcone.innerText = iconeClima; if (elDesc) elDesc.innerText = descClima;
-                        var mChuva = document.getElementById('modal-clima-chuva'); var mUmid = document.getElementById('modal-clima-umidade'); var mVento = document.getElementById('modal-clima-vento'); var mDescModal = document.getElementById('modal-clima-desc'); var mTempModal = document.getElementById('modal-clima-temp'); var mIconeModal = document.getElementById('modal-clima-icone');
-                        if(mDescModal) mDescModal.innerText = descClima; if(mTempModal) mTempModal.innerText = clima; if(mIconeModal) mIconeModal.innerText = iconeClima;
-                        if(dadosClima.hourly && dadosClima.hourly.precipitation_probability) { if(mChuva) mChuva.innerText = dadosClima.hourly.precipitation_probability[0] + '%'; if(mUmid) mUmid.innerText = dadosClima.hourly.relativehumidity_2m[0] + '%'; if(mVento) mVento.innerText = Math.round(dadosClima.hourly.windspeed_10m[0]) + ' km/h'; }
+
+                        var elTemp = document.getElementById('temp-clima');
+                        var elIcone = document.getElementById('icone-clima');
+                        var elBgIcone = document.getElementById('bg-icone-clima');
+                        var elDesc = document.getElementById('desc-clima');
+
+                        if (elTemp) elTemp.innerText = clima + '°';
+                        if (elIcone) elIcone.innerText = iconeClima;
+                        if (elBgIcone) elBgIcone.innerText = iconeClima;
+                        if (elDesc) elDesc.innerText = descClima;
+
+                        var mChuva = document.getElementById('modal-clima-chuva');
+                        var mUmid = document.getElementById('modal-clima-umidade');
+                        var mVento = document.getElementById('modal-clima-vento');
+                        var mDescModal = document.getElementById('modal-clima-desc');
+                        var mTempModal = document.getElementById('modal-clima-temp');
+                        var mIconeModal = document.getElementById('modal-clima-icone');
+                        
+                        if(mDescModal) mDescModal.innerText = descClima;
+                        if(mTempModal) mTempModal.innerText = clima;
+                        if(mIconeModal) mIconeModal.innerText = iconeClima;
+
+                        if(dadosClima.hourly && dadosClima.hourly.precipitation_probability) {
+                            if(mChuva) mChuva.innerText = dadosClima.hourly.precipitation_probability[0] + '%';
+                            if(mUmid) mUmid.innerText = dadosClima.hourly.relativehumidity_2m[0] + '%';
+                            if(mVento) mVento.innerText = Math.round(dadosClima.hourly.windspeed_10m[0]) + ' km/h';
+                        }
+
                         var mPrevisao = document.getElementById('modal-clima-previsao');
                         if (mPrevisao && dadosClima.daily) {
-                            var diasSemana = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB']; var htmlDias = '';
+                            var diasSemana = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+                            var htmlDias = '';
                             for (let i = 0; i < 7; i++) {
-                                var dataDia = new Date(dadosClima.daily.time[i] + 'T00:00:00'); var nomeDia = i === 0 ? 'HOJE' : i === 1 ? 'AMANHÃ' : diasSemana[dataDia.getDay()];
-                                var iconeD = obterIconeClima(dadosClima.daily.weathercode[i]); var maxD = Math.round(dadosClima.daily.temperature_2m_max[i]); var minD = Math.round(dadosClima.daily.temperature_2m_min[i]);
+                                var dataDia = new Date(dadosClima.daily.time[i] + 'T00:00:00'); 
+                                var nomeDia = i === 0 ? 'HOJE' : i === 1 ? 'AMANHÃ' : diasSemana[dataDia.getDay()];
+                                var iconeD = obterIconeClima(dadosClima.daily.weathercode[i]);
+                                var maxD = Math.round(dadosClima.daily.temperature_2m_max[i]);
+                                var minD = Math.round(dadosClima.daily.temperature_2m_min[i]);
                                 var activeClass = i === 0 ? 'border-sky-400 bg-sky-50' : 'border-transparent bg-gray-50 hover:bg-gray-100';
-                                htmlDias += `<div class="btn-dia-clima shrink-0 cursor-pointer border-2 ${activeClass} p-3 rounded-sm text-center min-w-[80px] transition-all flex flex-col items-center" data-dia="${i}"><span class="text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">${nomeDia}</span><span class="text-3xl mb-2 drop-shadow-sm">${iconeD}</span><div class="text-[10px] font-bold flex gap-2"><span class="text-rose-500">${maxD}°</span> <span class="text-gray-400">${minD}°</span></div></div>`;
+
+                                htmlDias += `<div class="btn-dia-clima shrink-0 cursor-pointer border-2 ${activeClass} p-3 rounded-sm text-center min-w-[80px] transition-all flex flex-col items-center" data-dia="${i}">
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">${nomeDia}</span>
+                                    <span class="text-3xl mb-2 drop-shadow-sm">${iconeD}</span>
+                                    <div class="text-[10px] font-bold flex gap-2"><span class="text-rose-500">${maxD}°</span> <span class="text-gray-400">${minD}°</span></div>
+                                </div>`;
                             }
                             mPrevisao.innerHTML = htmlDias;
+                            
                             var botoesDia = mPrevisao.querySelectorAll('.btn-dia-clima');
-                            botoesDia.forEach(function(btn) { btn.onclick = function() { botoesDia.forEach(b => { b.classList.remove('border-sky-400', 'bg-sky-50'); b.classList.add('border-transparent', 'bg-gray-50'); }); this.classList.remove('border-transparent', 'bg-gray-50'); this.classList.add('border-sky-400', 'bg-sky-50'); renderizarHoras(this.getAttribute('data-dia')); }; });
+                            botoesDia.forEach(function(btn) {
+                                btn.onclick = function() {
+                                    botoesDia.forEach(b => { b.classList.remove('border-sky-400', 'bg-sky-50'); b.classList.add('border-transparent', 'bg-gray-50'); });
+                                    this.classList.remove('border-transparent', 'bg-gray-50'); this.classList.add('border-sky-400', 'bg-sky-50');
+                                    renderizarHoras(this.getAttribute('data-dia'));
+                                };
+                            });
+                            
                             function renderizarHoras(diaIndex) {
-                                var containerHoras = document.getElementById('horas-clima-container'); if(!containerHoras) return; containerHoras.innerHTML = ''; var startIndex = diaIndex * 24;
+                                var containerHoras = document.getElementById('horas-clima-container');
+                                if(!containerHoras) return;
+                                containerHoras.innerHTML = '';
+                                var startIndex = diaIndex * 24;
                                 for (let j = startIndex; j < startIndex + 24; j++) {
-                                    var horaFull = dadosClima.hourly.time[j]; var horaLimpa = horaFull.substring(11, 16); var tempH = Math.round(dadosClima.hourly.temperature_2m[j]); var iconH = obterIconeClima(dadosClima.hourly.weathercode[j]); var probChuva = dadosClima.hourly.precipitation_probability[j] || 0;
-                                    containerHoras.innerHTML += `<div class="shrink-0 text-center flex flex-col items-center p-3 border border-gray-100 rounded-sm bg-gray-50 min-w-[70px]"><span class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">${horaLimpa}</span><span class="text-2xl mb-2 drop-shadow-sm">${iconH}</span><span class="text-xs font-black text-jornal-dark mb-1">${tempH}°</span><span class="text-[9px] font-bold text-sky-500 tracking-wider flex items-center gap-0.5">💧 ${probChuva}%</span></div>`;
+                                    var horaFull = dadosClima.hourly.time[j];
+                                    var horaLimpa = horaFull.substring(11, 16); 
+                                    var tempH = Math.round(dadosClima.hourly.temperature_2m[j]);
+                                    var iconH = obterIconeClima(dadosClima.hourly.weathercode[j]);
+                                    var probChuva = dadosClima.hourly.precipitation_probability[j] || 0;
+                                    containerHoras.innerHTML += `<div class="shrink-0 text-center flex flex-col items-center p-3 border border-gray-100 rounded-sm bg-gray-50 min-w-[70px]">
+                                        <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">${horaLimpa}</span>
+                                        <span class="text-2xl mb-2 drop-shadow-sm">${iconH}</span>
+                                        <span class="text-xs font-black text-jornal-dark mb-1">${tempH}°</span>
+                                        <span class="text-[9px] font-bold text-sky-500 tracking-wider flex items-center gap-0.5">💧 ${probChuva}%</span>
+                                    </div>`;
                                 }
                             }
                             renderizarHoras(0);
@@ -828,18 +1150,36 @@
         }
 
         function traduzirTermoPlacar(termo) {
-            if(!termo) return ''; var t = termo.toLowerCase();
-            if(t.includes('half')) return 'Intervalo'; if(t.includes('final')) return 'Encerrado'; if(t.includes('canceled')) return 'Cancelado'; if(t.includes('postponed')) return 'Adiado'; return termo;
+            if(!termo) return '';
+            var t = termo.toLowerCase();
+            if(t.includes('half')) return 'Intervalo';
+            if(t.includes('final')) return 'Encerrado';
+            if(t.includes('canceled')) return 'Cancelado';
+            if(t.includes('postponed')) return 'Adiado';
+            return termo;
         }
 
         function renderizarPlacarAoVivo() {
-            var placar = document.getElementById('widget-placar'); var containerGeral = document.getElementById('container-placar-ao-vivo'); if(!placar) return;
+            var placar = document.getElementById('widget-placar'); 
+            var containerGeral = document.getElementById('container-placar-ao-vivo');
+            if(!placar) return;
+            
             var ligasAtivas = ['soccer/bra.1']; 
-            if (configuracoesGlobais['LigasPlacar']) { try { var prs = JSON.parse(configuracoesGlobais['LigasPlacar']); if(prs && prs.length > 0) ligasAtivas = prs; } catch(e){} }
-            var hoje = new Date(); var dataHojeLocalStr = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
+            if (configuracoesGlobais['LigasPlacar']) { 
+                try { var prs = JSON.parse(configuracoesGlobais['LigasPlacar']); if(prs && prs.length > 0) ligasAtivas = prs; } catch(e){} 
+            }
+            
+            var hoje = new Date();
+            var dataHojeLocalStr = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
+
             placar.innerHTML = '<div class="text-center text-xs text-gray-400 py-4 font-bold uppercase tracking-widest">A procurar jogos...</div>';
-            var htmlFinal = ''; var fetchesConcluidos = 0;
-            if (ligasAtivas.length === 0) { if (containerGeral) containerGeral.classList.add('hidden'); return; }
+            var htmlFinal = ''; 
+            var fetchesConcluidos = 0;
+
+            if (ligasAtivas.length === 0) {
+                if (containerGeral) containerGeral.classList.add('hidden');
+                return;
+            }
 
             ligasAtivas.forEach(function(liga) {
                 fetch('https://site.api.espn.com/apis/site/v2/sports/' + liga + '/scoreboard?lang=pt&region=br')
@@ -847,253 +1187,436 @@
                 .then(function(data) {
                     if (data && data.events && data.events.length > 0) {
                         var nomeCompeticao = traduzirTermoPlacar(data.leagues && data.leagues.length > 0 ? data.leagues[0].name : 'Competição');
-                        var matchesHtml = ''; var exibidos = 0;
+                        var matchesHtml = ''; 
+                        var exibidos = 0;
+                        
                         data.events.forEach(function(jogo) {
                             if (!jogo.date || !jogo.competitions || jogo.competitions.length === 0) return;
-                            var dtJogo = criarDataSegura(jogo.date); if (isNaN(dtJogo.getTime())) return;
+                            var dtJogo = criarDataSegura(jogo.date);
+                            if (isNaN(dtJogo.getTime())) return;
+                            
                             var dataJogoLocal = dtJogo.getFullYear() + '-' + String(dtJogo.getMonth() + 1).padStart(2, '0') + '-' + String(dtJogo.getDate()).padStart(2, '0');
-                            if (dataJogoLocal !== dataHojeLocalStr || exibidos >= 4) return;
+                            if (dataJogoLocal !== dataHojeLocalStr) return;
+                            if (exibidos >= 4) return;
+                            
                             var matchInfo = jogo.competitions[0];
                             var casa = matchInfo.competitors.find(function(c) { return c.homeAway === 'home'; }) || matchInfo.competitors[0];
                             var fora = matchInfo.competitors.find(function(c) { return c.homeAway === 'away'; }) || matchInfo.competitors[1];
-                            var logoCasa = casa.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=C'; var logoFora = fora.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=F';
-                            var isAoVivo = jogo.status.type.state === 'in'; var isEncerrado = jogo.status.type.state === 'post'; var isAgendado = jogo.status.type.state === 'pre';
-                            var corEstado = 'text-gray-400'; var bgPlacar = 'bg-jornal-dark text-white';
-                            if (isAoVivo) { corEstado = 'text-red-600 animate-pulse'; bgPlacar = 'bg-jornal-red text-white'; } else if (isAgendado) { corEstado = 'text-emerald-600'; }
+                            
+                            var logoCasa = casa.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=C'; 
+                            var logoFora = fora.team.logo || 'https://placehold.co/40x40/f8fafc/94a3b8?text=F';
+                            var isAoVivo = jogo.status.type.state === 'in'; 
+                            var isEncerrado = jogo.status.type.state === 'post'; 
+                            var isAgendado = jogo.status.type.state === 'pre';
+                            
+                            var corEstado = 'text-gray-400'; 
+                            var bgPlacar = 'bg-jornal-dark text-white';
+
+                            if (isAoVivo) { corEstado = 'text-red-600 animate-pulse'; bgPlacar = 'bg-jornal-red text-white'; } 
+                            else if (isAgendado) { corEstado = 'text-emerald-600'; }
+                            
                             var infoEstadoTexto = traduzirTermoPlacar(jogo.status.type.shortDetail);
-                            if (isAoVivo) { infoEstadoTexto = 'AO VIVO'; } else if (isAgendado) { var hrs = String(dtJogo.getHours()).padStart(2, '0'); var mns = String(dtJogo.getMinutes()).padStart(2, '0'); infoEstadoTexto = hrs + ':' + mns; } else if (isEncerrado) { infoEstadoTexto = 'ENCERRADO'; }
-                            var h = '<div class="bg-white border border-gray-100 rounded-lg p-3 mb-3 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.1)] hover:shadow-md transition-shadow">\n<div class="flex items-center justify-between w-full gap-2">\n<div class="flex items-center justify-start gap-2 w-[40%] min-w-0">\n<img src="' + logoCasa + '" class="w-6 h-6 sm:w-7 sm:h-7 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'">\n<span class="font-bold text-gray-800 text-[11px] sm:text-xs text-left truncate w-full" title="' + traduzirTermoPlacar(casa.team.name) + '">' + traduzirTermoPlacar(casa.team.name) + '</span>\n</div>\n<div class="flex flex-col items-center justify-center shrink-0 w-[55px]">\n<div class="' + bgPlacar + ' font-black text-[13px] w-full py-1.5 rounded flex items-center justify-center tracking-wider shadow-inner mb-1.5 leading-none">' + (casa.score || '0') + ' - ' + (fora.score || '0') + '</div>\n<span class="text-[8px] uppercase tracking-widest font-bold ' + corEstado + ' text-center leading-none whitespace-nowrap">' + infoEstadoTexto + '</span>\n</div>\n<div class="flex items-center justify-end gap-2 w-[40%] min-w-0">\n<span class="font-bold text-gray-800 text-[11px] sm:text-xs text-right truncate w-full" title="' + traduzirTermoPlacar(fora.team.name) + '">' + traduzirTermoPlacar(fora.team.name) + '</span>\n<img src="' + logoFora + '" class="w-6 h-6 sm:w-7 sm:h-7 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'">\n</div>\n</div>\n</div>\n';
+                            if (isAoVivo) { infoEstadoTexto = 'AO VIVO'; } 
+                            else if (isAgendado) { 
+                                var hrs = String(dtJogo.getHours()).padStart(2, '0');
+                                var mns = String(dtJogo.getMinutes()).padStart(2, '0');
+                                infoEstadoTexto = hrs + ':' + mns;
+                            } else if (isEncerrado) { infoEstadoTexto = 'ENCERRADO'; }
+                            
+                            var h = '<div class="bg-white border border-gray-100 rounded-lg p-3 mb-3 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.1)] hover:shadow-md transition-shadow">\n';
+                            h += '    <div class="flex items-center justify-between w-full gap-2">\n';
+                            h += '        <div class="flex items-center justify-start gap-2 w-[40%] min-w-0">\n';
+                            h += '            <img src="' + logoCasa + '" class="w-6 h-6 sm:w-7 sm:h-7 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'">\n';
+                            h += '            <span class="font-bold text-gray-800 text-[11px] sm:text-xs text-left truncate w-full" title="' + traduzirTermoPlacar(casa.team.name) + '">' + traduzirTermoPlacar(casa.team.name) + '</span>\n';
+                            h += '        </div>\n';
+                            h += '        <div class="flex flex-col items-center justify-center shrink-0 w-[55px]">\n';
+                            h += '            <div class="' + bgPlacar + ' font-black text-[13px] w-full py-1.5 rounded flex items-center justify-center tracking-wider shadow-inner mb-1.5 leading-none">' + (casa.score || '0') + ' - ' + (fora.score || '0') + '</div>\n';
+                            h += '            <span class="text-[8px] uppercase tracking-widest font-bold ' + corEstado + ' text-center leading-none whitespace-nowrap">' + infoEstadoTexto + '</span>\n';
+                            h += '        </div>\n';
+                            h += '        <div class="flex items-center justify-end gap-2 w-[40%] min-w-0">\n';
+                            h += '            <span class="font-bold text-gray-800 text-[11px] sm:text-xs text-right truncate w-full" title="' + traduzirTermoPlacar(fora.team.name) + '">' + traduzirTermoPlacar(fora.team.name) + '</span>\n';
+                            h += '            <img src="' + logoFora + '" class="w-6 h-6 sm:w-7 sm:h-7 object-contain shrink-0" onerror="this.src=\'https://placehold.co/40x40/f8fafc/94a3b8?text=⚽\'">\n';
+                            h += '        </div>\n';
+                            h += '    </div>\n';
+                            h += '</div>\n';
                             matchesHtml += h; exibidos++;
                         });
                         if (matchesHtml !== '') { htmlFinal += '<h5 class="text-[10px] uppercase font-black tracking-widest text-slate-400 mt-4 mb-3 border-b border-gray-100 pb-1">' + nomeCompeticao + '</h5>\n' + matchesHtml; }
                     }
-                }).catch(function(e){}).finally(function() {
+                })
+                .catch(function(e){})
+                .finally(function() {
                     fetchesConcluidos++;
                     if(fetchesConcluidos === ligasAtivas.length) {
-                        if(htmlFinal === '') { if(containerGeral) containerGeral.classList.add('hidden'); } else { if(containerGeral) containerGeral.classList.remove('hidden'); placar.innerHTML = htmlFinal; }
+                        if(htmlFinal === '') { if(containerGeral) containerGeral.classList.add('hidden'); } 
+                        else { if(containerGeral) containerGeral.classList.remove('hidden'); placar.innerHTML = htmlFinal; }
                     }
                 });
             });
         }
 
-        function pesquisarSite(e) {
-            if(e) e.preventDefault();
-            var formMobile = document.getElementById('form-pesquisa-mobile'); var termoDesk = document.getElementById('input-pesquisa').value; var termoMob = document.getElementById('input-pesquisa-mobile').value; var termo = (termoDesk || termoMob).toLowerCase().trim();
-            if (!termo) { voltarCapa(); return; }
-            if(formMobile) formMobile.classList.add('hidden');
-            window.categoriaAtual = 'Pesquisa'; atualizarURL('pesquisa', termo);
-            var grid = document.getElementById('grid-noticias'); var dest = document.getElementById('destaque-noticia'); var carrosselContainer = document.getElementById('carrossel-destaques'); var gridEditorias = document.getElementById('grid-editorias-exclusivo'); var filtroCidades = document.getElementById('filtro-cidades-container');
-            if(carrosselContainer) carrosselContainer.classList.add('hidden'); if(gridEditorias) gridEditorias.classList.add('hidden'); if(filtroCidades) filtroCidades.classList.add('hidden'); if(dest) { dest.innerHTML = ''; dest.classList.add('hidden'); }
-            var headerNot = document.getElementById('header-ultimas-noticias'); if(headerNot) headerNot.classList.remove('hidden');
-            var tituloSec = document.getElementById('titulo-seccao-feed'); if(tituloSec) tituloSec.innerText = 'Resultados da pesquisa: "' + termo + '"';
-            var resultados = noticiasGlobais.filter(function(n) {
-                if (!isNoticiaPublicada(n)) return false;
-                var t = String(n.titulo).toLowerCase(); var f = String(n.linhaFina).toLowerCase(); var c = String(n.conteudo).toLowerCase();
-                return t.indexOf(termo) !== -1 || f.indexOf(termo) !== -1 || c.indexOf(termo) !== -1;
-            });
-            if(!grid) return; grid.innerHTML = ''; grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
-            if (resultados.length === 0) { grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-500 font-bold bg-white border border-gray-200 rounded-sm">Nenhum resultado encontrado para "' + termo + '".</div>'; } 
-            else { window.noticiasCategoriaAtual = resultados; window.itensExibidosCategoria = 16; resultados.slice(0, 16).forEach(function(n) { grid.innerHTML += htmlCard(n); }); var btnMais = document.getElementById('btn-mostrar-mais'); if (btnMais) { if (resultados.length > 16) { btnMais.classList.remove('hidden'); } else { btnMais.classList.add('hidden'); } } }
-            fecharNoticiaUI();
-        }
-
         function aplicarFiltroCidade() {
-            var inputFiltro = document.getElementById('input-cidade-filtro'); if(!inputFiltro) return;
-            var termo = normalizarTextoBusca(inputFiltro.value); if(!termo) { limparFiltroCidade(); return; }
-            var grid = document.getElementById('grid-noticias'); var dest = document.getElementById('destaque-noticia'); if(!grid || !dest) return;
-            var tituloSec = document.getElementById('titulo-seccao-feed'); if(tituloSec) tituloSec.innerText = 'MATÉRIAS EM: ' + termo.toUpperCase();
-            var filtradas = noticiasGlobais.filter(function(n) { return isNoticiaPublicada(n) && normalizarTextoBusca(n.categoria).indexOf('cidades') !== -1 && normalizarTextoBusca(n.cidade).indexOf(termo) !== -1; });
+            var inputFiltro = document.getElementById('input-cidade-filtro');
+            if(!inputFiltro) return;
+            var termo = normalizarTextoBusca(inputFiltro.value);
+            if(!termo) { limparFiltroCidade(); return; }
+            
+            var grid = document.getElementById('grid-noticias');
+            var dest = document.getElementById('destaque-noticia');
+            if(!grid || !dest) return;
+            
+            var tituloSec = document.getElementById('titulo-seccao-feed');
+            if(tituloSec) tituloSec.innerText = 'MATÉRIAS EM: ' + termo.toUpperCase();
+            
+            var filtradas = noticiasGlobais.filter(function(n) {
+                return isNoticiaPublicada(n) && normalizarTextoBusca(n.categoria).indexOf('cidades') !== -1 && normalizarTextoBusca(n.cidade).indexOf(termo) !== -1;
+            });
+            
             grid.innerHTML = ''; dest.innerHTML = ''; grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
+            
             if(filtradas.length === 0) {
-                dest.classList.add('hidden'); grid.innerHTML = '<div class="col-span-full text-center py-16 text-gray-500 font-bold bg-white border border-gray-200 rounded-sm shadow-sm">Nenhuma notícia encontrada nesta cidade.</div>'; var btnMais = document.getElementById('btn-mostrar-mais'); if(btnMais) btnMais.classList.add('hidden');
+                dest.classList.add('hidden');
+                grid.innerHTML = '<div class="col-span-full text-center py-16 text-gray-500 font-bold bg-white border border-gray-200 rounded-sm shadow-sm">Nenhuma notícia encontrada nesta cidade.</div>';
+                var btnMais = document.getElementById('btn-mostrar-mais'); if(btnMais) btnMais.classList.add('hidden');
             } else {
                 dest.innerHTML = htmlHero(filtradas[0]); dest.classList.remove('hidden');
-                var resto = filtradas.slice(1); window.noticiasCategoriaAtual = resto; window.itensExibidosCategoria = 16; resto.slice(0, 16).forEach(function(n) { grid.innerHTML += htmlCard(n); });
-                var btnMais = document.getElementById('btn-mostrar-mais'); if (btnMais) { if (resto.length > 16) { btnMais.classList.remove('hidden'); } else { btnMais.classList.add('hidden'); } }
+                var resto = filtradas.slice(1);
+                window.noticiasCategoriaAtual = resto; window.itensExibidosCategoria = 16;
+                resto.slice(0, 16).forEach(function(n) { grid.innerHTML += htmlCard(n); });
+                var btnMais = document.getElementById('btn-mostrar-mais');
+                if (btnMais) { if (resto.length > 16) { btnMais.classList.remove('hidden'); } else { btnMais.classList.add('hidden'); } }
             }
         }
 
-        function limparFiltroCidade() { var inputFiltro = document.getElementById('input-cidade-filtro'); if(inputFiltro) inputFiltro.value = ''; filtrarCategoria('Cidades', true); }
+        function limparFiltroCidade() {
+            var inputFiltro = document.getElementById('input-cidade-filtro');
+            if(inputFiltro) inputFiltro.value = '';
+            filtrarCategoria('Cidades', true);
+        }
 
         function filtrarCategoria(cat, up) {
-            if (up === undefined) up = true; window.categoriaAtual = cat; if(up) atualizarURL('categoria', cat);
-            var grid = document.getElementById('grid-noticias'); var dest = document.getElementById('destaque-noticia'); if (!grid || !dest) return;
+            if (up === undefined) up = true;
+            window.categoriaAtual = cat; 
+            if(up) atualizarURL('categoria', cat);
+            
+            var grid = document.getElementById('grid-noticias'); 
+            var dest = document.getElementById('destaque-noticia');
+            if (!grid || !dest) return;
+            
             grid.innerHTML = ''; dest.innerHTML = '';
-            var tituloSec = document.getElementById('titulo-seccao-feed'); if(tituloSec) tituloSec.innerText = cat === 'Todas' ? 'Últimas Notícias' : 'Editoria: ' + cat;
-            var headerNot = document.getElementById('header-ultimas-noticias'); if(headerNot) headerNot.classList.remove('hidden');
-            var inputPesq = document.getElementById('input-pesquisa'); if(inputPesq) inputPesq.value = '';
+            var tituloSec = document.getElementById('titulo-seccao-feed');
+            if(tituloSec) tituloSec.innerText = cat === 'Todas' ? 'Últimas Notícias' : 'Editoria: ' + cat;
+            var headerNot = document.getElementById('header-ultimas-noticias');
+            if(headerNot) headerNot.classList.remove('hidden');
+            var inputPesq = document.getElementById('input-pesquisa');
+            if(inputPesq) inputPesq.value = '';
+            
             var filtroCidades = document.getElementById('filtro-cidades-container');
-            if (filtroCidades) { if(normalizarTextoBusca(cat) === 'cidades') { filtroCidades.classList.remove('hidden'); var icf = document.getElementById('input-cidade-filtro'); if(icf) icf.value = ''; } else { filtroCidades.classList.add('hidden'); } }
+            if (filtroCidades) {
+                if(normalizarTextoBusca(cat) === 'cidades') { filtroCidades.classList.remove('hidden'); var icf = document.getElementById('input-cidade-filtro'); if(icf) icf.value = ''; } 
+                else { filtroCidades.classList.add('hidden'); }
+            }
             
             var catNorm = normalizarTextoBusca(cat);
-            var f = noticiasGlobais.filter(function(n) { var isPub = isNoticiaPublicada(n); if (cat === 'Todas') return isPub; return isPub && normalizarTextoBusca(n.categoria).indexOf(catNorm) !== -1; });
+            var f = noticiasGlobais.filter(function(n) {
+                var isPub = isNoticiaPublicada(n);
+                if (cat === 'Todas') return isPub;
+                return isPub && normalizarTextoBusca(n.categoria).indexOf(catNorm) !== -1;
+            });
             
-            var carrosselContainer = document.getElementById('carrossel-destaques'); var gridEditorias = document.getElementById('grid-editorias-exclusivo');
+            var carrosselContainer = document.getElementById('carrossel-destaques');
+            var gridEditorias = document.getElementById('grid-editorias-exclusivo');
 
             if(cat === 'Todas') {
-                grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"; var f_todas_editorias = f.slice();
+                grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6";
+                var f_todas_editorias = f.slice();
                 var c_itens = f.filter(function(n) { return String(n.noCarrossel) === 'true'; }).slice(0, 5);
-                if(c_itens.length > 0) { montarCarrossel(c_itens); if(carrosselContainer) carrosselContainer.classList.remove('hidden'); if(dest) dest.classList.add('hidden'); f = f.filter(function(n) { return String(n.noCarrossel) !== 'true'; }); } else { if(carrosselContainer) carrosselContainer.classList.add('hidden'); }
-                if (gridEditorias) {
-                    try { montarGrelhaEditorias(f_todas_editorias); gridEditorias.classList.remove('hidden'); } catch(e){}
-                }
+                
+                if(c_itens.length > 0) { 
+                    montarCarrossel(c_itens); 
+                    if(carrosselContainer) carrosselContainer.classList.remove('hidden'); 
+                    dest.classList.add('hidden');
+                    f = f.filter(function(n) { return String(n.noCarrossel) !== 'true'; }); 
+                } else { if(carrosselContainer) carrosselContainer.classList.add('hidden'); }
+                
+                montarGrelhaEditorias(f_todas_editorias);
+                if(gridEditorias) gridEditorias.classList.remove('hidden');
+                
                 window.noticiasCategoriaAtual = f; window.itensExibidosCategoria = 15;
-                if (f.length === 0) { grid.innerHTML = '<div class="col-span-full text-center py-12 bg-white border border-gray-200 rounded-sm shadow-sm"><span class="text-sm font-bold text-gray-500 uppercase tracking-widest">Nenhuma matéria publicada.</span></div>'; } else { f.slice(0, window.itensExibidosCategoria).forEach(function(n) { grid.innerHTML += htmlCard(n); }); }
-                var btnMais = document.getElementById('btn-mostrar-mais'); if(btnMais) { if(f.length > window.itensExibidosCategoria) { btnMais.classList.remove('hidden'); } else { btnMais.classList.add('hidden'); } }
+                if (f.length === 0) { grid.innerHTML = '<div class="col-span-full text-center py-12 bg-white border border-gray-200 rounded-sm shadow-sm"><span class="text-sm font-bold text-gray-500 uppercase tracking-widest">Nenhuma matéria publicada.</span></div>'; } 
+                else { f.slice(0, window.itensExibidosCategoria).forEach(function(n) { grid.innerHTML += htmlCard(n); }); }
+                
+                var btnMais = document.getElementById('btn-mostrar-mais');
+                if(btnMais) { if(f.length > window.itensExibidosCategoria) { btnMais.classList.remove('hidden'); } else { btnMais.classList.add('hidden'); } }
             } else {
                 grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
-                if(gridEditorias) gridEditorias.classList.add('hidden'); if(carrosselContainer) carrosselContainer.classList.add('hidden');
-                if(f.length > 0) { if(dest) { dest.innerHTML = htmlHero(f[0]); dest.classList.remove('hidden'); } f = f.slice(1); } else { if(dest) dest.classList.add('hidden'); }
+                if(gridEditorias) gridEditorias.classList.add('hidden');
+                if(carrosselContainer) carrosselContainer.classList.add('hidden');
+                
+                if(f.length > 0) { dest.innerHTML = htmlHero(f[0]); dest.classList.remove('hidden'); f = f.slice(1); } 
+                else { dest.classList.add('hidden'); }
+                
                 window.noticiasCategoriaAtual = f; window.itensExibidosCategoria = 16;
-                if (f.length === 0 && (!dest || dest.classList.contains('hidden'))) { grid.innerHTML = '<div class="col-span-full text-center py-16 text-gray-500 font-bold bg-white border border-gray-200 rounded-sm shadow-sm">Nenhuma matéria encontrada nesta editoria.</div>'; } else { f.slice(0, 16).forEach(function(n) { grid.innerHTML += htmlCard(n); }); }
-                var btnMais = document.getElementById('btn-mostrar-mais'); if (btnMais) { if (f.length > 16) { btnMais.classList.remove('hidden'); } else { btnMais.classList.add('hidden'); } }
+                if (f.length === 0 && (!dest || dest.classList.contains('hidden'))) { grid.innerHTML = '<div class="col-span-full text-center py-16 text-gray-500 font-bold bg-white border border-gray-200 rounded-sm shadow-sm">Nenhuma matéria encontrada nesta editoria.</div>'; } 
+                else { f.slice(0, 16).forEach(function(n) { grid.innerHTML += htmlCard(n); }); }
+                
+                var btnMais = document.getElementById('btn-mostrar-mais');
+                if (btnMais) { if (f.length > 16) { btnMais.classList.remove('hidden'); } else { btnMais.classList.add('hidden'); } }
             }
             fecharNoticiaUI();
         }
 
         function mostrarMaisNoticias() {
-            var grid = document.getElementById('grid-noticias'); var f = window.noticiasCategoriaAtual || []; var start = window.itensExibidosCategoria; window.itensExibidosCategoria += 16;
+            var grid = document.getElementById('grid-noticias');
+            var f = window.noticiasCategoriaAtual || [];
+            var start = window.itensExibidosCategoria;
+            window.itensExibidosCategoria += 16;
+            
             if(grid) { f.slice(start, window.itensExibidosCategoria).forEach(function(n) { grid.innerHTML += htmlCard(n); }); }
-            var btnMais = document.getElementById('btn-mostrar-mais'); if (window.itensExibidosCategoria >= f.length && btnMais) { btnMais.classList.add('hidden'); }
+            var btnMais = document.getElementById('btn-mostrar-mais');
+            if (window.itensExibidosCategoria >= f.length && btnMais) { btnMais.classList.add('hidden'); }
         }
 
         function htmlCard(n) {
-            // CORTE IMEDIATO DE BASE64 E TEXTOS GIGANTES PARA PROTEGER O IPHONE
-            var resumoLimpo = n.linhaFina ? n.linhaFina : removerHTMLRápido(n.conteudo).substring(0, 180) + '...';
-            
-            var cHTML = '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 p-0 flex flex-col h-full hover:shadow-md transition-shadow rounded-sm w-full overflow-hidden min-w-0">\n<div class="relative w-full aspect-video bg-gray-100 border-b border-gray-200 shrink-0 overflow-hidden">\n<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n</div>\n';
-            if (n.creditosImagem) { cHTML += '<div class="text-[8px] text-gray-400 italic px-4 py-1.5 bg-gray-50 border-b border-gray-100 truncate text-right font-medium">Foto: ' + n.creditosImagem + '</div>\n'; }
-            cHTML += '<div class="p-5 flex flex-col flex-grow w-full bg-white min-w-0">\n<span class="text-jornal-red text-[10px] font-black uppercase tracking-widest mb-3 block truncate">' + (n.categoria || 'Geral') + '</span>\n<h3 class="font-serif text-xl font-black mb-3 leading-snug text-jornal-dark group-hover:text-jornal-blue line-clamp-3 break-words tracking-tight">' + (n.titulo || '') + '</h3>\n';
-            cHTML += '<p class="text-gray-500 text-xs font-medium mb-3 italic line-clamp-2 break-words">' + resumoLimpo + '</p>\n';
-            var dataFormatada = String(n.dataHora || '').replace(' ', ' às ');
-            cHTML += '<div class="pt-4 mt-auto border-t border-gray-100 flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest w-full min-w-0">\n<span class="truncate pr-2">' + dataFormatada + '</span>\n</div>\n</div>\n</article>\n';
+            var cHTML = '';
+            cHTML += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 p-0 flex flex-col h-full hover:shadow-md transition-shadow rounded-sm w-full overflow-hidden min-w-0">\n';
+            cHTML += '    <div class="relative w-full aspect-video bg-gray-100 border-b border-gray-200 shrink-0 overflow-hidden">\n';
+            cHTML += '        <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain group-hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
+            cHTML += '    </div>\n';
+            if (n.creditosImagem) { cHTML += '    <div class="text-[8px] text-gray-400 italic px-4 py-1.5 bg-gray-50 border-b border-gray-100 truncate text-right font-medium">Foto: ' + n.creditosImagem + '</div>\n'; }
+            cHTML += '    <div class="p-5 flex flex-col flex-grow w-full bg-white min-w-0">\n';
+            cHTML += '        <span class="text-jornal-red text-[10px] font-black uppercase tracking-widest mb-3 block truncate">' + (n.categoria || 'Geral') + '</span>\n';
+            cHTML += '        <h3 class="font-serif text-xl font-black mb-3 leading-snug text-jornal-dark group-hover:text-jornal-blue line-clamp-3 break-words tracking-tight">' + (n.titulo || '') + '</h3>\n';
+            if (n.linhaFina) { cHTML += '        <p class="text-gray-500 text-xs font-medium mb-3 italic line-clamp-2 break-words">' + n.linhaFina + '</p>\n'; }
+            cHTML += '        <div class="text-gray-600 text-xs line-clamp-2 leading-relaxed flex-grow font-serif break-words">' + removerHTML(n.conteudo) + '</div>\n';
+            cHTML += '        <div class="pt-4 mt-4 border-t border-gray-100 flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest w-full min-w-0"><span class="truncate pr-2">' + (n.dataHora ? n.dataHora.replace(' ', ' às ') : '') + '</span></div>\n';
+            cHTML += '    </div>\n</article>\n';
             return cHTML;
         }
 
         function htmlHero(n) {
-            var resumoLimpo = n.linhaFina ? n.linhaFina : removerHTMLRápido(n.conteudo).substring(0, 240) + '...';
-            
-            var cHTML = '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 flex flex-col md:flex-row h-full overflow-hidden hover:shadow-md transition-shadow rounded-sm w-full">\n<div class="md:w-[55%] w-full bg-gray-100 min-h-[350px] shrink-0 overflow-hidden relative">\n<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700 min-h-[350px]" />\n';
-            if (n.creditosImagem) { cHTML += '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 rounded-tl">Foto: ' + n.creditosImagem + '</div>\n'; }
-            var dataFormatada = String(n.dataHora || '').replace(' ', ' às ');
-            cHTML += '</div>\n<div class="md:w-[45%] p-8 flex flex-col justify-center w-full min-w-0">\n<span class="text-jornal-red text-[10px] font-black uppercase tracking-widest mb-3 block w-full truncate">' + (n.categoria || 'Geral') + '</span>\n<h3 class="font-serif text-3xl md:text-4xl font-black mb-4 leading-tight text-jornal-dark group-hover:text-jornal-blue break-words line-clamp-4 tracking-tight">' + (n.titulo || '') + '</h3>\n';
-            cHTML += '<p class="text-gray-500 text-sm font-medium mb-4 italic line-clamp-3 break-words">' + resumoLimpo + '</p>\n';
-            cHTML += '<div class="mt-auto flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest w-full border-t border-gray-100 pt-4">\n<span>' + dataFormatada + '</span>\n</div>\n</div>\n</article>\n';
+            var cHTML = '';
+            cHTML += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 flex flex-col md:flex-row h-full overflow-hidden hover:shadow-md transition-shadow rounded-sm w-full">\n';
+            cHTML += '    <div class="md:w-[55%] w-full bg-gray-100 min-h-[350px] shrink-0 overflow-hidden relative">\n';
+            cHTML += '        <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition duration-700 min-h-[350px]" />\n';
+            if (n.creditosImagem) { cHTML += '        <div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 rounded-tl">Foto: ' + n.creditosImagem + '</div>\n'; }
+            cHTML += '    </div>\n';
+            cHTML += '    <div class="md:w-[45%] p-8 flex flex-col justify-center w-full min-w-0">\n';
+            cHTML += '        <span class="text-jornal-red text-[10px] font-black uppercase tracking-widest mb-3 block w-full truncate">' + (n.categoria || 'Geral') + '</span>\n';
+            cHTML += '        <h3 class="font-serif text-3xl md:text-4xl font-black mb-4 leading-tight text-jornal-dark group-hover:text-jornal-blue break-words line-clamp-4 tracking-tight">' + (n.titulo || '') + '</h3>\n';
+            if (n.linhaFina) { cHTML += '        <p class="text-gray-500 text-sm font-medium mb-4 italic line-clamp-3 break-words">' + n.linhaFina + '</p>\n'; }
+            cHTML += '        <div class="text-gray-600 text-sm line-clamp-4 leading-relaxed font-serif mb-6 break-words">' + removerHTML(n.conteudo) + '</div>\n';
+            cHTML += '        <div class="mt-auto flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest w-full border-t border-gray-100 pt-4"><span>' + (n.dataHora ? n.dataHora.replace(' ', ' às ') : '') + '</span></div>\n';
+            cHTML += '    </div>\n</article>\n';
             return cHTML;
         }
 
         function montarGrelhaEditorias(noticiasAtivas) {
-            var container = document.getElementById('grid-editorias-exclusivo'); if(!container) return; container.innerHTML = ''; var categoriasBlocos = [];
+            var container = document.getElementById('grid-editorias-exclusivo'); if(!container) return;
+            container.innerHTML = ''; var categoriasBlocos = [];
+            
             if (configuracoesGlobais['CategoriasCapa']) { try { categoriasBlocos = JSON.parse(configuracoesGlobais['CategoriasCapa']); } catch(e) {} }
+            
             if (!categoriasBlocos || categoriasBlocos.length === 0) {
-                listaCategoriasLocais.forEach(function(c) { var l = String(c).toLowerCase().trim(); if (['opinião', 'opiniao', 'opiniões', 'opinioes', 'carreira', 'carreiras', 'agenda', 'variedade', 'variedades'].indexOf(l) === -1) { if(categoriasBlocos.length < 8) categoriasBlocos.push(c); } });
+                listaCategoriasLocais.forEach(function(c) {
+                    var l = String(c).toLowerCase().trim();
+                    if (['opinião', 'opiniao', 'opiniões', 'opinioes', 'carreira', 'carreiras', 'agenda', 'variedade', 'variedades'].indexOf(l) === -1) { if(categoriasBlocos.length < 8) categoriasBlocos.push(c); }
+                });
             }
+
             var htmlFinal = ''; 
             categoriasBlocos.forEach(function(cat) {
                 if(!cat || cat.trim() === '') return;
                 var nCat = noticiasAtivas.filter(function(n) { return normalizarTextoBusca(n.categoria).indexOf(normalizarTextoBusca(cat)) !== -1; }).slice(0, 4); 
+                
                 if (nCat.length > 0) {
-                    htmlFinal += '<div class="w-full mb-12">\n<div class="border-b-4 border-gray-200 pb-3 mb-6 flex justify-between items-center">\n<h3 class="text-lg font-black uppercase tracking-widest text-jornal-dark">\n<span class="inline-block w-3 h-3 bg-rose-600 mr-2 rounded-sm"></span>' + cat + '\n</h3>\n<button onclick="filtrarCategoria(\'' + cat + '\', true)" class="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-jornal-red transition-colors bg-gray-50 px-3 py-1.5 rounded-sm">\nVer tudo &raquo;\n</button>\n</div>\n<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">\n';
+                    htmlFinal += '<div class="w-full mb-12">\n    <div class="border-b-4 border-gray-200 pb-3 mb-6 flex justify-between items-center">\n        <h3 class="text-lg font-black uppercase tracking-widest text-jornal-dark">\n            <span class="inline-block w-3 h-3 bg-rose-600 mr-2 rounded-sm"></span>' + cat + '\n        </h3>\n        <button onclick="filtrarCategoria(\'' + cat + '\', true)" class="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-jornal-red transition-colors bg-gray-50 px-3 py-1.5 rounded-sm">\n            Ver tudo &raquo;\n        </button>\n    </div>\n    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">\n';
                     nCat.forEach(function(n) {
-                        var dataFormatada = String(n.dataHora || '').replace(' ', ' às ');
-                        htmlFinal += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col h-full border border-gray-100 shadow-sm bg-white rounded-sm overflow-hidden min-w-0 hover:shadow-md transition-shadow">\n<div class="relative w-full aspect-video bg-gray-100 shrink-0 overflow-hidden">\n<img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n</div>\n<div class="p-4 flex flex-col flex-grow min-w-0 bg-white relative z-10">\n<h4 class="font-serif font-black text-sm leading-snug text-jornal-dark group-hover:text-jornal-red line-clamp-3 mb-3">' + n.titulo + '</h4>\n<span class="text-[9px] font-bold text-gray-400 mt-auto tracking-widest uppercase">\n' + dataFormatada + '\n</span>\n</div>\n</article>\n';
+                        htmlFinal += '        <article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col h-full border border-gray-100 shadow-sm bg-white rounded-sm overflow-hidden min-w-0 hover:shadow-md transition-shadow">\n            <div class="relative w-full aspect-video bg-gray-100 shrink-0 overflow-hidden">\n                <img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n            </div>\n            <div class="p-4 flex flex-col flex-grow min-w-0 bg-white relative z-10">\n                <h4 class="font-serif font-black text-sm leading-snug text-jornal-dark group-hover:text-jornal-red line-clamp-3 mb-3">' + n.titulo + '</h4>\n                <span class="text-[9px] font-bold text-gray-400 mt-auto tracking-widest uppercase">\n                    ' + (n.dataHora ? n.dataHora.replace(' ', ' às ') : '') + '\n                </span>\n            </div>\n        </article>\n';
                     });
-                    htmlFinal += '</div>\n</div>\n';
+                    htmlFinal += '    </div>\n</div>\n';
                 }
             });
             container.innerHTML = htmlFinal;
         }
 
         function montarCarrossel(itens) {
-            var inner = document.getElementById('carrossel-inner'); var ind = document.getElementById('carrossel-indicadores'); if(!inner || !ind) return;
+            var inner = document.getElementById('carrossel-inner'); var ind = document.getElementById('carrossel-indicadores');
+            if(!inner || !ind) return;
             var htmlInner = ''; var htmlInd = '';
+            
             itens.forEach(function(n, i) {
-                var credHtml = ''; if (n.creditosImagem) { credHtml = '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 z-20">Foto: ' + n.creditosImagem + '</div>'; }
-                htmlInner += '<div class="absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out cursor-pointer group carrossel-slide opacity-0 z-0 pointer-events-none" onclick="abrirNoticia(\'' + n.id + '\', true)">\n<img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover bg-gray-100" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'"/>\n' + credHtml + '\n<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>\n<div class="absolute bottom-0 left-0 p-8 md:p-14 w-full text-white min-w-0 z-10 pointer-events-none">\n<span class="bg-jornal-red text-white text-[10px] font-black uppercase px-3 py-1.5 mb-4 inline-block rounded-sm truncate shadow-sm">\n' + n.categoria + '\n</span>\n<h3 class="font-serif text-3xl md:text-5xl font-black mb-3 leading-tight break-words line-clamp-3 tracking-tighter drop-shadow-md">\n' + n.titulo + '\n</h3>\n</div>\n</div>\n';
-                htmlInd += '<button onclick="irParaSlide(' + i + ')" class="w-3 h-3 rounded-full carrossel-indicador transition-colors bg-white/50 cursor-pointer"></button>\n';
+                var credHtml = '';
+                if (n.creditosImagem) { credHtml = '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 z-20">Foto: ' + n.creditosImagem + '</div>'; }
+                
+                htmlInner += '<div class="absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out cursor-pointer group carrossel-slide opacity-0 z-0 pointer-events-none" onclick="abrirNoticia(\'' + n.id + '\', true)">\n    <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-100" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'"/>\n    ' + credHtml + '\n    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>\n    <div class="absolute bottom-0 left-0 p-8 md:p-14 w-full text-white min-w-0 z-10 pointer-events-none">\n        <span class="bg-jornal-red text-white text-[10px] font-black uppercase px-3 py-1.5 mb-4 inline-block rounded-sm truncate shadow-sm">\n            ' + n.categoria + '\n        </span>\n        <h3 class="font-serif text-3xl md:text-5xl font-black mb-3 leading-tight break-words line-clamp-3 tracking-tighter drop-shadow-md">\n            ' + n.titulo + '\n        </h3>\n    </div>\n</div>\n';
+                htmlInd += '<button onclick="irParaSlide(' + i + ')" class="w-3 h-3 rounded-full carrossel-indicador transition-colors bg-white/50"></button>\n';
             });
-            inner.innerHTML = htmlInner; ind.innerHTML = htmlInd; slideIndex = 0; 
-            if(carrosselTimer) clearInterval(carrosselTimer); carrosselTimer = setInterval(function() { moverCarrossel(1); }, 6000); atualizarCarrosselVisivel(); 
+            
+            inner.innerHTML = htmlInner; ind.innerHTML = htmlInd;
+            slideIndex = 0; 
+            if(carrosselTimer) clearInterval(carrosselTimer);
+            carrosselTimer = setInterval(function() { moverCarrossel(1); }, 6000); 
+            atualizarCarrosselVisivel(); 
         }
 
         function moverCarrossel(d) { var s = document.getElementsByClassName('carrossel-slide'); if(s.length > 0) { slideIndex = (slideIndex + d + s.length) % s.length; atualizarCarrosselVisivel(); } }
         function irParaSlide(idx) { slideIndex = idx; atualizarCarrosselVisivel(); }
+
         function atualizarCarrosselVisivel() {
             var slides = document.getElementsByClassName('carrossel-slide'); var indics = document.getElementsByClassName('carrossel-indicador');
             for (var i = 0; i < slides.length; i++) {
-                if(slides[i]) { if (i === slideIndex) { slides[i].classList.remove('opacity-0', 'z-0', 'pointer-events-none'); slides[i].classList.add('opacity-100', 'z-10', 'pointer-events-auto'); } else { slides[i].classList.remove('opacity-100', 'z-10', 'pointer-events-auto'); slides[i].classList.add('opacity-0', 'z-0', 'pointer-events-none'); } }
-                if(indics[i]) { indics[i].className = 'w-3 h-3 rounded-full carrossel-indicador transition-colors cursor-pointer ' + (i === slideIndex ? 'bg-jornal-red' : 'bg-white/50'); }
+                if(slides[i]) { 
+                    if (i === slideIndex) { slides[i].classList.remove('opacity-0', 'z-0', 'pointer-events-none'); slides[i].classList.add('opacity-100', 'z-10', 'pointer-events-auto'); } 
+                    else { slides[i].classList.remove('opacity-100', 'z-10', 'pointer-events-auto'); slides[i].classList.add('opacity-0', 'z-0', 'pointer-events-none'); }
+                }
+                if(indics[i]) { indics[i].className = 'w-3 h-3 rounded-full carrossel-indicador transition-colors ' + (i === slideIndex ? 'bg-jornal-red' : 'bg-white/50'); }
             }
         }
 
+        function atualizarMetaTags(noticia) {
+            document.title = noticia.titulo + " - Notícias Avulsas";
+            var metaOgTitle = document.querySelector('meta[property="og:title"]');
+            if (!metaOgTitle) { metaOgTitle = document.createElement('meta'); metaOgTitle.setAttribute('property', 'og:title'); document.head.appendChild(metaOgTitle); }
+            metaOgTitle.setAttribute('content', noticia.titulo);
+
+            var metaOgDesc = document.querySelector('meta[property="og:description"]');
+            if (!metaOgDesc) { metaOgDesc = document.createElement('meta'); metaOgDesc.setAttribute('property', 'og:description'); document.head.appendChild(metaOgDesc); }
+            var desc = noticia.linhaFina ? noticia.linhaFina : "Leia a matéria completa no Notícias Avulsas.";
+            metaOgDesc.setAttribute('content', desc);
+
+            var metaOgImage = document.querySelector('meta[property="og:image"]');
+            if (!metaOgImage) { metaOgImage = document.createElement('meta'); metaOgImage.setAttribute('property', 'og:image'); document.head.appendChild(metaOgImage); }
+            if (noticia.urlImagem) { metaOgImage.setAttribute('content', noticia.urlImagem); }
+            
+            var metaOgUrl = document.querySelector('meta[property="og:url"]');
+            if (!metaOgUrl) { metaOgUrl = document.createElement('meta'); metaOgUrl.setAttribute('property', 'og:url'); document.head.appendChild(metaOgUrl); }
+            metaOgUrl.setAttribute('content', window.location.href);
+        }
+
         function converterVideoUrlsParaPlayers(t) { 
-            if (!t) return ""; var strT = String(t);
+            if (!t) return ""; 
+            var strT = String(t);
             strT = strT.replace(/<a[^>]*href="([^"]*(?:youtube\.com|youtu\.be)[^"]*)"[^>]*>.*?<\/a>/gi, '$1');
+            
             var ytRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})[^\s<"]*/gi;
             strT = strT.replace(ytRegex, function(match, id) { return '<div class="aspect-video w-full my-6 shadow-md rounded-sm overflow-hidden border border-gray-200"><iframe class="w-full h-full" src="https://www.youtube.com/embed/' + id + '" frameborder="0" allowfullscreen></iframe></div>'; });
+            
             var igRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[a-zA-Z0-9_-]+)(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
             strT = strT.replace(igRegex, function(match, url) { return '<blockquote class="instagram-media" data-instgrm-permalink="' + url + '/?utm_source=ig_embed" data-instgrm-version="14" style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px auto; max-width:540px; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);"></blockquote>'; });
+            
             var tkRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?tiktok\.com\/@[a-zA-Z0-9_.-]+\/video\/([0-9]+))(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
             strT = strT.replace(tkRegex, function(match, fullUrl, id) { return '<blockquote class="tiktok-embed" cite="' + fullUrl + '" data-video-id="' + id + '" style="max-width: 605px;min-width: 325px;" > <section> <a target="_blank" title="Video no TikTok" href="' + fullUrl + '">Assistir no TikTok</a> </section> </blockquote> <script async src="https://www.tiktok.com/embed.js"><\/scr' + 'ipt>'; });
+            
             var twRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?(?:twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/status\/[0-9]+)(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
             strT = strT.replace(twRegex, function(match, url) { var cleanUrl = url.replace('x.com', 'twitter.com'); return '<div class="my-6 overflow-hidden rounded-sm"><blockquote class="twitter-tweet" data-dnt="true"><a href="' + cleanUrl + '"></a></blockquote></div>'; });
+            
             return strT;
         }
 
         function abrirNoticia(idNoticia, updateUrl) {
             if (updateUrl === undefined) updateUrl = true;
-            var noticia = noticiasGlobais.find(function(n) { return String(n.id) === String(idNoticia); }); if(!noticia) return;
-            noticiaAbertaId = noticia.id; if (updateUrl) atualizarURL('noticia', null, noticia);
-            var homeFeed = document.getElementById('home-feed-container'); if(homeFeed && homeFeed.classList) homeFeed.classList.add('hidden'); 
-            var filtroCid = document.getElementById('filtro-cidades-container'); if (filtroCid && filtroCid.classList) filtroCid.classList.add('hidden');
-            var noticiaContainer = document.getElementById('noticia-completa-container'); if(noticiaContainer && noticiaContainer.classList) noticiaContainer.classList.remove('hidden');
-            document.getElementById('nc-categoria').innerText = noticia.categoria; document.getElementById('nc-titulo').innerText = noticia.titulo;
+            var noticia = noticiasGlobais.find(function(n) { return String(n.id) === String(idNoticia); }); 
+            if(!noticia) return;
+            
+            noticiaAbertaId = noticia.id; 
+            if (updateUrl) atualizarURL('noticia', null, noticia);
+            
+            document.getElementById('home-feed-container').classList.add('hidden'); 
+            var filtroCid = document.getElementById('filtro-cidades-container');
+            if (filtroCid) filtroCid.classList.add('hidden');
+            
+            document.getElementById('noticia-completa-container').classList.remove('hidden');
+            document.getElementById('nc-categoria').innerText = noticia.categoria; 
+            document.getElementById('nc-titulo').innerText = noticia.titulo;
+            
             var ncLinhaFina = document.getElementById('nc-linha-fina');
-            if (noticia.linhaFina && noticia.linhaFina.trim() !== '') { ncLinhaFina.innerText = noticia.linhaFina; ncLinhaFina.classList.remove('hidden'); } else { ncLinhaFina.innerText = ''; ncLinhaFina.classList.add('hidden'); }
-            document.getElementById('nc-autor').innerText = "Por: " + noticia.autor; document.getElementById('nc-data').innerText = noticia.dataHora ? "Publicado em " + String(noticia.dataHora).replace(' ', ' às ') : '';
+            if (noticia.linhaFina && noticia.linhaFina.trim() !== '') { ncLinhaFina.innerText = noticia.linhaFina; ncLinhaFina.classList.remove('hidden'); } 
+            else { ncLinhaFina.innerText = ''; ncLinhaFina.classList.add('hidden'); }
+
+            document.getElementById('nc-autor').innerText = "Por: " + noticia.autor; 
+            document.getElementById('nc-data').innerText = noticia.dataHora ? "Publicado em " + noticia.dataHora.replace(' ', ' às ') : '';
+            
             var conteudoFormatado = converterVideoUrlsParaPlayers(noticia.conteudo || '');
-            var tempDiv = document.createElement('div'); tempDiv.innerHTML = conteudoFormatado; var botoesDeletar = tempDiv.querySelectorAll('.btn-diminuir-img, .btn-aumentar-img');
+            var tempDiv = document.createElement('div'); tempDiv.innerHTML = conteudoFormatado;
+            var botoesDeletar = tempDiv.querySelectorAll('.btn-diminuir-img, .btn-aumentar-img');
             botoesDeletar.forEach(function(b) { var pai = b.parentElement; b.remove(); if(pai && pai.innerHTML.trim() === '') pai.remove(); });
             conteudoFormatado = tempDiv.innerHTML;
+
             document.getElementById('nc-conteudo').innerHTML = conteudoFormatado || '<p class="text-gray-400 italic">Sem conteúdo disponível para esta matéria.</p>';
+            
             if(conteudoFormatado.indexOf('instagram-media') !== -1) { setTimeout(function(){ if(window.instgrm) window.instgrm.Embeds.process(); }, 500); }
             if(conteudoFormatado.indexOf('twitter-tweet') !== -1) { setTimeout(function(){ if(window.twttr) window.twttr.widgets.load(); }, 500); }
-            var ncImg = document.getElementById('nc-imagem'); var ncImgContainer = document.getElementById('nc-imagem-container');
-            if(noticia.urlImagem && noticia.urlImagem.trim() !== '') { ncImg.src = noticia.urlImagem; if(ncImgContainer && ncImgContainer.classList) ncImgContainer.classList.remove('hidden'); } else { if(ncImgContainer && ncImgContainer.classList) ncImgContainer.classList.add('hidden'); }
-            document.getElementById('nc-creditos').innerText = noticia.creditosImagem ? 'Foto: ' + noticia.creditosImagem : ''; document.getElementById('nc-legenda').innerText = noticia.legendaImagem ? noticia.legendaImagem : '';
-            var coms = comentariosGlobais.filter(function(c) { return c && String(c.idNoticia) === String(idNoticia); }); var divComs = document.getElementById('lista-comentarios'); 
+            
+            var ncImg = document.getElementById('nc-imagem');
+            if(noticia.urlImagem && noticia.urlImagem.trim() !== '') { ncImg.src = noticia.urlImagem; document.getElementById('nc-imagem-container').classList.remove('hidden'); } 
+            else { document.getElementById('nc-imagem-container').classList.add('hidden'); }
+            
+            document.getElementById('nc-creditos').innerText = noticia.creditosImagem ? 'Foto: ' + noticia.creditosImagem : '';
+            document.getElementById('nc-legenda').innerText = noticia.legendaImagem ? noticia.legendaImagem : '';
+            
+            var coms = comentariosGlobais.filter(function(c) { return c && String(c.idNoticia) === String(idNoticia); });
+            var divComs = document.getElementById('lista-comentarios'); 
             if (divComs) {
                 divComs.innerHTML = '';
-                if(coms.length === 0) { divComs.innerHTML = '<p class="text-sm text-gray-400 italic font-medium">Seja o primeiro a comentar.</p>'; } else { coms.forEach(function(c) { if(c) { var hC = '<div class="bg-white p-5 border border-gray-200 rounded-sm shadow-sm">\n<div class="flex items-center gap-3 mb-2">\n<span class="font-black text-sm text-jornal-dark">' + c.nome + '</span>\n<span class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">' + c.data + '</span>\n</div>\n<p class="text-sm text-gray-700 font-medium">' + c.texto + '</p>\n</div>\n'; divComs.innerHTML += hC; } }); }
+                if(coms.length === 0) { divComs.innerHTML = '<p class="text-sm text-gray-400 italic font-medium">Seja o primeiro a comentar.</p>'; } 
+                else { 
+                    coms.forEach(function(c) { 
+                        if(c) { 
+                            divComs.innerHTML += '<div class="bg-white p-5 border border-gray-200 rounded-sm shadow-sm">\n    <div class="flex items-center gap-3 mb-2">\n        <span class="font-black text-sm text-jornal-dark">' + c.nome + '</span>\n        <span class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">' + c.data + '</span>\n    </div>\n    <p class="text-sm text-gray-700 font-medium">' + c.texto + '</p>\n</div>\n';
+                        }
+                    }); 
+                }
             }
-            var relContainer = document.getElementById('nc-relacionadas-container'); var relGrid = document.getElementById('nc-relacionadas-grid');
+            
+            var relContainer = document.getElementById('nc-relacionadas-container');
+            var relGrid = document.getElementById('nc-relacionadas-grid');
+            
             if(noticia.relacionadas && noticia.relacionadas.trim() !== '') {
                 var idsRel = noticia.relacionadas.split(','); var objRel = [];
                 idsRel.forEach(function(idR) { var nr = noticiasGlobais.find(function(x) { return String(x.id) === String(idR.trim()); }); if(nr && isNoticiaPublicada(nr)) objRel.push(nr); });
-                if(objRel.length > 0) { if(relContainer && relContainer.classList) relContainer.classList.remove('hidden'); relGrid.innerHTML = ''; objRel.forEach(function(nr) { relGrid.innerHTML += htmlCard(nr); }); } else { if(relContainer && relContainer.classList) relContainer.classList.add('hidden'); }
-            } else { if(relContainer && relContainer.classList) relContainer.classList.add('hidden'); }
+                if(objRel.length > 0) {
+                    relContainer.classList.remove('hidden'); relGrid.innerHTML = '';
+                    objRel.forEach(function(nr) { relGrid.innerHTML += htmlCard(nr); });
+                } else { relContainer.classList.add('hidden'); }
+            } else { relContainer.classList.add('hidden'); }
+            
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { window.google.script.run.incrementarView(noticiaAbertaId); }
             atualizarMetaTags(noticia); window.scrollTo(0,0);
         }
 
-        function fecharNoticiaUI() { noticiaAbertaId = null; document.title = "Notícias Avulsas - Portal de Informação"; var ncContainer = document.getElementById('noticia-completa-container'); if(ncContainer && ncContainer.classList) ncContainer.classList.add('hidden'); var relCont = document.getElementById('nc-relacionadas-container'); if (relCont && relCont.classList) relCont.classList.add('hidden'); var masterWrap = document.getElementById('master-feed-wrapper'); if (masterWrap && !masterWrap.classList.contains('hidden')) { var hfContainer = document.getElementById('home-feed-container'); if(hfContainer && hfContainer.classList) hfContainer.classList.remove('hidden'); } window.scrollTo(0,0); }
-        function fecharNoticia() { var url = window.location.origin; if(window.location.pathname.indexOf('/noticias') !== -1) { url += '/noticias'; } if (window.location.protocol !== 'file:') { window.history.pushState({path: url}, '', url); } fecharNoticiaUI(); }
+        function fecharNoticiaUI() { 
+            noticiaAbertaId = null; document.title = "Notícias Avulsas - Portal de Informação";
+            document.getElementById('noticia-completa-container').classList.add('hidden'); 
+            var relCont = document.getElementById('nc-relacionadas-container'); if (relCont) relCont.classList.add('hidden');
+            var masterWrap = document.getElementById('master-feed-wrapper');
+            if (masterWrap && !masterWrap.classList.contains('hidden')) { document.getElementById('home-feed-container').classList.remove('hidden'); }
+            window.scrollTo(0,0); 
+        }
+        
+        function fecharNoticia() { 
+            var url = window.location.origin;
+            if(window.location.pathname.indexOf('/noticias') !== -1) { url += '/noticias'; }
+            if (window.location.protocol !== 'file:') { window.history.pushState({path: url}, '', url); }
+            fecharNoticiaUI(); 
+        }
+        
         function voltarCapa() { fecharNoticia(); filtrarCategoria('Todas', true); var iPesq = document.getElementById('input-pesquisa'); if(iPesq) iPesq.value = ''; }
 
-        function atualizarMetaTags(noticia) {
-            document.title = noticia.titulo + " - Notícias Avulsas";
-            var metaOgTitle = document.querySelector('meta[property="og:title"]'); if (!metaOgTitle) { metaOgTitle = document.createElement('meta'); metaOgTitle.setAttribute('property', 'og:title'); document.head.appendChild(metaOgTitle); } metaOgTitle.setAttribute('content', noticia.titulo);
-            var metaOgDesc = document.querySelector('meta[property="og:description"]'); if (!metaOgDesc) { metaOgDesc = document.createElement('meta'); metaOgDesc.setAttribute('property', 'og:description'); document.head.appendChild(metaOgDesc); } metaOgDesc.setAttribute('content', noticia.linhaFina ? noticia.linhaFina : "Leia a matéria completa no Notícias Avulsas.");
-            var metaOgImage = document.querySelector('meta[property="og:image"]'); if (!metaOgImage) { metaOgImage = document.createElement('meta'); metaOgImage.setAttribute('property', 'og:image'); document.head.appendChild(metaOgImage); } if (noticia.urlImagem) { metaOgImage.setAttribute('content', noticia.urlImagem); }
-            var metaOgUrl = document.querySelector('meta[property="og:url"]'); if (!metaOgUrl) { metaOgUrl = document.createElement('meta'); metaOgUrl.setAttribute('property', 'og:url'); document.head.appendChild(metaOgUrl); } metaOgUrl.setAttribute('content', window.location.href);
-        }
-
         function enviarComentario(e) {
-            e.preventDefault(); if(!noticiaAbertaId) return; var btn = document.getElementById('btn-enviar-comentario'); var txt = btn.innerHTML; btn.innerHTML = 'A enviar...'; btn.disabled = true;
+            e.preventDefault(); if(!noticiaAbertaId) return;
+            var btn = document.getElementById('btn-enviar-comentario'); var txt = btn.innerHTML; btn.innerHTML = 'A enviar...'; btn.disabled = true;
             var payload = { idNoticia: noticiaAbertaId, nome: document.getElementById('com-nome').value, texto: document.getElementById('com-texto').value };
+            
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
-                    if (res && res.sucesso) { var t = document.getElementById('toast'); document.getElementById('toast-msg').innerText = 'Comentário publicado!'; if(t && t.classList) { t.className = 'fixed top-5 right-5 px-6 py-4 font-bold shadow-xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-jornal-dark border-jornal-dark text-white rounded-sm'; document.getElementById('toast-icon').innerHTML = '✓'; t.classList.remove('hidden'); setTimeout(function() { t.classList.add('hidden'); }, 4500); } document.getElementById('form-comentario').reset(); comentariosGlobais.push(res.comentario); abrirNoticia(noticiaAbertaId, false); }
+                    if (res && res.sucesso) { 
+                        var t = document.getElementById('toast'); document.getElementById('toast-msg').innerText = 'Comentário publicado!';
+                        t.className = 'fixed top-5 right-5 px-6 py-4 font-bold shadow-xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-jornal-dark border-jornal-dark text-white rounded-sm'; 
+                        document.getElementById('toast-icon').innerHTML = '✓'; t.classList.remove('hidden'); 
+                        setTimeout(function() { t.classList.add('hidden'); }, 4500);
+                        document.getElementById('form-comentario').reset(); comentariosGlobais.push(res.comentario); abrirNoticia(noticiaAbertaId, false); 
+                    }
                     btn.innerHTML = txt; btn.disabled = false;
                 }).salvarComentarioNoSheets(payload);
             }
@@ -1101,7 +1624,8 @@
 
         function shareLink(plataforma) {
             if(!noticiaAbertaId) return; var noticia = noticiasGlobais.find(function(n) { return n && String(n.id) === String(noticiaAbertaId); }); if(!noticia) return;
-            var urlEncoded = encodeURIComponent(window.location.href); var tituloTexto = noticia.titulo; if (noticia.linhaFina) { tituloTexto += " - " + noticia.linhaFina; }
+            var urlEncoded = encodeURIComponent(window.location.href); var tituloTexto = noticia.titulo;
+            if (noticia.linhaFina) { tituloTexto += " - " + noticia.linhaFina; }
             var textoEncoded = encodeURIComponent(tituloTexto); var link = '';
             if(plataforma === 'whatsapp') { link = 'https://api.whatsapp.com/send?text=' + textoEncoded + '%0A%0A' + urlEncoded; }
             if(plataforma === 'x') { link = 'https://twitter.com/intent/tweet?text=' + textoEncoded + '&url=' + urlEncoded; }
