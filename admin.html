@@ -3,226 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Redação - Notícias Avulsas (Firebase)</title>
+    <title>Painel de Redação - Notícias Avulsas</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
-    <!-- PONTE FIREBASE (O NOVO MOTOR OTIMIZADO E SEM BLOQUEIOS) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
-
-        // As suas Chaves Oficiais!
-        const firebaseConfig = {
-            apiKey: "AIzaSyD7HqJYDLlREM2OV3dofdKgyBXLJ_OdD0M",
-            authDomain: "noticias-avulsas.firebaseapp.com",
-            projectId: "noticias-avulsas",
-            storageBucket: "noticias-avulsas.firebasestorage.app",
-            messagingSenderId: "632608657227",
-            appId: "1:632608657227:web:d88d071fd8b92d08c0e2ce"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const storage = getStorage(app);
-
-        function formatDateStr(dt) {
-            const d = String(dt.getDate()).padStart(2, '0');
-            const m = String(dt.getMonth() + 1).padStart(2, '0');
-            const y = dt.getFullYear();
-            const h = String(dt.getHours()).padStart(2, '0');
-            const min = String(dt.getMinutes()).padStart(2, '0');
-            return `${d}/${m}/${y} ${h}:${min}`;
-        }
-
-        window.firebaseBridge = {
-            getHomeData: async function() {
-                try {
-                    const res = { sucesso: true, noticias: [], categorias: [], comentarios: [], propagandas: [], config: {} };
-                    const [noticiasSnap, catSnap, configSnap, propSnap, comSnap] = await Promise.all([
-                        getDocs(collection(db, 'Noticias')), getDocs(collection(db, 'Categorias')),
-                        getDocs(collection(db, 'Configuracoes')), getDocs(collection(db, 'Propagandas')),
-                        getDocs(collection(db, 'Comentarios'))
-                    ]);
-
-                    noticiasSnap.forEach(d => res.noticias.push({id: d.id, ...d.data()}));
-                    catSnap.forEach(d => res.categorias.push(d.id));
-                    configSnap.forEach(d => res.config[d.id] = d.data().valor);
-                    propSnap.forEach(d => res.propagandas.push({id: d.id, ...d.data()}));
-                    comSnap.forEach(d => res.comentarios.push({id: d.id, ...d.data()}));
-
-                    res.noticias.sort((a,b) => {
-                        function parse(s) {
-                            if(!s) return 0;
-                            const p = s.split(/[\/\s:\-T]/);
-                            if(p.length < 5) return 0;
-                            const ano = p[2].length === 4 ? p[2] : p[0];
-                            const dia = p[0].length <= 2 ? p[0] : p[2];
-                            return new Date(ano, p[1]-1, dia, p[3], p[4]).getTime();
-                        }
-                        return parse(b.dataHora) - parse(a.dataHora);
-                    });
-                    return res;
-                } catch (err) { 
-                    console.error("Erro Firebase getHomeData:", err);
-                    return { sucesso: false, erro: err.message }; 
+    <script>
+        // O SEU LINK OFICIAL DA BASE DE DADOS (ATUALIZADO)
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyoHo_olvZbyvT-qfKBDAveq1-n1IHD_bLxf831i_bBrFJeSVTcc6RTfvdQ9QV25hTh/exec";
+        
+        window.google = {
+            script: {
+                run: {
+                    withSuccessHandler: function(cb) { this._onSuccess = cb; return this; },
+                    withFailureHandler: function(cb) { this._onFailure = cb; return this; }
                 }
-            },
-            verificarLogin: async function(u, p) {
-                try {
-                    if (u === 'admin' && p === '123456') return { sucesso: true, role: 'admin', usuario: 'admin' };
-                    const snap = await getDocs(collection(db, 'Admins'));
-                    let found = false; let role = 'admin';
-                    snap.forEach(d => { if (d.id === u && d.data().senha === p) { found = true; role = d.data().role || 'admin'; } });
-                    if (found) return { sucesso: true, role: role, usuario: u };
-                    return { sucesso: false, erro: "Credenciais inválidas." };
-                } catch(e) { return { sucesso: false, erro: e.message }; }
-            },
-            salvarUsuario: async function(payload) {
-                try {
-                    await setDoc(doc(db, 'Admins', payload.usuario), { senha: payload.senha, role: payload.role || 'admin' });
-                    return { sucesso: true };
-                } catch(e) { return { sucesso: false, erro: e.message }; }
-            },
-            salvarNoticiaNoSheets: async function(payload) {
-                try {
-                    const id = payload.id || new Date().getTime().toString();
-                    let urlImagemFinal = payload.urlImagem || "";
-
-                    if (payload.isUpload && payload.base64) {
-                        const fileRef = storageRef(storage, `imagens_noticias/${id}_${new Date().getTime()}`);
-                        await uploadString(fileRef, payload.base64, 'base64', { contentType: payload.mimeType || 'image/jpeg' });
-                        urlImagemFinal = await getDownloadURL(fileRef);
-                    }
-
-                    let dataRegistro = ""; let statusFinal = payload.statusForcado || 'Ativa';
-                    if (payload.dataAgendamento) {
-                        const dt = new Date(payload.dataAgendamento);
-                        if (dt > new Date()) statusFinal = 'Agendada';
-                        dataRegistro = formatDateStr(dt);
-                    } else { dataRegistro = payload.dataHora || formatDateStr(new Date()); }
-
-                    const docData = {
-                        id: id, titulo: payload.titulo || 'Sem Título', categoria: payload.categoria || 'Geral',
-                        cidade: payload.cidade || '', linhaFina: payload.linhaFina || '', conteudo: payload.conteudo || '',
-                        autor: payload.autor || 'da redação', dataHora: dataRegistro,
-                        dataFimEvento: payload.dataFimEvento || '', legendaImagem: payload.legendaImagem || '',
-                        creditosImagem: payload.creditosImagem || '', relacionadas: payload.relacionadas || '',
-                        status: statusFinal, usuarioPublicador: payload.usuarioPublicador || 'admin',
-                        noCarrossel: String(payload.noCarrossel), likes: payload.likes || 0, views: payload.views || 0
-                    };
-                    if (urlImagemFinal) docData.urlImagem = urlImagemFinal;
-
-                    await setDoc(doc(db, 'Noticias', id), docData, { merge: true });
-                    return { sucesso: true, id: id };
-                } catch (e) { return { sucesso: false, erro: e.message }; }
-            },
-            alternarStatusNoticia: async function(id) {
-                try {
-                    const ref = doc(db, 'Noticias', id); const snap = await getDoc(ref);
-                    if (snap.exists()) {
-                        const st = snap.data().status === 'Ativa' ? 'Inativa' : 'Ativa';
-                        await updateDoc(ref, { status: st }); return { sucesso: true, novoStatus: st };
-                    }
-                    return { sucesso: false };
-                } catch(e) { return { sucesso: false, erro: e.message }; }
-            },
-            excluirNoticia: async function(id) {
-                try {
-                    await deleteDoc(doc(db, 'Noticias', id)); return { sucesso: true };
-                } catch(e) { return { sucesso: false, erro: e.message }; }
-            },
-            adicionarCategoriaNoSheets: async function(p) {
-                try {
-                    await setDoc(doc(db, 'Categorias', p.nome), { nome: p.nome }); return { sucesso: true };
-                } catch(e) { return { sucesso: false, erro: e.message }; }
-            },
-            salvarConfiguracaoHTMLCustom: async function(k, v) {
-                try {
-                    await setDoc(doc(db, 'Configuracoes', k), { valor: v }); return { sucesso: true };
-                } catch(e) { return { sucesso: false, erro: e.message }; }
-            },
-            salvarPropagandaNoSheets: async function(payload) {
-                try {
-                    const id = new Date().getTime().toString();
-                    let urlFinal = payload.urlArquivo || ""; let tipoFinal = payload.tipo || "imagem";
-                    if (payload.isUpload && payload.base64) {
-                        const fileRef = storageRef(storage, `propagandas/${id}`);
-                        await uploadString(fileRef, payload.base64, 'base64', { contentType: payload.mimeType });
-                        urlFinal = await getDownloadURL(fileRef);
-                        tipoFinal = payload.mimeType.includes("video") ? "video" : "imagem";
-                    }
-                    await setDoc(doc(db, 'Propagandas', id), { empresa: payload.empresa, urlArquivo: urlFinal, tipo: tipoFinal, local: payload.local, linkDestino: payload.linkDestino, status: 'Ativa' });
-                    return { sucesso: true };
-                } catch(e) { return { sucesso: false, erro: e.message }; }
-            },
-            chamarGeminiBackend: async function(prompt) {
-                try {
-                    const confRef = await getDoc(doc(db, 'Configuracoes', 'ChaveIA'));
-                    const key = confRef.exists() ? confRef.data().valor : '';
-                    if (!key) return { sucesso: false, erro: "Chave IA não configurada." };
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                    });
-                    const json = await res.json();
-                    if (json.candidates && json.candidates[0].content) return { sucesso: true, texto: json.candidates[0].content.parts[0].text };
-                    return { sucesso: false, erro: "A IA não conseguiu responder." };
-                } catch(e) { return { sucesso: false, erro: e.message }; }
             }
         };
-    </script>
 
-    <script>
-        window.onerror = function(message, source, lineno, colno, error) {
-            setTimeout(function() {
-                var debugBox = document.getElementById('debug-error-box');
-                if (debugBox) { debugBox.innerHTML = "Aviso: " + message + " (Linha " + lineno + ")"; debugBox.classList.remove('hidden'); }
-            }, 500);
-        };
-
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw3BLfTFC2Z4sPOQcFMEx8rO8Xz862pVR8STIcc_XK-HAtZjC_CTS_Xs36gh1qbwzWf/exec";
-        window.google = { script: { run: {
-            withSuccessHandler: function(cb) { this._onSuccess = cb; return this; },
-            withFailureHandler: function(cb) { this._onFailure = cb; return this; }
-        }}};
-
-        const apiFunctions = ['getHomeData', 'verificarLogin', 'salvarNoticiaNoSheets', 'alternarStatusNoticia', 'excluirNoticia', 'adicionarCategoriaNoSheets', 'chamarGeminiBackend', 'salvarUsuario', 'salvarConfiguracaoHTMLCustom', 'salvarPropagandaNoSheets'];
-        
-        // Funções que o Firebase assume na íntegra
-        const firebaseOverrides = ['getHomeData', 'verificarLogin', 'salvarNoticiaNoSheets', 'alternarStatusNoticia', 'excluirNoticia', 'adicionarCategoriaNoSheets', 'chamarGeminiBackend', 'salvarUsuario', 'salvarConfiguracaoHTMLCustom', 'salvarPropagandaNoSheets'];
+        const apiFunctions = [
+            'getHomeData', 'verificarLogin', 'salvarNoticiaNoSheets', 
+            'alternarStatusNoticia', 'excluirNoticia', 'adicionarCategoriaNoSheets', 
+            'chamarGeminiBackend', 'salvarUsuario'
+        ];
 
         apiFunctions.forEach(function(funcName) {
             window.google.script.run[funcName] = function() {
                 var argsArray = Array.prototype.slice.call(arguments);
-                var successCb = this._onSuccess; var failureCb = this._onFailure;
-                this._onSuccess = null; this._onFailure = null;
+                var successCb = this._onSuccess;
+                var failureCb = this._onFailure;
                 
-                var checkReady = setInterval(function() {
-                    if (window.firebaseBridge) {
-                        clearInterval(checkReady);
-                        if (firebaseOverrides.includes(funcName)) {
-                            window.firebaseBridge[funcName].apply(window.firebaseBridge, argsArray)
-                                .then(res => { if(successCb) successCb(res); })
-                                .catch(err => { if(failureCb) failureCb(err); });
-                        } else {
-                            fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: funcName, args: argsArray }) })
-                            .then(res => res.json())
-                            .then(result => {
-                                var finalPayload = result;
-                                if (result && result.result !== undefined) finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
-                                if (successCb) successCb(finalPayload);
-                            }).catch(err => { if (failureCb) failureCb(err); });
-                        }
+                this._onSuccess = null; 
+                this._onFailure = null;
+                
+                fetch(GAS_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    redirect: 'follow',
+                    body: JSON.stringify({ action: funcName, args: argsArray })
+                })
+                .then(function(res) { 
+                    if (!res.ok) {
+                        if (res.status === 500) throw new Error("A Base de Dados rejeitou a gravação. A matéria excede os limites de tamanho da Google Sheets.");
+                        if (res.status === 413) throw new Error("O ficheiro enviado é demasiado grande.");
+                        throw new Error("Erro de Servidor (Código " + res.status + ")");
                     }
-                }, 50);
+                    return res.text(); 
+                })
+                .then(function(text) {
+                    try {
+                        var result = JSON.parse(text); 
+                        if (successCb) {
+                            var finalPayload = result;
+                            if (result && result.result !== undefined) {
+                                finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
+                            }
+                            successCb(finalPayload);
+                        }
+                    } catch (e) {
+                        console.error("Erro a converter resposta: ", text);
+                        if (failureCb) failureCb(new Error("Erro de servidor. A resposta não foi válida."));
+                    }
+                })
+                .catch(function(err) {
+                    if (failureCb) failureCb(err);
+                    else console.error("API Error (" + funcName + "):", err);
+                });
             };
         });
 
         var configureTailwind = function() {
             if (typeof tailwind === 'undefined') { setTimeout(configureTailwind, 10); return; }
-            tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] }, colors: { jornal: { blue: '#0F172A', red: '#E11D48', dark: '#020617', gray: '#F8FAFC' } } } } };
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] },
+                        colors: { jornal: { blue: '#0F172A', red: '#E11D48', gray: '#F8FAFC', dark: '#020617' } }
+                    }
+                }
+            };
         };
         configureTailwind();
     </script>
@@ -232,19 +93,28 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
         .rich-editor { outline: none; }
         .rich-editor img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px auto; border: 1px solid #e2e8f0; display: block; }
         .rich-editor iframe, .rich-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; background: #000; }
         .rich-editor a { color: #2563eb; text-decoration: underline; font-weight: 500; }
+        
+        /* Regras para os tamanhos de fonte do execCommand('fontSize') */
         .rich-editor font[size="1"] { font-size: 0.75rem !important; line-height: 1.1rem !important; }
+        .rich-editor font[size="2"] { font-size: 0.875rem !important; line-height: 1.25rem !important; }
         .rich-editor font[size="3"] { font-size: 1.125rem !important; line-height: 1.75rem !important; }
+        .rich-editor font[size="4"] { font-size: 1.25rem !important; line-height: 1.8rem !important; }
         .rich-editor font[size="5"] { font-size: 1.5rem !important; line-height: 2rem !important; }
+        .rich-editor font[size="6"] { font-size: 1.875rem !important; line-height: 2.25rem !important; }
         .rich-editor font[size="7"] { font-size: 2.25rem !important; line-height: 2.5rem !important; }
+        
         .rich-editor h1, .rich-editor h2, .rich-editor h3 { font-family: 'Inter', sans-serif; color: #020617; }
         .rich-editor h1 { font-size: 1.5em; font-weight: 900; margin: 16px 0 8px 0; }
         .rich-editor h2 { font-size: 1.25em; font-weight: 800; margin: 12px 0 8px 0; }
         .rich-editor blockquote { border-left: 4px solid #E11D48; background: #f8fafc; padding: 12px 16px; color: #475569; font-style: italic; margin: 16px 0; border-radius: 0 8px 8px 0; }
         .rich-editor ul { list-style-type: disc; padding-left: 24px; margin-bottom: 12px; }
+        .rich-editor ol { list-style-type: decimal; padding-left: 24px; margin-bottom: 12px; }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col relative selection:bg-jornal-red selection:text-white">
@@ -254,10 +124,21 @@
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
-    <!-- Ecrã de Loading com Proteção Anti-Bloqueio -->
+    <!-- TELA DE CARREGAMENTO COM DETETOR DE DEMORA -->
     <div id="loading-global" class="fixed inset-0 z-[99998] bg-jornal-dark flex flex-col items-center justify-center transition-opacity duration-500">
-        <div class="w-12 h-12 border-4 border-gray-700 border-t-jornal-red rounded-full animate-spin mb-4"></div>
-        <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Sistema...</p>
+        <div id="loading-spinner" class="w-12 h-12 border-4 border-gray-700 border-t-jornal-red rounded-full animate-spin mb-4"></div>
+        <p id="loading-text" class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse text-center">Acessar Sistema...</p>
+        
+        <!-- NOVA CAIXA DE AVISO DE DEMORA -->
+        <div id="loading-error-box" class="hidden mt-8 flex flex-col items-center gap-4 bg-gray-900 p-6 rounded-sm border border-gray-700 max-w-sm mx-4 shadow-xl">
+            <span class="text-3xl mb-1">⚠️</span>
+            <p class="text-xs font-medium text-gray-300 text-center leading-relaxed">
+                A ligação está a demorar mais do que o esperado.<br>Isto pode acontecer se a sua internet estiver instável ou se o <span class="text-white font-bold">Link da Base de Dados</span> no código estiver desatualizado.
+            </p>
+            <button onclick="window.location.reload()" class="mt-3 px-6 py-3 bg-jornal-red text-white font-black text-[10px] uppercase tracking-widest rounded-sm hover:bg-red-700 transition-colors shadow-md w-full">
+                RECARREGAR PÁGINA
+            </button>
+        </div>
     </div>
 
     <!-- Modal de Login -->
@@ -266,11 +147,34 @@
         <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
             <div class="mb-6 text-center">
                 <h2 class="font-sans text-xl font-black uppercase text-jornal-dark tracking-tighter">Painel de Redação</h2>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Acesso restrito à equipa</p>
             </div>
             <form onsubmit="fazerLogin(event)" class="space-y-4">
-                <input type="text" id="login-user" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Usuário" />
+                <input type="text" id="login-user" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Usuário (Ex: admin)" />
                 <input type="password" id="login-pass" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required placeholder="Senha" />
-                <button type="submit" id="btn-fazer-login" class="w-full bg-jornal-blue text-white font-black py-3 hover:opacity-90 transition-colors text-xs uppercase tracking-widest rounded-sm mt-4">Entrar no Painel</button>
+                <button type="submit" id="btn-fazer-login" class="w-full bg-jornal-blue text-white font-black py-3 hover:opacity-90 transition-colors text-xs uppercase tracking-widest rounded-sm mt-4 shadow-md">Entrar no Painel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Troca de Senha Obrigatória -->
+    <div id="modalTrocarSenha" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-jornal-dark/95 backdrop-blur-md"></div>
+        <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
+            <div class="mb-6 text-center">
+                <h2 class="font-sans text-xl font-black uppercase text-jornal-dark tracking-tighter">Bem-vindo(a)!</h2>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-2">Por segurança, é obrigatório criar a sua própria senha pessoal neste primeiro acesso.</p>
+            </div>
+            <form onsubmit="trocarSenhaPrimeiroAcesso(event)" class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Nova Senha Pessoal</label>
+                    <input type="password" id="nova-senha" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required minlength="6" placeholder="Mínimo 6 caracteres" />
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Confirmar Nova Senha</label>
+                    <input type="password" id="confirmar-nova-senha" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold rounded-sm" required minlength="6" placeholder="Repita a senha" />
+                </div>
+                <button type="submit" id="btn-trocar-senha" class="w-full bg-jornal-red text-white font-black py-4 hover:bg-red-700 transition-colors text-[11px] uppercase tracking-widest rounded-sm mt-2 shadow-md">Salvar Nova Senha e Entrar</button>
             </form>
         </div>
     </div>
@@ -286,22 +190,30 @@
                     </span>
                 </div>
                 <div class="flex items-center gap-4">
-                    <!-- BOTÃO MÁGICO DE MIGRAÇÃO -->
-                    <button type="button" onclick="iniciarMigracaoFirebase()" class="bg-gradient-to-r from-orange-500 to-red-600 hover:opacity-90 text-white px-4 py-1.5 rounded-sm text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1 hidden md:flex">🔥 Migrar do Excel</button>
                     <button type="button" onclick="encerrarSessao()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm">Sair (Logout)</button>
                 </div>
             </div>
         </header>
 
         <main class="max-w-[1400px] mx-auto py-6 md:py-8 px-4 w-full flex-grow">
+            <!-- MENUS DE NAVEGAÇÃO -->
             <div class="flex gap-1 mb-6 border-b-2 border-gray-300 overflow-x-auto custom-scrollbar" id="nav-abas-admin">
-                <button type="button" onclick="alternarAbaAdmin('form-noticia-container')" id="aba-noticia" class="py-3 px-5 font-black text-[11px] bg-jornal-blue text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Publicar</button>
-                <button type="button" onclick="alternarAbaAdmin('lista-noticias-container')" id="aba-lista" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors">Gerir Matérias</button>
-                <a href="index.html" class="py-3 px-5 font-bold text-[11px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors ml-auto">Ver Portal &raquo;</a>
+                <!-- Abas da Redação -->
+                <button type="button" onclick="alternarAbaAdmin('form-noticia-container')" id="aba-noticia" class="py-3 px-5 font-black text-[11px] bg-jornal-blue text-white uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors hidden">Publicar</button>
+                <button type="button" onclick="alternarAbaAdmin('lista-noticias-container')" id="aba-lista" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors hidden">Gerir Matérias</button>
+                
+                <!-- Links na Mesma Aba (Abertura Direta) -->
+                <a href="config.html" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1">⚙️ Configurações</a>
+                <a href="instagram.html" class="py-3 px-5 font-bold text-[11px] bg-gray-200 text-purple-600 hover:text-purple-800 hover:bg-purple-100 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1">📸 Estúdio IG</a>
+                
+                <!-- Link Portal -->
+                <a href="index.html" class="py-3 px-5 font-bold text-[11px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors flex items-center gap-1 ml-auto">Ver Portal &raquo;</a>
             </div>
 
-            <!-- FORMULÁRIO DE NOTÍCIA -->
-            <div id="form-noticia-container" class="bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
+            <!-- ========================================================= -->
+            <!-- ABA: FORMULÁRIO DE NOTÍCIA                                -->
+            <!-- ========================================================= -->
+            <div id="form-noticia-container" class="hidden bg-white p-6 md:p-8 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-jornal-red pl-3 mb-8">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter" id="titulo-pagina-form">Redigir Matéria</h2>
                 </div>
@@ -310,21 +222,24 @@
                     <input type="hidden" id="admin-id-noticia" value="" />
                     
                     <div class="flex flex-col lg:flex-row gap-6">
+                        <!-- Manchete e Resumo -->
                         <div class="lg:w-2/3 flex flex-col gap-6">
                             <div>
                                 <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Manchete</label>
-                                <input type="text" id="admin-titulo" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue font-serif font-bold text-lg text-jornal-dark rounded-sm" placeholder="O título da sua notícia..." />
+                                <input type="text" id="admin-titulo" oninput="atualizarPreviewURL()" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue font-serif font-bold text-lg text-jornal-dark rounded-sm" placeholder="O título da sua notícia..." />
+                                <p id="preview-url-noticia" class="text-[11px] mt-2 hidden truncate">🔗 <span class="text-gray-500 hidden sm:inline">Link da matéria: </span><span id="preview-url-texto" class="text-blue-600 font-bold tracking-wide"></span></p>
                             </div>
                             
                             <div>
                                 <div class="flex justify-between items-end mb-2">
                                     <label class="text-[10px] font-black uppercase tracking-widest text-gray-500">Linha Fina (Opcional - SEO)</label>
-                                    <button type="button" onclick="gerarLinhaFinaIA()" class="text-[10px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 transition-colors">✨ Gerar com IA</button>
+                                    <button type="button" id="btn-ia-linhafina" onclick="gerarLinhaFinaIA()" class="text-[10px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 transition-colors">✨ Gerar com IA</button>
                                 </div>
                                 <input type="text" id="admin-linha-fina" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-medium text-gray-700 rounded-sm" placeholder="Breve resumo da matéria..." />
                             </div>
                         </div>
                         
+                        <!-- Editorias -->
                         <div class="lg:w-1/3">
                             <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Editorias (Múltipla Seleção)</label>
                             <div class="p-4 bg-gray-50 border border-gray-300 rounded-sm">
@@ -336,49 +251,76 @@
 
                     <div id="admin-cidade-container" class="hidden p-5 bg-blue-50 border border-blue-200 rounded-sm">
                         <label for="admin-cidade" class="text-[11px] font-black uppercase tracking-widest text-jornal-blue mb-2 block">Cidade *</label>
-                        <input type="text" id="admin-cidade" class="w-full px-4 py-3 bg-white border border-blue-300 focus:outline-none text-sm font-bold rounded-sm" />
+                        <input type="text" id="admin-cidade" placeholder="Informe a cidade da matéria" class="w-full px-4 py-3 bg-white border border-blue-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm" />
+                        <p class="text-[9px] text-gray-500 mt-2">Este campo aparece somente quando a editoria Cidades está selecionada.</p>
                     </div>
 
                     <div>
                         <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Autor / Assinatura</label>
-                        <input type="text" id="admin-autor" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none text-sm font-bold rounded-sm" placeholder="Vazio = 'da redação'" />
+                        <input type="text" id="admin-autor" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm" placeholder="Ex: João Silva (Vazio = 'da redação')" />
                     </div>
 
                     <!-- Editor Rich Text -->
                     <div>
-                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Conteúdo</label>
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Conteúdo (Rich Text Avançado)</label>
                         <input type="file" id="upload-imagem-conteudo" accept="image/*" class="hidden" onchange="processarUploadImagemConteudo(this)" />
-                        
                         <div class="flex flex-wrap gap-1 p-2 bg-gray-100 border border-gray-300 border-b-0 rounded-t-sm items-center">
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('undo')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded">U</button>
+                            <!-- Botões de Desfazer / Refazer -->
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('undo')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded shadow-sm transition-colors" title="Desfazer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                            </button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('redo')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-gray-600 rounded shadow-sm transition-colors" title="Refazer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"/></svg>
+                            </button>
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
-                            
-                            <select onchange="restaurarSelecao(); aplicarFonte(this.value);" class="fontFamilySelect px-2 py-1.5 bg-white border border-gray-300 text-xs rounded focus:outline-none min-w-[100px]">
+
+                            <select onchange="restaurarSelecao(); aplicarFonte(this.value);" class="fontFamilySelect px-2 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer min-w-[100px]">
                                 <option value="" disabled selected>Sans Serif</option>
                                 <option value="Arial, sans-serif">Sans Serif</option>
                                 <option value="Merriweather, serif">Serif</option>
+                                <option value="Courier New, monospace">Largura fixa</option>
+                                <option value="Impact, fantasy">Largo</option>
+                                <option value="Comic Sans MS">Comic Sans MS</option>
+                                <option value="Garamond, serif">Garamond</option>
+                                <option value="Georgia, serif">Georgia</option>
+                                <option value="Tahoma, sans-serif">Tahoma</option>
+                                <option value="Trebuchet MS, sans-serif">Trebuchet MS</option>
+                                <option value="Verdana, sans-serif">Verdana</option>
                             </select>
                             
-                            <select onchange="restaurarSelecao(); execCmd('fontSize', this.value);" class="fontSizeSelect px-2 py-1.5 bg-white border border-gray-300 text-xs rounded focus:outline-none ml-1">
+                            <select onchange="restaurarSelecao(); execCmd('fontSize', this.value);" class="fontSizeSelect px-2 py-1.5 bg-white hover:bg-slate-100 border border-gray-300 text-xs font-medium rounded shadow-sm focus:outline-none cursor-pointer ml-1">
                                 <option value="" disabled selected>Tamanho</option>
-                                <option value="1">Pequeno</option><option value="3">Normal</option><option value="5">Grande</option><option value="7">Enorme</option>
+                                <option value="1">Pequeno</option>
+                                <option value="3">Normal</option>
+                                <option value="5">Grande</option>
+                                <option value="7">Enorme</option>
                             </select>
+                            
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
 
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('bold')" class="px-2.5 py-1.5 bg-white border border-gray-300 text-xs font-bold rounded">B</button>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('italic')" class="px-2.5 py-1.5 bg-white border border-gray-300 text-xs italic rounded">I</button>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('underline')" class="px-2.5 py-1.5 bg-white border border-gray-300 text-xs underline rounded">U</button>
-                            <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
-                            
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('justifyLeft')" class="px-2 py-1.5 bg-white border border-gray-300 text-xs rounded">Esq</button>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('justifyCenter')" class="px-2 py-1.5 bg-white border border-gray-300 text-xs rounded">Cen</button>
-                            <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
-                            
-                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirLinkRichEditor()" class="px-2 py-1.5 bg-white border border-gray-300 text-xs text-blue-600 rounded">🔗</button>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirImagemRichEditor()" class="px-2 py-1.5 bg-white border border-gray-300 text-xs text-emerald-600 rounded">🖼️</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('bold')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm transition-colors">B</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('italic')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm transition-colors">I</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('underline')" class="px-2.5 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs underline rounded shadow-sm transition-colors">U</button>
                             
                             <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
-                            <button type="button" onmousedown="event.preventDefault();" onclick="limparFormatacao(this)" class="px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 text-xs font-bold rounded">Limpar</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('justifyLeft')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Esq</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('justifyCenter')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm">Cen</button>
+                            <span class="w-[1px] h-5 bg-gray-300 mx-1 hidden sm:block"></span>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('insertUnorderedList')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs rounded shadow-sm hidden sm:block">UL</button>
+                            <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
+                            
+                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirLinkRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-blue-600 rounded font-semibold shadow-sm" title="Inserir Link">🔗</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirImagemRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-emerald-600 rounded font-semibold shadow-sm" title="Upload Imagem">🖼️</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="inserirVideoRichEditor()" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs text-purple-600 rounded font-semibold shadow-sm" title="Vídeo">📹</button>
+                            
+                            <span class="w-[1px] h-5 bg-gray-300 mx-1"></span>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('formatBlock', 'H2')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs font-bold rounded shadow-sm">H2</button>
+                            <button type="button" onmousedown="event.preventDefault();" onclick="execCmd('formatBlock', 'blockquote')" class="px-2 py-1.5 bg-white hover:bg-slate-200 border border-gray-300 text-xs italic rounded shadow-sm">""</button>
+                            
+                            <!-- Botão Limpar Formatação (A Vassoura) -->
+                            <button type="button" onmousedown="event.preventDefault();" onclick="limparFormatacao(this)" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-xs font-bold text-red-600 rounded shadow-sm ml-1">Limpar Formatação</button>
+                            
+                            <button type="button" onmousedown="event.preventDefault();" id="btn-ia-conteudo" onclick="gerarConteudoIA()" class="ml-auto px-4 py-1.5 bg-purple-100 hover:bg-purple-200 border border-purple-300 text-xs text-purple-800 font-bold tracking-wide rounded shadow-sm transition-colors flex items-center justify-center">✨ Escrever com IA</button>
                         </div>
                         <div id="admin-editor-rich" contenteditable="true" class="w-full px-6 py-6 bg-white border border-gray-300 rounded-b-sm min-h-[350px] max-h-[600px] overflow-y-auto focus:outline-none focus:ring-1 focus:ring-jornal-blue text-base leading-relaxed font-serif custom-scrollbar rich-editor"></div>
                     </div>
@@ -386,23 +328,26 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-gray-50 border border-gray-200 rounded-sm">
                         <div>
                             <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3 block">Upload da Foto de Capa</label>
-                            <input type="file" id="admin-arquivo-imagem" accept="image/*" class="w-full text-sm file:mr-3 file:py-2 file:px-4 file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-jornal-dark file:text-white cursor-pointer rounded-sm bg-white border border-gray-300" onchange="verificarUploadMedia(this)" />
+                            <div class="relative">
+                                <input type="file" id="admin-arquivo-imagem" accept="image/*" class="w-full text-sm file:mr-3 file:py-2 file:px-4 file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-wider file:bg-jornal-dark file:text-white hover:file:opacity-90 cursor-pointer rounded-sm bg-white border border-gray-300" onchange="verificarUploadMedia(this)" />
+                            </div>
                             <img id="preview-imagem" loading="lazy" src="" class="mt-4 w-full h-40 object-contain bg-gray-900 rounded-sm hidden shadow-inner" />
                         </div>
                         
                         <div class="flex flex-col gap-6">
                             <div>
-                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 block mb-2">Agendamento</label>
-                                <input type="datetime-local" id="admin-agendamento" class="w-full px-4 py-2.5 bg-white border border-gray-300 focus:outline-none text-xs font-bold rounded-sm" />
+                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 block mb-2">Agendamento ou Publicação Retroativa</label>
+                                <input type="datetime-local" id="admin-agendamento" class="w-full px-4 py-2.5 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue text-xs font-bold text-jornal-dark rounded-sm shadow-sm" />
                             </div>
                             <div>
-                                <label class="text-[10px] font-black uppercase tracking-widest text-rose-600 block mb-2">Fim do Evento</label>
-                                <input type="datetime-local" id="admin-data-fim-evento" class="w-full px-4 py-2.5 bg-white border border-gray-300 focus:outline-none text-xs font-bold rounded-sm" />
+                                <label class="text-[10px] font-black uppercase tracking-widest text-rose-600 block mb-2">Fim do Evento (Obrigatório se for Agenda)</label>
+                                <input type="datetime-local" id="admin-data-fim-evento" class="w-full px-4 py-2.5 bg-white border border-gray-300 focus:outline-none focus:border-rose-500 text-xs font-bold text-jornal-dark rounded-sm shadow-sm" />
                             </div>
                         </div>
                     </div>
 
                     <div id="admin-imagem-metadados" class="hidden p-6 bg-amber-50 border border-amber-200 rounded-sm">
+                        <h4 class="text-[11px] font-black text-amber-800 uppercase tracking-widest mb-4">⚠️ Créditos de Imagem Obrigatórios</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-2 block">Legenda (Opcional)</label>
@@ -410,9 +355,20 @@
                             </div>
                             <div>
                                 <label class="text-[10px] font-bold uppercase tracking-widest text-red-600 mb-2 block">Créditos / Fonte da Imagem *</label>
-                                <input type="text" id="admin-creditos-imagem" class="w-full px-4 py-2 bg-white border border-red-300 text-sm font-bold focus:outline-none rounded-sm" />
+                                <input type="text" id="admin-creditos-imagem" class="w-full px-4 py-2 bg-white border border-red-300 text-sm font-bold focus:outline-none rounded-sm" placeholder="Ex: João Silva / Agência Reuters" />
                             </div>
                         </div>
+                    </div>
+
+                    <div class="p-6 bg-indigo-50 border border-indigo-100 rounded-sm">
+                        <label class="text-[11px] font-black uppercase tracking-widest text-indigo-800 mb-3 block">Notícias Relacionadas</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="admin-busca-relacionada" placeholder="Pesquisar por título, editoria ou cidade..." class="flex-grow px-4 py-3 border border-indigo-200 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400">
+                            <button type="button" onclick="buscarRelacionadas()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-sm text-xs font-bold uppercase tracking-widest transition-colors shadow-sm">Pesquisar</button>
+                        </div>
+                        <div id="lista-resultados-relacionadas" class="mt-4 space-y-2"></div>
+                        <div id="lista-selecionadas-relacionadas" class="mt-4 space-y-2"></div>
+                        <input type="hidden" id="admin-relacionadas-ids" value="">
                     </div>
 
                     <div class="p-5 bg-sky-50 border border-sky-100 rounded-sm">
@@ -423,13 +379,18 @@
                     </div>
 
                     <div class="pt-6 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
-                        <button type="button" onclick="limparFormNoticia()" class="text-xs font-black text-gray-500 hover:text-jornal-red uppercase tracking-widest py-2">Limpar Form</button>
-                        <button type="submit" id="btn-salvar-noticia" onclick="salvarNoticia(event)" class="w-full md:w-auto bg-jornal-dark text-white font-black px-12 py-4 uppercase tracking-widest text-sm rounded-sm">Publicar Matéria</button>
+                        <button type="button" onclick="limparFormNoticia()" class="text-xs font-black text-gray-500 hover:text-jornal-red uppercase tracking-widest w-full md:w-auto text-center md:text-left py-2 transition-colors">Limpar Form</button>
+                        <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                            <button type="button" id="btn-salvar-rascunho" onclick="salvarNoticia(event, 'Rascunho')" class="w-full sm:w-auto bg-gray-400 text-white font-black px-8 py-4 hover:bg-gray-500 transition-colors uppercase tracking-widest text-sm rounded-sm shadow-md">Salvar Rascunho</button>
+                            <button type="button" onclick="salvarNoticia(event, 'Ativa')" id="btn-salvar-noticia" class="w-full sm:w-auto bg-jornal-dark text-white font-black px-10 py-4 hover:opacity-90 transition-opacity uppercase tracking-widest text-sm rounded-sm shadow-xl">Publicar Matéria</button>
+                        </div>
                     </div>
                 </form>
             </div>
 
-            <!-- LISTAGEM -->
+            <!-- ========================================================= -->
+            <!-- ABA: LISTAGEM DE NOTÍCIAS                                 -->
+            <!-- ========================================================= -->
             <div id="lista-noticias-container" class="hidden bg-white p-6 shadow-sm border border-gray-200 rounded-sm">
                 <div class="border-l-4 border-jornal-red pl-3 mb-6">
                     <h2 class="font-sans text-xl font-black text-jornal-dark uppercase tracking-tighter">Editar Publicações</h2>
@@ -437,13 +398,13 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 border border-gray-200 rounded-sm">
                     <div>
                         <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Filtrar por editoria</label>
-                        <select id="admin-filtro-editoria" onchange="carregarListaEdicao()" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none text-sm font-bold text-jornal-dark rounded-sm">
+                        <select id="admin-filtro-editoria" onchange="carregarListaEdicao()" class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm font-bold text-jornal-dark rounded-sm">
                             <option value="todas">Todas as editorias</option>
                         </select>
                     </div>
                     <div>
                         <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1 block">Pesquisar matéria</label>
-                        <input type="search" id="admin-pesquisa-materia" oninput="carregarListaEdicao()" placeholder="Digite título ou conteúdo..." class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none text-sm text-jornal-dark rounded-sm" />
+                        <input type="search" id="admin-pesquisa-materia" oninput="carregarListaEdicao()" placeholder="Digite título ou conteúdo..." class="w-full px-4 py-3 bg-white border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm text-jornal-dark rounded-sm" />
                     </div>
                 </div>
                 <div class="overflow-x-auto">
@@ -453,6 +414,9 @@
                                 <th class="p-4">Data</th>
                                 <th class="p-4">Editorias</th>
                                 <th class="p-4">Manchete</th>
+                                <th class="p-4">Autor</th>
+                                <th class="p-4">Publicador</th>
+                                <th class="p-4 text-center">Visões</th>
                                 <th class="p-4 text-center">Visibilidade</th>
                                 <th class="p-4 text-center">Ações</th>
                             </tr>
@@ -465,19 +429,28 @@
         </main>
     </div>
 
-    <!-- SCRIPTS CORE -->
+    <!-- SCRIPTS CORE E LÓGICA -->
     <script>
         var noticiasGlobais = [];
-        var listaCategoriasLocais = [];
-        var base64StringNoticia = ""; var mimeStringNoticia = ""; var nameStringNoticia = "";
-        window.usuarioLogado = 'admin'; window.roleLogado = 'admin';
-        var rangeSalvo = null;
+        var listaCategoriasLocais = ['Política', 'Economia', 'Cidades', 'Polícia', 'Justiça', 'Esportes', 'Brasil', 'Mundo'];
+        var base64StringNoticia = ""; 
+        var mimeStringNoticia = ""; 
+        var nameStringNoticia = "";
+        
+        window.relacionadasSelecionadas = [];
+        window.relacionadasEditadasManualmente = false;
+        window.usuarioLogado = 'admin'; 
+        window.roleLogado = 'admin';
 
+        var rangeSalvo = null;
+        
         document.addEventListener('selectionchange', function() {
             var sel = window.getSelection();
             if (sel.rangeCount > 0) {
                 var ativo = document.activeElement;
-                if (ativo && ativo.id === 'admin-editor-rich') rangeSalvo = sel.getRangeAt(0);
+                if (ativo && ativo.id === 'admin-editor-rich') {
+                    rangeSalvo = sel.getRangeAt(0);
+                }
             }
         });
 
@@ -490,24 +463,12 @@
         }
 
         document.addEventListener("DOMContentLoaded", function() {
-            // TIMEOUT DE SEGURANÇA NO ARRANQUE:
-            setTimeout(function() {
-                var loader = document.getElementById('loading-global');
-                if (loader && !loader.classList.contains('hidden')) {
-                    loader.classList.add('hidden');
-                    var modalLogin = document.getElementById('modalLogin');
-                    if (modalLogin) {
-                        modalLogin.classList.remove('hidden');
-                        modalLogin.classList.add('flex');
-                    }
-                    mostrarMensagem("Aviso: O carregamento automático demorou mais que o normal. Tente fazer login.", "erro");
-                }
-            }, 12000);
-
             if (localStorage.getItem('admin_logado') === 'true') {
                 window.usuarioLogado = localStorage.getItem('admin_user') || 'admin';
+                window.roleLogado = localStorage.getItem('admin_role') || 'admin';
                 document.getElementById('modalLogin').classList.add('hidden');
                 document.getElementById('view-admin').classList.remove('hidden');
+                aplicarPermissoes(window.roleLogado); 
                 carregarNoticiasAdmin();
             } else {
                 document.getElementById('loading-global').classList.add('hidden');
@@ -521,21 +482,26 @@
                     var el = e.target;
                     if (el && (el.classList.contains('btn-diminuir-img') || el.classList.contains('btn-aumentar-img'))) {
                         e.preventDefault(); e.stopPropagation();
-                        var figure = el.closest('figure');
-                        var img = figure ? figure.querySelector('img') : null;
+                        var img = null; var figure = el.closest('figure');
+                        if (figure) img = figure.querySelector('img');
+                        
                         if (img) {
                             var currentWidthStr = img.style.width || img.width + 'px';
                             var val = parseFloat(currentWidthStr);
                             var isPercent = currentWidthStr.indexOf('%') !== -1;
                             if (isNaN(val)) { val = 300; isPercent = false; }
+                            
                             var step = isPercent ? 10 : 50; 
-                            if (el.classList.contains('btn-aumentar-img')) { val += step; } else { val -= step; if(val < 50) val = 50; }
+                            if (el.classList.contains('btn-aumentar-img')) { val += step; } 
+                            else { val -= step; if(val < 50) val = 50; }
+                            
                             if (isPercent && val > 100) val = 100;
                             img.style.width = val + (isPercent ? '%' : 'px');
                             img.style.maxWidth = '100%';
-                        }
+                        } else { alert("Não foi possível localizar a imagem para ajustar."); }
                     }
                 });
+                
                 editorRich.addEventListener('keyup', atualizarBarraFerramentas);
                 editorRich.addEventListener('mouseup', atualizarBarraFerramentas);
             }
@@ -544,60 +510,15 @@
         function mostrarMensagem(mensagem, tipo) {
             var toast = document.getElementById('toast'); 
             document.getElementById('toast-msg').innerText = mensagem;
-            toast.className = tipo === 'erro' ? 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-white border-red-600 text-red-600 rounded-sm' : 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-jornal-dark border-jornal-dark text-white rounded-sm'; 
-            document.getElementById('toast-icon').innerText = tipo === 'erro' ? '⚠️' : '✓';
+            if (tipo === 'erro') { 
+                toast.className = 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-white border-red-600 text-red-600 rounded-sm'; 
+                document.getElementById('toast-icon').innerHTML = '⚠️'; 
+            } else { 
+                toast.className = 'fixed top-5 right-5 px-6 py-4 font-bold shadow-2xl transition-all duration-300 z-[99999] flex items-center gap-3 border bg-jornal-dark border-jornal-dark text-white rounded-sm'; 
+                document.getElementById('toast-icon').innerHTML = '✓'; 
+            }
             toast.classList.remove('hidden'); 
             setTimeout(function() { toast.classList.add('hidden'); }, 4500);
-        }
-
-        function iniciarMigracaoFirebase() {
-            if(!confirm("Tem a certeza que deseja migrar TUDO do Excel para o Firebase? Isto pode demorar alguns minutos dependendo da quantidade de matérias.")) return;
-            var btn = document.querySelector('button[onclick="iniciarMigracaoFirebase()"]');
-            var txtOrig = btn.innerHTML;
-            btn.innerHTML = "A LER EXCEL... ⏳"; btn.disabled = true;
-
-            fetch(GAS_API_URL, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                body: JSON.stringify({ action: 'getHomeData', args: [] }) 
-            })
-            .then(res => res.json())
-            .then(async result => {
-                var data = result;
-                if (result && result.result !== undefined) data = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
-                
-                if (data && data.sucesso) {
-                    btn.innerHTML = "A GRAVAR NO FIREBASE... ⏳";
-                    try {
-                        if(data.noticias) {
-                            for(let n of data.noticias) { await window.firebaseBridge.salvarNoticiaNoSheets({...n, statusForcado: n.status}); }
-                        }
-                        if(data.categorias) {
-                            for(let c of data.categorias) { await window.firebaseBridge.adicionarCategoriaNoSheets({nome: c}); }
-                        }
-                        if(data.config) {
-                            for(let k in data.config) { await window.firebaseBridge.salvarConfiguracaoHTMLCustom(k, data.config[k]); }
-                        }
-                        if(data.propagandas) {
-                            for(let p of data.propagandas) { await window.firebaseBridge.salvarPropagandaNoSheets({...p, status: 'Ativa'}); }
-                        }
-                        mostrarMensagem("Migração concluída com sucesso!");
-                        btn.innerHTML = "✅ MIGRAÇÃO CONCLUÍDA";
-                        setTimeout(() => btn.classList.add('hidden'), 3000);
-                        carregarNoticiasAdmin();
-                    } catch(e) {
-                        mostrarMensagem("Erro na gravação: " + e.message, "erro");
-                        btn.innerHTML = txtOrig; btn.disabled = false;
-                    }
-                } else {
-                    mostrarMensagem("Falha ao ler Excel.", "erro");
-                    btn.innerHTML = txtOrig; btn.disabled = false;
-                }
-            })
-            .catch(err => {
-                mostrarMensagem("Falha de rede na migração.", "erro");
-                btn.innerHTML = txtOrig; btn.disabled = false;
-            });
         }
 
         function fazerLogin(e) {
@@ -605,281 +526,830 @@
             var u = document.getElementById('login-user').value; 
             var p = document.getElementById('login-pass').value;
             var btn = document.getElementById('btn-fazer-login'); 
+            
             btn.innerHTML = "A VERIFICAR..."; btn.disabled = true;
 
-            var checkReady = setInterval(function() {
-                if (window.firebaseBridge) {
-                    clearInterval(checkReady);
-                    window.firebaseBridge.verificarLogin(u, p).then(function(res) {
-                        if (res && res.sucesso) {
-                            window.usuarioLogado = res.usuario || u; 
-                            localStorage.setItem('admin_logado', 'true'); 
-                            localStorage.setItem('admin_user', window.usuarioLogado); 
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if (res && res.sucesso) {
+                        let roleStr = res.role || 'admin'; 
+                        window.usuarioLogado = res.usuario || u; 
+                        window.roleLogado = roleStr;
+                        if (roleStr.includes('req_pass_change:true')) {
                             document.getElementById('modalLogin').classList.add('hidden'); 
-                            document.getElementById('view-admin').classList.remove('hidden');
-                            carregarNoticiasAdmin();
+                            document.getElementById('modalTrocarSenha').classList.remove('hidden'); 
+                            document.getElementById('modalTrocarSenha').classList.add('flex');
                         } else { 
-                            mostrarMensagem(res ? res.erro : "Resposta inválida.", 'erro'); 
-                            btn.innerHTML = "Entrar no Painel"; btn.disabled = false; 
+                            iniciarSessao(window.usuarioLogado, window.roleLogado); 
                         }
-                    }).catch(function(erro) {
-                        mostrarMensagem("Falha na rede ou base de dados.", 'erro'); 
-                        btn.innerHTML = "Entrar no Painel"; btn.disabled = false;
-                    });
-                }
-            }, 100);
+                    } else { 
+                        mostrarMensagem(res ? res.erro : "Resposta inválida.", 'erro'); 
+                        btn.innerHTML = "Entrar no Painel"; btn.disabled = false; 
+                    }
+                }).withFailureHandler(function(erro) {
+                    mostrarMensagem("Falha na rede.", 'erro'); 
+                    btn.innerHTML = "Entrar no Painel"; btn.disabled = false;
+                }).verificarLogin(u, p);
+            }
+        }
+
+        function trocarSenhaPrimeiroAcesso(e) {
+            e.preventDefault(); 
+            const novaSenha = document.getElementById('nova-senha').value; 
+            const confSenha = document.getElementById('confirmar-nova-senha').value;
+            
+            if(novaSenha !== confSenha) { mostrarMensagem('As senhas não coincidem.', 'erro'); return; }
+            if(novaSenha.length < 6) { mostrarMensagem('Mínimo de 6 caracteres.', 'erro'); return; }
+            
+            const btn = document.getElementById('btn-trocar-senha'); 
+            btn.innerHTML = 'A ATUALIZAR...'; btn.disabled = true;
+            const novoRole = window.roleLogado.replace('req_pass_change:true', 'req_pass_change:false');
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    if (res.sucesso) { 
+                        mostrarMensagem('Senha atualizada!'); 
+                        iniciarSessao(window.usuarioLogado, novoRole); 
+                    } else { 
+                        mostrarMensagem('Erro.', 'erro'); 
+                        btn.innerHTML = 'Salvar Nova Senha e Entrar'; btn.disabled = false; 
+                    }
+                }).salvarUsuario({ usuarioOriginal: window.usuarioLogado, usuario: window.usuarioLogado, senha: novaSenha, role: novoRole });
+            }
+        }
+
+        function iniciarSessao(user, role) {
+            try { 
+                localStorage.setItem('admin_logado', 'true'); 
+                localStorage.setItem('admin_user', user); 
+                localStorage.setItem('admin_role', role); 
+            } catch(err) {}
+            
+            document.getElementById('modalTrocarSenha').classList.add('hidden'); 
+            document.getElementById('modalTrocarSenha').classList.remove('flex');
+            document.getElementById('modalLogin').classList.add('hidden'); 
+            document.getElementById('view-admin').classList.remove('hidden');
+            
+            aplicarPermissoes(role); 
+            carregarNoticiasAdmin();
         }
 
         function encerrarSessao() {
-            localStorage.removeItem('admin_logado'); localStorage.removeItem('admin_user'); 
+            try { 
+                localStorage.removeItem('admin_logado'); 
+                localStorage.removeItem('admin_user'); 
+                localStorage.removeItem('admin_role'); 
+            } catch(err) {}
             window.location.href = "index.html";
         }
 
+        function aplicarPermissoes(role) {
+            document.getElementById('label-usuario-logado').innerText = window.usuarioLogado;
+            
+            if (role === 'admin' || role === 'administrador') {
+                document.getElementById('aba-noticia').style.display = 'block';
+                document.getElementById('aba-lista').style.display = 'block';
+                alternarAbaAdmin('form-noticia-container'); 
+                return;
+            }
+            
+            let allowedTabs = [];
+            if (role.indexOf('tabs:') !== -1) {
+                let tabsPart = role.split('tabs:')[1].split(';')[0];
+                allowedTabs = tabsPart.split(',');
+            }
+
+            document.getElementById('aba-noticia').style.display = allowedTabs.includes('aba-noticia') ? 'block' : 'none';
+            document.getElementById('aba-lista').style.display = allowedTabs.includes('aba-lista') ? 'block' : 'none';
+
+            if (allowedTabs.includes('aba-noticia')) alternarAbaAdmin('form-noticia-container');
+            else if (allowedTabs.includes('aba-lista')) alternarAbaAdmin('lista-noticias-container');
+            else { mostrarMensagem("A sua conta não tem permissões para estas páginas.", "erro"); }
+        }
+
         function alternarAbaAdmin(abaId) {
-            ['form-noticia-container', 'lista-noticias-container'].forEach(function(id) { var el = document.getElementById(id); if (el) el.classList.add('hidden'); });
-            ['aba-noticia', 'aba-lista'].forEach(function(id) { var el = document.getElementById(id); if (el) el.className = "py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors"; });
-            var targetEl = document.getElementById(abaId); if(targetEl) targetEl.classList.remove('hidden');
-            var botaoId = abaId === 'form-noticia-container' ? 'aba-noticia' : 'aba-lista'; 
-            var classAtiva = abaId === 'form-noticia-container' ? "bg-jornal-blue text-white font-black" : "bg-jornal-dark text-white font-black";
-            if (abaId === 'lista-noticias-container') carregarListaEdicao(); 
-            var btnEl = document.getElementById(botaoId); if(btnEl) btnEl.className = `py-3 px-5 uppercase tracking-widest text-[11px] whitespace-nowrap rounded-t-sm transition-colors ${classAtiva}`;
+            ['form-noticia-container', 'lista-noticias-container'].forEach(function(id) { 
+                var el = document.getElementById(id); 
+                if (el) el.classList.add('hidden'); 
+            });
+            
+            ['aba-noticia', 'aba-lista'].forEach(function(id) { 
+                var el = document.getElementById(id); 
+                if (el) {
+                    el.className = "py-3 px-5 font-bold text-[11px] bg-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-300 uppercase tracking-widest whitespace-nowrap rounded-t-sm transition-colors " + (el.style.display==='none'?'hidden':''); 
+                }
+            });
+            
+            var targetEl = document.getElementById(abaId); 
+            if(targetEl) targetEl.classList.remove('hidden');
+            
+            var botaoId = ""; var classAtiva = "bg-jornal-dark text-white font-black";
+            
+            if (abaId === 'form-noticia-container') { 
+                botaoId = 'aba-noticia'; classAtiva = "bg-jornal-blue text-white font-black"; 
+            } else if (abaId === 'lista-noticias-container') { 
+                botaoId = 'aba-lista'; classAtiva = "bg-jornal-dark text-white font-black"; 
+                carregarListaEdicao(); 
+            }
+            
+            var btnEl = document.getElementById(botaoId); 
+            if(btnEl) {
+                btnEl.className = `py-3 px-5 uppercase tracking-widest text-[11px] whitespace-nowrap rounded-t-sm transition-colors ${classAtiva}`;
+            }
         }
 
         function carregarNoticiasAdmin() {
-            var loader = document.getElementById('loading-global'); loader.classList.remove('hidden');
-            
-            var checkReady = setInterval(function() {
-                if (window.firebaseBridge) {
-                    clearInterval(checkReady);
-                    window.firebaseBridge.getHomeData()
-                        .then(function(res) {
-                            loader.classList.add('hidden');
-                            if (res && res.sucesso) {
-                                noticiasGlobais = res.noticias || []; 
-                                if (res.categorias && res.categorias.length > 0) listaCategoriasLocais = res.categorias;
-                                renderizarChecklistCategoriasAdmin();
-                                if (!document.getElementById('lista-noticias-container').classList.contains('hidden')) carregarListaEdicao();
-                            } else { mostrarMensagem("Erro ao carregar dados: " + (res.erro || ''), 'erro'); }
-                        })
-                        .catch(function(err) {
-                            loader.classList.add('hidden');
-                            mostrarMensagem("Erro de comunicação com o Firebase: " + err.message, "erro");
-                        });
-                }
-            }, 100);
+            var loader = document.getElementById('loading-global');
+            var errorBox = document.getElementById('loading-error-box');
+            var spinner = document.getElementById('loading-spinner');
+            var text = document.getElementById('loading-text');
 
-            // TIMEOUT DE SEGURANÇA DA LEITURA
-            setTimeout(function() {
-                if (!loader.classList.contains('hidden')) {
-                    loader.classList.add('hidden');
-                    mostrarMensagem("Aviso: O servidor está a demorar a responder ou encontrou um bloqueio. Recarregue a página.", "erro");
+            if(loader) loader.classList.remove('hidden');
+            if(errorBox) errorBox.classList.add('hidden');
+            if(spinner) spinner.classList.remove('hidden');
+            if(text) { text.innerText = "Acessar Sistema..."; text.classList.add('animate-pulse'); text.classList.remove('text-red-500'); }
+            
+            // Lógica do Tempo Limite (Timeout de 12 segundos)
+            var timeoutId = setTimeout(function() {
+                if(loader && !loader.classList.contains('hidden')) {
+                    if(spinner) spinner.classList.add('hidden');
+                    if(text) { 
+                        text.innerText = "TEMPO LIMITE EXCEDIDO"; 
+                        text.classList.remove('animate-pulse'); 
+                        text.classList.add('text-red-500'); 
+                    }
+                    if(errorBox) errorBox.classList.remove('hidden');
                 }
-            }, 15000);
+            }, 12000);
+
+            var usouCache = false;
+            try {
+                var cache = localStorage.getItem('admin_data_cache_v2');
+                if(cache) {
+                    var dados = JSON.parse(cache);
+                    if (dados && dados.sucesso) {
+                        noticiasGlobais = dados.noticias || []; 
+                        if (dados.categorias && dados.categorias.length > 0) {
+                            listaCategoriasLocais = dados.categorias;
+                        }
+                        renderizarChecklistCategoriasAdmin();
+                        
+                        clearTimeout(timeoutId); // Limpa o timeout se carregou do cache
+                        if(loader) loader.classList.add('hidden');
+                        
+                        if (!document.getElementById('lista-noticias-container').classList.contains('hidden')) {
+                            carregarListaEdicao();
+                        }
+                        usouCache = true;
+                    }
+                }
+            } catch(e){
+                console.warn("Memória cache cheia ou corrompida. Ignorando cache local.", e);
+            }
+
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    clearTimeout(timeoutId); // Desliga o alerta de demora
+                    if(loader) loader.classList.add('hidden');
+                    if (res && res.sucesso) {
+                        try { 
+                            localStorage.setItem('admin_data_cache_v2', JSON.stringify(res)); 
+                        } catch(e) {
+                            console.warn("Navegador sem memória suficiente. Não foi possível guardar em cache.");
+                        }
+                        noticiasGlobais = res.noticias || []; 
+                        if (res.categorias && res.categorias.length > 0) {
+                            listaCategoriasLocais = res.categorias;
+                        }
+                        renderizarChecklistCategoriasAdmin();
+                        
+                        if (!document.getElementById('lista-noticias-container').classList.contains('hidden')) {
+                            carregarListaEdicao();
+                        }
+                    } else {
+                        mostrarMensagem("Erro ao carregar dados.", 'erro');
+                    }
+                }).withFailureHandler(function(err) {
+                    clearTimeout(timeoutId); // Desliga o alerta de demora
+                    if(loader) loader.classList.add('hidden'); 
+                    mostrarMensagem("Falha de rede. O Link da base de dados pode estar desatualizado.", 'erro');
+                    
+                    renderizarChecklistCategoriasAdmin();
+                    if (!document.getElementById('lista-noticias-container').classList.contains('hidden')) {
+                        carregarListaEdicao();
+                    }
+                }).getHomeData();
+            } else {
+                clearTimeout(timeoutId);
+                if(loader) loader.classList.add('hidden');
+                renderizarChecklistCategoriasAdmin();
+            }
         }
 
         function renderizarChecklistCategoriasAdmin() {
-            var checklistAdmin = document.getElementById('admin-categoria-checklist'); if(!checklistAdmin) return;
+            var checklistAdmin = document.getElementById('admin-categoria-checklist'); 
+            if(!checklistAdmin) return;
+            
+            if (!listaCategoriasLocais || listaCategoriasLocais.length === 0) {
+                listaCategoriasLocais = ['Política', 'Economia', 'Cidades', 'Polícia', 'Justiça', 'Esportes', 'Brasil', 'Mundo'];
+            }
+            
             checklistAdmin.innerHTML = '';
             listaCategoriasLocais.forEach(function(c) {
-                if (!c) return; var nomeCat = String(c).trim();
-                checklistAdmin.innerHTML += `<label class="flex items-center gap-3 cursor-pointer text-xs font-bold text-slate-700 p-2 hover:bg-gray-100 rounded transition-colors"><input type="checkbox" name="admin-categorias-checkbox" value="${nomeCat}" onchange="atualizarCampoCidadeAdmin();" class="w-4 h-4 text-jornal-blue rounded border-gray-400" /> ${nomeCat.toUpperCase()}</label>`;
+                if (!c) return;
+                var nomeCat = String(c).trim();
+                checklistAdmin.innerHTML += `
+                    <label class="flex items-center gap-3 cursor-pointer text-xs font-bold text-slate-700 p-2 hover:bg-gray-100 rounded transition-colors">
+                        <input type="checkbox" name="admin-categorias-checkbox" value="${nomeCat}" onchange="atualizarCampoCidadeAdmin(); atualizarPreviewURL(); autoPreencherRelacionadas();" class="w-4 h-4 text-jornal-blue rounded focus:ring-jornal-blue border-gray-400" /> 
+                        ${nomeCat.toUpperCase()} 
+                    </label>
+                `;
             });
         }
 
         function normalizarTexto(str) { return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
 
+        function normalizarTextoUrl(text) { 
+            if (!text) return 'geral'; 
+            return String(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, ''); 
+        }
+
+        function formatarDataParaInput(dataString) {
+            if (!dataString) return "";
+            var str = String(dataString).trim();
+            var partesBarra = str.split(/[\/\s:\-T]/);
+            if (partesBarra.length >= 5) {
+                var ano = partesBarra[2].length === 4 ? partesBarra[2] : partesBarra[0];
+                var dia = partesBarra[0].length <= 2 ? partesBarra[0] : partesBarra[2];
+                var mes = partesBarra[1];
+                var hora = partesBarra[3];
+                var min = partesBarra[4];
+                return `${ano}-${mes}-${dia}T${hora}:${min}`;
+            }
+            return "";
+        }
+
         function atualizarCampoCidadeAdmin() {
             var selecionadas = Array.from(document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked'));
             var mostraCidade = selecionadas.some(function(cb) { return normalizarTexto(cb.value) === 'cidades'; });
-            var container = document.getElementById('admin-cidade-container'); var input = document.getElementById('admin-cidade');
+            var container = document.getElementById('admin-cidade-container'); 
+            var input = document.getElementById('admin-cidade');
             if (container) container.classList.toggle('hidden', !mostraCidade);
             if (input) { input.required = mostraCidade; if (!mostraCidade) input.value = ''; }
         }
 
+        function atualizarPreviewURL() {
+            var titulo = document.getElementById('admin-titulo').value; 
+            var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
+            var cat = checkboxes.length > 0 ? checkboxes[0].value : 'geral'; 
+            var p = document.getElementById('preview-url-noticia');
+            var span = document.getElementById('preview-url-texto');
+            
+            if (titulo) { 
+                var slugCat = normalizarTextoUrl(cat); 
+                var slugTit = normalizarTextoUrl(titulo); 
+                if (span) span.innerText = `https://noticiasavulsas.com.br/${slugCat}/${slugTit}/[ID]`; 
+                if (p) p.classList.remove('hidden'); 
+            } else { 
+                if (p) p.classList.add('hidden'); 
+            }
+        }
+
         function novaCategoria() {
-            var nome = prompt("Escreva o nome da nova editoria:"); if (!nome) return;
-            window.firebaseBridge.adicionarCategoriaNoSheets({nome: nome}).then(function(res){
-                if(res.sucesso) { mostrarMensagem("Editoria adicionada!"); if(listaCategoriasLocais.indexOf(nome) === -1) listaCategoriasLocais.push(nome); renderizarChecklistCategoriasAdmin(); }
-            }).catch(function(e) { mostrarMensagem("Erro a adicionar editoria.", "erro"); });
+            var nome = prompt("Escreva o nome da nova editoria (Ex: Saúde, Tecnologia):"); 
+            if (!nome) return;
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) { 
+                    if(res && res.sucesso) { 
+                        mostrarMensagem("Editoria adicionada!"); 
+                        if (listaCategoriasLocais.indexOf(nome) === -1) listaCategoriasLocais.push(nome); 
+                        renderizarChecklistCategoriasAdmin(); 
+                    } 
+                }).adicionarCategoriaNoSheets({nome: nome});
+            }
+        }
+
+        function autoPreencherRelacionadas() {
+            if (window.relacionadasEditadasManualmente) return;
+            var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked');
+            if (checkboxes.length === 0) { 
+                window.relacionadasSelecionadas = []; atualizarUIListaRelacionadas(); return; 
+            }
+            var catStr = normalizarTextoUrl(checkboxes[0].value); 
+            var idAtual = document.getElementById('admin-id-noticia').value;
+            
+            var sugestoes = noticiasGlobais.filter(function(n) { 
+                var statusVal = n.status ? String(n.status).toLowerCase() : 'inativa';
+                if (String(n.id) === String(idAtual)) return false; 
+                if (statusVal !== 'ativa') return false; 
+                return normalizarTextoUrl(n.categoria).indexOf(catStr) !== -1; 
+            }).slice(0, 3);
+            
+            window.relacionadasSelecionadas = sugestoes.map(function(n) { 
+                var tituloSafe = n.titulo.replace(/'/g, "\\'").replace(/"/g, '&quot;'); 
+                return { id: n.id, titulo: tituloSafe }; 
+            });
+            atualizarUIListaRelacionadas();
+        }
+
+        function buscarRelacionadas() {
+            var inputVal = normalizarTexto(document.getElementById('admin-busca-relacionada').value); 
+            var divResultados = document.getElementById('lista-resultados-relacionadas');
+            
+            if(!inputVal || inputVal.length < 2) { 
+                divResultados.innerHTML = `<div class="text-xs text-indigo-500 font-bold p-2">Digite pelo menos 2 letras.</div>`; return; 
+            }
+            
+            var res = noticiasGlobais.filter(function(n) { 
+                var isPub = n.status ? String(n.status).toLowerCase() === 'ativa' : false; 
+                var txt = normalizarTexto([n.titulo, n.categoria, n.cidade].join(' ')); 
+                return isPub && txt.indexOf(inputVal) !== -1; 
+            }).slice(0, 5);
+            
+            var html = '';
+            if (res.length === 0) { 
+                html = `<div class="text-xs text-indigo-500 font-bold p-2">Nenhum resultado encontrado.</div>`; 
+            } else {
+                res.forEach(function(n) { 
+                    var tituloSafe = n.titulo.replace(/'/g, "\\'").replace(/"/g, '&quot;'); 
+                    html += `
+                        <div class="flex justify-between items-center p-3 bg-white border border-indigo-200 text-xs rounded-sm hover:shadow-md transition-shadow">
+                            <div class="flex-grow min-w-0 pr-2 truncate font-bold text-gray-700">${n.titulo}</div>
+                            <button type="button" onclick="adicionarRelacionada('${n.id}', '${tituloSafe}')" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-black px-3 py-1 rounded text-[10px] uppercase tracking-widest shrink-0">Add</button>
+                        </div>
+                    `; 
+                });
+            }
+            divResultados.innerHTML = html;
+        }
+
+        function adicionarRelacionada(id, titulo) {
+            window.relacionadasEditadasManualmente = true;
+            if (window.relacionadasSelecionadas.length >= 3) { mostrarMensagem("Limite de 3 matérias.", "erro"); return; }
+            if (window.relacionadasSelecionadas.find(function(r) { return r.id === id; })) { mostrarMensagem("Já selecionada.", "erro"); return; }
+            window.relacionadasSelecionadas.push({ id: id, titulo: titulo }); 
+            atualizarUIListaRelacionadas();
+            document.getElementById('lista-resultados-relacionadas').innerHTML = ''; document.getElementById('admin-busca-relacionada').value = '';
+        }
+
+        function removerRelacionada(id) { 
+            window.relacionadasEditadasManualmente = true; 
+            window.relacionadasSelecionadas = window.relacionadasSelecionadas.filter(function(r) { return r.id !== id; }); 
+            atualizarUIListaRelacionadas(); 
+        }
+
+        function atualizarUIListaRelacionadas() {
+            var html = '';
+            window.relacionadasSelecionadas.forEach(function(r) { 
+                html += `
+                    <div class="flex justify-between items-center p-4 bg-indigo-600 text-white text-xs rounded-sm shadow-sm mb-2">
+                        <div class="flex-grow min-w-0 pr-4 font-bold text-sm truncate">${r.titulo}</div>
+                        <button type="button" onclick="removerRelacionada('${r.id}')" class="text-amber-300 hover:text-amber-100 font-black uppercase tracking-widest text-[10px] shrink-0">Remover</button>
+                    </div>
+                `; 
+            });
+            document.getElementById('lista-selecionadas-relacionadas').innerHTML = html; 
+            document.getElementById('admin-relacionadas-ids').value = window.relacionadasSelecionadas.map(function(r){ return r.id; }).join(',');
         }
 
         function execCmd(command, arg) { 
             if(arg === undefined) arg = null; 
             if(command === 'fontName' || command === 'fontSize') restaurarSelecao();
-            document.execCommand(command, false, arg); document.getElementById('admin-editor-rich').focus(); atualizarBarraFerramentas(); 
+            document.execCommand(command, false, arg); 
+            document.getElementById('admin-editor-rich').focus(); 
+            atualizarBarraFerramentas(); 
         }
-        function aplicarFonte(valor) { if (!valor) return; execCmd('fontName', valor); }
+        
+        function aplicarFonte(valor) { 
+            if (!valor) return; 
+            execCmd('fontName', valor); 
+        }
         
         function atualizarBarraFerramentas() {
-            var editorAtivo = document.getElementById('admin-editor-rich'); if (!editorAtivo) return;
-            var fontNode = document.queryCommandValue('fontName'); var sizeNode = document.queryCommandValue('fontSize');
-            var selFont = document.querySelector('.fontFamilySelect'); var selSize = document.querySelector('.fontSizeSelect');
-            if (fontNode && selFont) { var fontL = fontNode.replace(/['"]/g, '').toLowerCase().split(',')[0]; for(var i=0; i<selFont.options.length; i++) { if(selFont.options[i].value.toLowerCase().includes(fontL)) { selFont.selectedIndex = i; break; } } }
-            if (sizeNode && selSize) { for(var j=0; j<selSize.options.length; j++) { if(selSize.options[j].value === sizeNode.toString()) { selSize.selectedIndex = j; break; } } }
+            var editorAtivo = document.getElementById('admin-editor-rich');
+            if (!editorAtivo) return;
+            
+            var fontNode = document.queryCommandValue('fontName');
+            var sizeNode = document.queryCommandValue('fontSize');
+            
+            var selFont = document.querySelector('.fontFamilySelect');
+            var selSize = document.querySelector('.fontSizeSelect');
+            
+            if (fontNode && selFont) {
+                var fontL = fontNode.replace(/['"]/g, '').toLowerCase().split(',')[0];
+                for(var i=0; i<selFont.options.length; i++) {
+                    if(selFont.options[i].value.toLowerCase().includes(fontL)) { 
+                        selFont.selectedIndex = i; 
+                        break; 
+                    }
+                }
+            }
+            if (sizeNode && selSize) {
+                for(var j=0; j<selSize.options.length; j++) {
+                    if(selSize.options[j].value === sizeNode.toString()) { 
+                        selSize.selectedIndex = j; 
+                        break; 
+                    }
+                }
+            }
         }
         
         function limparFormatacao(btnElement) {
-            document.execCommand('removeFormat', false, null); document.execCommand('unlink', false, null);
+            document.execCommand('removeFormat', false, null);
+            document.execCommand('unlink', false, null);
             var sel = window.getSelection();
             if (!sel.isCollapsed) {
-                var range = sel.getRangeAt(0); var container = range.commonAncestorContainer; if (container.nodeType === 3) container = container.parentNode;
+                var range = sel.getRangeAt(0);
+                var container = range.commonAncestorContainer;
+                if (container.nodeType === 3) container = container.parentNode;
+                
                 var editor = document.getElementById('admin-editor-rich');
+                
                 if (editor) {
                     var elements = container.querySelectorAll('*');
-                    elements.forEach(function(el) { if (sel.containsNode(el, true)) { el.removeAttribute('style'); el.removeAttribute('face'); el.removeAttribute('size'); el.removeAttribute('class'); el.removeAttribute('color'); } });
-                    if (container !== editor) { container.removeAttribute('style'); container.removeAttribute('face'); container.removeAttribute('size'); container.removeAttribute('class'); container.removeAttribute('color'); }
-                    var selFont = document.querySelector('.fontFamilySelect'); var selSize = document.querySelector('.fontSizeSelect');
-                    if(selFont) selFont.selectedIndex = 0; if(selSize) selSize.selectedIndex = 0; editor.focus();
+                    elements.forEach(function(el) {
+                        if (sel.containsNode(el, true)) {
+                            el.removeAttribute('style'); el.removeAttribute('face');
+                            el.removeAttribute('size'); el.removeAttribute('class'); el.removeAttribute('color');
+                        }
+                    });
+                    if (container !== editor) {
+                        container.removeAttribute('style'); container.removeAttribute('face');
+                        container.removeAttribute('size'); container.removeAttribute('class'); container.removeAttribute('color');
+                    }
+                    
+                    var selFont = document.querySelector('.fontFamilySelect');
+                    var selSize = document.querySelector('.fontSizeSelect');
+                    if(selFont) selFont.selectedIndex = 0;
+                    if(selSize) selSize.selectedIndex = 0;
+                    editor.focus();
                 }
             }
         }
 
+        function inserirLinkRichEditor() { 
+            var url = prompt("Insira a URL completa do hiperlink:"); 
+            if (url) execCmd('createLink', url); 
+        }
+        
         function inserirImagemRichEditor() { document.getElementById('upload-imagem-conteudo').click(); }
 
         function processarUploadImagemConteudo(input) {
-            if (!input.files || !input.files[0]) return; var file = input.files[0]; var reader = new FileReader();
+            if (!input.files || !input.files[0]) return; 
+            var file = input.files[0]; 
+            var legenda = prompt("Legenda para a imagem (opcional):") || ""; 
+            var creditos = prompt("Créditos da foto (obrigatório se houver direitos):") || "";
+            var reader = new FileReader();
+            
             reader.onload = function(e) {
                 var img = new Image();
                 img.onload = function() {
-                    var canvas = document.createElement('canvas'); var ctx = canvas.getContext('2d'); var maxWidth = 500; var scale = 1;
+                    var canvas = document.createElement('canvas'); var ctx = canvas.getContext('2d'); 
+                    var maxWidth = 500; var scale = 1;
                     if (img.width > maxWidth) scale = maxWidth / img.width;
-                    canvas.width = img.width * scale; canvas.height = img.height * scale; ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    canvas.width = img.width * scale; canvas.height = img.height * scale; 
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     var base64Resized = canvas.toDataURL('image/jpeg', 0.6); 
-                    var htmlImg = `<br><figure style="margin: 16px auto; text-align: center; max-width: 100%; display: block;"><img src="${base64Resized}" style="max-width: 100%; height: auto; border-radius: 8px; display: inline-block; margin: 0 auto; border: 1px solid #e2e8f0;" /></figure><br><p>&#8203;</p>`; 
+                    
+                    var htmlImg = `
+                        <br>
+                        <figure style="margin: 16px auto; text-align: center; max-width: 100%; display: block;">
+                            <img src="${base64Resized}" style="max-width: 100%; height: auto; border-radius: 8px; display: inline-block; margin: 0 auto; border: 1px solid #e2e8f0;" />
+                    `;
+                    
+                    if (legenda || creditos) { 
+                        var credTexto = creditos ? `Foto: ${creditos}` : ''; 
+                        var sep = (legenda && creditos) ? ' - ' : ''; 
+                        htmlImg += `<figcaption style="font-size: 12px; color: #64748b; margin-top: 8px; font-style: italic; text-align: center;">${legenda}${sep}${credTexto}</figcaption>`; 
+                    }
+                    htmlImg += `
+                        <div contenteditable="false" class="controles-imagem-admin" style="margin-top: 10px; text-align: center; user-select: none;">
+                            <button type="button" class="btn-diminuir-img" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; margin-right: 8px;" title="Diminuir Imagem">-</button>
+                            <button type="button" class="btn-aumentar-img" style="background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer;" title="Aumentar Imagem">+</button>
+                        </div>
+                        </figure><br><p>&#8203;</p>
+                    `; 
                     execCmd('insertHTML', htmlImg); input.value = '';
-                }; img.src = e.target.result;
-            }; reader.readAsDataURL(file);
+                }; 
+                img.src = e.target.result;
+            }; 
+            reader.readAsDataURL(file);
+        }
+
+        function inserirVideoRichEditor() { 
+            var url = prompt("Insira o link (YouTube, X, Insta, TikTok):"); 
+            if (url) execCmd('insertHTML', url + '<br><br>'); 
+        }
+
+        function gerarLinhaFinaIA() {
+            var t = document.getElementById('admin-titulo').value.trim(); 
+            if(!t) { mostrarMensagem("Preencha a Manchete primeiro.", "erro"); return; }
+            var btn = document.getElementById('btn-ia-linhafina'); var txt = btn.innerText; btn.innerText = "...";
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) { 
+                    if(res && res.sucesso && res.texto) { 
+                        document.getElementById('admin-linha-fina').value = res.texto.trim(); mostrarMensagem("Linha fina gerada!"); 
+                    } 
+                    btn.innerText = txt; 
+                }).chamarGeminiBackend(`Escreva uma linha fina curta (SEO) para o título: "${t}"`);
+            } else { btn.innerText = txt; }
+        }
+
+        function gerarConteudoIA() {
+            var t = document.getElementById('admin-titulo').value.trim(); 
+            if(!t) { mostrarMensagem("Preencha a Manchete primeiro.", "erro"); return; }
+            var btn = document.getElementById('btn-ia-conteudo'); var txt = btn.innerText; btn.innerText = "A escrever...";
+            
+            var lf = document.getElementById('admin-linha-fina').value.trim(); 
+            var promptStr = `Escreva uma notícia completa em HTML (use apenas tags <p>, <h2>, <ul>). Manchete: "${t}". ${lf ? `Linha Fina: "${lf}"` : ''}`;
+            
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) { 
+                    if(res && res.sucesso && res.texto) { 
+                        var cleanHtml = res.texto.replace(/(\`\`\`html|\`\`\`)/gi, '').trim(); 
+                        document.getElementById('admin-editor-rich').innerHTML = cleanHtml; mostrarMensagem("Texto gerado!"); 
+                    } 
+                    btn.innerText = txt; 
+                }).chamarGeminiBackend(promptStr);
+            } else { btn.innerText = txt; }
         }
 
         function verificarUploadMedia(input) {
-            var containerMetadados = document.getElementById('admin-imagem-metadados'); var inputCreditos = document.getElementById('admin-creditos-imagem');
-            if (input && input.files && input.files[0]) { if (containerMetadados) containerMetadados.classList.remove('hidden'); if (inputCreditos) inputCreditos.required = true; } 
-            else { var prevSrc = document.getElementById('preview-imagem').src; if (!prevSrc || prevSrc === "") { if (containerMetadados) containerMetadados.classList.add('hidden'); if (inputCreditos) inputCreditos.required = false; } }
+            var containerMetadados = document.getElementById('admin-imagem-metadados'); 
+            var inputCreditos = document.getElementById('admin-creditos-imagem');
+            
+            if (input && input.files && input.files[0]) { 
+                if (containerMetadados) {
+                    containerMetadados.classList.remove('hidden'); 
+                }
+                if (inputCreditos) {
+                    inputCreditos.required = true; 
+                }
+            } else { 
+                var prevSrc = document.getElementById('preview-imagem').src; 
+                if (!prevSrc || prevSrc === "" || prevSrc.indexOf('placehold.co') !== -1) { 
+                    if (containerMetadados) {
+                        containerMetadados.classList.add('hidden'); 
+                    }
+                    if (inputCreditos) {
+                        inputCreditos.required = false; 
+                    }
+                } 
+            }
         }
 
         var adminArquivoInput = document.getElementById('admin-arquivo-imagem');
         if(adminArquivoInput) {
             adminArquivoInput.addEventListener('change', function(e) {
-                var file = e.target.files[0]; if (!file) { base64StringNoticia = ""; return; }
+                var file = e.target.files[0]; 
+                if (!file) { base64StringNoticia = ""; return; }
+                if (file.size > 5 * 1024 * 1024) { alert('Ficheiro excede 5MB.'); this.value = ""; return; }
+                
                 mimeStringNoticia = file.type; nameStringNoticia = file.name;
                 var reader = new FileReader(); 
-                reader.onload = function(evt) { base64StringNoticia = evt.target.result.split(',')[1]; document.getElementById('preview-imagem').src = evt.target.result; document.getElementById('preview-imagem').classList.remove('hidden'); verificarUploadMedia(e.target); }; 
+                
+                reader.onload = function(evt) { 
+                    base64StringNoticia = evt.target.result.split(',')[1]; 
+                    document.getElementById('preview-imagem').src = evt.target.result; 
+                    document.getElementById('preview-imagem').classList.remove('hidden'); 
+                    verificarUploadMedia(e.target); 
+                }; 
                 reader.readAsDataURL(file);
             });
         }
 
         function limparFormNoticia() {
-            document.getElementById('form-admin').reset(); document.getElementById('admin-id-noticia').value = ""; document.getElementById('preview-imagem').classList.add('hidden'); document.getElementById('preview-imagem').src = ""; document.getElementById('admin-editor-rich').innerHTML = ""; document.getElementById('admin-imagem-metadados').classList.add('hidden'); document.getElementById('admin-creditos-imagem').required = false; base64StringNoticia = ""; document.querySelectorAll('input[name="admin-categorias-checkbox"]').forEach(function(cb) { cb.checked = false; }); atualizarCampoCidadeAdmin(); 
-            var btnSalvar = document.getElementById('btn-salvar-noticia'); if (btnSalvar) btnSalvar.innerText = "PUBLICAR MATÉRIA"; document.getElementById('titulo-pagina-form').innerText = "Redigir Matéria";
+            document.getElementById('form-admin').reset(); 
+            document.getElementById('admin-id-noticia').value = ""; 
+            document.getElementById('preview-imagem').classList.add('hidden'); 
+            document.getElementById('preview-imagem').src = ""; 
+            document.getElementById('admin-carrossel').checked = false; 
+            document.getElementById('admin-editor-rich').innerHTML = ""; 
+            document.getElementById('admin-imagem-metadados').classList.add('hidden'); 
+            document.getElementById('admin-creditos-imagem').required = false; 
+            base64StringNoticia = "";
+            
+            document.querySelectorAll('input[name="admin-categorias-checkbox"]').forEach(function(cb) { cb.checked = false; });
+            
+            atualizarCampoCidadeAdmin(); 
+            window.relacionadasSelecionadas = []; 
+            window.relacionadasEditadasManualmente = false; 
+            atualizarUIListaRelacionadas(); 
+            atualizarPreviewURL();
+            
+            var btnSalvar = document.getElementById('btn-salvar-noticia'); 
+            if (btnSalvar) {
+                btnSalvar.innerText = "PUBLICAR MATÉRIA";
+            }
+            document.getElementById('titulo-pagina-form').innerText = "Redigir Matéria";
         }
 
-        function salvarNoticia(e) {
+        function salvarNoticia(e, statusForcado) {
             if(e) e.preventDefault(); 
-            var editandoID = document.getElementById('admin-id-noticia').value; var prevSrc = document.getElementById('preview-imagem').src; var temImagemAnterior = prevSrc && prevSrc !== "";
+            var editandoID = document.getElementById('admin-id-noticia').value; 
+            var noCarrossel = document.getElementById('admin-carrossel').checked; 
+            var prevSrc = document.getElementById('preview-imagem').src; 
+            var temImagemAnterior = prevSrc && (prevSrc.indexOf('http') !== -1 || prevSrc.indexOf('data:image') !== -1);
+            
+            var isRascunho = (statusForcado === 'Rascunho');
             var checkboxes = document.querySelectorAll('input[name="admin-categorias-checkbox"]:checked'); 
-            var tituloDigitado = document.getElementById('admin-titulo').value.trim(); var creditos = document.getElementById('admin-creditos-imagem').value.trim();
             
-            if (!tituloDigitado || checkboxes.length === 0) { mostrarMensagem("Manchete e Editoria obrigatórias.", "erro"); return; }
-            if ((base64StringNoticia || temImagemAnterior) && !creditos) { mostrarMensagem("Crédito de imagem obrigatório.", "erro"); return; }
-            
-            var categoriasSelecionadas = Array.from(checkboxes).map(function(cb) { return cb.value; }).join(", ");
-            var btn = document.getElementById('btn-salvar-noticia'); var txtOriginal = btn.innerHTML; btn.innerHTML = 'A publicar para o Firebase...'; btn.disabled = true;
+            var tituloDigitado = document.getElementById('admin-titulo').value.trim();
+            var creditos = document.getElementById('admin-creditos-imagem').value.trim();
+            var campoCidade = document.getElementById('admin-cidade'); 
+            var cidadeSelecionada = campoCidade ? campoCidade.value.trim() : ''; 
 
+            if (!isRascunho) {
+                if (!tituloDigitado) { mostrarMensagem("Manchete é obrigatória.", "erro"); return; }
+                if (checkboxes.length === 0) { mostrarMensagem("Selecione 1 Editoria.", "erro"); return; }
+                if ((base64StringNoticia || temImagemAnterior) && !creditos) { mostrarMensagem("Crédito de imagem obrigatório.", "erro"); document.getElementById('admin-creditos-imagem').focus(); return; }
+                var containerCidade = document.getElementById('admin-cidade-container');
+                if (campoCidade && containerCidade && !containerCidade.classList.contains('hidden') && !cidadeSelecionada) { mostrarMensagem("Cidade é obrigatória.", "erro"); return; }
+            } else {
+                if (!tituloDigitado) tituloDigitado = "Rascunho sem título";
+            }
+            
+            var categoriasSelecionadasArray = Array.from(checkboxes).map(function(cb) { return cb.value; }); 
+            var categoriasSelecionadas = categoriasSelecionadasArray.length > 0 ? categoriasSelecionadasArray.join(", ") : "Geral";
+            
+            var btn = document.getElementById(isRascunho ? 'btn-salvar-rascunho' : 'btn-salvar-noticia'); 
+            var txtOriginal = btn.innerHTML; btn.innerHTML = 'A gravar...'; btn.disabled = true;
+            
+            // DETETOR DE PESO DA MATÉRIA (Proteção contra Erro 413 do Google)
             var conteudoRich = document.getElementById('admin-editor-rich').innerHTML;
             var tamanhoEmBytes = new Blob([conteudoRich]).size;
-            if (tamanhoEmBytes > 800000) { 
-                mostrarMensagem("A matéria excede o limite (800KB). Reduza as imagens coladas.", "erro");
+            if (tamanhoEmBytes > 4 * 1024 * 1024) { // 4MB
+                mostrarMensagem("Erro: A matéria está muito pesada (" + (tamanhoEmBytes / 1024 / 1024).toFixed(1) + "MB). Apague as imagens que colou no texto e use o botão 🖼️ para fazer o upload corretamente.", "erro");
                 btn.innerHTML = txtOriginal; btn.disabled = false;
                 return;
             }
 
-            var tempDiv = document.createElement('div'); tempDiv.innerHTML = conteudoRich;
+            // LIMPEZA DA MATÉRIA (Remove botões interativos do editor antes de salvar)
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = conteudoRich;
             var botoesAdmin = tempDiv.querySelectorAll('.controles-imagem-admin, .btn-diminuir-img, .btn-aumentar-img');
-            botoesAdmin.forEach(function(btnRem) { var pai = btnRem.parentElement; btnRem.remove(); if (pai && pai.tagName !== 'FIGURE' && pai.innerHTML.trim() === '') pai.remove(); });
+            botoesAdmin.forEach(function(btnRem) {
+                var pai = btnRem.parentElement; btnRem.remove();
+                if (pai && pai.tagName !== 'FIGURE' && pai.innerHTML.trim() === '') pai.remove();
+            });
             var conteudoLimpo = tempDiv.innerHTML;
 
             var payload = { 
-                id: editandoID, titulo: tituloDigitado, categoria: categoriasSelecionadas, cidade: document.getElementById('admin-cidade') ? document.getElementById('admin-cidade').value : '', 
+                id: editandoID, titulo: tituloDigitado, categoria: categoriasSelecionadas, cidade: cidadeSelecionada, 
                 linhaFina: document.getElementById('admin-linha-fina').value.trim(), conteudo: conteudoLimpo, 
-                autor: document.getElementById('admin-autor').value.trim(), dataAgendamento: document.getElementById('admin-agendamento').value, 
-                dataFimEvento: document.getElementById('admin-data-fim-evento').value, legendaImagem: document.getElementById('admin-legenda-imagem').value, 
-                creditosImagem: creditos, statusForcado: 'Ativa', noCarrossel: document.getElementById('admin-carrossel').checked,
-                usuarioPublicador: window.usuarioLogado
+                autor: document.getElementById('admin-autor').value.trim(), 
+                dataAgendamento: document.getElementById('admin-agendamento') ? document.getElementById('admin-agendamento').value : '', 
+                dataFimEvento: document.getElementById('admin-data-fim-evento') ? document.getElementById('admin-data-fim-evento').value : '', 
+                legendaImagem: document.getElementById('admin-legenda-imagem').value, 
+                creditosImagem: creditos, relacionadas: document.getElementById('admin-relacionadas-ids').value, 
+                statusForcado: statusForcado || 'Ativa', 
+                usuarioPublicador: window.usuarioLogado,
+                noCarrossel: noCarrossel
             };
             
             if (base64StringNoticia) { payload.isUpload = true; payload.base64 = base64StringNoticia; payload.mimeType = mimeStringNoticia; payload.fileName = nameStringNoticia; } 
-            else if (temImagemAnterior) { payload.urlImagem = prevSrc; payload.isUpload = false; }
             else { payload.isUpload = false; }
             
-            window.firebaseBridge.salvarNoticiaNoSheets(payload).then(function(res){
-                btn.innerHTML = txtOriginal; btn.disabled = false;
-                if(res.sucesso) { mostrarMensagem('Matéria Publicada no Firebase!'); limparFormNoticia(); carregarNoticiasAdmin(); setTimeout(function(){ alternarAbaAdmin('lista-noticias-container'); }, 1000); }
-                else { mostrarMensagem("Erro: " + res.erro, "erro"); }
-            }).catch(function(e) {
-                btn.innerHTML = txtOriginal; btn.disabled = false;
-                mostrarMensagem("Falha na gravação.", "erro");
-            });
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
+                window.google.script.run.withSuccessHandler(function(res) {
+                    btn.innerHTML = txtOriginal; btn.disabled = false;
+                    if (res && res.sucesso) { 
+                        mostrarMensagem(isRascunho ? 'Rascunho Guardado!' : 'Matéria Publicada!'); 
+                        try { localStorage.removeItem('admin_data_cache_v2'); } catch(e){}
+                        limparFormNoticia(); 
+                        carregarNoticiasAdmin(); 
+                        setTimeout(function() { alternarAbaAdmin('lista-noticias-container'); window.scrollTo(0,0); }, 1500); 
+                    } else { mostrarMensagem(res ? res.erro : "Erro ao guardar", 'erro'); }
+                }).withFailureHandler(function(err) {
+                    btn.innerHTML = txtOriginal; btn.disabled = false; mostrarMensagem("Falha na rede: " + err.message, "erro");
+                }).salvarNoticiaNoSheets(payload);
+            }
+        }
+
+        function atualizarFiltroEditoriasAdmin() {
+            var select = document.getElementById('admin-filtro-editoria'); if (!select) return; 
+            var valorAtual = select.value || 'todas'; var categorias = [];
+            noticiasGlobais.forEach(function(n) { String((n && n.categoria) || '').split(',').forEach(function(categoria) { var nome = categoria.trim(); if (nome && categorias.map(normalizarTexto).indexOf(normalizarTexto(nome)) === -1) categorias.push(nome); }); });
+            categorias.sort();
+            var htmlOpcoes = '<option value="todas">Todas as editorias</option>'; 
+            htmlOpcoes += categorias.map(function(c) { return `<option value="${c.replace(/"/g, '&quot;')}">${c}</option>`; }).join('');
+            select.innerHTML = htmlOpcoes; 
+            select.value = Array.from(select.options).some(function(o) { return o.value === valorAtual; }) ? valorAtual : 'todas';
         }
 
         function carregarListaEdicao() {
-            var tbody = document.getElementById('admin-tabela-noticias'); if(!tbody) return; tbody.innerHTML = '';
-            var sel = document.getElementById('admin-filtro-editoria'); var term = normalizarTexto(document.getElementById('admin-pesquisa-materia') ? document.getElementById('admin-pesquisa-materia').value : '');
+            var tbody = document.getElementById('admin-tabela-noticias'); if(!tbody) return; 
+            atualizarFiltroEditoriasAdmin(); tbody.innerHTML = '';
+            
+            var sel = document.getElementById('admin-filtro-editoria'); var inp = document.getElementById('admin-pesquisa-materia'); 
+            var catSel = normalizarTexto(sel ? sel.value : 'todas'); var term = normalizarTexto(inp ? inp.value : '');
             
             var filtradas = noticiasGlobais.filter(function(n) { 
-                var txt = normalizarTexto([n.titulo, n.categoria].join(' ')); return !term || txt.indexOf(term) !== -1; 
+                if (!n) return false; 
+                var cats = String(n.categoria || '').split(',').map(normalizarTexto); 
+                var matchCat = catSel === 'todas' || cats.indexOf(catSel) !== -1; 
+                var text = normalizarTexto([n.titulo, n.linhaFina, n.cidade].join(' ')); 
+                var matchTerm = !term || text.indexOf(term) !== -1; 
+                return matchCat && matchTerm; 
             });
-            if (filtradas.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-xs text-gray-500 font-bold">Nenhuma matéria.</td></tr>`; return; }
+            
+            if (filtradas.length === 0) { tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-xs text-gray-500 font-bold">Nenhuma matéria encontrada.</td></tr>`; return; }
+            
             filtradas.forEach(function(n) {
-                var isAtivo = n.status === 'Ativa'; var corStat = isAtivo ? 'text-gray-700' : 'text-gray-400';
+                var statusVal = n.status ? String(n.status).toLowerCase() : 'inativa';
+                var isAtivo = statusVal === 'ativa'; var isAgendada = statusVal === 'agendada'; var isRascunho = statusVal === 'rascunho';
+                var txtStat = isRascunho ? 'RASCUNHO' : (isAtivo ? 'ATIVO' : (isAgendada ? 'AGENDADO' : 'INATIVO')); 
+                var corStat = isRascunho ? 'text-blue-500' : (isAtivo ? 'text-gray-700' : (isAgendada ? 'text-amber-600' : 'text-gray-400'));
+                
                 tbody.innerHTML += `
                     <tr class="hover:bg-gray-50 border-b border-gray-100">
                         <td class="p-4 text-xs font-medium text-gray-500">${n.dataHora || ''}</td>
-                        <td class="p-4"><span class="bg-gray-200 text-gray-800 px-2 py-1 rounded-sm text-[9px] uppercase font-black">${n.categoria}</span></td>
-                        <td class="p-4 font-bold text-sm text-jornal-dark truncate max-w-[250px]">${n.titulo}</td>
+                        <td class="p-4"><span class="bg-gray-200 text-gray-800 px-2 py-1 rounded-sm text-[9px] uppercase font-black tracking-widest">${n.categoria || 'Geral'}</span></td>
+                        <td class="p-4 font-bold text-sm text-jornal-dark truncate max-w-[250px]" title="${n.titulo}">${n.titulo || ''}</td>
+                        <td class="p-4 text-xs font-medium text-gray-600">${n.autor || 'da redação'}</td>
+                        <td class="p-4 text-xs font-medium text-gray-600">${n.usuarioPublicador || '--'}</td>
+                        <td class="p-4 text-center text-xs font-black text-jornal-blue">👁️ ${n.views || 0}</td>
                         <td class="p-4 text-center">
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" class="sr-only peer" ${isAtivo ? 'checked' : ''} onchange="alterarStatusRapido('${n.id}', this)" />
-                                <div class="w-10 h-5 bg-gray-300 rounded-full peer peer-checked:bg-emerald-500"></div>
-                            </label>
+                            <div class="flex justify-center items-center">
+                                <label class="relative inline-flex items-center cursor-pointer select-none">
+                                    <input type="checkbox" class="sr-only peer" ${isAtivo ? 'checked' : ''} onchange="alterarStatusRapido('${n.id}', this)" />
+                                    <div class="w-10 h-5 bg-gray-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                                    <span class="ml-2 text-[10px] font-black ${corStat} select-none uppercase tracking-widest inline-block w-16 text-left">${txtStat}</span>
+                                </label>
+                            </div>
                         </td>
                         <td class="p-4 text-center flex gap-2 justify-center">
-                            <button onclick="editarNoticia('${n.id}')" class="text-[10px] font-black uppercase text-jornal-blue border border-jornal-blue/30 px-3 py-1.5 rounded-sm hover:bg-jornal-blue hover:text-white">Editar</button>
-                            <button onclick="apagarMateria('${n.id}')" class="text-[10px] font-black uppercase text-red-600 border border-red-200 px-3 py-1.5 rounded-sm hover:bg-red-50">Excluir</button>
+                            <button type="button" onclick="editarNoticia('${n.id}')" class="text-[10px] font-black uppercase tracking-widest text-jornal-blue border border-jornal-blue/30 px-3 py-1.5 rounded-sm hover:bg-jornal-blue hover:text-white transition-colors">Editar</button>
+                            <button type="button" onclick="apagarMateria('${n.id}')" class="text-[10px] font-black uppercase tracking-widest text-red-600 border border-red-200 px-3 py-1.5 rounded-sm hover:bg-red-50 transition-colors">Excluir</button>
                         </td>
                     </tr>
                 `;
             });
         }
 
-        function alterarStatusRapido(id, checkbox) { 
-            window.firebaseBridge.alternarStatusNoticia(id).then(function(res){ 
-                if(res.sucesso) carregarNoticiasAdmin(); 
-                else { checkbox.checked = !checkbox.checked; mostrarMensagem("Erro a alterar status.", "erro"); }
-            }).catch(function(e) { checkbox.checked = !checkbox.checked; mostrarMensagem("Falha de rede.", "erro"); }); 
+        function alterarStatusRapido(id, checkbox) {
+            var isAtivo = checkbox.checked; var labelSpan = checkbox.nextElementSibling.nextElementSibling;
+            if (labelSpan) { labelSpan.innerText = isAtivo ? 'ATIVO' : 'INATIVO'; labelSpan.className = `ml-2 text-[10px] font-black ${isAtivo ? 'text-gray-700' : 'text-gray-400'} select-none uppercase tracking-widest inline-block w-16 text-left`; }
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
+                try { localStorage.removeItem('admin_data_cache_v2'); } catch(e){}
+                window.google.script.run.withSuccessHandler(function(res){ if(res && res.sucesso) carregarNoticiasAdmin(); }).alternarStatusNoticia(id); 
+            }
         }
 
-        function apagarMateria(id) { 
-            if(confirm("Eliminar permanentemente?")) {
-                window.firebaseBridge.excluirNoticia(id).then(function(res){ 
-                    if(res.sucesso) carregarNoticiasAdmin(); 
-                    else mostrarMensagem("Erro ao apagar.", "erro");
-                }).catch(function(e) { mostrarMensagem("Falha de rede.", "erro"); });
+        function apagarMateria(id) {
+            if(!confirm("Eliminar permanentemente?")) return;
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { 
+                try { localStorage.removeItem('admin_data_cache_v2'); } catch(e){}
+                window.google.script.run.withSuccessHandler(function(res){ carregarNoticiasAdmin(); }).excluirNoticia(id); 
             }
         }
 
         function editarNoticia(id) {
             var noticia = noticiasGlobais.find(function(n) { return String(n.id) === String(id); }); if(!noticia) return;
+            
             limparFormNoticia(); 
-            document.getElementById('admin-id-noticia').value = noticia.id; document.getElementById('admin-titulo').value = noticia.titulo || ''; 
-            document.getElementById('admin-linha-fina').value = noticia.linhaFina || ""; document.getElementById('admin-editor-rich').innerHTML = noticia.conteudo || ''; 
+            
+            document.getElementById('admin-id-noticia').value = noticia.id; 
+            document.getElementById('admin-titulo').value = noticia.titulo || ''; 
+            document.getElementById('admin-linha-fina').value = noticia.linhaFina || ""; 
+            document.getElementById('admin-editor-rich').innerHTML = noticia.conteudo || ''; 
             document.getElementById('admin-autor').value = noticia.autor !== "da redação" ? (noticia.autor || '') : ""; 
+            
+            var elCarrossel = document.getElementById('admin-carrossel');
+            if (elCarrossel) elCarrossel.checked = (String(noticia.noCarrossel) === 'true');
+            
+            if (noticia.dataHora) { 
+                var formatada = formatarDataParaInput(noticia.dataHora);
+                if(formatada) document.getElementById('admin-agendamento').value = formatada;
+            }
+            if (noticia.dataFimEvento) { 
+                var formatadaFim = formatarDataParaInput(noticia.dataFimEvento);
+                if(formatadaFim) document.getElementById('admin-data-fim-evento').value = formatadaFim;
+            }
+            
             var cats = String(noticia.categoria).split(',').map(function(c) { return c.trim().toLowerCase(); }); 
             document.querySelectorAll('input[name="admin-categorias-checkbox"]').forEach(function(cb) { cb.checked = cats.indexOf(cb.value.toLowerCase()) !== -1; }); 
+            var campoCidade = document.getElementById('admin-cidade'); if (campoCidade) { campoCidade.value = noticia.cidade || ''; } atualizarCampoCidadeAdmin();
+            
             document.getElementById('admin-legenda-imagem').value = noticia.legendaImagem || ''; document.getElementById('admin-creditos-imagem').value = noticia.creditosImagem || '';
-            document.getElementById('admin-carrossel').checked = (String(noticia.noCarrossel) === 'true');
             var prevImg = document.getElementById('preview-imagem'); 
-            if (prevImg) { if(noticia.urlImagem) { prevImg.src = noticia.urlImagem; prevImg.classList.remove('hidden'); document.getElementById('admin-imagem-metadados').classList.remove('hidden'); } else { prevImg.classList.add('hidden'); } }
-            document.getElementById('titulo-pagina-form').innerText = "Editar Matéria"; alternarAbaAdmin('form-noticia-container'); window.scrollTo(0,0);
+            if (prevImg) { 
+                if(noticia.urlImagem) { prevImg.src = noticia.urlImagem; prevImg.classList.remove('hidden'); document.getElementById('admin-imagem-metadados').classList.remove('hidden'); } 
+                else { prevImg.classList.add('hidden'); } 
+            }
+            
+            if (noticia.relacionadas) { 
+                var relIds = String(noticia.relacionadas).split(','); window.relacionadasSelecionadas = []; 
+                relIds.forEach(function(rId) { var rn = noticiasGlobais.find(function(x) { return String(x.id) === String(rId.trim()); }); if(rn) { window.relacionadasSelecionadas.push({ id: rn.id, titulo: rn.titulo }); } }); 
+                window.relacionadasEditadasManualmente = true; atualizarUIListaRelacionadas(); 
+            } else { window.relacionadasEditadasManualmente = false; }
+            
+            var btnSalvar = document.getElementById('btn-salvar-noticia'); if(btnSalvar) { btnSalvar.innerText = "SALVAR ALTERAÇÕES"; }
+            document.getElementById('titulo-pagina-form').innerText = "Editar Matéria";
+            alternarAbaAdmin('form-noticia-container'); window.scrollTo(0,0); atualizarPreviewURL();
+            atualizarBarraFerramentas();
         }
     </script>
 </body>
