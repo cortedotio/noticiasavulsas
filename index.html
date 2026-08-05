@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notícias Avulsas - Portal de Informação</title>
     
+    <meta property="og:title" content="Notícias Avulsas - Portal de Informação">
+    <meta property="og:description" content="Jornalismo sério, ético e independente. Acompanhe as últimas matérias.">
+    <meta property="og:image" content="https://placehold.co/1200x630/0F172A/ffffff?text=Noticias+Avulsas">
+    <meta property="og:url" content="https://noticiasavulsas.com.br">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,124 +20,65 @@
     <script async src="//www.instagram.com/embed.js"></script>
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
     
-    <!-- PONTE HÍBRIDA FIREBASE FIRESTORE -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyD7HqJYDLlREM2OV3dofdKgyBXLJ_OdD0M",
-            authDomain: "noticias-avulsas.firebaseapp.com",
-            projectId: "noticias-avulsas",
-            storageBucket: "noticias-avulsas.firebasestorage.app",
-            messagingSenderId: "632608657227",
-            appId: "1:632608657227:web:d88d071fd8b92d08c0e2ce"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        window.firebaseBridge = {
-            getHomeData: async function() {
-                try {
-                    const res = { sucesso: true, noticias: [], categorias: [], comentarios: [], propagandas: [], config: {} };
-                    const [noticiasSnap, catSnap, configSnap, propSnap, comSnap] = await Promise.all([
-                        getDocs(collection(db, 'Noticias')), getDocs(collection(db, 'Categorias')),
-                        getDocs(collection(db, 'Configuracoes')), getDocs(collection(db, 'Propagandas')),
-                        getDocs(collection(db, 'Comentarios'))
-                    ]);
-
-                    noticiasSnap.forEach(d => res.noticias.push({id: d.id, ...d.data()}));
-                    catSnap.forEach(d => res.categorias.push(d.id));
-                    configSnap.forEach(d => res.config[d.id] = d.data().valor);
-                    propSnap.forEach(d => {
-                        const p = d.data();
-                        if(String(p.status || 'Ativa').toLowerCase() === 'ativa') res.propagandas.push({id: d.id, ...p});
-                    });
-                    comSnap.forEach(d => {
-                        const c = d.data();
-                        if(String(c.status || 'Aprovado').toLowerCase() === 'aprovado') res.comentarios.push({id: d.id, ...c});
-                    });
-
-                    // Se não houver categorias cadastradas, insere as padrão
-                    if (res.categorias.length === 0) {
-                        res.categorias = ['Política', 'Economia', 'Cidades', 'Polícia', 'Justiça', 'Esportes', 'Brasil', 'Mundo', 'Eleições 2026', 'Agenda', 'Opinião', 'Carreiras', 'Variedades'];
-                    }
-
-                    res.noticias.sort((a,b) => {
-                        function getTs(str) {
-                            if(!str) return 0;
-                            const dt = new Date(str);
-                            if(!isNaN(dt.getTime())) return dt.getTime();
-                            const p = str.split(/[\/\s:\-T]/);
-                            if(p.length >= 5) {
-                                const ano = p[2].length === 4 ? p[2] : p[0];
-                                const dia = p[0].length <= 2 ? p[0] : p[2];
-                                return new Date(ano, p[1]-1, dia, p[3], p[4]).getTime();
-                            }
-                            return 0;
-                        }
-                        return getTs(b.dataHora) - getTs(a.dataHora);
-                    });
-                    return res;
-                } catch (err) { return { sucesso: false, erro: err.message }; }
-            },
-            curtirNoticiaNoSheets: async function(id) { 
-                try { await updateDoc(doc(db, 'Noticias', id), { likes: increment(1) }); return { sucesso: true }; } catch(e){ return {sucesso: false}; }
-            },
-            incrementarView: async function(id) { 
-                try { await updateDoc(doc(db, 'Noticias', id), { views: increment(1) }); return { sucesso: true }; } catch(e){ return {sucesso: false}; }
-            },
-            salvarComentarioNoSheets: async function(p) {
-                try {
-                    const id = new Date().getTime().toString();
-                    const d = new Date(); 
-                    const dataStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-                    const payloadFinal = { idNoticia: p.idNoticia, nome: p.nome, texto: p.texto, data: dataStr, status: 'Aprovado' };
-                    await setDoc(doc(db, 'Comentarios', id), payloadFinal);
-                    return { sucesso: true, comentario: payloadFinal };
-                } catch(e) { return { sucesso: false, erro: e.message }; }
-            }
-        };
-    </script>
-    
     <script>
+        // ================================================================
+        // PONTE API ROBUSTA PARA LIGAÇÃO AO GOOGLE SHEETS
+        // ================================================================
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw3BLfTFC2Z4sPOQcFMEx8rO8Xz862pVR8STIcc_XK-HAtZjC_CTS_Xs36gh1qbwzWf/exec";
         
-        window.google = { script: { run: {
-            withSuccessHandler: function(cb) { this._onSuccess = cb; return this; },
-            withFailureHandler: function(cb) { this._onFailure = cb; return this; }
-        }}};
+        window.google = {
+            script: {
+                run: {
+                    withSuccessHandler: function(cb) { this._onSuccess = cb; return this; },
+                    withFailureHandler: function(cb) { this._onFailure = cb; return this; }
+                }
+            }
+        };
 
-        const apiFunctions = ['getHomeData', 'curtirNoticiaNoSheets', 'incrementarView', 'salvarComentarioNoSheets', 'inscreverNewsletter'];
-        const firebaseOverrides = ['getHomeData', 'curtirNoticiaNoSheets', 'incrementarView', 'salvarComentarioNoSheets'];
-
+        const apiFunctions = ['getHomeData', 'verificarLogin', 'curtirNoticiaNoSheets', 'incrementarView', 'salvarComentarioNoSheets', 'inscreverNewsletter'];
+        
         apiFunctions.forEach(function(funcName) {
             window.google.script.run[funcName] = function() {
                 var argsArray = Array.prototype.slice.call(arguments);
                 var successCb = this._onSuccess; var failureCb = this._onFailure;
                 this._onSuccess = null; this._onFailure = null;
                 
-                var checkReady = setInterval(function() {
-                    if (window.firebaseBridge || !firebaseOverrides.includes(funcName)) {
-                        clearInterval(checkReady);
-                        if (firebaseOverrides.includes(funcName)) {
-                            window.firebaseBridge[funcName].apply(window.firebaseBridge, argsArray)
-                                .then(res => { if(successCb) successCb(res); })
-                                .catch(err => { if(failureCb) failureCb(err); });
-                        } else {
-                            fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: funcName, args: argsArray }) })
-                            .then(res => res.json())
-                            .then(result => {
-                                var finalPayload = result;
-                                if (result && result.result !== undefined) finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
-                                if (successCb) successCb(finalPayload);
-                            }).catch(err => { if (failureCb) failureCb(err); });
+                fetch(GAS_API_URL, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: funcName, args: argsArray }),
+                    redirect: 'follow'
+                })
+                .then(function(res) { 
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+                    return res.json(); 
+                })
+                .then(function(result) { 
+                    if (successCb) {
+                        var finalPayload = result;
+                        if (result && result.result !== undefined) {
+                            finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
                         }
+                        successCb(finalPayload);
                     }
-                }, 50);
+                })
+                .catch(function(err) { 
+                    if (failureCb) failureCb(err); 
+                    else console.error("API Error:", err); 
+                });
             };
         });
+
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.error("Erro Global JS:", message, "na linha", lineno);
+            setTimeout(function() {
+                var debugBox = document.getElementById('debug-error-box');
+                if (debugBox) {
+                    debugBox.innerHTML = "Erro de JavaScript: " + message + " (Linha " + lineno + ")";
+                    debugBox.classList.remove('hidden');
+                }
+            }, 500);
+        };
 
         var configureTailwind = function() {
             if (typeof tailwind === 'undefined') { setTimeout(configureTailwind, 10); return; }
@@ -154,7 +102,6 @@
         @keyframes marquee { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
         .animate-marquee-slow { animation: marquee 150s linear infinite; }
         .animate-marquee-slow:hover { animation-play-state: paused; }
-        
         .rich-editor img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px auto; border: 1px solid #e2e8f0; display: block; }
         .rich-editor iframe, .rich-editor video { max-width: 100%; border-radius: 8px; margin: 8px 0; background: #000; }
         .rich-editor a { color: #2563eb; text-decoration: underline; font-weight: 500; }
@@ -163,7 +110,6 @@
         .rich-editor h2 { font-size: 1.25em; font-weight: 800; margin: 12px 0 8px 0; }
         .rich-editor blockquote { border-left: 4px solid #E11D48; background: #f8fafc; padding: 12px 16px; color: #475569; font-style: italic; margin: 16px 0; border-radius: 0 8px 8px 0; }
         .rich-editor ul { list-style-type: disc; padding-left: 24px; margin-bottom: 12px; }
-        .rich-editor ol { list-style-type: decimal; padding-left: 24px; margin-bottom: 12px; }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col relative selection:bg-jornal-red selection:text-white">
@@ -173,20 +119,33 @@
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
+    <!-- TELA DE CARREGAMENTO BLINDADA -->
     <div id="loading-noticias" class="fixed inset-0 z-[100000] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
         <div id="loading-logo-container" class="mb-6">
-             <h1 id="loading-logo-text" class="text-4xl md:text-5xl font-black tracking-tighter uppercase text-slate-900">
+             <h1 id="loading-logo-text" class="text-4xl md:text-5xl font-black tracking-tighter uppercase text-jornal-dark">
                 NOTÍCIAS AVULSAS
              </h1>
         </div>
-        <div class="w-10 h-10 border-4 border-gray-100 border-t-rose-600 rounded-full animate-spin mb-4"></div>
+        <div class="w-10 h-10 border-4 border-gray-100 border-t-jornal-red rounded-full animate-spin mb-4"></div>
         <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 animate-pulse">ACESSAR PORTAL...</p>
-        <div id="debug-error-box" class="hidden mt-4 text-xs text-amber-600 font-bold text-center p-4 bg-amber-50 border border-amber-200 rounded max-w-xl break-words w-full shadow-sm"></div>
+        <div id="debug-error-box" class="hidden mt-4 text-xs text-red-500 font-mono text-center p-4 bg-red-50 border border-red-200 rounded max-w-xl break-words w-full shadow-sm"></div>
     </div>
 
     <div id="view-portal" class="flex-grow flex flex-col relative min-w-0">
         
-        <div id="ticker-noticias" class="bg-jornal-red text-white text-[10px] font-bold h-8 overflow-hidden flex items-center border-b border-red-800 sticky top-0 z-50 w-full shadow-sm min-w-0 transition-colors duration-500">
+        <div class="bg-jornal-dark text-white text-[10px] uppercase font-bold tracking-widest py-1.5 px-4 hidden md:block w-full z-40 relative min-w-0">
+            <div class="max-w-[1200px] mx-auto flex justify-between items-center min-w-0">
+                <span>Mato Grosso, Brasil</span>
+                <div class="flex items-center gap-4">
+                    <button id="btn-top-login" onclick="abrirModalLogin()" class="hover:text-jornal-red transition-colors flex items-center gap-1">🔒 Acesso Restrito</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="ticker-noticias" class="bg-jornal-red text-white text-[10px] font-bold h-8 overflow-hidden flex items-center border-b border-red-800 sticky top-0 z-50 w-full shadow-sm min-w-0">
+            <div id="ticker-label-aovivo" class="px-4 h-full uppercase tracking-widest whitespace-nowrap shrink-0 border-r border-red-400 mr-2 relative z-10 flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span> Ao Vivo
+            </div>
             <div class="overflow-hidden relative w-full flex-grow min-w-0">
                 <div class="inline-block animate-marquee-slow whitespace-nowrap flex items-center gap-8 uppercase" id="ticker-content">
                     A carregar informações financeiras e matérias recentes...
@@ -239,7 +198,7 @@
         <main class="max-w-[1200px] mx-auto pt-6 md:pt-8 pb-16 px-4 flex-grow w-full min-w-0">
             <div id="ads-topo-container" class="w-full mb-8 hidden grid gap-4 grid-cols-1 md:grid-cols-2"></div>
 
-            <div id="master-feed-wrapper" class="flex flex-col lg:flex-row gap-8 items-start min-w-0">
+            <div id="master-feed-wrapper" class="flex flex-col lg:flex-row gap-8 items-start hidden min-w-0">
                 
                 <div class="lg:w-[72%] w-full flex flex-col gap-6 min-w-0">
                     
@@ -495,6 +454,20 @@
         </div>
     </div>
 
+    <!-- MODAL DE LOGIN -->
+    <div id="modalLogin" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-jornal-dark/80 backdrop-blur-sm" onclick="fecharModalLogin()"></div>
+        <div class="bg-white w-full max-w-sm p-8 rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-red">
+            <button type="button" onclick="fecharModalLogin()" class="absolute top-4 right-4 text-gray-400 hover:text-jornal-red">✕</button>
+            <div class="mb-6 text-center"><h2 class="font-sans text-xl font-black uppercase text-jornal-dark tracking-tighter">Painel de Redação</h2></div>
+            <form onsubmit="fazerLogin(event)" class="space-y-4">
+                <input type="text" id="login-user" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm rounded-sm" required placeholder="Usuário" />
+                <input type="password" id="login-pass" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 focus:outline-none focus:border-jornal-blue text-sm rounded-sm" required placeholder="Senha" />
+                <button type="submit" id="btn-fazer-login" class="w-full bg-jornal-dark text-white font-bold py-3 hover:opacity-90 transition-colors text-sm uppercase tracking-widest rounded-sm">Entrar</button>
+            </form>
+        </div>
+    </div>
+
     <script>
         var IMG_FALLBACK = 'https://placehold.co/600x400/e2e8f0/475569?text=Sem+Foto';
         var ICON_HEART = '<svg class="w-3 h-3 fill-current inline" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
@@ -578,16 +551,7 @@
         window.agendaTimers = {};
 
         document.addEventListener("DOMContentLoaded", function() {
-            setTimeout(function() {
-                var loaderGlobal = document.getElementById('loading-noticias');
-                if (loaderGlobal && !loaderGlobal.classList.contains('hidden')) {
-                    loaderGlobal.classList.add('hidden');
-                    var wrap = document.getElementById('master-feed-wrapper');
-                    if(wrap) wrap.classList.remove('hidden');
-                }
-            }, 10000); 
             carregarNoticias(false);
-            
             window.addEventListener('scroll', function() {
                 var stickyLogo = document.getElementById('sticky-logo-container');
                 if (stickyLogo) {
@@ -627,11 +591,23 @@
         window.addEventListener('popstate', function(e) { tratarRotasIniciais(false); });
 
         function carregarNoticias(forcarUpdate) {
-            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
-                var dbg = document.getElementById('debug-error-box'); if(dbg) dbg.classList.add('hidden');
-                var loaderGlobal = document.getElementById('loading-noticias'); if(loaderGlobal) loaderGlobal.classList.remove('hidden');
+            document.getElementById('master-feed-wrapper').classList.add('hidden');
+            document.getElementById('loading-noticias').classList.remove('hidden');
+            document.getElementById('debug-error-box').classList.add('hidden');
+            
+            // ANTI LOCK 8 SECONDS
+            var failSafeTimer = setTimeout(function() {
+                var loader = document.getElementById('loading-noticias');
+                if (loader && !loader.classList.contains('hidden')) {
+                    removerLoaderGlobal();
+                    var dbg = document.getElementById('debug-error-box');
+                    if(dbg) { dbg.innerHTML = "O servidor demorou a responder. A carregar cache de segurança..."; dbg.classList.remove('hidden'); }
+                }
+            }, 8000);
 
+            if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run.withSuccessHandler(function(res) {
+                    clearTimeout(failSafeTimer);
                     removerLoaderGlobal();
                     try {
                         if (res && res.sucesso) { 
@@ -642,12 +618,26 @@
                                 else if(window.categoriaAtual === 'Pesquisa') { pesquisarSite(new Event('submit')); } 
                                 else { filtrarCategoria(window.categoriaAtual, false); }
                             }
+                        } else {
+                            var dbg = document.getElementById('debug-error-box');
+                            if(dbg) { dbg.innerHTML = res ? res.erro : "Resposta inválida."; dbg.classList.remove('hidden'); }
                         }
-                    } catch(e) {}
+                    } catch(e) { 
+                        var dbg = document.getElementById('debug-error-box');
+                        if(dbg) { dbg.innerHTML = "Falha no JS: " + e.message; dbg.classList.remove('hidden'); }
+                    }
                 }).withFailureHandler(function(err) {
+                    clearTimeout(failSafeTimer);
                     removerLoaderGlobal();
+                    var dbg = document.getElementById('debug-error-box');
+                    if(dbg) { dbg.innerHTML = "Erro de conexão: " + err.message; dbg.classList.remove('hidden'); }
                 }).getHomeData();
-            } else { removerLoaderGlobal(); }
+            } else {
+                clearTimeout(failSafeTimer);
+                removerLoaderGlobal();
+                var dbg = document.getElementById('debug-error-box');
+                if(dbg) { dbg.innerHTML = "Motor Google não detectado."; dbg.classList.remove('hidden'); }
+            }
         }
 
         function processarDadosHome(d) {
@@ -656,10 +646,14 @@
             
             var headerBranding = document.getElementById('header-branding');
             var footerBranding = document.getElementById('footer-branding');
+            var expContent = document.getElementById('conteudo-expediente');
             
             if (configuracoesGlobais['LogoHTML']) {
-                headerBranding.innerHTML = configuracoesGlobais['LogoHTML'];
+                if(headerBranding) headerBranding.innerHTML = configuracoesGlobais['LogoHTML'];
                 if(footerBranding) footerBranding.innerHTML = configuracoesGlobais['LogoHTML'];
+            }
+            if (configuracoesGlobais['ExpedienteHTML'] && expContent) {
+                expContent.innerHTML = configuracoesGlobais['ExpedienteHTML'];
             }
             if (configuracoesGlobais['CorLogo']) {
                 try {
@@ -680,7 +674,7 @@
                 if (configuracoesGlobais['soc-inst-url']) { sHtml += '<a href="' + configuracoesGlobais['soc-inst-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>'; }
                 if (configuracoesGlobais['soc-fb-url']) { sHtml += '<a href="' + configuracoesGlobais['soc-fb-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.312h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/></svg></a>'; }
                 if (configuracoesGlobais['soc-x-url']) { sHtml += '<a href="' + configuracoesGlobais['soc-x-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></a>'; }
-                if (configuracoesGlobais['soc-yt-url']) { sHtml += '<a href="' + configuracoesGlobais['soc-yt-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>';
+                if (configuracoesGlobais['soc-yt-url']) { sHtml += '<a href="' + configuracoesGlobais['soc-yt-url'] + '" target="_blank" class="hover:text-jornal-red transition-colors"><svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>'; }
                 if (sHtml) { socFooter.innerHTML = sHtml; socFooter.classList.remove('hidden'); }
             }
 
@@ -1376,7 +1370,7 @@
             var cHTML = '';
             cHTML += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 p-0 flex flex-col h-full hover:shadow-md transition-shadow rounded-sm w-full overflow-hidden min-w-0">\n';
             cHTML += '    <div class="relative w-full aspect-video bg-gray-100 border-b border-gray-200 shrink-0 overflow-hidden">\n';
-            cHTML += '        <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain group-hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
+            cHTML += '        <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n';
             cHTML += '    </div>\n';
             if (n.creditosImagem) { cHTML += '    <div class="text-[8px] text-gray-400 italic px-4 py-1.5 bg-gray-50 border-b border-gray-100 truncate text-right font-medium">Foto: ' + n.creditosImagem + '</div>\n'; }
             cHTML += '    <div class="p-5 flex flex-col flex-grow w-full bg-white min-w-0">\n';
@@ -1393,7 +1387,7 @@
             var cHTML = '';
             cHTML += '<article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer bg-white border border-gray-200 flex flex-col md:flex-row h-full overflow-hidden hover:shadow-md transition-shadow rounded-sm w-full">\n';
             cHTML += '    <div class="md:w-[55%] w-full bg-gray-100 min-h-[350px] shrink-0 overflow-hidden relative">\n';
-            cHTML += '        <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition duration-700 min-h-[350px]" />\n';
+            cHTML += '        <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700 min-h-[350px]" />\n';
             if (n.creditosImagem) { cHTML += '        <div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 rounded-tl">Foto: ' + n.creditosImagem + '</div>\n'; }
             cHTML += '    </div>\n';
             cHTML += '    <div class="md:w-[45%] p-8 flex flex-col justify-center w-full min-w-0">\n';
@@ -1427,7 +1421,7 @@
                 if (nCat.length > 0) {
                     htmlFinal += '<div class="w-full mb-12">\n    <div class="border-b-4 border-gray-200 pb-3 mb-6 flex justify-between items-center">\n        <h3 class="text-lg font-black uppercase tracking-widest text-jornal-dark">\n            <span class="inline-block w-3 h-3 bg-rose-600 mr-2 rounded-sm"></span>' + cat + '\n        </h3>\n        <button onclick="filtrarCategoria(\'' + cat + '\', true)" class="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-jornal-red transition-colors bg-gray-50 px-3 py-1.5 rounded-sm">\n            Ver tudo &raquo;\n        </button>\n    </div>\n    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">\n';
                     nCat.forEach(function(n) {
-                        htmlFinal += '        <article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col h-full border border-gray-100 shadow-sm bg-white rounded-sm overflow-hidden min-w-0 hover:shadow-md transition-shadow">\n            <div class="relative w-full aspect-video bg-gray-100 shrink-0 overflow-hidden">\n                <img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n            </div>\n            <div class="p-4 flex flex-col flex-grow min-w-0 bg-white relative z-10">\n                <h4 class="font-serif font-black text-sm leading-snug text-jornal-dark group-hover:text-jornal-red line-clamp-3 mb-3">' + n.titulo + '</h4>\n                <span class="text-[9px] font-bold text-gray-400 mt-auto tracking-widest uppercase">\n                    ' + (n.dataHora ? n.dataHora.replace(' ', ' às ') : '') + '\n                </span>\n            </div>\n        </article>\n';
+                        htmlFinal += '        <article onclick="abrirNoticia(\'' + n.id + '\', true)" class="group cursor-pointer flex flex-col h-full border border-gray-100 shadow-sm bg-white rounded-sm overflow-hidden min-w-0 hover:shadow-md transition-shadow">\n            <div class="relative w-full aspect-video bg-gray-100 shrink-0 overflow-hidden">\n                <img src="' + (n.urlImagem || IMG_FALLBACK) + '" class="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'" />\n            </div>\n            <div class="p-4 flex flex-col flex-grow min-w-0 bg-white relative z-10">\n                <h4 class="font-serif font-black text-sm leading-snug text-jornal-dark group-hover:text-jornal-red line-clamp-3 mb-3">' + n.titulo + '</h4>\n                <span class="text-[9px] font-bold text-gray-400 mt-auto tracking-widest uppercase">\n                    ' + (n.dataHora ? n.dataHora.replace(' ', ' às ') : '') + '\n                </span>\n            </div>\n        </article>\n';
                     });
                     htmlFinal += '    </div>\n</div>\n';
                 }
@@ -1444,7 +1438,7 @@
                 var credHtml = '';
                 if (n.creditosImagem) { credHtml = '<div class="absolute bottom-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 z-20">Foto: ' + n.creditosImagem + '</div>'; }
                 
-                htmlInner += '<div class="absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out cursor-pointer group carrossel-slide opacity-0 z-0 pointer-events-none" onclick="abrirNoticia(\'' + n.id + '\', true)">\n    <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-contain bg-gray-100" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'"/>\n    ' + credHtml + '\n    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>\n    <div class="absolute bottom-0 left-0 p-8 md:p-14 w-full text-white min-w-0 z-10 pointer-events-none">\n        <span class="bg-jornal-red text-white text-[10px] font-black uppercase px-3 py-1.5 mb-4 inline-block rounded-sm truncate shadow-sm">\n            ' + n.categoria + '\n        </span>\n        <h3 class="font-serif text-3xl md:text-5xl font-black mb-3 leading-tight break-words line-clamp-3 tracking-tighter drop-shadow-md">\n            ' + n.titulo + '\n        </h3>\n    </div>\n</div>\n';
+                htmlInner += '<div class="absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out cursor-pointer group carrossel-slide opacity-0 z-0 pointer-events-none" onclick="abrirNoticia(\'' + n.id + '\', true)">\n    <img loading="lazy" src="' + (n.urlImagem || IMG_FALLBACK) + '" class="w-full h-full object-cover bg-gray-100" onerror="this.onerror=null; this.src=\'' + IMG_FALLBACK + '\'"/>\n    ' + credHtml + '\n    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>\n    <div class="absolute bottom-0 left-0 p-8 md:p-14 w-full text-white min-w-0 z-10 pointer-events-none">\n        <span class="bg-jornal-red text-white text-[10px] font-black uppercase px-3 py-1.5 mb-4 inline-block rounded-sm truncate shadow-sm">\n            ' + n.categoria + '\n        </span>\n        <h3 class="font-serif text-3xl md:text-5xl font-black mb-3 leading-tight break-words line-clamp-3 tracking-tighter drop-shadow-md">\n            ' + n.titulo + '\n        </h3>\n    </div>\n</div>\n';
                 htmlInd += '<button onclick="irParaSlide(' + i + ')" class="w-3 h-3 rounded-full carrossel-indicador transition-colors bg-white/50"></button>\n';
             });
             
@@ -1469,44 +1463,69 @@
             }
         }
 
-        function atualizarMetaTags(noticia) {
-            document.title = noticia.titulo + " - Notícias Avulsas";
-            var metaOgTitle = document.querySelector('meta[property="og:title"]');
-            if (!metaOgTitle) { metaOgTitle = document.createElement('meta'); metaOgTitle.setAttribute('property', 'og:title'); document.head.appendChild(metaOgTitle); }
-            metaOgTitle.setAttribute('content', noticia.titulo);
-
-            var metaOgDesc = document.querySelector('meta[property="og:description"]');
-            if (!metaOgDesc) { metaOgDesc = document.createElement('meta'); metaOgDesc.setAttribute('property', 'og:description'); document.head.appendChild(metaOgDesc); }
-            var desc = noticia.linhaFina ? noticia.linhaFina : "Leia a matéria completa no Notícias Avulsas.";
-            metaOgDesc.setAttribute('content', desc);
-
-            var metaOgImage = document.querySelector('meta[property="og:image"]');
-            if (!metaOgImage) { metaOgImage = document.createElement('meta'); metaOgImage.setAttribute('property', 'og:image'); document.head.appendChild(metaOgImage); }
-            if (noticia.urlImagem) { metaOgImage.setAttribute('content', noticia.urlImagem); }
+        function pesquisarSite(e) {
+            if(e) e.preventDefault();
+            var formMobile = document.getElementById('form-pesquisa-mobile');
+            var termoDesk = document.getElementById('input-pesquisa').value;
+            var termoMob = document.getElementById('input-pesquisa-mobile').value;
+            var termo = termoDesk || termoMob;
             
-            var metaOgUrl = document.querySelector('meta[property="og:url"]');
-            if (!metaOgUrl) { metaOgUrl = document.createElement('meta'); metaOgUrl.setAttribute('property', 'og:url'); document.head.appendChild(metaOgUrl); }
-            metaOgUrl.setAttribute('content', window.location.href);
-        }
-
-        function converterVideoUrlsParaPlayers(t) { 
-            if (!t) return ""; 
-            var strT = String(t);
-            strT = strT.replace(/<a[^>]*href="([^"]*(?:youtube\.com|youtu\.be)[^"]*)"[^>]*>.*?<\/a>/gi, '$1');
+            termo = termo.toLowerCase().trim();
+            if (!termo) { voltarCapa(); return; }
             
-            var ytRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})[^\s<"]*/gi;
-            strT = strT.replace(ytRegex, function(match, id) { return '<div class="aspect-video w-full my-6 shadow-md rounded-sm overflow-hidden border border-gray-200"><iframe class="w-full h-full" src="https://www.youtube.com/embed/' + id + '" frameborder="0" allowfullscreen></iframe></div>'; });
+            if(formMobile) formMobile.classList.add('hidden');
             
-            var igRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[a-zA-Z0-9_-]+)(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
-            strT = strT.replace(igRegex, function(match, url) { return '<blockquote class="instagram-media" data-instgrm-permalink="' + url + '/?utm_source=ig_embed" data-instgrm-version="14" style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px auto; max-width:540px; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);"></blockquote>'; });
+            window.categoriaAtual = 'Pesquisa';
+            atualizarURL('pesquisa', termo);
             
-            var tkRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?tiktok\.com\/@[a-zA-Z0-9_.-]+\/video\/([0-9]+))(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
-            strT = strT.replace(tkRegex, function(match, fullUrl, id) { return '<blockquote class="tiktok-embed" cite="' + fullUrl + '" data-video-id="' + id + '" style="max-width: 605px;min-width: 325px;" > <section> <a target="_blank" title="Video no TikTok" href="' + fullUrl + '">Assistir no TikTok</a> </section> </blockquote> <script async src="https://www.tiktok.com/embed.js"><\/scr' + 'ipt>'; });
+            var grid = document.getElementById('grid-noticias');
+            var dest = document.getElementById('destaque-noticia');
+            var carrosselContainer = document.getElementById('carrossel-destaques');
+            var gridEditorias = document.getElementById('grid-editorias-exclusivo');
+            var filtroCidades = document.getElementById('filtro-cidades-container');
             
-            var twRegex = /(?:<a[^>]*href=")?(https?:\/\/(?:www\.)?(?:twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/status\/[0-9]+)(?:\/?)(?:"[^>]*>.*?<\/a>)?/gi;
-            strT = strT.replace(twRegex, function(match, url) { var cleanUrl = url.replace('x.com', 'twitter.com'); return '<div class="my-6 overflow-hidden rounded-sm"><blockquote class="twitter-tweet" data-dnt="true"><a href="' + cleanUrl + '"></a></blockquote></div>'; });
+            if(carrosselContainer) carrosselContainer.classList.add('hidden');
+            if(gridEditorias) gridEditorias.classList.add('hidden');
+            if(filtroCidades) filtroCidades.classList.add('hidden');
+            if(dest) { dest.innerHTML = ''; dest.classList.add('hidden'); }
             
-            return strT;
+            var headerNot = document.getElementById('header-ultimas-noticias');
+            if(headerNot) headerNot.classList.remove('hidden');
+            
+            var tituloSec = document.getElementById('titulo-seccao-feed');
+            if(tituloSec) tituloSec.innerText = 'Resultados da pesquisa: "' + termo + '"';
+            
+            var resultados = noticiasGlobais.filter(function(n) {
+                if (!isNoticiaPublicada(n)) return false;
+                var t = String(n.titulo).toLowerCase(); 
+                var f = String(n.linhaFina).toLowerCase(); 
+                var c = String(n.conteudo).toLowerCase();
+                return t.indexOf(termo) !== -1 || f.indexOf(termo) !== -1 || c.indexOf(termo) !== -1;
+            });
+            
+            if(!grid) return;
+            grid.innerHTML = ''; 
+            grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
+            
+            if (resultados.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-500 font-bold bg-white border border-gray-200 rounded-sm">Nenhum resultado encontrado para "' + termo + '".</div>';
+            } else {
+                window.noticiasCategoriaAtual = resultados; 
+                window.itensExibidosCategoria = 16;
+                resultados.slice(0, 16).forEach(function(n) { 
+                    grid.innerHTML += htmlCard(n); 
+                });
+                
+                var btnMais = document.getElementById('btn-mostrar-mais');
+                if (btnMais) { 
+                    if (resultados.length > 16) {
+                        btnMais.classList.remove('hidden'); 
+                    } else {
+                        btnMais.classList.add('hidden'); 
+                    }
+                }
+            }
+            fecharNoticiaUI();
         }
 
         function abrirNoticia(idNoticia, updateUrl) {
@@ -1532,7 +1551,7 @@
             document.getElementById('nc-autor').innerText = "Por: " + noticia.autor; 
             document.getElementById('nc-data').innerText = noticia.dataHora ? "Publicado em " + noticia.dataHora.replace(' ', ' às ') : '';
             
-            var conteudoFormatado = converterVideoUrlsParaPlayers(noticia.conteudo || '');
+            var conteudoFormatado = (noticia.conteudo || '');
             var tempDiv = document.createElement('div'); tempDiv.innerHTML = conteudoFormatado;
             var botoesDeletar = tempDiv.querySelectorAll('.btn-diminuir-img, .btn-aumentar-img');
             botoesDeletar.forEach(function(b) { var pai = b.parentElement; b.remove(); if(pai && pai.innerHTML.trim() === '') pai.remove(); });
@@ -1577,7 +1596,7 @@
             } else { relContainer.classList.add('hidden'); }
             
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) { window.google.script.run.incrementarView(noticiaAbertaId); }
-            atualizarMetaTags(noticia); window.scrollTo(0,0);
+            window.scrollTo(0,0);
         }
 
         function fecharNoticiaUI() { 
@@ -1589,14 +1608,7 @@
             window.scrollTo(0,0); 
         }
         
-        function fecharNoticia() { 
-            var url = window.location.origin;
-            if(window.location.pathname.indexOf('/noticias') !== -1) { url += '/noticias'; }
-            if (window.location.protocol !== 'file:') { window.history.pushState({path: url}, '', url); }
-            fecharNoticiaUI(); 
-        }
-        
-        function voltarCapa() { fecharNoticia(); filtrarCategoria('Todas', true); var iPesq = document.getElementById('input-pesquisa'); if(iPesq) iPesq.value = ''; }
+        function voltarCapa() { fecharNoticiaUI(); atualizarURL('categoria', 'Todas'); filtrarCategoria('Todas', false); var iPesq = document.getElementById('input-pesquisa'); if(iPesq) iPesq.value = ''; }
 
         function enviarComentario(e) {
             e.preventDefault(); if(!noticiaAbertaId) return;
@@ -1625,6 +1637,30 @@
             if(plataforma === 'whatsapp') { link = 'https://api.whatsapp.com/send?text=' + textoEncoded + '%0A%0A' + urlEncoded; }
             if(plataforma === 'x') { link = 'https://twitter.com/intent/tweet?text=' + textoEncoded + '&url=' + urlEncoded; }
             window.open(link, '_blank', 'width=600,height=400');
+        }
+
+        function abrirModalExpediente() {
+            var m = document.getElementById('modalExpediente');
+            if(m){ m.classList.remove('hidden'); m.classList.add('flex'); }
+        }
+
+        function fecharModalExpediente() {
+            var m = document.getElementById('modalExpediente');
+            if(m){ m.classList.add('hidden'); m.classList.remove('flex'); }
+        }
+
+        function abrirModalClima() {
+            var m = document.getElementById('modalClima');
+            if(m){ m.classList.remove('hidden'); m.classList.add('flex'); }
+        }
+
+        function fecharModalClima() {
+            var m = document.getElementById('modalClima');
+            if(m){ m.classList.add('hidden'); m.classList.remove('flex'); }
+        }
+        
+        function abrirModalLogin() { 
+            window.location.href = "admin.html";
         }
     </script>
 </body>
