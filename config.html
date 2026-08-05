@@ -12,7 +12,7 @@
     
     <script>
         // O SEU LINK DA BASE DE DADOS GOOGLE
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyoHo_olvZbyvT-qfKBDAveq1-n1IHD_bLxf831i_bBrFJeSVTcc6RTfvdQ9QV25hTh/exec";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw3BLfTFC2Z4sPOQcFMEx8rO8Xz862pVR8STIcc_XK-HAtZjC_CTS_Xs36gh1qbwzWf/exec";
         
         // Ponte de comunicação com o Backend (Google Apps Script)
         window.google = {
@@ -1236,11 +1236,3 @@
     </script>
 </body>
 </html>
-```
-
-### O que mudou:
-1.  **Correspondência Perfeita das Abas:** O layout tem exatamente as 7 abas visíveis nas suas imagens (Layout Capa, IA & Design, Anúncios, Redes Sociais, Placar ao Vivo, Expediente, Gestão Equipa), com as cores correspondentes (Verde, Roxo, Escuro, Azul, Rosa/Vermelho) quando ativas.
-2.  **Gestão Equipa Completa:** O código do formulário de utilizadores e da tabela que você mostrou na `image_33a77f.png` foi implementado e associado à função `salvarMembroEquipa()`. Quando você clica em "Criar Acesso", ele envia a ordem certa para o `Codigo.gs` salvar esse utilizador no Google Sheets (aba Admins), sem sequer tocar no Firebase!
-3.  **Ligação 100% Sheets:** O script da página comunica diretamente com a `GAS_API_URL` que você me enviou. A lógica de permissões e de troca de senha no primeiro acesso também foi polida.
-
-Não se esqueça de guardar este ficheiro no seu GitHub!
