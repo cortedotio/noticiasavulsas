@@ -124,20 +124,14 @@
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
-    <!-- TELA DE CARREGAMENTO COM DETETOR DE DEMORA -->
+    <!-- TELA DE CARREGAMENTO COM DETETOR INTELIGENTE -->
     <div id="loading-global" class="fixed inset-0 z-[99998] bg-jornal-dark flex flex-col items-center justify-center transition-opacity duration-500">
         <div id="loading-spinner" class="w-12 h-12 border-4 border-gray-700 border-t-jornal-red rounded-full animate-spin mb-4"></div>
         <p id="loading-text" class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse text-center">Acessar Sistema...</p>
         
-        <!-- NOVA CAIXA DE AVISO DE DEMORA -->
+        <!-- NOVA CAIXA DE AVISO (DINÂMICA) -->
         <div id="loading-error-box" class="hidden mt-8 flex flex-col items-center gap-4 bg-gray-900 p-6 rounded-sm border border-gray-700 max-w-sm mx-4 shadow-xl">
-            <span class="text-3xl mb-1">⚠️</span>
-            <p class="text-xs font-medium text-gray-300 text-center leading-relaxed">
-                A ligação está a demorar mais do que o esperado.<br>Isto pode acontecer se a sua internet estiver instável ou se o <span class="text-white font-bold">Link da Base de Dados</span> no código estiver desatualizado.
-            </p>
-            <button onclick="window.location.reload()" class="mt-3 px-6 py-3 bg-jornal-red text-white font-black text-[10px] uppercase tracking-widest rounded-sm hover:bg-red-700 transition-colors shadow-md w-full">
-                RECARREGAR PÁGINA
-            </button>
+            <!-- Será preenchida via Javascript -->
         </div>
     </div>
 
@@ -669,18 +663,16 @@
             if(spinner) spinner.classList.remove('hidden');
             if(text) { text.innerText = "Acessar Sistema..."; text.classList.add('animate-pulse'); text.classList.remove('text-red-500'); }
             
-            // Lógica do Tempo Limite (Timeout de 12 segundos)
+            // Lógica do Tempo Limite (Aviso de base pesada após 15 segundos)
             var timeoutId = setTimeout(function() {
                 if(loader && !loader.classList.contains('hidden')) {
-                    if(spinner) spinner.classList.add('hidden');
-                    if(text) { 
-                        text.innerText = "TEMPO LIMITE EXCEDIDO"; 
-                        text.classList.remove('animate-pulse'); 
-                        text.classList.add('text-red-500'); 
+                    if(text) text.innerText = "A PROCESSAR DADOS...";
+                    if(errorBox) {
+                        errorBox.innerHTML = '<span class="text-3xl mb-1">⏳</span><p class="text-xs font-medium text-gray-300 text-center leading-relaxed">O seu portal já tem muitas matérias.<br>A Google está a preparar a lista completa. <b>Por favor, aguarde sem fechar a página.</b></p>';
+                        errorBox.classList.remove('hidden');
                     }
-                    if(errorBox) errorBox.classList.remove('hidden');
                 }
-            }, 12000);
+            }, 15000);
 
             var usouCache = false;
             try {
@@ -713,6 +705,9 @@
                     if(loader) loader.classList.add('hidden');
                     if (res && res.sucesso) {
                         try { 
+                            // Limpa as caches antigas para libertar espaço
+                            localStorage.removeItem('admin_data_cache');
+                            localStorage.removeItem('portal_data_cache');
                             localStorage.setItem('admin_data_cache_v2', JSON.stringify(res)); 
                         } catch(e) {
                             console.warn("Navegador sem memória suficiente. Não foi possível guardar em cache.");
@@ -731,8 +726,12 @@
                     }
                 }).withFailureHandler(function(err) {
                     clearTimeout(timeoutId); // Desliga o alerta de demora
-                    if(loader) loader.classList.add('hidden'); 
-                    mostrarMensagem("Falha de rede. O Link da base de dados pode estar desatualizado.", 'erro');
+                    if(spinner) spinner.classList.add('hidden');
+                    if(text) { text.innerText = "FALHA DE LIGAÇÃO"; text.classList.remove('animate-pulse'); text.classList.add('text-red-500'); }
+                    if(errorBox) {
+                        errorBox.innerHTML = '<span class="text-3xl mb-1">❌</span><p class="text-xs font-medium text-gray-300 text-center leading-relaxed">Não foi possível ligar à Base de Dados.<br><span class="text-white font-bold">Verifique a sua internet ou recarregue a página.</span></p><button onclick="window.location.reload()" class="mt-3 px-6 py-3 bg-jornal-red text-white font-black text-[10px] uppercase tracking-widest rounded-sm hover:bg-red-700 transition-colors shadow-md w-full">RECARREGAR PÁGINA</button>';
+                        errorBox.classList.remove('hidden');
+                    }
                     
                     renderizarChecklistCategoriasAdmin();
                     if (!document.getElementById('lista-noticias-container').classList.contains('hidden')) {
