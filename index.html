@@ -10,16 +10,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
-    <!-- Scripts Oficiais para as Redes Sociais Embutidas -->
     <script async src="//www.instagram.com/embed.js"></script>
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
     
-    <!-- PONTE HÍBRIDA FIREBASE (NOVO MOTOR ULTRA RÁPIDO) -->
+    <!-- PONTE HÍBRIDA FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // AS SUAS CHAVES OFICIAIS DO FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyD7HqJYDLlREM2OV3dofdKgyBXLJ_OdD0M",
             authDomain: "noticias-avulsas.firebaseapp.com",
@@ -36,8 +34,6 @@
             getHomeData: async function() {
                 try {
                     const res = { sucesso: true, noticias: [], categorias: [], comentarios: [], propagandas: [], config: {} };
-                    
-                    // Vai buscar tudo ao Firebase em paralelo (Muito mais rápido!)
                     const [noticiasSnap, catSnap, configSnap, propSnap, comSnap] = await Promise.all([
                         getDocs(collection(db, 'Noticias')), getDocs(collection(db, 'Categorias')),
                         getDocs(collection(db, 'Configuracoes')), getDocs(collection(db, 'Propagandas')),
@@ -49,20 +45,18 @@
                     configSnap.forEach(d => res.config[d.id] = d.data().valor);
                     propSnap.forEach(d => {
                         const p = d.data();
-                        if(p.status === 'Ativa') res.propagandas.push({id: d.id, ...p});
+                        if(String(p.status || 'Ativa').toLowerCase() === 'ativa') res.propagandas.push({id: d.id, ...p});
                     });
                     comSnap.forEach(d => {
                         const c = d.data();
-                        if(c.status === 'Aprovado') res.comentarios.push({id: d.id, ...c});
+                        if(String(c.status || 'Aprovado').toLowerCase() === 'aprovado') res.comentarios.push({id: d.id, ...c});
                     });
 
-                    // Ordena as notícias da mais recente para a mais antiga de forma super segura
                     res.noticias.sort((a,b) => {
                         function getTs(str) {
                             if(!str) return 0;
                             const dt = new Date(str);
                             if(!isNaN(dt.getTime())) return dt.getTime();
-                            
                             const p = str.split(/[\/\s:\-T]/);
                             if(p.length >= 5) {
                                 const ano = p[2].length === 4 ? p[2] : p[0];
@@ -73,12 +67,8 @@
                         }
                         return getTs(b.dataHora) - getTs(a.dataHora);
                     });
-                    
                     return res;
-                } catch (err) { 
-                    console.error("Erro ao ler Firebase:", err);
-                    return { sucesso: false, erro: err.message }; 
-                }
+                } catch (err) { return { sucesso: false, erro: err.message }; }
             },
             curtirNoticiaNoSheets: async function(id) { 
                 try { await updateDoc(doc(db, 'Noticias', id), { likes: increment(1) }); return { sucesso: true }; } catch(e){ return {sucesso: false}; }
@@ -100,7 +90,6 @@
     </script>
     
     <script>
-        // O SEU LINK OFICIAL DA BASE DE DADOS GOOGLE (Para o que não for Firebase)
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw3BLfTFC2Z4sPOQcFMEx8rO8Xz862pVR8STIcc_XK-HAtZjC_CTS_Xs36gh1qbwzWf/exec";
         
         window.google = { script: { run: {
@@ -138,19 +127,6 @@
             };
         });
 
-        // ================================================================
-        // TRATAMENTO DE ERROS E CONFIGURAÇÕES VISUAIS
-        // ================================================================
-        window.onerror = function(message, source, lineno, colno, error) {
-            setTimeout(function() {
-                var debugBox = document.getElementById('debug-error-box');
-                if (debugBox) {
-                    debugBox.innerHTML = "Aviso: A rede encontrou uma lentidão. Algumas imagens podem não carregar imediatamente.";
-                    debugBox.classList.remove('hidden');
-                }
-            }, 500);
-        };
-
         var configureTailwind = function() {
             if (typeof tailwind === 'undefined') { setTimeout(configureTailwind, 10); return; }
             tailwind.config = {
@@ -170,8 +146,6 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #999; }
-        .heart-beat { animation: heartbeat 0.3s ease-in-out; }
-        @keyframes heartbeat { 0% { transform: scale(1); } 50% { transform: scale(1.3); color: #E11D48; } 100% { transform: scale(1); } }
         @keyframes marquee { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
         .animate-marquee-slow { animation: marquee 150s linear infinite; }
         .animate-marquee-slow:hover { animation-play-state: paused; }
@@ -185,8 +159,6 @@
         .rich-editor blockquote { border-left: 4px solid #E11D48; background: #f8fafc; padding: 12px 16px; color: #475569; font-style: italic; margin: 16px 0; border-radius: 0 8px 8px 0; }
         .rich-editor ul { list-style-type: disc; padding-left: 24px; margin-bottom: 12px; }
         .rich-editor ol { list-style-type: decimal; padding-left: 24px; margin-bottom: 12px; }
-        
-        .instagram-media { background: #FFF; border: 0; border-radius: 3px; box-shadow: 0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px auto; max-width: 540px; min-width: 326px; padding: 0; width: 99.375%; width: calc(100% - 2px); }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col relative selection:bg-jornal-red selection:text-white">
@@ -196,7 +168,6 @@
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
-    <!-- Ecrã de Carregamento Ultra Rápido -->
     <div id="loading-noticias" class="fixed inset-0 z-[100000] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
         <div id="loading-logo-container" class="mb-6">
              <h1 id="loading-logo-text" class="text-4xl md:text-5xl font-black tracking-tighter uppercase text-slate-900">
@@ -210,7 +181,6 @@
 
     <div id="view-portal" class="flex-grow flex flex-col relative min-w-0">
         
-        <!-- Ticker de Informações -->
         <div id="ticker-noticias" class="bg-jornal-red text-white text-[10px] font-bold h-8 overflow-hidden flex items-center border-b border-red-800 sticky top-0 z-50 w-full shadow-sm min-w-0 transition-colors duration-500">
             <div class="overflow-hidden relative w-full flex-grow min-w-0">
                 <div class="inline-block animate-marquee-slow whitespace-nowrap flex items-center gap-8 uppercase" id="ticker-content">
@@ -252,7 +222,6 @@
             </form>
         </header>
 
-        <!-- MENU DE NAVEGAÇÃO -->
         <nav class="border-y border-gray-200 border-b-4 border-b-jornal-blue sticky top-0 md:top-8 z-40 bg-white/95 backdrop-blur-sm w-full shadow-sm min-w-0" id="nav-categorias-publicas">
             <div id="nav-container-inner" class="max-w-[1200px] mx-auto px-4 flex items-center overflow-x-auto whitespace-nowrap text-[11px] md:text-sm font-black uppercase tracking-widest text-jornal-dark py-3 md:py-4 custom-scrollbar min-w-0">
                 <div id="sticky-logo-container" class="hidden shrink-0 items-center cursor-pointer mr-6 pr-6 border-r-2 border-gray-200 transition-all duration-300" onclick="voltarCapa()">
@@ -267,7 +236,6 @@
 
             <div id="master-feed-wrapper" class="flex flex-col lg:flex-row gap-8 items-start min-w-0">
                 
-                <!-- Coluna Esquerda: Notícias -->
                 <div class="lg:w-[72%] w-full flex flex-col gap-6 min-w-0">
                     
                     <div id="filtro-cidades-container" class="w-full mb-6 hidden bg-gray-50 p-5 border border-gray-200 rounded-sm shadow-sm">
@@ -279,7 +247,6 @@
                         </div>
                     </div>
 
-                    <!-- PÁGINA INICIAL DO FEED -->
                     <div id="home-feed-container" class="w-full min-w-0">
                         <div id="carrossel-destaques" class="w-full mb-8 relative hidden overflow-hidden bg-gray-100 aspect-video shrink-0 rounded-sm shadow-md">
                             <div id="carrossel-inner" class="w-full h-full relative"></div>
@@ -302,7 +269,6 @@
                         </div>
                     </div>
 
-                    <!-- LEITURA DA MATÉRIA -->
                     <div id="noticia-completa-container" class="hidden bg-white border border-gray-200 p-5 md:p-10 shadow-sm min-w-0 rounded-sm">
                         <button onclick="voltarCapa()" class="mb-6 text-jornal-red font-black text-[10px] uppercase tracking-widest hover:underline flex items-center gap-1">&larr; Voltar à Capa</button>
                         
@@ -349,7 +315,6 @@
                             </button>
                         </div>
 
-                        <!-- COMENTÁRIOS DA NOTÍCIA -->
                         <div class="border-t-4 border-jornal-dark pt-8 mt-4">
                             <h3 class="text-lg font-black font-sans uppercase tracking-tighter text-jornal-dark mb-6">Comentários</h3>
                             <form id="form-comentario" onsubmit="enviarComentario(event)" class="mb-10 bg-gray-50 p-6 md:p-8 border border-gray-200 rounded-sm shadow-inner">
@@ -456,7 +421,6 @@
         </footer>
     </div>
 
-    <!-- MODAL EXPEDIENTE -->
     <div id="modalExpediente" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/90 backdrop-blur-sm" onclick="fecharModalExpediente()"></div>
         <div class="bg-white w-full max-w-3xl rounded-sm shadow-2xl relative z-10 border-t-4 border-jornal-blue flex flex-col max-h-[90vh]">
@@ -472,7 +436,6 @@
         </div>
     </div>
 
-    <!-- MODAL CLIMA -->
     <div id="modalClima" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-jornal-dark/90 backdrop-blur-sm" onclick="fecharModalClima()"></div>
         <div class="bg-white w-full max-w-lg rounded-sm shadow-2xl relative z-10 overflow-hidden font-sans border-t-4 border-sky-500">
@@ -540,18 +503,12 @@
             } catch(e) { return url; }
         }
 
-        // ==========================================
-        // BLINDAGEM DE DATAS (NOVO FORMATO SEGURO)
-        // ==========================================
         function criarDataSegura(dataString) {
             if (!dataString) return new Date();
             var str = String(dataString).trim();
-            
-            // Tenta o formato ISO ou GMT nativo do JS
             var dt = new Date(str);
             if (!isNaN(dt.getTime())) return dt;
 
-            // Formato DD/MM/YYYY HH:MM
             var partesBarra = str.split(/[\/\s:\-T]/);
             if (partesBarra.length >= 5) {
                 var ano, mes, dia, hora, min;
@@ -562,14 +519,12 @@
             return new Date(str); 
         }
 
-        // Função de inteligência para não mostrar notícias do futuro!
         function isNoticiaPublicada(n) {
             try {
                 if (!n || !n.status) return false;
                 if (String(n.status).trim().toLowerCase() !== 'ativa') return false;
                 if (n.dataHora && String(n.dataHora).trim() !== '') {
                     var dtP = criarDataSegura(n.dataHora);
-                    // Só bloqueia se a data for válida E estiver no futuro
                     if (!isNaN(dtP.getTime()) && dtP > new Date()) return false;
                 }
                 return true;
@@ -600,7 +555,7 @@
                     pathNovo = '/busca/' + encodeURIComponent(valor);
                 }
                 window.history.pushState({ path: baseUrl + pathNovo }, '', baseUrl + pathNovo);
-            } catch(e) { console.warn("Navegação bloqueada."); }
+            } catch(e) {}
         }
 
         window.categoriaAtual = 'Todas';
@@ -682,15 +637,12 @@
                                 else { filtrarCategoria(window.categoriaAtual, false); }
                             }
                         }
-                    } catch(e) { console.error("Falha no JS Local: " + e.message); }
+                    } catch(e) {}
                 }).withFailureHandler(function(err) {
-                    removerLoaderGlobal(); console.error("Falha de Servidor: " + err.message);
+                    removerLoaderGlobal();
                 }).getHomeData();
             } else { removerLoaderGlobal(); }
         }
-
-        function abrirModalExpediente() { var m = document.getElementById('modalExpediente'); if(m){ m.classList.remove('hidden'); m.classList.add('flex'); } }
-        function fecharModalExpediente() { var m = document.getElementById('modalExpediente'); if(m){ m.classList.add('hidden'); m.classList.remove('flex'); } }
 
         function processarDadosHome(d) {
             window.agendaCarousels = [];
@@ -702,10 +654,6 @@
             if (configuracoesGlobais['LogoHTML']) {
                 headerBranding.innerHTML = configuracoesGlobais['LogoHTML'];
                 if(footerBranding) footerBranding.innerHTML = configuracoesGlobais['LogoHTML'];
-            }
-            if (configuracoesGlobais['ExpedienteHTML']) {
-                var expContainer = document.getElementById('conteudo-expediente');
-                if(expContainer) expContainer.innerHTML = configuracoesGlobais['ExpedienteHTML'];
             }
             if (configuracoesGlobais['CorLogo']) {
                 try {
@@ -1333,7 +1281,9 @@
             var f = noticiasGlobais.filter(function(n) {
                 var isPub = isNoticiaPublicada(n);
                 if (cat === 'Todas') return isPub;
-                return isPub && normalizarTextoBusca(n.categoria).indexOf(catNorm) !== -1;
+                // CORREÇÃO: Usa indexOf blindado (ignora maiúsculas, minúsculas e acentos)
+                var catNoticiaNorm = normalizarTextoBusca(n.categoria || '');
+                return isPub && catNoticiaNorm.indexOf(catNorm) !== -1;
             });
             
             var carrosselContainer = document.getElementById('carrossel-destaques');
@@ -1372,15 +1322,13 @@
                     dest.classList.remove('hidden'); 
                     f = f.slice(1); 
                 } else { 
-                    dest.innerHTML = '';
-                    dest.classList.add('hidden'); 
+                    dest.innerHTML = '<div class="col-span-full text-center py-16 bg-white border border-gray-200 rounded-sm shadow-sm flex flex-col items-center justify-center"><span class="text-4xl mb-3">📰</span><span class="text-sm font-bold text-gray-500 uppercase tracking-widest">Nenhuma matéria publicada nesta editoria no momento.</span></div>';
+                    dest.classList.remove('hidden'); 
                 }
                 
                 window.noticiasCategoriaAtual = f; window.itensExibidosCategoria = 16;
                 
-                if (f.length === 0 && (!dest || dest.classList.contains('hidden'))) { 
-                    grid.innerHTML = '<div class="col-span-full text-center py-16 bg-white border border-gray-200 rounded-sm shadow-sm flex flex-col items-center justify-center"><span class="text-4xl mb-3">📰</span><span class="text-sm font-bold text-gray-500 uppercase tracking-widest">Nenhuma matéria publicada nesta editoria no momento.</span></div>'; 
-                } else { 
+                if (f.length > 0) { 
                     f.slice(0, 16).forEach(function(n) { grid.innerHTML += htmlCard(n); }); 
                 }
                 
