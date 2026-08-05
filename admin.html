@@ -106,12 +106,12 @@
                         const dt = new Date(payload.dataAgendamento);
                         if (dt > new Date()) statusFinal = 'Agendada';
                         dataRegistro = formatDateStr(dt);
-                    } else { dataRegistro = formatDateStr(new Date()); }
+                    } else { dataRegistro = payload.dataHora || formatDateStr(new Date()); }
 
                     const docData = {
                         id: id, titulo: payload.titulo || 'Sem Título', categoria: payload.categoria || 'Geral',
                         cidade: payload.cidade || '', linhaFina: payload.linhaFina || '', conteudo: payload.conteudo || '',
-                        autor: payload.autor || 'da redação', dataHora: payload.dataHora || dataRegistro,
+                        autor: payload.autor || 'da redação', dataHora: dataRegistro,
                         dataFimEvento: payload.dataFimEvento || '', legendaImagem: payload.legendaImagem || '',
                         creditosImagem: payload.creditosImagem || '', relacionadas: payload.relacionadas || '',
                         status: statusFinal, usuarioPublicador: payload.usuarioPublicador || 'admin',
@@ -172,13 +172,24 @@
     </script>
 
     <script>
-        // TRADUTOR: Redireciona o antigo código para o Firebase perfeitamente
+        window.onerror = function(message, source, lineno, colno, error) {
+            setTimeout(function() {
+                var debugBox = document.getElementById('debug-error-box');
+                if (debugBox) { debugBox.innerHTML = "Aviso: " + message + " (Linha " + lineno + ")"; debugBox.classList.remove('hidden'); }
+            }, 500);
+        };
+
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw3BLfTFC2Z4sPOQcFMEx8rO8Xz862pVR8STIcc_XK-HAtZjC_CTS_Xs36gh1qbwzWf/exec";
         window.google = { script: { run: {
             withSuccessHandler: function(cb) { this._onSuccess = cb; return this; },
             withFailureHandler: function(cb) { this._onFailure = cb; return this; }
         }}};
 
         const apiFunctions = ['getHomeData', 'verificarLogin', 'salvarNoticiaNoSheets', 'alternarStatusNoticia', 'excluirNoticia', 'adicionarCategoriaNoSheets', 'chamarGeminiBackend', 'salvarUsuario', 'salvarConfiguracaoHTMLCustom', 'salvarPropagandaNoSheets'];
+        
+        // Funções que o Firebase assume na íntegra
+        const firebaseOverrides = ['getHomeData', 'verificarLogin', 'salvarNoticiaNoSheets', 'alternarStatusNoticia', 'excluirNoticia', 'adicionarCategoriaNoSheets', 'chamarGeminiBackend', 'salvarUsuario', 'salvarConfiguracaoHTMLCustom', 'salvarPropagandaNoSheets'];
+
         apiFunctions.forEach(function(funcName) {
             window.google.script.run[funcName] = function() {
                 var argsArray = Array.prototype.slice.call(arguments);
@@ -186,11 +197,21 @@
                 this._onSuccess = null; this._onFailure = null;
                 
                 var checkReady = setInterval(function() {
-                    if (window.firebaseBridge && window.firebaseBridge[funcName]) {
+                    if (window.firebaseBridge) {
                         clearInterval(checkReady);
-                        window.firebaseBridge[funcName].apply(window.firebaseBridge, argsArray)
-                            .then(function(res) { if (successCb) successCb(res); })
-                            .catch(function(err) { if (failureCb) failureCb(err); });
+                        if (firebaseOverrides.includes(funcName)) {
+                            window.firebaseBridge[funcName].apply(window.firebaseBridge, argsArray)
+                                .then(res => { if(successCb) successCb(res); })
+                                .catch(err => { if(failureCb) failureCb(err); });
+                        } else {
+                            fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: funcName, args: argsArray }) })
+                            .then(res => res.json())
+                            .then(result => {
+                                var finalPayload = result;
+                                if (result && result.result !== undefined) finalPayload = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
+                                if (successCb) successCb(finalPayload);
+                            }).catch(err => { if (failureCb) failureCb(err); });
+                        }
                     }
                 }, 50);
             };
@@ -198,7 +219,7 @@
 
         var configureTailwind = function() {
             if (typeof tailwind === 'undefined') { setTimeout(configureTailwind, 10); return; }
-            tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] }, colors: { jornal: { blue: '#0F172A', red: '#E11D48', gray: '#F8FAFC', dark: '#020617' } } } } };
+            tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] }, colors: { jornal: { blue: '#0F172A', red: '#E11D48', dark: '#020617', gray: '#F8FAFC' } } } } };
         };
         configureTailwind();
     </script>
@@ -232,7 +253,7 @@
 
     <div id="loading-global" class="fixed inset-0 z-[99998] bg-jornal-dark flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="w-12 h-12 border-4 border-gray-700 border-t-jornal-red rounded-full animate-spin mb-4"></div>
-        <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Firebase...</p>
+        <p class="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse">Acessar Sistema...</p>
     </div>
 
     <!-- Modal de Login -->
@@ -261,6 +282,7 @@
                     </span>
                 </div>
                 <div class="flex items-center gap-4">
+                    <!-- BOTÃO MÁGICO DE MIGRAÇÃO -->
                     <button type="button" onclick="iniciarMigracaoFirebase()" class="bg-gradient-to-r from-orange-500 to-red-600 hover:opacity-90 text-white px-4 py-1.5 rounded-sm text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1 hidden md:flex">🔥 Migrar do Excel</button>
                     <button type="button" onclick="encerrarSessao()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm">Sair (Logout)</button>
                 </div>
@@ -508,6 +530,57 @@
             document.getElementById('toast-icon').innerText = tipo === 'erro' ? '⚠️' : '✓';
             toast.classList.remove('hidden'); 
             setTimeout(function() { toast.classList.add('hidden'); }, 4500);
+        }
+
+        function iniciarMigracaoFirebase() {
+            if(!confirm("Tem a certeza que deseja migrar TUDO do Excel para o Firebase? Isto pode demorar alguns minutos dependendo da quantidade de matérias.")) return;
+            var btn = document.querySelector('button[onclick="iniciarMigracaoFirebase()"]');
+            var txtOrig = btn.innerHTML;
+            btn.innerHTML = "A LER EXCEL... ⏳"; btn.disabled = true;
+
+            // Busca os dados diretamente do URL do GAS para não ativar o intercetor do Firebase
+            fetch(GAS_API_URL, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                body: JSON.stringify({ action: 'getHomeData', args: [] }) 
+            })
+            .then(res => res.json())
+            .then(async result => {
+                var data = result;
+                if (result && result.result !== undefined) data = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
+                
+                if (data && data.sucesso) {
+                    btn.innerHTML = "A GRAVAR NO FIREBASE... ⏳";
+                    try {
+                        if(data.noticias) {
+                            for(let n of data.noticias) { await window.firebaseBridge.salvarNoticiaNoSheets({...n, statusForcado: n.status}); }
+                        }
+                        if(data.categorias) {
+                            for(let c of data.categorias) { await window.firebaseBridge.adicionarCategoriaNoSheets({nome: c}); }
+                        }
+                        if(data.config) {
+                            for(let k in data.config) { await window.firebaseBridge.salvarConfiguracaoHTMLCustom(k, data.config[k]); }
+                        }
+                        if(data.propagandas) {
+                            for(let p of data.propagandas) { await window.firebaseBridge.salvarPropagandaNoSheets({...p, status: 'Ativa'}); }
+                        }
+                        mostrarMensagem("Migração concluída com sucesso!");
+                        btn.innerHTML = "✅ MIGRAÇÃO CONCLUÍDA";
+                        setTimeout(() => btn.classList.add('hidden'), 3000);
+                        carregarNoticiasAdmin();
+                    } catch(e) {
+                        mostrarMensagem("Erro na gravação: " + e.message, "erro");
+                        btn.innerHTML = txtOrig; btn.disabled = false;
+                    }
+                } else {
+                    mostrarMensagem("Falha ao ler Excel.", "erro");
+                    btn.innerHTML = txtOrig; btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                mostrarMensagem("Falha de rede na migração.", "erro");
+                btn.innerHTML = txtOrig; btn.disabled = false;
+            });
         }
 
         function fazerLogin(e) {
