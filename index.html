@@ -65,10 +65,6 @@
             };
         });
 
-        window.onerror = function(message, source, lineno, colno, error) {
-            console.error("Aviso JS:", message, "na linha", lineno);
-        };
-
         var configureTailwind = function() {
             if (typeof tailwind === 'undefined') { setTimeout(configureTailwind, 10); return; }
             tailwind.config = {
@@ -84,14 +80,10 @@
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-        .spinner { border: 2px solid rgba(255,255,255,.3); border-left-color: #fff; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
-        @keyframes spin { to { transform: rotate(360deg); } }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #999; }
-        .heart-beat { animation: heartbeat 0.3s ease-in-out; }
-        @keyframes heartbeat { 0% { transform: scale(1); } 50% { transform: scale(1.3); color: #E11D48; } 100% { transform: scale(1); } }
         @keyframes marquee { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
         .animate-marquee-slow { animation: marquee 150s linear infinite; }
         .animate-marquee-slow:hover { animation-play-state: paused; }
@@ -105,7 +97,6 @@
         .rich-editor blockquote { border-left: 4px solid #E11D48; background: #f8fafc; padding: 12px 16px; color: #475569; font-style: italic; margin: 16px 0; border-radius: 0 8px 8px 0; }
         .rich-editor ul { list-style-type: disc; padding-left: 24px; margin-bottom: 12px; }
         .rich-editor ol { list-style-type: decimal; padding-left: 24px; margin-bottom: 12px; }
-        
         .instagram-media { background: #FFF; border: 0; border-radius: 3px; box-shadow: 0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px auto; max-width: 540px; min-width: 326px; padding: 0; width: 99.375%; width: calc(100% - 2px); }
     </style>
 </head>
@@ -116,14 +107,15 @@
         <span id="toast-msg" class="text-sm"></span>
     </div>
 
+    <!-- Tela de Loading Inicial (Logo do Site) -->
     <div id="loading-noticias" class="fixed inset-0 z-[100000] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
-        <div id="loading-logo-container" class="mb-6">
+        <div class="mb-6">
              <h1 id="loading-logo-text" class="text-4xl md:text-5xl font-black tracking-tighter uppercase bg-gradient-to-r from-blue-500 to-emerald-400 bg-clip-text text-transparent">
                 NOTÍCIAS AVULSAS
              </h1>
         </div>
         <div class="w-10 h-10 border-4 border-gray-100 border-t-rose-600 rounded-full animate-spin mb-4"></div>
-        <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 animate-pulse">ACESSAR SISTEMA...</p>
+        <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 animate-pulse">Acessar Servidor...</p>
     </div>
 
     <div id="view-portal" class="flex-grow flex flex-col relative min-w-0">
@@ -186,14 +178,20 @@
                 <div id="sticky-logo-container" class="hidden shrink-0 items-center cursor-pointer mr-6 pr-6 border-r-2 border-gray-200 transition-all duration-300" onclick="voltarCapa()">
                     <span class="font-black text-[15px] tracking-tighter uppercase bg-gradient-to-r from-blue-500 to-emerald-400 bg-clip-text text-transparent" id="sticky-logo-text">NOTÍCIAS AVULSAS</span>
                 </div>
-                <div id="links-categorias" class="flex items-center gap-6 md:gap-8 min-w-0"></div>
+                <div id="links-categorias" class="flex items-center gap-6 md:gap-8 min-w-0">
+                    <!-- Skeletons do Menu -->
+                    <div class="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+                    <div class="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                    <div class="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+                    <div class="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                </div>
             </div>
         </nav>
 
         <main class="max-w-[1200px] mx-auto pt-6 md:pt-8 pb-16 px-4 flex-grow w-full min-w-0">
             <div id="ads-topo-container" class="w-full mb-8 hidden grid gap-4 grid-cols-1 md:grid-cols-2"></div>
 
-            <div id="master-feed-wrapper" class="hidden flex-col lg:flex-row gap-8 items-start min-w-0">
+            <div id="master-feed-wrapper" class="flex flex-col lg:flex-row gap-8 items-start min-w-0">
                 
                 <div class="lg:w-[72%] w-full flex flex-col gap-6 min-w-0">
                     
@@ -216,20 +214,80 @@
 
                         <div id="grid-editorias-exclusivo" class="w-full mb-10 hidden flex-col min-w-0 text-slate-800"></div>
                         
-                        <div id="destaque-noticia" class="w-full mb-8 hidden min-w-0"></div>
+                        <!-- Skeleton do Destaque Inicial (Profissionalismo enquanto carrega) -->
+                        <div id="destaque-noticia" class="w-full mb-8 min-w-0">
+                            <article class="flex flex-col md:flex-row h-full overflow-hidden border border-gray-200 rounded-sm bg-white animate-pulse">
+                                <div class="md:w-[55%] w-full bg-gray-200 min-h-[350px] shrink-0"></div>
+                                <div class="md:w-[45%] p-8 flex flex-col justify-center w-full">
+                                    <div class="h-3 bg-gray-200 rounded w-1/4 mb-4"></div>
+                                    <div class="h-8 bg-gray-200 rounded w-full mb-2"></div>
+                                    <div class="h-8 bg-gray-200 rounded w-3/4 mb-6"></div>
+                                    <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                                    <div class="h-4 bg-gray-200 rounded w-2/3"></div>
+                                </div>
+                            </article>
+                        </div>
                         
                         <div class="border-t-4 border-jornal-dark w-full pt-4 flex justify-between items-center mb-6 min-w-0" id="header-ultimas-noticias">
                             <h2 class="text-sm font-black uppercase tracking-widest text-jornal-dark" id="titulo-seccao-feed">Últimas Notícias</h2>
                         </div>
                         
-                        <div id="grid-noticias" class="grid gap-6 w-full min-w-0"></div>
+                        <!-- Skeletons da Grelha de Notícias -->
+                        <div id="grid-noticias" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full min-w-0">
+                            <!-- Skeleton 1 -->
+                            <div class="bg-white border border-gray-200 rounded-sm overflow-hidden animate-pulse">
+                                <div class="w-full aspect-video bg-gray-200"></div>
+                                <div class="p-5">
+                                    <div class="h-3 bg-gray-200 rounded w-1/4 mb-3"></div>
+                                    <div class="h-5 bg-gray-200 rounded w-full mb-2"></div>
+                                    <div class="h-5 bg-gray-200 rounded w-3/4 mb-4"></div>
+                                    <div class="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                                    <div class="h-3 bg-gray-200 rounded w-5/6"></div>
+                                </div>
+                            </div>
+                            <!-- Skeleton 2 -->
+                            <div class="bg-white border border-gray-200 rounded-sm overflow-hidden animate-pulse hidden sm:block">
+                                <div class="w-full aspect-video bg-gray-200"></div>
+                                <div class="p-5">
+                                    <div class="h-3 bg-gray-200 rounded w-1/4 mb-3"></div>
+                                    <div class="h-5 bg-gray-200 rounded w-full mb-2"></div>
+                                    <div class="h-5 bg-gray-200 rounded w-3/4 mb-4"></div>
+                                    <div class="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                                    <div class="h-3 bg-gray-200 rounded w-5/6"></div>
+                                </div>
+                            </div>
+                            <!-- Skeleton 3 -->
+                            <div class="bg-white border border-gray-200 rounded-sm overflow-hidden animate-pulse hidden lg:block">
+                                <div class="w-full aspect-video bg-gray-200"></div>
+                                <div class="p-5">
+                                    <div class="h-3 bg-gray-200 rounded w-1/4 mb-3"></div>
+                                    <div class="h-5 bg-gray-200 rounded w-full mb-2"></div>
+                                    <div class="h-5 bg-gray-200 rounded w-3/4 mb-4"></div>
+                                    <div class="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                                    <div class="h-3 bg-gray-200 rounded w-5/6"></div>
+                                </div>
+                            </div>
+                            <!-- Skeleton 4 -->
+                            <div class="bg-white border border-gray-200 rounded-sm overflow-hidden animate-pulse hidden lg:block">
+                                <div class="w-full aspect-video bg-gray-200"></div>
+                                <div class="p-5">
+                                    <div class="h-3 bg-gray-200 rounded w-1/4 mb-3"></div>
+                                    <div class="h-5 bg-gray-200 rounded w-full mb-2"></div>
+                                    <div class="h-5 bg-gray-200 rounded w-3/4 mb-4"></div>
+                                    <div class="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                                    <div class="h-3 bg-gray-200 rounded w-5/6"></div>
+                                </div>
+                            </div>
+                        </div>
                         
                         <div class="w-full flex justify-center mt-10">
                             <button id="btn-mostrar-mais" onclick="mostrarMaisNoticias()" class="border-2 border-jornal-dark text-jornal-dark font-black uppercase text-[11px] px-12 py-3.5 rounded-full hover:bg-jornal-dark hover:text-white transition-all tracking-widest hidden shadow-sm w-full md:w-auto">Mostrar Mais Notícias</button>
                         </div>
                     </div>
 
+                    <!-- Notícia Completa Container -->
                     <div id="noticia-completa-container" class="hidden bg-white border border-gray-200 p-5 md:p-10 shadow-sm min-w-0 rounded-sm">
+                        <!-- ... (O conteúdo da notícia preenchido pelo JS) ... -->
                         <button onclick="voltarCapa()" class="mb-6 text-jornal-red font-black text-[10px] uppercase tracking-widest hover:underline flex items-center gap-1">&larr; Voltar à Capa</button>
                         
                         <span id="nc-categoria" class="text-jornal-red text-[11px] font-black uppercase tracking-widest mb-4 block cursor-pointer hover:underline" onclick="filtrarCategoria(this.innerText)"></span>
@@ -330,7 +388,9 @@
                             </h2>
                         </div>
                         <div id="widget-placar" class="space-y-4 min-w-0">
-                            <div class="text-center text-xs text-gray-400 py-4 font-bold uppercase tracking-widest">A procurar jogos...</div>
+                            <!-- Skeleton Placar -->
+                            <div class="animate-pulse bg-gray-100 h-16 rounded mb-2"></div>
+                            <div class="animate-pulse bg-gray-100 h-16 rounded mb-2"></div>
                         </div>
                     </div>
 
@@ -341,7 +401,7 @@
                         </div>
                         <div class="relative overflow-hidden bg-gradient-to-br from-sky-400 to-blue-600 rounded-b-sm shadow-inner py-8 px-4 text-white flex flex-col items-center">
                             <div class="absolute top-1/2 -translate-y-1/2 -right-10 text-[150px] opacity-10 select-none pointer-events-none" id="bg-icone-clima">☀️</div>
-                            <span class="text-[12px] font-black uppercase tracking-widest opacity-90 mb-4 relative z-10" id="desc-clima">CÉU LIMPO</span>
+                            <span class="text-[12px] font-black uppercase tracking-widest opacity-90 mb-4 relative z-10" id="desc-clima">--</span>
                             <div class="flex items-center justify-center gap-6 relative z-10">
                                 <span class="text-7xl drop-shadow-md" id="icone-clima">☀️</span>
                                 <span class="text-7xl font-black drop-shadow-md tracking-tighter leading-none" id="temp-clima">--°</span>
@@ -353,7 +413,12 @@
                         <div class="border-b-4 border-jornal-blue pb-3 mb-5">
                             <h2 class="text-xs font-black uppercase tracking-widest text-jornal-blue">Top 10 Mais Lidas</h2>
                         </div>
-                        <ul id="lista-mais-lidas" class="space-y-4 divide-y divide-gray-100 min-w-0"></ul>
+                        <ul id="lista-mais-lidas" class="space-y-4 divide-y divide-gray-100 min-w-0">
+                            <!-- Skeletons Top 10 -->
+                            <li class="animate-pulse flex gap-3"><div class="w-8 h-8 rounded-full bg-gray-200 shrink-0"></div><div class="h-8 bg-gray-200 rounded w-full"></div></li>
+                            <li class="animate-pulse flex gap-3"><div class="w-8 h-8 rounded-full bg-gray-200 shrink-0"></div><div class="h-8 bg-gray-200 rounded w-full"></div></li>
+                            <li class="animate-pulse flex gap-3"><div class="w-8 h-8 rounded-full bg-gray-200 shrink-0"></div><div class="h-8 bg-gray-200 rounded w-full"></div></li>
+                        </ul>
                     </div>
 
                     <div class="border-t-4 border-jornal-red w-full pt-5 mb-6">
@@ -544,14 +609,18 @@
         var dadosClimaGlobal = null;
         window.agendaCarousels = [];
         window.agendaTimers = {};
+        var dadosCarregados = false; // Flag de segurança
 
         document.addEventListener("DOMContentLoaded", function() {
+            carregarNoticias(false);
+            
+            // ALARME DE SEGURANÇA: Se o site não carregar em 8s, força o erro profissional
             setTimeout(function() {
-                if (noticiasGlobais.length === 0) {
+                if (!dadosCarregados) {
                     mostrarErroCritico();
                 }
-            }, 6000); 
-            carregarNoticias(false);
+            }, 8000); 
+
             window.addEventListener('scroll', function() {
                 var stickyLogo = document.getElementById('sticky-logo-container');
                 if (stickyLogo) {
@@ -563,7 +632,7 @@
 
         function carregarNoticias(forcarUpdate) {
             var loader = document.getElementById('loading-noticias');
-            var wrapper = document.getElementById('master-feed-wrapper');
+            if(loader) loader.style.display = 'flex';
 
             var temCacheValido = false;
             try {
@@ -571,32 +640,26 @@
                 if (cache) {
                     var dadosCache = JSON.parse(cache);
                     if (dadosCache && dadosCache.noticias && dadosCache.noticias.length > 0) {
+                        dadosCarregados = true; // Desativa o alarme de falha
                         processarDadosHome(dadosCache);
                         if (!forcarUpdate) tratarRotasIniciais(false);
                         temCacheValido = true;
                         
-                        // Força Bruta para esconder o loader se o cache foi bem sucedido
                         if(loader) loader.style.display = 'none';
-                        if(wrapper) wrapper.style.display = 'flex';
                     }
                 }
             } catch(e) {}
-
-            if (!temCacheValido) {
-                if(loader) loader.style.display = 'flex';
-                if(wrapper) wrapper.style.display = 'none';
-            }
 
             if (typeof window.google !== 'undefined' && window.google.script && window.google.script.run) {
                 window.google.script.run
                 .withSuccessHandler(function(res) {
                     if (res && res.sucesso && res.noticias) {
+                        dadosCarregados = true;
                         try { localStorage.setItem('portal_data_cache', JSON.stringify(res)); } catch(err){}
                         processarDadosHome(res);
                         
                         if (!temCacheValido || forcarUpdate) {
                             if(loader) loader.style.display = 'none';
-                            if(wrapper) wrapper.style.display = 'flex';
                             if (noticiaAbertaId) abrirNoticia(noticiaAbertaId, false);
                             else if(window.categoriaAtual === 'Pesquisa') pesquisarSite(new Event('submit'));
                             else filtrarCategoria(window.categoriaAtual, false);
@@ -621,9 +684,6 @@
         function mostrarErroCritico() {
             var loader = document.getElementById('loading-noticias');
             if(loader) loader.style.display = 'none';
-
-            var wrapper = document.getElementById('master-feed-wrapper');
-            if(wrapper) wrapper.style.display = 'flex';
 
             var feed = document.getElementById('grid-noticias');
             var secFeed = document.getElementById('titulo-seccao-feed');
